@@ -9,11 +9,12 @@ MINECRAFT_SCALE_FACTOR = 16
 
 
 def cube_size(obj):
-    # 1. ---; 2. --+; 3. -++; 4. -+-; 5. +--; 6. +-+; 7. +++; 8. ++-
-    return np.array(obj.bound_box[7]) - np.array(obj.bound_box[1])
+    # 0. ---; 1. --+; 2. -++; 3. -+-; 4. +--; 5. +-+; 6. +++; 7. ++-
+    return (np.array(obj.bound_box[6]) - np.array(obj.bound_box[0]))[[0, 2, 1]]
+
 
 def cube_position(obj):
-    return np.array(obj.bound_box[1])
+    return np.array(obj.bound_box[0])[[0, 2, 1]]
 
 def get_local_matrix(parent_world_matrix, child_world_matrix):
     '''
@@ -85,12 +86,16 @@ def to_mc_bone(
         mcbone['parent'] = bone['mc_parent'].name
 
     _, _, _b_scale = matrix.decompose()
+    _b_scale = np.array(_b_scale.xzy)
+
     b_pivot = pivot(bone)
     b_rot = rotation(bone)
 
-    c_size = np.array(_b_scale.xzy) * cube_size(bone) * MINECRAFT_SCALE_FACTOR
+    c_size = _b_scale * MINECRAFT_SCALE_FACTOR * cube_size(bone)
     b_pivot = np.array(b_pivot) * MINECRAFT_SCALE_FACTOR
-    c_origin = (b_pivot - c_size/2)
+    c_origin = b_pivot + (
+        cube_position(bone) * _b_scale * MINECRAFT_SCALE_FACTOR
+    )
 
     mcbone['pivot'] = json_vect(b_pivot)
     mcbone['rotation'] = json_vect(b_rot)
