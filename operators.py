@@ -5,6 +5,16 @@ import json
 import numpy as np
 
 
+MINECRAFT_SCALE_FACTOR = 16
+
+
+def cube_size(obj):
+    # 1. ---; 2. --+; 3. -++; 4. -+-; 5. +--; 6. +-+; 7. +++; 8. ++-
+    return np.array(obj.bound_box[7]) - np.array(obj.bound_box[1])
+
+def cube_position(obj):
+    return np.array(obj.bound_box[1])
+
 def get_local_matrix(parent_world_matrix, child_world_matrix):
     '''
     Returns translation matrix of child in relation to parent.
@@ -14,26 +24,46 @@ def get_local_matrix(parent_world_matrix, child_world_matrix):
         parent_world_matrix.inverted() @ child_world_matrix
     )
 
-# Pseudocode
+
 def pivot(obj):
-    result = [0, 0, 0]
-    def local_crds():
-        pass
-    if obj.parent is not None:
-        parent_pivot = pivot(obj.parent)
-        result += local_crds(obj.crds, obj.parent.crds) + parent_pivot
-    else:
-        result = obj.crds
-    return result
+    def local_crds(parent_matrix, child_matrix):
+        parent_matrix = parent_matrix.normalized()  # eliminate scale
+        child_matrix = child_matrix.normalized()  # eliminate scale
+        return get_local_matrix(parent_matrix, child_matrix).to_translation()
+
+    def _pivot(obj):
+        if 'mc_parent' in obj:
+            result = local_crds(
+                obj['mc_parent'].matrix_world,
+                obj.matrix_world
+            )
+            result += _pivot(obj['mc_parent'])
+        else:
+            result = obj.matrix_world.to_translation()
+        return result
+
+    return np.array(_pivot(obj).xzy)
+
 
 # Pseudocode
 def rotation(obj):
-    def local_rotation():
-        pass
-    if obj.parent is not None:
-        return local_rotation(obj.rot, obj.parent.rot)
+    def local_rotation(parent_matrix, child_matrix):
+        parent_rot = parent_matrix.to_quaternion()
+        child_rot = child_matrix.to_quaternion()
+
+        return child_rot.rotation_difference(parent_rot).to_euler('XZY')
+
+    if 'mc_parent' in obj:
+        result = local_rotation(
+            obj.matrix_world, obj['mc_parent'].matrix_world
+        )
     else:
-        return obj.rot
+        result = obj.matrix_world.to_euler('XZY')
+    result = np.array(result)[[0, 2, 1]]
+    result = result * np.array([1, -1, 1])
+    result = result * 180/math.pi  # math.degrees() for array
+    return result
+
 
 # Wziac poprzednika, z poprzednika obliczyć PIVOT
 def to_mc_bone(
@@ -52,27 +82,15 @@ def to_mc_bone(
 
     matrix = bone.matrix_world
     if 'mc_parent' in bone:
-        parent = bone['mc_parent']
-        mcbone['parent'] = parent.name
-        rot = parent.matrix_world.to_euler('XYZ')
-        rot = (
-            mathutils.Matrix.Rotation(-rot[0], 4, 'X') @
-            mathutils.Matrix.Rotation(-rot[1], 4, 'Y') @
-            mathutils.Matrix.Rotation(-rot[2], 4, 'Z')
-        )
+        mcbone['parent'] = bone['mc_parent'].name
 
-        matrix = rot @ matrix
+    _, _, _b_scale = matrix.decompose()
+    b_pivot = pivot(bone)
+    b_rot = rotation(bone)
 
-    b_pivot, b_rot, c_size = matrix.decompose()
-
-    b_rot = np.array(b_rot.to_euler('XYZ'))[[0, 2, 1]]
-    b_rot = b_rot * np.array([1, -1, 1])
-    b_rot = b_rot * 180/math.pi  # math.degrees() for array
-
-    # TODO -handle other sizes of cube
-    c_size = np.array(c_size.xzy) * 2  # Size of default cube is 2x2x2
-    b_pivot = np.array(b_pivot.xzy)
-    c_origin = b_pivot - c_size/2
+    c_size = np.array(_b_scale.xzy) * cube_size(bone) * MINECRAFT_SCALE_FACTOR
+    b_pivot = np.array(b_pivot) * MINECRAFT_SCALE_FACTOR
+    c_origin = (b_pivot - c_size/2)
 
     mcbone['pivot'] = json_vect(b_pivot)
     mcbone['rotation'] = json_vect(b_rot)
