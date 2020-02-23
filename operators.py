@@ -12,12 +12,19 @@ MINECRAFT_SCALE_FACTOR = 16
 # Names for temporary types of objects for the exporter
 CUBE, BONE, BOTH = 'CUBE', 'BONE', "BOTH"
 
-def cube_size(obj):
+
+# TODO - apply translation
+def cube_size(obj, translation):
     # 0. ---; 1. --+; 2. -++; 3. -+-; 4. +--; 5. +-+; 6. +++; 7. ++-
+    bound_box = obj.bound_box
+    bound_box = [translation @ mathutils.Vector(i) for i in bound_box]
     return (np.array(obj.bound_box[6]) - np.array(obj.bound_box[0]))[[0, 2, 1]]
 
 
-def cube_position(obj):
+# TODO - apply translation
+def cube_position(obj, translation):
+    bound_box = obj.bound_box
+    bound_box = [translation @ mathutils.Vector(i) for i in bound_box]
     return np.array(obj.bound_box[0])[[0, 2, 1]]
 
 
@@ -51,19 +58,19 @@ def pivot(obj):
     return np.array(_pivot(obj).xzy)
 
 
-def rotation(obj):
-    def local_rotation(parent_matrix, child_matrix):
+def rotation(child_matrix, parent_matrix=None):
+    def local_rotation(child_matrix, parent_matrix):
         parent_rot = parent_matrix.to_quaternion()
         child_rot = child_matrix.to_quaternion()
 
-        return child_rot.rotation_difference(parent_rot).to_euler('XZY')
+        return parent_rot.rotation_difference(child_rot).to_euler('XZY')
 
-    if 'mc_parent' in obj:
+    if parent_matrix is not None:
         result = local_rotation(
-            obj.matrix_world, obj['mc_parent'].matrix_world
+            child_matrix, parent_matrix
         )
     else:
-        result = obj.matrix_world.to_euler('XZY')
+        result = child_matrix.to_euler('XZY')
     result = np.array(result)[[0, 2, 1]]
     result = result * np.array([1, -1, 1])
     result = result * 180/math.pi  # math.degrees() for array
@@ -73,41 +80,58 @@ def rotation(obj):
 def to_mc_bone(
     bone, cubes=None
 ):
-    # TODO - make use of cubes
     # mcbone - parent, pivot, rotation
     # mccube - origin, size, inflate, pivot, rotation, uv
 
     # For the first version I want to use only:
     # origin, size, rotation
     # for mccube
+
+    # Helper functions
+    # TODO - apply translation
+    print(f"Working on bone: {bone.name} with cubes {[i.name for i in cubes]}")
+    def _scale(obj):
+        '''Scale of a bone'''
+        _, _, scale = obj.matrix_world.decompose()
+        return np.array(scale.xzy)
+
     def json_vect(arr):
         return [i for i in arr]
     mcbone = {'name': bone.name, 'cubes': []}
 
-    matrix = bone.matrix_world
+    # Code
     if 'mc_parent' in bone:
         mcbone['parent'] = bone['mc_parent'].name
+        b_rot = rotation(bone.matrix_world, bone['mc_parent'].matrix_world)  # NO TRANSLATION
+    else:
+        b_rot = rotation(bone.matrix_world)  # NO TRANSLATION
 
-    _, _, _b_scale = matrix.decompose()
-    _b_scale = np.array(_b_scale.xzy)
+    b_pivot = pivot(bone) * MINECRAFT_SCALE_FACTOR  # NO TRANSLATION
+    
+    for cube in cubes:
+        translation = get_local_matrix(
+            bone.matrix_world, cube.matrix_world
+        )
 
-    b_pivot = pivot(bone)
-    b_rot = rotation(bone)
+        _b_scale = _scale(cube)  # @ NO TRANSLATION
 
-    c_size = _b_scale * MINECRAFT_SCALE_FACTOR * cube_size(bone)
-    b_pivot = np.array(b_pivot) * MINECRAFT_SCALE_FACTOR
-    c_origin = b_pivot + (
-        cube_position(bone) * _b_scale * MINECRAFT_SCALE_FACTOR
-    )
+        c_size = cube_size(cube, translation) * _b_scale * MINECRAFT_SCALE_FACTOR # @ TRANSLATION
+        c_pivot = pivot(cube) * MINECRAFT_SCALE_FACTOR
+        c_origin = c_pivot + (
+            cube_position(cube, translation) * _b_scale * MINECRAFT_SCALE_FACTOR  # @ TRANSLATION
+        )
+        c_rot = rotation(cube.matrix_world, bone.matrix_world)
+
+        mcbone['cubes'].append({
+            'uv': [0, 0],
+            'size': json_vect(c_size),
+            'origin': json_vect(c_origin),
+            'pivot': json_vect(c_pivot),
+            'rotation': json_vect(c_rot)
+        })
 
     mcbone['pivot'] = json_vect(b_pivot)
     mcbone['rotation'] = json_vect(b_rot)
-    mcbone['cubes'].append({
-        'uv': [0, 0],
-        'size': json_vect(c_size),
-        'origin': json_vect(c_origin),
-        'pivot': json_vect(b_pivot)
-    })
     return mcbone
 
 
