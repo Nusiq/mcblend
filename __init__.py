@@ -1,3 +1,17 @@
+import bpy
+from bpy.props import PointerProperty, BoolProperty, FloatVectorProperty
+import bmesh
+import mathutils
+
+
+from .operators import (
+    OBJECT_OT_ExportOperator,
+    OBJECT_OT_BedrockParentOperator, menu_bedrock_parent,
+    OBJECT_OT_BedrockParentClearOperator, menu_bedrock_parent_clear,
+)
+from .panels import OBJECT_PT_ExportPanel, OBJECT_BedrockExporterProperties
+
+
 bl_info = {
     "name": "MC Bedrock Export",
     "author": "Artur",
@@ -10,10 +24,28 @@ bl_info = {
 }
 
 
-import bpy
-from .operators import NUSIQ_OT_MainOperator
-from .panels import NUSIQ_PT_ExportPanel
+classes = (
+    OBJECT_OT_ExportOperator,
+    OBJECT_PT_ExportPanel,
+    OBJECT_BedrockExporterProperties,
+    OBJECT_OT_BedrockParentOperator,
+    OBJECT_OT_BedrockParentClearOperator,
+)
 
-classes = (NUSIQ_OT_MainOperator, NUSIQ_PT_ExportPanel)
 
-register, unregister = bpy.utils.register_classes_factory(classes)
+def register():
+    for _class in classes:
+        bpy.utils.register_class(_class)
+    bpy.types.Scene.bedrock_exporter = PointerProperty(
+        type=OBJECT_BedrockExporterProperties
+    )
+    bpy.types.VIEW3D_MT_object_parent.append(menu_bedrock_parent)
+    bpy.types.VIEW3D_MT_object_parent.append(menu_bedrock_parent_clear)
+
+
+def unregister():
+    for _class in reversed(classes):
+        bpy.utils.unregister_class(_class)
+    del bpy.types.Scene.bedrock_exporter
+    bpy.types.VIEW3D_MT_object_parent.remove(menu_bedrock_parent)
+    bpy.types.VIEW3D_MT_object_parent.remove(menu_bedrock_parent_clear)

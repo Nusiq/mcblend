@@ -4,6 +4,8 @@ import mathutils
 import json
 import numpy as np
 
+from bpy.props import StringProperty
+from bpy_extras import object_utils
 
 MINECRAFT_SCALE_FACTOR = 16
 
@@ -15,6 +17,7 @@ def cube_size(obj):
 
 def cube_position(obj):
     return np.array(obj.bound_box[0])[[0, 2, 1]]
+
 
 def get_local_matrix(parent_world_matrix, child_world_matrix):
     '''
@@ -46,7 +49,6 @@ def pivot(obj):
     return np.array(_pivot(obj).xzy)
 
 
-# Pseudocode
 def rotation(obj):
     def local_rotation(parent_matrix, child_matrix):
         parent_rot = parent_matrix.to_quaternion()
@@ -66,7 +68,6 @@ def rotation(obj):
     return result
 
 
-# Wziac poprzednika, z poprzednika obliczyć PIVOT
 def to_mc_bone(
     bone, cubes_matrixes=None
 ):
@@ -108,31 +109,17 @@ def to_mc_bone(
     return mcbone
 
 
-class NUSIQ_OT_MainOperator(bpy.types.Operator):
-    bl_idname = "nusiq.main_operator"
+class OBJECT_OT_ExportOperator(bpy.types.Operator):
+    bl_idname = "object.export_operator"
     bl_label = "Export Bedrock model."
     bl_description = "Exports visible objects from scene to bedrock model."
 
-    def __init__(self):
-        super().__init__()
-        self.output = (
-            "C:/Users/artur/AppData/Local/Packages/"
-            "Microsoft.MinecraftUWP_8wekyb3d8bbwe/LocalState/games/"
-            "com.mojang/minecraftWorlds/Models-Tests/resource_packs/"
-            "physics_rp/models/entity/b_model.geo.json"
-        )
-
     def execute(self, context):
         mc_bones = []
+        output = context.scene.bedrock_exporter.path
+        model_name = context.scene.bedrock_exporter.model_name
 
-        # prev_obj = None
-        # for obj in bpy.data.objects:
-        #     if obj.visible_get():
-        #         if prev_obj is not None:
-        #             obj['mc_parent'] = prev_obj
-        #         prev_obj = obj
-
-        for obj in bpy.data.objects:
+        for obj in bpy.context.selected_objects:
             if obj.visible_get():
                 mcbone = to_mc_bone(obj)
                 mc_bones.append(mcbone)
@@ -141,7 +128,7 @@ class NUSIQ_OT_MainOperator(bpy.types.Operator):
             "minecraft:geometry": [
                 {
                     "description": {
-                        "identifier": "geometry.b_model",
+                        "identifier": f"geometry.{model_name}",
                         "texture_width": 1,
                         "texture_height": 1,
                         "visible_bounds_width": 10,
@@ -153,7 +140,82 @@ class NUSIQ_OT_MainOperator(bpy.types.Operator):
             ]
         }
         # print(result)
-        with open(self.output, 'w') as f:
+        with open(output, 'w') as f:
             json.dump(result, f, indent=4)
 
         return {'FINISHED'}
+
+# Aditional operators
+
+class OBJECT_OT_BedrockParentOperator(bpy.types.Operator):
+    """Add parent child relation for bedrock model exporter."""
+    bl_idname = "object.parent_operator"
+    bl_label = "Parent bedrock bone"
+    bl_description = "Parent object for bedrock model exporter."
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        if len(context.selected_objects) < 2:
+            return False
+        elif not bpy.context.object.select_get():
+            return False
+        return True
+
+    def execute(self, context):
+        def _is_parent_loop(this, start):
+            if 'mc_parent' in this:
+                if this['mc_parent'] is start:
+                    print(this['mc_parent'])
+                    return True
+                return _is_parent_loop(this['mc_parent'], start)
+            return False
+
+        # Check looped parents
+        for obj in bpy.context.selected_objects:
+            if obj is not bpy.context.object:
+                if _is_parent_loop(bpy.context.object, obj):
+                    self.report({'ERROR'}, "Loop in parents")
+                    return {'CANCELLED'}
+        # No loops detected
+        for obj in bpy.context.selected_objects:
+            if obj is not bpy.context.object:
+                obj['mc_parent'] = bpy.context.object
+
+        return {'FINISHED'}
+
+
+def menu_bedrock_parent(self, context):
+    '''Used for registration of OBJECT_OT_BedrockParentOperator class'''
+    self.layout.operator(
+        OBJECT_OT_BedrockParentOperator.bl_idname,
+        text=OBJECT_OT_BedrockParentOperator.bl_label, icon="PLUGIN"
+    )
+
+
+class OBJECT_OT_BedrockParentClearOperator(bpy.types.Operator):
+    """Clear parent child relation for bedrock model exporter."""
+    bl_idname = "object.parent_clear_operator"
+    bl_label = "Clear parent from bedrock bone"
+    bl_description = "Clear parent for bedrock model exporter."
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        if len(context.selected_objects) >= 1:
+            return True
+        return False
+
+    def execute(self, context):
+        for obj in bpy.context.selected_objects:
+            if 'mc_parent' in obj:
+                del obj['mc_parent']
+        return {'FINISHED'}
+
+
+def menu_bedrock_parent_clear(self, context):
+    '''Used for registration of OBJECT_OT_BedrockParentClearOperator class'''
+    self.layout.operator(
+        OBJECT_OT_BedrockParentClearOperator.bl_idname,
+        text=OBJECT_OT_BedrockParentClearOperator.bl_label, icon="PLUGIN"
+    )
