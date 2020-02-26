@@ -261,6 +261,12 @@ def get_transformations():
             obj['mc_obj_type_tmp'] in [BONE, BOTH]
         ):
             if 'mc_parent' in obj:
+                # Calculate translation in parent axis
+                location = get_local_matrix(
+                    obj['mc_parent'].matrix_world.normalized(),
+                    obj.matrix_world.normalized()
+                ).to_translation()
+                # Add result
                 transformations[obj.name] = {
                     'matrix': get_local_matrix(
                         obj['mc_parent'].matrix_world, obj.matrix_world
@@ -268,15 +274,14 @@ def get_transformations():
                     'scale': (
                         np.array(obj.matrix_world.to_scale()) /
                         np.array(obj['mc_parent'].matrix_world.to_scale())
-                    )
+                    ),
+                    'location': location
                 }
-                
-                
-
             else:
                 transformations[obj.name] = {
                     'matrix': obj.matrix_world.copy(),
-                    'scale': np.array(obj.matrix_world.to_scale())
+                    'scale': np.array(obj.matrix_world.to_scale()),
+                    'location': np.array(obj.matrix_world.to_translation())
                 }
     return transformations
 
@@ -322,7 +327,11 @@ def is_translated(matrix_a, matrix_b):
     return loc_changed, rot_changed, scale_changed
 
 
-def to_mc_translation_vectors(parent, child, parent_scale, child_scale):
+def to_mc_translation_vectors(
+    parent, child,
+    parent_scale, child_scale,
+    parent_loc, child_loc
+):
     '''
     Takes translation matrix and returns 3 numpy arrays for location, rotation
     and scale in minecraft friendly format.
@@ -335,7 +344,7 @@ def to_mc_translation_vectors(parent, child, parent_scale, child_scale):
     # child = child.normalized()
 
 
-    loc = np.array(child.to_translation()) - np.array(parent.to_translation())
+    loc = child_loc - parent_loc
     loc = np.array(loc) * MINECRAFT_SCALE_FACTOR
     loc = loc[[0, 2, 1]] / parent_scale
 
@@ -466,7 +475,8 @@ class OBJECT_OT_ExportAnimationOperator(bpy.types.Operator):
                     # Get the difference from original
                     loc, rot, scale = to_mc_translation_vectors(
                         d_val['matrix'], current_translations[d_key]['matrix'],
-                        d_val['scale'], current_translations[d_key]['scale']
+                        d_val['scale'], current_translations[d_key]['scale'],
+                        d_val['location'], current_translations[d_key]['location']
                     )
 
 
