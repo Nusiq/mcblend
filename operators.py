@@ -31,34 +31,6 @@ def get_local_matrix(parent_world_matrix, child_world_matrix):
     Returns translation matrix of child in relation to parent.
     In space defined by parent translation matrix.
     '''
-    # ploc, prot, pscale = parent_world_matrix.decompose()
-    # cloc, crot, cscale = child_world_matrix.decompose()
-
-    # ploc, prot, pscale = np.array(ploc), np.array(prot), np.array(pscale)
-    # cloc, crot, cscale = np.array(cloc), np.array(crot), np.array(cscale)
-
-    # loc = cloc-ploc
-    # rot = crot-prot
-    # scale = cscale/pscale
-
-    # # Create mathutils.Matrix.Translation
-    # loc = (parent_world_matrix.inverted() @ child_world_matrix).to_translation()
-    # loc = mathutils.Matrix.Translation(loc)
-
-    # # Create mathutils.Matrix.Rotation
-    # r0 = mathutils.Matrix.Rotation(rot[0], 4, 'X')
-    # r1 = mathutils.Matrix.Rotation(rot[1], 4, 'Y')
-    # r2 = mathutils.Matrix.Rotation(rot[2], 4, 'Z')
-    # rot = r2 @ r1 @ r0
-
-    # # Create mathutils.Matrix.Scale
-    # scale0 = mathutils.Matrix.Scale(scale[0], 4, [1, 0, 0])
-    # scale1 = mathutils.Matrix.Scale(scale[1], 4, [0, 1, 0])
-    # scale2 = mathutils.Matrix.Scale(scale[2], 4, [1, 0, 1])
-    # scale = scale0 @ scale1 @ scale2
-
-    #return scale @ rot @ loc
-
     return (
         parent_world_matrix.inverted() @ child_world_matrix
     )
@@ -289,13 +261,23 @@ def get_transformations():
             obj['mc_obj_type_tmp'] in [BONE, BOTH]
         ):
             if 'mc_parent' in obj:
-                transformations[obj.name] = get_local_matrix(
-                    obj['mc_parent'].matrix_world, obj.matrix_world
-                )
+                transformations[obj.name] = {
+                    'matrix': get_local_matrix(
+                        obj['mc_parent'].matrix_world, obj.matrix_world
+                    ),
+                    'scale': (
+                        np.array(obj.matrix_world.to_scale()) /
+                        np.array(obj['mc_parent'].matrix_world.to_scale())
+                    )
+                }
+                
+                
+
             else:
-                transformations[obj.name] = (
-                    obj.matrix_world.copy()
-                )
+                transformations[obj.name] = {
+                    'matrix': obj.matrix_world.copy(),
+                    'scale': np.array(obj.matrix_world.to_scale())
+                }
     return transformations
 
 
@@ -340,21 +322,41 @@ def is_translated(matrix_a, matrix_b):
     return loc_changed, rot_changed, scale_changed
 
 
-def to_mc_translation_vectors(matrix):
+def to_mc_translation_vectors(parent, child, parent_scale, child_scale):
     '''
     Takes translation matrix and returns 3 numpy arrays for location, rotation
     and scale in minecraft friendly format.
     '''
-    loc, rot, scale = matrix.decompose()
+    child_scale = child_scale[[0, 2, 1]]
+    parent_scale = parent_scale[[0, 2, 1]]
+    scale = child_scale / parent_scale
+    scale = scale
+    # parent = parent.normalized()
+    # child = child.normalized()
 
-    loc = np.array(loc.xzy) * MINECRAFT_SCALE_FACTOR
 
-    scale = np.array(scale.xzy)
+    loc = np.array(child.to_translation()) - np.array(parent.to_translation())
+    loc = np.array(loc) * MINECRAFT_SCALE_FACTOR
+    loc = loc[[0, 2, 1]] / parent_scale
 
-    rot = rot.to_euler('XZY')
+    parent_rot = parent.to_quaternion()
+    child_rot = child.to_quaternion()
+    rot = parent_rot.rotation_difference(child_rot).to_euler('XZY')
     rot = np.array(rot)[[0, 2, 1]]
     rot = rot * np.array([1, -1, 1])
     rot = rot * 180/math.pi  # math.degrees() for array
+
+    # matrix = get_local_matrix(parent, child)
+    # loc, rot, scale = matrix.decompose()
+
+    # loc = np.array(loc.xzy) * MINECRAFT_SCALE_FACTOR
+
+    # scale = np.array(scale.xzy)
+
+    # rot = rot.to_euler('XZY')
+    # rot = np.array(rot)[[0, 2, 1]]
+    # rot = rot * np.array([1, -1, 1])
+    # rot = rot * 180/math.pi  # math.degrees() for array
 
     return loc, rot, scale
 
@@ -463,45 +465,32 @@ class OBJECT_OT_ExportAnimationOperator(bpy.types.Operator):
                 for d_key, d_val in self.default_translation.items():
                     # Get the difference from original
                     loc, rot, scale = to_mc_translation_vectors(
-                        get_local_matrix(d_val, current_translations[d_key])
+                        d_val['matrix'], current_translations[d_key]['matrix'],
+                        d_val['scale'], current_translations[d_key]['scale']
                     )
 
-                    # The distance after previous operation is in the original
-                    # scale. Multiplying the loc by original scale fixes
-                    # the problem.
-                    loc = np.array(d_val.to_scale()) * loc
-                    
-                    # TODO - solve scale problem
-                    print(f'{d_key} {scale}')
 
-                    # Pick closest rotation to previous
+                    self.add_keyframe(
+                        bone=d_key, frame=bpy.context.scene.frame_current,
+                        type_='position', value=loc
+                    )
+                    
                     rot = pick_closest_rotation(
                         rot, self.prev_rotation[d_key]
                     )
-
-                    # if loc_changed:
-                    # self.add_keyframe(
-                    #     bone=d_key, frame=bpy.context.scene.frame_current,
-                    #     type_='position', value=loc
-                    # )
-                    # if rot_changed:
-
                     self.add_keyframe(
                         bone=d_key, frame=bpy.context.scene.frame_current,
                         type_='rotation', value=rot
                     )
-                    #if scale_changed:
 
                     # TODO - solve scaling problems with animations
                     # (export_test_7)
-                    # self.add_keyframe(
-                    #     bone=d_key, frame=bpy.context.scene.frame_current,
-                    #     type_='scale', value=scale
-                    # )
-                    # Save previous rotation value. This is used to pick
-                    # always the closest rotation value to previous keyframe
-                    # in order to get to the rotation of the next keyframe.
-                    self.prev_rotation[d_key] = rot
+                    self.add_keyframe(
+                        bone=d_key, frame=bpy.context.scene.frame_current,
+                        type_='scale', value=scale
+                    )
+
+                    self.prev_rotation[d_key] = rot  # Save previous rotation
 
             # Finish loop
             next_keyframe = get_next_keyframe()
