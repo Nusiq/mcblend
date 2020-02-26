@@ -5,11 +5,15 @@ import mathutils
 
 
 from .operators import (
-    OBJECT_OT_ExportOperator,
+    OBJECT_OT_ExportOperator, OBJECT_OT_ExportAnimationOperator,
     OBJECT_OT_BedrockParentOperator, menu_bedrock_parent,
     OBJECT_OT_BedrockParentClearOperator, menu_bedrock_parent_clear,
 )
-from .panels import OBJECT_PT_ExportPanel, OBJECT_BedrockExporterProperties
+from .panels import (
+    OBJECT_PT_ExportPanel,
+    OBJECT_BedrockExporterProperties,
+    OBJECT_PT_ExportAnimationPanel
+)
 
 
 bl_info = {
@@ -26,6 +30,8 @@ bl_info = {
 
 classes = (
     OBJECT_OT_ExportOperator,
+    OBJECT_OT_ExportAnimationOperator,
+    OBJECT_PT_ExportAnimationPanel,
     OBJECT_PT_ExportPanel,
     OBJECT_BedrockExporterProperties,
     OBJECT_OT_BedrockParentOperator,

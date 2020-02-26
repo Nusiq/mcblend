@@ -13,7 +13,6 @@ MINECRAFT_SCALE_FACTOR = 16
 CUBE, BONE, BOTH = 'CUBE', 'BONE', "BOTH"
 
 
-# TODO - apply translation
 def cube_size(obj, translation):
     # 0. ---; 1. --+; 2. -++; 3. -+-; 4. +--; 5. +-+; 6. +++; 7. ++-
     bound_box = obj.bound_box
@@ -21,7 +20,6 @@ def cube_size(obj, translation):
     return (np.array(obj.bound_box[6]) - np.array(obj.bound_box[0]))[[0, 2, 1]]
 
 
-# TODO - apply translation
 def cube_position(obj, translation):
     bound_box = obj.bound_box
     bound_box = [translation @ mathutils.Vector(i) for i in bound_box]
@@ -33,6 +31,34 @@ def get_local_matrix(parent_world_matrix, child_world_matrix):
     Returns translation matrix of child in relation to parent.
     In space defined by parent translation matrix.
     '''
+    # ploc, prot, pscale = parent_world_matrix.decompose()
+    # cloc, crot, cscale = child_world_matrix.decompose()
+
+    # ploc, prot, pscale = np.array(ploc), np.array(prot), np.array(pscale)
+    # cloc, crot, cscale = np.array(cloc), np.array(crot), np.array(cscale)
+
+    # loc = cloc-ploc
+    # rot = crot-prot
+    # scale = cscale/pscale
+
+    # # Create mathutils.Matrix.Translation
+    # loc = (parent_world_matrix.inverted() @ child_world_matrix).to_translation()
+    # loc = mathutils.Matrix.Translation(loc)
+
+    # # Create mathutils.Matrix.Rotation
+    # r0 = mathutils.Matrix.Rotation(rot[0], 4, 'X')
+    # r1 = mathutils.Matrix.Rotation(rot[1], 4, 'Y')
+    # r2 = mathutils.Matrix.Rotation(rot[2], 4, 'Z')
+    # rot = r2 @ r1 @ r0
+
+    # # Create mathutils.Matrix.Scale
+    # scale0 = mathutils.Matrix.Scale(scale[0], 4, [1, 0, 0])
+    # scale1 = mathutils.Matrix.Scale(scale[1], 4, [0, 1, 0])
+    # scale2 = mathutils.Matrix.Scale(scale[2], 4, [1, 0, 1])
+    # scale = scale0 @ scale1 @ scale2
+
+    #return scale @ rot @ loc
+
     return (
         parent_world_matrix.inverted() @ child_world_matrix
     )
@@ -77,6 +103,10 @@ def rotation(child_matrix, parent_matrix=None):
     return result
 
 
+def json_vect(arr):
+    return [round(i, 4) for i in arr]
+
+
 def to_mc_bone(
     bone, cubes=None
 ):
@@ -88,15 +118,11 @@ def to_mc_bone(
     # for mccube
 
     # Helper functions
-    # TODO - apply translation
-    print(f"Working on bone: {bone.name} with cubes {[i.name for i in cubes]}")
     def _scale(obj):
         '''Scale of a bone'''
         _, _, scale = obj.matrix_world.decompose()
         return np.array(scale.xzy)
 
-    def json_vect(arr):
-        return [i for i in arr]
     mcbone = {'name': bone.name, 'cubes': []}
 
     # Code
@@ -107,7 +133,7 @@ def to_mc_bone(
         b_rot = rotation(bone.matrix_world)  # NO TRANSLATION
 
     b_pivot = pivot(bone) * MINECRAFT_SCALE_FACTOR  # NO TRANSLATION
-    
+
     for cube in cubes:
         translation = get_local_matrix(
             bone.matrix_world, cube.matrix_world
@@ -162,10 +188,17 @@ def set_mc_obj_types():
     Also adds "mc_children_tmp" properties for easy access to reverse relation
     of "mc_parent".
     '''
+    clear_mc_obj_tmp_properties()
     for obj in bpy.context.selected_objects:
         if "mc_parent" in obj:
             if "mc_children_tmp" in obj["mc_parent"]:
-                obj["mc_parent"]["mc_children_tmp"].append(obj)
+                # obj["mc_parent"]["mc_children_tmp"].append(obj)
+                # Custom properties seam to be unmutable
+                # TODO - create custom dictionary to store
+                # object relations
+                children = obj["mc_parent"]["mc_children_tmp"].copy()
+                children.append(obj)
+                obj["mc_parent"]["mc_children_tmp"] = children
             else:
                 obj["mc_parent"]["mc_children_tmp"] = [obj]
 
@@ -239,8 +272,280 @@ class OBJECT_OT_ExportOperator(bpy.types.Operator):
 
         return {'FINISHED'}
 
-# Aditional operators
 
+def get_transformations():
+    '''
+    For each mcbone returns matrix that represents the transformation of
+    it in relation to its parent. If there is no paren than returns
+    matrix_world.
+
+    Result is a dictionary with name of the bone as a key and the matrix
+    as the value.
+    '''
+    transformations = {}
+    for obj in bpy.context.selected_objects:
+        if (
+            'mc_obj_type_tmp' in obj and
+            obj['mc_obj_type_tmp'] in [BONE, BOTH]
+        ):
+            if 'mc_parent' in obj:
+                transformations[obj.name] = get_local_matrix(
+                    obj['mc_parent'].matrix_world, obj.matrix_world
+                )
+            else:
+                transformations[obj.name] = (
+                    obj.matrix_world.copy()
+                )
+    return transformations
+
+
+def get_next_keyframe():
+    '''
+    Returns the index of next keyframe from selected objects.
+    Returns None if there is no more keyframes to chose.
+    '''
+    curr = bpy.context.scene.frame_current
+    next_keyframe = None
+    for obj in bpy.context.selected_objects:
+        for fcurve in obj.animation_data.action.fcurves:
+            for kframe_point in fcurve.keyframe_points:
+                time = kframe_point.co[0]
+                if time > curr:
+                    if next_keyframe is None:
+                        next_keyframe = time
+                    else:
+                        next_keyframe = min(time, next_keyframe)
+    return next_keyframe
+
+
+def is_translated(matrix_a, matrix_b):
+    '''
+    Takes two translation matrices and compares location, rotation
+    and scale to test if they are different (with certain error margin)
+
+    Returns 3 boolean values - loc_changed, rot_changed, scale_changed
+    '''
+    prev_loc, prev_rot, prev_scale = get_local_matrix(
+        matrix_a,
+        matrix_b
+    ).decompose()
+    prev_rot = prev_rot.to_euler()
+    prev_rot = np.array([math.degrees(i) for i in prev_rot])
+
+    loc_changed, rot_changed, scale_changed = (
+        not np.allclose(prev_loc, [0, 0, 0], atol=0.0001),
+        not np.allclose(prev_rot, [0, 0, 0], atol=0.0001),
+        not np.allclose(prev_scale, [1, 1, 1], atol=0.0001)
+    )
+    return loc_changed, rot_changed, scale_changed
+
+
+def to_mc_translation_vectors(matrix):
+    '''
+    Takes translation matrix and returns 3 numpy arrays for location, rotation
+    and scale in minecraft friendly format.
+    '''
+    loc, rot, scale = matrix.decompose()
+
+    loc = np.array(loc.xzy) * MINECRAFT_SCALE_FACTOR
+
+    scale = np.array(scale.xzy)
+
+    rot = rot.to_euler('XZY')
+    rot = np.array(rot)[[0, 2, 1]]
+    rot = rot * np.array([1, -1, 1])
+    rot = rot * 180/math.pi  # math.degrees() for array
+
+    return loc, rot, scale
+
+
+def get_animation_template(name, length):
+    return {
+        "format_version": "1.8.0",
+        "animations": {
+            f"animation.{name}": {
+                "animation_length": (length-1)/bpy.context.scene.render.fps,
+                "bones": {
+                }
+            }
+        }
+    }
+
+
+def pick_closest_rotation(modify, close_to):
+    '''
+    Takes two numpy.arrays that represent rotation in
+    euler rotation mode (using degrees). Modifies the
+    values of 'modify' vector to get different representations
+    of the same rotation. Picks the vector which is the
+    closest to 'close_to' vector (euclidean distance).
+    '''
+    def _pick_closet_location(modify, close_to):
+        choice = modify
+        distance = np.linalg.norm(choice - close_to)
+
+        for i in range(3):  # Adds removes 360 to all 3 axis (picks the best)
+            arr = np.zeros(3)
+            arr[i] = 360
+            while choice[i] < close_to[i]:
+                new_choice = choice + arr
+                new_distance = np.linalg.norm(new_choice - close_to)
+                if new_distance > distance:
+                    break
+                else:
+                    distance, choice = new_distance, new_choice
+            while choice[i] > close_to[i]:
+                new_choice = choice - arr
+                new_distance = np.linalg.norm(new_choice - close_to)
+                if new_distance > distance:
+                    break
+                else:
+                    distance, choice = new_distance, new_choice
+        return distance, choice
+
+    distance1, choice1 = _pick_closet_location(modify, close_to)
+    distance2, choice2 = _pick_closet_location(  # Counterintuitive but works
+        (modify + np.array([180, 180, 180])) * np.array([1, -1, 1]),
+        close_to
+    )
+    if distance2 < distance1:
+        return choice2
+    else:
+        return choice1
+
+
+
+class OBJECT_OT_ExportAnimationOperator(bpy.types.Operator):
+    bl_idname = "object.export_animation_operator"
+    bl_label = "Export animation for bedrock model."
+    bl_description = (
+        "Exports animation of selected objects to bedrock entity animation "
+        "format."
+    )
+    _timer = None
+    _start_frame = None
+    _animation_dict = None
+    _animation_name = None
+
+    def add_keyframe(self, bone, frame, type_, value):
+        bones = self._animation_dict['animations'][
+            f"animation.{self._animation_name}"
+        ]["bones"]
+        if bone not in bones:
+            bones[bone] = {}
+        if type_ not in ['rotation', 'position', 'scale']:
+            print(
+                f'WARNING! Unknown translation type - {type_}. Use rotation, '
+                'position or scale instead.'
+            )
+        if type_ not in bones[bone]:
+            bones[bone][type_] = {}
+        bones[bone][type_][
+            f'{round((frame-1)/bpy.context.scene.render.fps, 4)}'
+        ] = json_vect(value)
+
+    def modal(self, context, event):
+        if event.type in {'RIGHTMOUSE', 'ESC'}:
+            self.cancel(context)
+            # Back to the start frame
+            bpy.context.scene.frame_current = self._start_frame
+            return {'CANCELLED'}
+        elif event.type == 'TIMER':
+            # Do some stuff
+            if bpy.context.scene.frame_current == 0:
+                self.default_translation = get_transformations()
+                self.prev_rotation = {
+                    name:np.zeros(3)
+                    for name in self.default_translation.keys()
+                }
+            else:
+                current_translations = get_transformations()
+                for d_key, d_val in self.default_translation.items():
+                    # Get the difference from original
+                    loc, rot, scale = to_mc_translation_vectors(
+                        get_local_matrix(d_val, current_translations[d_key])
+                    )
+
+                    # The distance after previous operation is in the original
+                    # scale. Multiplying the loc by original scale fixes
+                    # the problem.
+                    loc = np.array(d_val.to_scale()) * loc
+                    
+                    # TODO - solve scale problem
+                    print(f'{d_key} {scale}')
+
+                    # Pick closest rotation to previous
+                    rot = pick_closest_rotation(
+                        rot, self.prev_rotation[d_key]
+                    )
+
+                    # if loc_changed:
+                    # self.add_keyframe(
+                    #     bone=d_key, frame=bpy.context.scene.frame_current,
+                    #     type_='position', value=loc
+                    # )
+                    # if rot_changed:
+
+                    self.add_keyframe(
+                        bone=d_key, frame=bpy.context.scene.frame_current,
+                        type_='rotation', value=rot
+                    )
+                    #if scale_changed:
+
+                    # TODO - solve scaling problems with animations
+                    # (export_test_7)
+                    # self.add_keyframe(
+                    #     bone=d_key, frame=bpy.context.scene.frame_current,
+                    #     type_='scale', value=scale
+                    # )
+                    # Save previous rotation value. This is used to pick
+                    # always the closest rotation value to previous keyframe
+                    # in order to get to the rotation of the next keyframe.
+                    self.prev_rotation[d_key] = rot
+
+            # Finish loop
+            next_keyframe = get_next_keyframe()
+            if next_keyframe is None:
+                # Back to the start frame
+                clear_mc_obj_tmp_properties()
+                bpy.context.scene.frame_current = self._start_frame
+                context.window_manager.event_timer_remove(self._timer)
+                output = context.scene.bedrock_exporter.path_animation
+                with open(output, 'w') as f:
+                    json.dump(self._animation_dict, f, indent=4)
+                return {'FINISHED'}
+            else:
+                bpy.context.scene.frame_current = math.ceil(next_keyframe)
+
+        return {'PASS_THROUGH'}
+
+    def execute(self, context):
+        wm = context.window_manager
+
+        set_mc_obj_types()
+        self._timer = wm.event_timer_add(0.5, window=context.window)
+        self._start_frame = bpy.context.scene.frame_current
+        self._animation_name = context.scene.bedrock_exporter.animation_name
+
+        self._animation_dict = get_animation_template(
+            self._animation_name,
+            bpy.context.scene.frame_end
+        )
+
+        # Stop animation if running & jump to the first frame
+        bpy.ops.screen.animation_cancel()
+        bpy.context.scene.frame_current = 0
+
+        wm.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
+
+    def cancel(self, context):
+        clear_mc_obj_tmp_properties()
+        wm = context.window_manager
+        wm.event_timer_remove(self._timer)
+
+
+# Aditional operators
 class OBJECT_OT_BedrockParentOperator(bpy.types.Operator):
     """Add parent child relation for bedrock model exporter."""
     bl_idname = "object.parent_operator"
@@ -260,7 +565,6 @@ class OBJECT_OT_BedrockParentOperator(bpy.types.Operator):
         def _is_parent_loop(this, start):
             if 'mc_parent' in this:
                 if this['mc_parent'] is start:
-                    print(this['mc_parent'])
                     return True
                 return _is_parent_loop(this['mc_parent'], start)
             return False
