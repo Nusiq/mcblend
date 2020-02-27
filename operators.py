@@ -457,14 +457,25 @@ class OBJECT_OT_ExportAnimationOperator(bpy.types.Operator):
             f'{round((frame-1)/bpy.context.scene.render.fps, 4)}'
         ] = json_vect(value)
 
-    def modal(self, context, event):
-        if event.type in {'RIGHTMOUSE', 'ESC'}:
-            self.cancel(context)
-            # Back to the start frame
-            bpy.context.scene.frame_current = self._start_frame
-            return {'CANCELLED'}
-        elif event.type == 'TIMER':
-            # Do some stuff
+    def execute(self, context):
+        wm = context.window_manager
+
+        set_mc_obj_types()
+        #self._timer = wm.event_timer_add(1.0, window=context.window)
+
+        self._start_frame = bpy.context.scene.frame_current
+        self._animation_name = context.scene.bedrock_exporter.animation_name
+        self._animation_dict = get_animation_template(
+            self._animation_name,
+            bpy.context.scene.frame_end
+        )
+
+        # Stop animation if running & jump to the first frame
+        bpy.ops.screen.animation_cancel()
+        bpy.context.scene.frame_set(0)
+
+        next_keyframe = get_next_keyframe()
+        while next_keyframe is not None:
             if bpy.context.scene.frame_current == 0:
                 self.default_translation = get_transformations()
                 self.prev_rotation = {
@@ -505,41 +516,17 @@ class OBJECT_OT_ExportAnimationOperator(bpy.types.Operator):
 
                     self.prev_rotation[d_key] = rot  # Save previous rotation
 
-            # Finish loop
             next_keyframe = get_next_keyframe()
-            if next_keyframe is None:
-                # Back to the start frame
+            if next_keyframe is not None:
+                bpy.context.scene.frame_set(math.ceil(next_keyframe))
+            else:
+                bpy.context.scene.frame_set(self._start_frame)
                 clear_mc_obj_tmp_properties()
-                bpy.context.scene.frame_current = self._start_frame
-                context.window_manager.event_timer_remove(self._timer)
                 output = context.scene.bedrock_exporter.path_animation
                 with open(output, 'w') as f:
                     json.dump(self._animation_dict, f, indent=4)
                 return {'FINISHED'}
-            else:
-                bpy.context.scene.frame_current = math.ceil(next_keyframe)
-
-        return {'PASS_THROUGH'}
-
-    def execute(self, context):
-        wm = context.window_manager
-
-        set_mc_obj_types()
-        self._timer = wm.event_timer_add(1.0, window=context.window)
-        self._start_frame = bpy.context.scene.frame_current
-        self._animation_name = context.scene.bedrock_exporter.animation_name
-
-        self._animation_dict = get_animation_template(
-            self._animation_name,
-            bpy.context.scene.frame_end
-        )
-
-        # Stop animation if running & jump to the first frame
-        bpy.ops.screen.animation_cancel()
-        bpy.context.scene.frame_current = 0
-
-        wm.modal_handler_add(self)
-        return {'RUNNING_MODAL'}
+        return {'FINISHED'}
 
     def cancel(self, context):
         clear_mc_obj_tmp_properties()
