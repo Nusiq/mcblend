@@ -180,7 +180,7 @@ def set_mc_obj_types():
         elif obj.type == 'MESH':
             if "mc_children_tmp" in obj:
                 obj['mc_obj_type_tmp'] = BOTH
-            elif "mc_is_bone" in obj and obj["mc_is_bone"] is True:
+            elif "mc_is_bone" in obj and obj["mc_is_bone"] == 1:
                 obj["mc_obj_type_tmp"] = BOTH
             elif "mc_parent" in obj:
                 obj["mc_obj_type_tmp"] = CUBE
@@ -272,16 +272,18 @@ def get_transformations():
                         obj['mc_parent'].matrix_world, obj.matrix_world
                     ),
                     'scale': (
-                        np.array(obj.matrix_world.to_scale()) /
-                        np.array(obj['mc_parent'].matrix_world.to_scale())
+                        np.array(obj.matrix_world.copy().to_scale()) /
+                        np.array(obj['mc_parent'].matrix_world.copy().to_scale())
                     ),
                     'location': location
                 }
             else:
+                scale = np.array(obj.matrix_world.copy().to_scale())
+                location = np.array(obj.matrix_world.normalized().to_translation())
                 transformations[obj.name] = {
                     'matrix': obj.matrix_world.copy(),
-                    'scale': np.array(obj.matrix_world.to_scale()),
-                    'location': np.array(obj.matrix_world.to_translation())
+                    'scale': scale,
+                    'location': location * scale
                 }
     return transformations
 
@@ -330,7 +332,7 @@ def is_translated(matrix_a, matrix_b):
 def to_mc_translation_vectors(
     parent, child,
     parent_scale, child_scale,
-    parent_loc, child_loc
+    parent_loc, child_loc, name
 ):
     '''
     Takes translation matrix and returns 3 numpy arrays for location, rotation
@@ -476,7 +478,8 @@ class OBJECT_OT_ExportAnimationOperator(bpy.types.Operator):
                     loc, rot, scale = to_mc_translation_vectors(
                         d_val['matrix'], current_translations[d_key]['matrix'],
                         d_val['scale'], current_translations[d_key]['scale'],
-                        d_val['location'], current_translations[d_key]['location']
+                        d_val['location'], current_translations[d_key]['location'],
+                        d_key
                     )
 
 
@@ -522,7 +525,7 @@ class OBJECT_OT_ExportAnimationOperator(bpy.types.Operator):
         wm = context.window_manager
 
         set_mc_obj_types()
-        self._timer = wm.event_timer_add(0.5, window=context.window)
+        self._timer = wm.event_timer_add(1.0, window=context.window)
         self._start_frame = bpy.context.scene.frame_current
         self._animation_name = context.scene.bedrock_exporter.animation_name
 
