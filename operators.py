@@ -275,9 +275,7 @@ def get_transformations():
                 ).to_translation()
                 # Add result
                 transformations[obj.name] = {
-                    'matrix': get_local_matrix(
-                        obj['mc_parent'].matrix_world, obj.matrix_world
-                    ),
+                    'rotation': rotation(obj.matrix_world, obj['mc_parent'].matrix_world),
                     'scale': (
                         np.array(obj.matrix_world.copy().to_scale()) /
                         np.array(obj['mc_parent'].matrix_world.copy().to_scale())
@@ -288,7 +286,7 @@ def get_transformations():
                 scale = np.array(obj.matrix_world.copy().to_scale())
                 location = np.array(obj.matrix_world.normalized().to_translation())
                 transformations[obj.name] = {
-                    'matrix': obj.matrix_world.copy(),
+                    'rotation': rotation(obj.matrix_world),
                     'scale': scale,
                     'location': location * scale
                 }
@@ -343,7 +341,7 @@ def is_translated(matrix_a, matrix_b):
 
 
 def to_mc_translation_vectors(
-    parent, child,
+    parent_rot, child_rot,
     parent_scale, child_scale,
     parent_loc, child_loc, name
 ):
@@ -360,21 +358,22 @@ def to_mc_translation_vectors(
     loc = np.array(loc) * MINECRAFT_SCALE_FACTOR
     loc = loc[[0, 2, 1]] / parent_scale
 
-    # Normalization (not tested for both options below)
-    child = child.normalized()
-    parent = parent.normalized()
+    rot = child_rot - parent_rot
+    # # Normalization (not tested for both options below)
+    # child = child.normalized()
+    # parent = parent.normalized()
 
-    # # This works for animated objects
-    # parent_rot = parent.to_quaternion()
-    # child_rot = child.to_quaternion()
-    # rot = parent_rot.rotation_difference(child_rot).to_euler('XZY')
+    # # # This works for animated objects
+    # # parent_rot = parent.to_quaternion()
+    # # child_rot = child.to_quaternion()
+    # # rot = parent_rot.rotation_difference(child_rot).to_euler('XZY')
 
-    # This works for rigged objects
-    rot = (parent.inverted() @ child).to_quaternion().to_euler('XZY')
+    # # This works for rigged objects
+    # rot = (parent.inverted() @ child).to_quaternion().to_euler('XZY')
 
-    rot = np.array(rot)[[0, 2, 1]]
-    rot = rot * np.array([1, -1, 1])
-    rot = rot * 180/math.pi  # math.degrees() for array
+    # rot = np.array(rot)[[0, 2, 1]]
+    # rot = rot * np.array([1, -1, 1])
+    # rot = rot * 180/math.pi  # math.degrees() for array
 
     return loc, rot, scale
 
@@ -494,7 +493,7 @@ class OBJECT_OT_ExportAnimationOperator(bpy.types.Operator):
                 for d_key, d_val in self.default_translation.items():
                     # Get the difference from original
                     loc, rot, scale = to_mc_translation_vectors(
-                        d_val['matrix'], current_translations[d_key]['matrix'],
+                        d_val['rotation'], current_translations[d_key]['rotation'],
                         d_val['scale'], current_translations[d_key]['scale'],
                         d_val['location'], current_translations[d_key]['location'],
                         d_key
