@@ -58,10 +58,17 @@ def pivot(obj):
 
 def rotation(child_matrix, parent_matrix=None):
     def local_rotation(child_matrix, parent_matrix):
-        parent_rot = parent_matrix.to_quaternion()
-        child_rot = child_matrix.to_quaternion()
+        # Normalization (not tested for both options below)
+        child_matrix = child_matrix.normalized()
+        parent_matrix = parent_matrix.normalized()
 
-        return parent_rot.rotation_difference(child_rot).to_euler('XZY')
+        # # This seams to work for animatied objects
+        # parent_rot = parent_matrix.to_quaternion()
+        # child_rot = child_matrix.to_quaternion()
+        # return parent_rot.rotation_difference(child_rot).to_euler('XZY')
+
+        # This works for rigged objects
+        return (parent_matrix.inverted() @ child_matrix).to_quaternion().to_euler('XZY')
 
     if parent_matrix is not None:
         result = local_rotation(
@@ -240,7 +247,7 @@ class OBJECT_OT_ExportOperator(bpy.types.Operator):
         clear_mc_obj_tmp_properties()
 
         with open(output, 'w') as f:
-            json.dump(result, f, indent=4)
+            json.dump(result, f) #, indent=4)
 
         return {'FINISHED'}
 
@@ -296,14 +303,20 @@ def get_next_keyframe():
     curr = bpy.context.scene.frame_current
     next_keyframe = None
     for obj in bpy.context.selected_objects:
-        for fcurve in obj.animation_data.action.fcurves:
-            for kframe_point in fcurve.keyframe_points:
-                time = kframe_point.co[0]
-                if time > curr:
-                    if next_keyframe is None:
-                        next_keyframe = time
-                    else:
-                        next_keyframe = min(time, next_keyframe)
+        if (
+            obj.animation_data is not None and
+            obj.animation_data.action is not None and
+            obj.animation_data.action.fcurves is not None
+        ):
+            for fcurve in obj.animation_data.action.fcurves:
+                if fcurve.keyframe_points is not None:
+                    for kframe_point in fcurve.keyframe_points:
+                        time = kframe_point.co[0]
+                        if time > curr:
+                            if next_keyframe is None:
+                                next_keyframe = time
+                            else:
+                                next_keyframe = min(time, next_keyframe)
     return next_keyframe
 
 
@@ -342,32 +355,26 @@ def to_mc_translation_vectors(
     parent_scale = parent_scale[[0, 2, 1]]
     scale = child_scale / parent_scale
     scale = scale
-    # parent = parent.normalized()
-    # child = child.normalized()
-
 
     loc = child_loc - parent_loc
     loc = np.array(loc) * MINECRAFT_SCALE_FACTOR
     loc = loc[[0, 2, 1]] / parent_scale
 
-    parent_rot = parent.to_quaternion()
-    child_rot = child.to_quaternion()
-    rot = parent_rot.rotation_difference(child_rot).to_euler('XZY')
+    # Normalization (not tested for both options below)
+    child = child.normalized()
+    parent = parent.normalized()
+
+    # # This works for animated objects
+    # parent_rot = parent.to_quaternion()
+    # child_rot = child.to_quaternion()
+    # rot = parent_rot.rotation_difference(child_rot).to_euler('XZY')
+
+    # This works for rigged objects
+    rot = (parent.inverted() @ child).to_quaternion().to_euler('XZY')
+
     rot = np.array(rot)[[0, 2, 1]]
     rot = rot * np.array([1, -1, 1])
     rot = rot * 180/math.pi  # math.degrees() for array
-
-    # matrix = get_local_matrix(parent, child)
-    # loc, rot, scale = matrix.decompose()
-
-    # loc = np.array(loc.xzy) * MINECRAFT_SCALE_FACTOR
-
-    # scale = np.array(scale.xzy)
-
-    # rot = rot.to_euler('XZY')
-    # rot = np.array(rot)[[0, 2, 1]]
-    # rot = rot * np.array([1, -1, 1])
-    # rot = rot * 180/math.pi  # math.degrees() for array
 
     return loc, rot, scale
 
@@ -507,8 +514,6 @@ class OBJECT_OT_ExportAnimationOperator(bpy.types.Operator):
                         type_='rotation', value=rot
                     )
 
-                    # TODO - solve scaling problems with animations
-                    # (export_test_7)
                     self.add_keyframe(
                         bone=d_key, frame=bpy.context.scene.frame_current,
                         type_='scale', value=scale
@@ -524,7 +529,7 @@ class OBJECT_OT_ExportAnimationOperator(bpy.types.Operator):
                 clear_mc_obj_tmp_properties()
                 output = context.scene.bedrock_exporter.path_animation
                 with open(output, 'w') as f:
-                    json.dump(self._animation_dict, f, indent=4)
+                    json.dump(self._animation_dict, f) #, indent=4)
                 return {'FINISHED'}
         return {'FINISHED'}
 
