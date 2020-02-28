@@ -7,26 +7,44 @@ import numpy as np
 from bpy.props import StringProperty
 from bpy_extras import object_utils
 
+# Additional imports for mypy
+import bpy_types
+import typing as tp
+
 MINECRAFT_SCALE_FACTOR = 16
 
 # Names for temporary types of objects for the exporter
 CUBE, BONE, BOTH = 'CUBE', 'BONE', "BOTH"
 
 
-def cube_size(obj, translation):
+def cube_size(
+    obj: bpy_types.Object, translation: mathutils.Matrix
+) -> np.ndarray:
+    '''
+    Returns cube size based on the bounding box of an object.
+    The returned value is moved by the translation matrix from "translation"
+    '''
     # 0. ---; 1. --+; 2. -++; 3. -+-; 4. +--; 5. +-+; 6. +++; 7. ++-
     bound_box = obj.bound_box
     bound_box = [translation @ mathutils.Vector(i) for i in bound_box]
     return (np.array(obj.bound_box[6]) - np.array(obj.bound_box[0]))[[0, 2, 1]]
 
 
-def cube_position(obj, translation):
+def cube_position(
+    obj: bpy_types.Object, translation: mathutils.Matrix
+) -> np.ndarray:
+    '''
+    Returns cube position based on the bounding box of an object.
+    The returned value is moved by the translation matrix from "translation"
+    '''
     bound_box = obj.bound_box
     bound_box = [translation @ mathutils.Vector(i) for i in bound_box]
     return np.array(obj.bound_box[0])[[0, 2, 1]]
 
 
-def get_local_matrix(parent_world_matrix, child_world_matrix):
+def get_local_matrix(
+    parent_world_matrix: mathutils.Matrix, child_world_matrix: mathutils.Matrix
+) -> mathutils.Matrix:
     '''
     Returns translation matrix of child in relation to parent.
     In space defined by parent translation matrix.
@@ -36,13 +54,20 @@ def get_local_matrix(parent_world_matrix, child_world_matrix):
     )
 
 
-def pivot(obj):
-    def local_crds(parent_matrix, child_matrix):
+def pivot(obj: bpy_types.Object) -> np.ndarray:
+    '''
+    Returns the pivot point. Of a mcbone (or mccube represented by the "obj"
+    object.
+    '''
+    def local_crds(
+        parent_matrix: mathutils.Matrix, child_matrix: mathutils.Matrix
+    ) -> mathutils.Vector:
+        '''Local coordinates of child matrix inside parent matrix'''
         parent_matrix = parent_matrix.normalized()  # eliminate scale
         child_matrix = child_matrix.normalized()  # eliminate scale
         return get_local_matrix(parent_matrix, child_matrix).to_translation()
 
-    def _pivot(obj):
+    def _pivot(obj: bpy_types.Object) -> mathutils.Vector:
         if 'mc_parent' in obj:
             result = local_crds(
                 obj['mc_parent'].matrix_world,
@@ -56,19 +81,22 @@ def pivot(obj):
     return np.array(_pivot(obj).xzy)
 
 
-def rotation(child_matrix, parent_matrix=None):
-    def local_rotation(child_matrix, parent_matrix):
-        # Normalization (not tested for both options below)
+def rotation(
+    child_matrix: mathutils.Matrix,
+    parent_matrix: tp.Optional[mathutils.Matrix]=None
+) -> np.ndarray:
+    '''Returns the rotation of mcbone represented by the "obj" object.'''
+    def local_rotation(
+        child_matrix: mathutils.Matrix, parent_matrix: mathutils.Matrix
+    ) -> mathutils.Euler:
+        '''
+        Reuturns Euler rotation of a child matrix in relation to parent matrix
+        '''
         child_matrix = child_matrix.normalized()
         parent_matrix = parent_matrix.normalized()
-
-        # # This seams to work for animatied objects
-        # parent_rot = parent_matrix.to_quaternion()
-        # child_rot = child_matrix.to_quaternion()
-        # return parent_rot.rotation_difference(child_rot).to_euler('XZY')
-
-        # This works for rigged objects
-        return (parent_matrix.inverted() @ child_matrix).to_quaternion().to_euler('XZY')
+        return (
+            parent_matrix.inverted() @ child_matrix
+        ).to_quaternion().to_euler('XZY')
 
     if parent_matrix is not None:
         result = local_rotation(
@@ -82,22 +110,28 @@ def rotation(child_matrix, parent_matrix=None):
     return result
 
 
-def json_vect(arr):
+def json_vect(arr: tp.Iterable) -> tp.List[float]:
+    '''
+    Changes the iterable whith numbers into basic python list of floats.
+    Values from the original iterable are rounded to the 4th deimal
+    digit.
+    '''
     return [round(i, 4) for i in arr]
 
 
 def to_mc_bone(
-    bone, cubes=None
-):
-    # mcbone - parent, pivot, rotation
-    # mccube - origin, size, inflate, pivot, rotation, uv
+    bone: bpy_types.Object, cubes: tp.Optional[tp.List[bpy_types.Object]]=None
+) -> tp.Dict:
+    '''
+    :param bone: the main object that represents the bone.
+    :param cubes: the list of objects that represent the cubes that belong to
+    the bone. If the "bone" is one of the cubes it should be included on the
+    list.
 
-    # For the first version I want to use only:
-    # origin, size, rotation
-    # for mccube
-
-    # Helper functions
-    def _scale(obj):
+    Returns the dictionary that represents a single mcbone in json file
+    of exported model.
+    '''
+    def _scale(obj: bpy_types.Object) -> np.ndarray:
         '''Scale of a bone'''
         _, _, scale = obj.matrix_world.decompose()
         return np.array(scale.xzy)
@@ -107,23 +141,27 @@ def to_mc_bone(
     # Code
     if 'mc_parent' in bone:
         mcbone['parent'] = bone['mc_parent'].name
-        b_rot = rotation(bone.matrix_world, bone['mc_parent'].matrix_world)  # NO TRANSLATION
+        b_rot = rotation(bone.matrix_world, bone['mc_parent'].matrix_world)
     else:
-        b_rot = rotation(bone.matrix_world)  # NO TRANSLATION
+        b_rot = rotation(bone.matrix_world)
 
-    b_pivot = pivot(bone) * MINECRAFT_SCALE_FACTOR  # NO TRANSLATION
+    b_pivot = pivot(bone) * MINECRAFT_SCALE_FACTOR
 
     for cube in cubes:
         translation = get_local_matrix(
             bone.matrix_world, cube.matrix_world
         )
 
-        _b_scale = _scale(cube)  # @ NO TRANSLATION
+        _b_scale = _scale(cube)
 
-        c_size = cube_size(cube, translation) * _b_scale * MINECRAFT_SCALE_FACTOR # @ TRANSLATION
+        c_size = (
+            cube_size(cube, translation) * _b_scale *
+            MINECRAFT_SCALE_FACTOR
+        )
         c_pivot = pivot(cube) * MINECRAFT_SCALE_FACTOR
         c_origin = c_pivot + (
-            cube_position(cube, translation) * _b_scale * MINECRAFT_SCALE_FACTOR  # @ TRANSLATION
+            cube_position(cube, translation) * _b_scale *
+            MINECRAFT_SCALE_FACTOR
         )
         c_rot = rotation(cube.matrix_world, bone.matrix_world)
 
@@ -140,7 +178,10 @@ def to_mc_bone(
     return mcbone
 
 
-def get_model_template(model_name, mc_bones):
+def get_model_template(model_name: str, mc_bones: tp.List[tp.Dict]) -> tp.Dict:
+    '''
+    Returns the dictionary that represents JSON file for exporting the model
+    '''
     return {
         "format_version": "1.12.0",
         "minecraft:geometry": [
@@ -159,7 +200,7 @@ def get_model_template(model_name, mc_bones):
     }
 
 
-def set_mc_obj_types():
+def set_mc_obj_types() -> None:
     '''
     Loops through bpy.context.selected_objects and assigns custom poperty
     "mc_obj_type_tmp" with value "CUBE" or "BONE" or "BOTH".
@@ -210,6 +251,7 @@ def clear_mc_obj_tmp_properties():
 
 
 class OBJECT_OT_ExportOperator(bpy.types.Operator):
+    '''Operator used for exporting minecraft models from blender'''
     bl_idname = "object.export_operator"
     bl_label = "Export Bedrock model."
     bl_description = "Exports selected objects from scene to bedrock model."
@@ -252,14 +294,15 @@ class OBJECT_OT_ExportOperator(bpy.types.Operator):
         return {'FINISHED'}
 
 
-def get_transformations():
+def get_transformations() -> tp.Dict[str, tp.Dict[str, np.ndarray]]:
     '''
-    For each mcbone returns matrix that represents the transformation of
-    it in relation to its parent. If there is no paren than returns
-    matrix_world.
+    Loops over bpy.context.selected_objects and returns the dictionary with
+    information about transformations of every bone.
 
-    Result is a dictionary with name of the bone as a key and the matrix
-    as the value.
+    Result is a dictionary with name of the bone as a key and whith another
+    dictionary that contains the information about "rotation", "scale" and
+    "location" of the bone. The scale is an np.ndarray Euler rotation in
+    degrees.
     '''
     transformations = {}
     for obj in bpy.context.selected_objects:
@@ -293,7 +336,7 @@ def get_transformations():
     return transformations
 
 
-def get_next_keyframe():
+def get_next_keyframe() -> tp.Optional[int]:
     '''
     Returns the index of next keyframe from selected objects.
     Returns None if there is no more keyframes to chose.
@@ -318,36 +361,16 @@ def get_next_keyframe():
     return next_keyframe
 
 
-def is_translated(matrix_a, matrix_b):
-    '''
-    Takes two translation matrices and compares location, rotation
-    and scale to test if they are different (with certain error margin)
-
-    Returns 3 boolean values - loc_changed, rot_changed, scale_changed
-    '''
-    prev_loc, prev_rot, prev_scale = get_local_matrix(
-        matrix_a,
-        matrix_b
-    ).decompose()
-    prev_rot = prev_rot.to_euler()
-    prev_rot = np.array([math.degrees(i) for i in prev_rot])
-
-    loc_changed, rot_changed, scale_changed = (
-        not np.allclose(prev_loc, [0, 0, 0], atol=0.0001),
-        not np.allclose(prev_rot, [0, 0, 0], atol=0.0001),
-        not np.allclose(prev_scale, [1, 1, 1], atol=0.0001)
-    )
-    return loc_changed, rot_changed, scale_changed
-
-
 def to_mc_translation_vectors(
-    parent_rot, child_rot,
-    parent_scale, child_scale,
-    parent_loc, child_loc, name
-):
+    parent_rot: np.ndarray, child_rot: np.ndarray,
+    parent_scale: np.ndarray, child_scale: np.ndarray,
+    parent_loc: np.ndarray, child_loc: np.ndarray
+) -> tp.Tuple[np.ndarray, np.ndarray, np.ndarray]:
     '''
-    Takes translation matrix and returns 3 numpy arrays for location, rotation
-    and scale in minecraft friendly format.
+    Compares original rotation, scale and translation with new rotation, scale
+    and translation of an object to return location, rotation and scale values
+    (in this order) that can be used by the dictionary used for exporting the
+    animation data to minecraft format.
     '''
     child_scale = child_scale[[0, 2, 1]]
     parent_scale = parent_scale[[0, 2, 1]]
@@ -359,26 +382,19 @@ def to_mc_translation_vectors(
     loc = loc[[0, 2, 1]] / parent_scale
 
     rot = child_rot - parent_rot
-    # # Normalization (not tested for both options below)
-    # child = child.normalized()
-    # parent = parent.normalized()
-
-    # # # This works for animated objects
-    # # parent_rot = parent.to_quaternion()
-    # # child_rot = child.to_quaternion()
-    # # rot = parent_rot.rotation_difference(child_rot).to_euler('XZY')
-
-    # # This works for rigged objects
-    # rot = (parent.inverted() @ child).to_quaternion().to_euler('XZY')
-
-    # rot = np.array(rot)[[0, 2, 1]]
-    # rot = rot * np.array([1, -1, 1])
-    # rot = rot * 180/math.pi  # math.degrees() for array
 
     return loc, rot, scale
 
 
-def get_animation_template(name, length):
+def get_animation_template(name: str, length: int):
+    '''
+    :param str name: name of the animation
+    :param int length: the length of animation (in frames). The FPS vlaue
+    is extracted from bpy.context.scene.render.fps.
+
+    Returns the tamplate of a dictionary that represents the JSON file with
+    minecraft animation.
+    '''
     return {
         "format_version": "1.8.0",
         "animations": {
@@ -391,7 +407,9 @@ def get_animation_template(name, length):
     }
 
 
-def pick_closest_rotation(modify, close_to):
+def pick_closest_rotation(
+    modify: np.ndarray, close_to: np.ndarray
+) -> np.ndarray:
     '''
     Takes two numpy.arrays that represent rotation in
     euler rotation mode (using degrees). Modifies the
@@ -399,7 +417,9 @@ def pick_closest_rotation(modify, close_to):
     of the same rotation. Picks the vector which is the
     closest to 'close_to' vector (euclidean distance).
     '''
-    def _pick_closet_location(modify, close_to):
+    def _pick_closet_location(
+        modify: np.ndarray, close_to: np.ndarray
+    ) -> tp.Tuple[float, np.ndarray]:
         choice = modify
         distance = np.linalg.norm(choice - close_to)
 
@@ -435,6 +455,7 @@ def pick_closest_rotation(modify, close_to):
 
 
 class OBJECT_OT_ExportAnimationOperator(bpy.types.Operator):
+    '''Operator used for exporting minecraft animations from blender'''
     bl_idname = "object.export_animation_operator"
     bl_label = "Export animation for bedrock model."
     bl_description = (
@@ -446,7 +467,18 @@ class OBJECT_OT_ExportAnimationOperator(bpy.types.Operator):
     _animation_dict = None
     _animation_name = None
 
-    def add_keyframe(self, bone, frame, type_, value):
+    def add_keyframe(
+        self, bone: str, frame: int, type_: str, value: np.ndarray
+    ):
+        '''
+        Adds new value to the self._animation_dict dictionary.
+
+        :param str bone: name of the bone.
+        :param int frame: the number of frame to edit of the animation.
+        :param str type_: string with 'rotation', 'position' or 'scale' value.
+        Indicates which value in animation should be changed.
+        :param np.ndarray value: Vector with values to insert to the animation.
+        '''
         bones = self._animation_dict['animations'][
             f"animation.{self._animation_name}"
         ]["bones"]
@@ -495,8 +527,7 @@ class OBJECT_OT_ExportAnimationOperator(bpy.types.Operator):
                     loc, rot, scale = to_mc_translation_vectors(
                         d_val['rotation'], current_translations[d_key]['rotation'],
                         d_val['scale'], current_translations[d_key]['scale'],
-                        d_val['location'], current_translations[d_key]['location'],
-                        d_key
+                        d_val['location'], current_translations[d_key]['location']
                     )
 
 
@@ -531,11 +562,6 @@ class OBJECT_OT_ExportAnimationOperator(bpy.types.Operator):
                     json.dump(self._animation_dict, f) #, indent=4)
                 return {'FINISHED'}
         return {'FINISHED'}
-
-    def cancel(self, context):
-        clear_mc_obj_tmp_properties()
-        wm = context.window_manager
-        wm.event_timer_remove(self._timer)
 
 
 # Aditional operators
