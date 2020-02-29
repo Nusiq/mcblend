@@ -56,9 +56,12 @@ custom parent make sure to add "mc_is_bone" property to it.
 
 ## Exporting the models and the animations:
 After installation and enabling the add-on there should be an additional tab called "MC Bedrock exporter" on the right side of
-3d-viewport. Opening this tab reveals two panels - "Export bedrock animation" and "Export bedrock model" each of this panels contain
-2 fields and a button. One of the fields is a file chooser used to select the path of exported file the other field is a text input
-for the name of the model/animation. The button is used to export the file.
+3d-viewport. Opening this tab reveals two panels - "Export bedrock animation" and "Export bedrock model" each of this panels
+contain 2 fields and a button. One of the fields is a file chooser used to select the path of exported file the other field
+is a text input for the name of the model/animation. Additionaly animation exporter has two fields that edit some of the
+minecraft animation properties. The Loop checkbox loops the animation adn the animation_time_update sets the
+animation_time_update property unless you leave it with empty string.
+The button is used to export the file.
 
 Before exporting you need to select all of the objects that you want exported. Remember to set the timeline of the animation to a
 point in which the model is in its neutral position.
