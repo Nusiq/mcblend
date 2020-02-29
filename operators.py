@@ -58,109 +58,85 @@ class OBJECT_OT_ExportAnimationOperator(bpy.types.Operator):
         "Exports animation of selected objects to bedrock entity animation "
         "format."
     )
-    _timer = None
-    _start_frame = None
+
     _animation_dict = None
     _animation_name = None
-
-    def add_keyframe(
-        self, bone: str, frame: int, type_: str, value: np.ndarray
-    ):
-        '''
-        Adds new value to the self._animation_dict dictionary.
-
-        :param str bone: name of the bone.
-        :param int frame: the number of frame to edit of the animation.
-        :param str type_: string with 'rotation', 'position' or 'scale' value.
-        Indicates which value in animation should be changed.
-        :param np.ndarray value: Vector with values to insert to the animation.
-        '''
-        bones = self._animation_dict['animations'][
-            f"animation.{self._animation_name}"
-        ]["bones"]
-        if bone not in bones:
-            bones[bone] = {}
-        if type_ not in ['rotation', 'position', 'scale']:
-            print(
-                f'WARNING! Unknown translation type - {type_}. Use rotation, '
-                'position or scale instead.'
-            )
-        if type_ not in bones[bone]:
-            bones[bone][type_] = {}
-        bones[bone][type_][
-            f'{round((frame-1)/bpy.context.scene.render.fps, 4)}'
-        ] = json_vect(value)
 
     def execute(self, context):
         wm = context.window_manager
 
         object_properties = get_object_properties()
-        #self._timer = wm.event_timer_add(1.0, window=context.window)
 
-        self._start_frame = bpy.context.scene.frame_current
-        self._animation_name = context.scene.bedrock_exporter.animation_name
-        loop_animation = context.scene.bedrock_exporter.loop_animation
-        anim_time_update = context.scene.bedrock_exporter.anim_time_update
-        self._animation_dict = get_animation_template(
-            self._animation_name,
-            bpy.context.scene.frame_end,
-            loop_animation,
-            anim_time_update
+        start_frame = bpy.context.scene.frame_current
+        bone_data: tp.Dict[str, tp.Dict[str, tp.List[int]]] = (
+            defaultdict(lambda: {
+                'scale': [], 'rotation': [], 'position': []
+            })
         )
 
         # Stop animation if running & jump to the first frame
         bpy.ops.screen.animation_cancel()
         bpy.context.scene.frame_set(0)
+        default_translation = get_transformations(object_properties)
+        prev_rotation = {
+            name:np.zeros(3) for name in default_translation.keys()
+        }
 
         next_keyframe = get_next_keyframe()
+        
         while next_keyframe is not None:
-            if bpy.context.scene.frame_current == 0:
-                self.default_translation = get_transformations(object_properties)
-                self.prev_rotation = {
-                    name:np.zeros(3)
-                    for name in self.default_translation.keys()
-                }
-            else:
-                current_translations = get_transformations(object_properties)
-                for d_key, d_val in self.default_translation.items():
-                    # Get the difference from original
-                    loc, rot, scale = to_mc_translation_vectors(
-                        d_val['rotation'], current_translations[d_key]['rotation'],
-                        d_val['scale'], current_translations[d_key]['scale'],
-                        d_val['location'], current_translations[d_key]['location']
-                    )
+            bpy.context.scene.frame_set(math.ceil(next_keyframe))
+            print(f'setting frame {next_keyframe}')
+            current_translations = get_transformations(object_properties)
+            for d_key, d_val in default_translation.items():
+                # Get the difference from original
+                loc, rot, scale = to_mc_translation_vectors(
+                    d_val['rotation'], current_translations[d_key]['rotation'],
+                    d_val['scale'], current_translations[d_key]['scale'],
+                    d_val['location'], current_translations[d_key]['location']
+                )
+                time = str(round(
+                    (bpy.context.scene.frame_current-1) /
+                    bpy.context.scene.render.fps, 4
+                ))
+                
+                bone_data[d_key]['position'].append({
+                    'time': time,
+                    'value': json_vect(loc)
+                })
+                print(f'The frame is {bpy.context.scene.frame_current} Time is {time}')
+                rot = pick_closest_rotation(
+                    rot, prev_rotation[d_key]
+                )
+                bone_data[d_key]['rotation'].append({
+                    'time': time,
+                    'value': json_vect(rot)
+                })
+                bone_data[d_key]['scale'].append({
+                    'time': time,
+                    'value': json_vect(scale)
+                })
 
-
-                    self.add_keyframe(
-                        bone=d_key, frame=bpy.context.scene.frame_current,
-                        type_='position', value=loc
-                    )
-                    
-                    rot = pick_closest_rotation(
-                        rot, self.prev_rotation[d_key]
-                    )
-                    self.add_keyframe(
-                        bone=d_key, frame=bpy.context.scene.frame_current,
-                        type_='rotation', value=rot
-                    )
-
-                    self.add_keyframe(
-                        bone=d_key, frame=bpy.context.scene.frame_current,
-                        type_='scale', value=scale
-                    )
-
-                    self.prev_rotation[d_key] = rot  # Save previous rotation
+                prev_rotation[d_key] = rot  # Save previous rotation
 
             next_keyframe = get_next_keyframe()
-            if next_keyframe is not None:
-                bpy.context.scene.frame_set(math.ceil(next_keyframe))
-            else:
-                bpy.context.scene.frame_set(self._start_frame)
-                output = context.scene.bedrock_exporter.path_animation
-                with open(output, 'w') as f:
-                    json.dump(self._animation_dict, f) #, indent=4)
-                return {'FINISHED'}
+
+
+        animation_dict = get_animation_template(
+            name=context.scene.bedrock_exporter.animation_name,
+            length=bpy.context.scene.frame_end,
+            loop_animation=context.scene.bedrock_exporter.loop_animation,
+            anim_time_update=context.scene.bedrock_exporter.anim_time_update,
+            bone_data=bone_data
+        )
+
+        # Save file and finish
+        bpy.context.scene.frame_set(start_frame)
+        output = context.scene.bedrock_exporter.path_animation
+        with open(output, 'w') as f:
+            json.dump(animation_dict, f) #, indent=4)
         return {'FINISHED'}
+
 
 
 # Aditional operators

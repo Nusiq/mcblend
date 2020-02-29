@@ -34,7 +34,7 @@ def json_vect(arr: tp.Iterable) -> tp.List[float]:
     Values from the original iterable are rounded to the 4th deimal
     digit.
     '''
-    return [round(i, 4) for i in arr]
+    return [round(i, 3) for i in arr]
 
 def rotation(
     child_matrix: mathutils.Matrix,
@@ -332,7 +332,8 @@ def to_mc_translation_vectors(
 
 
 def get_animation_template(
-    name: str, length: int, loop_animation: bool, anim_time_update: str
+    name: str, length: int, loop_animation: bool, anim_time_update: str,
+    bone_data: tp.Dict[str, tp.Dict[str, tp.List[int]]]
 ):
     '''
     :param str name: name of the animation
@@ -341,18 +342,42 @@ def get_animation_template(
     :param int loop_animation: Loops the animation
     :param int anim_time_update: Adds anim_time_update property to the
     animation.
-
+    :param tp.Dict[str, tp.Dict[str, tp.List[int]]] bone_data: Dictionary
+    filled with dictionaries that describe postition, rotation and scale
+    for each frame (uses bone name as a key).
 
     Returns the tamplate of a dictionary that represents the JSON file with
     minecraft animation.
     '''
+    def reduce_property(ls: tp.List[tp.Dict]) -> tp.List[tp.Dict]:
+        '''
+        Removes some of the keyframes from list of keyframes values of
+        a property (rotation, location or scale)
+        '''
+        # TODO - implement
+        return ls
+
+    # Extract bones data
+    bones = {}
+    for bone_name, bone in bone_data.items():
+        bones[bone_name] = {
+            'position': {},
+            'rotation': {},
+            'scale': {}
+        }
+        for prop in reduce_property(bone['position']):
+            bones[bone_name]['position'][prop['time']] = prop['value']
+        for prop in reduce_property(bone['rotation']):
+            bones[bone_name]['rotation'][prop['time']] = prop['value']
+        for prop in reduce_property(bone['scale']):
+            bones[bone_name]['scale'][prop['time']] = prop['value']
+    # Returning result
     result = {
         "format_version": "1.8.0",
         "animations": {
             f"animation.{name}": {
                 "animation_length": (length-1)/bpy.context.scene.render.fps,
-                "bones": {
-                }
+                "bones": bones
             }
         }
     }
