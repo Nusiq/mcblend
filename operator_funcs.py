@@ -349,13 +349,28 @@ def get_animation_template(
     Returns the tamplate of a dictionary that represents the JSON file with
     minecraft animation.
     '''
-    def reduce_property(ls: tp.List[tp.Dict]) -> tp.List[tp.Dict]:
+    def reduce_property(
+        ls: tp.List[tp.Dict]
+    ) -> tp.List[tp.Dict]:
         '''
         Removes some of the keyframes from list of keyframes values of
         a property (rotation, location or scale)
         '''
-        # TODO - implement
-        return ls
+        if len(ls) == 0:
+            return []
+        last_val = ls[0]['value']
+        result = [ls[0]]
+        for i in range(1, len(ls)-1):
+            curr_val = ls[i]['value']
+            next_val = ls[i+1]['value']
+            if curr_val != last_val or curr_val != next_val:
+                result.append(ls[i])
+                last_val = curr_val
+        # Add last element unless there is only one (in which case it's
+        # already added)
+        if len(ls) > 1:
+            result.append(ls[-1])
+        return result
 
     # Extract bones data
     bones = {}

@@ -8,8 +8,6 @@ Blender addon that exports models for custom entities for Minecraft Bedrock Edit
 ## Planned features
 - UV Mapping/Texturing the models for export
 - Exporting minecraft models that use "inflate" option.
-- Optimizing the size of the animation file (currently it defines a rotation, location and scale for every keyframe of the animation
-for every bone).
 - Other planned small features can be found in the ["Issues"](https://github.com/Nusiq/Blender-Export-MC-Bedrock-Model/issues]) tab of this project on Github.
 
 ## Instalation
