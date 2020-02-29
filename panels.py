@@ -90,7 +90,8 @@ class OBJECT_PT_ExportAnimationPanel(bpy.types.Panel):
             context.scene.bedrock_exporter, "loop_animation", text="Loop"
         )
         col.prop(
-            context.scene.bedrock_exporter, "anim_time_update", text="anim_time_update"
+            context.scene.bedrock_exporter, "anim_time_update",
+            text="anim_time_update"
         )
         self.layout.row().operator(
             "object.export_animation_operator", text="Export animation"

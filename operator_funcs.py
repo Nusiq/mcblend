@@ -238,7 +238,9 @@ def get_object_properties() -> tp.Dict:
 
 
 # ANIMATIONS
-def get_transformations(object_properties: tp.Dict) -> tp.Dict[str, tp.Dict[str, np.ndarray]]:
+def get_transformations(
+    object_properties: tp.Dict
+) -> tp.Dict[str, tp.Dict[str, np.ndarray]]:
     # TODO - update doc string (added object_properties property)
     '''
     Loops over bpy.context.selected_objects and returns the dictionary with
@@ -263,16 +265,22 @@ def get_transformations(object_properties: tp.Dict) -> tp.Dict[str, tp.Dict[str,
                 ).to_translation()
                 # Add result
                 transformations[obj.name] = {
-                    'rotation': rotation(obj.matrix_world, obj['mc_parent'].matrix_world),
+                    'rotation': rotation(
+                        obj.matrix_world, obj['mc_parent'].matrix_world
+                    ),
                     'scale': (
                         np.array(obj.matrix_world.copy().to_scale()) /
-                        np.array(obj['mc_parent'].matrix_world.copy().to_scale())
+                        np.array(
+                            obj['mc_parent'].matrix_world.copy().to_scale()
+                        )
                     ),
                     'location': location
                 }
             else:
                 scale = np.array(obj.matrix_world.copy().to_scale())
-                location = np.array(obj.matrix_world.normalized().to_translation())
+                location = np.array(
+                    obj.matrix_world.normalized().to_translation()
+                )
                 transformations[obj.name] = {
                     'rotation': rotation(obj.matrix_world),
                     'scale': scale,

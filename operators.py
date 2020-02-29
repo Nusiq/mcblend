@@ -104,7 +104,6 @@ class OBJECT_OT_ExportAnimationOperator(bpy.types.Operator):
                     'time': time,
                     'value': json_vect(loc)
                 })
-                print(f'The frame is {bpy.context.scene.frame_current} Time is {time}')
                 rot = pick_closest_rotation(
                     rot, prev_rotation[d_key]
                 )
