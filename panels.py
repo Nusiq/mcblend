@@ -1,6 +1,8 @@
 import bpy
 
-from bpy.props import StringProperty, PointerProperty, IntProperty
+from bpy.props import (
+    StringProperty, PointerProperty, IntProperty, BoolProperty
+)
 from bpy.types import Operator, AddonPreferences
 
 import pathlib
@@ -35,6 +37,17 @@ class OBJECT_BedrockExporterProperties(bpy.types.PropertyGroup):
         ),
         maxlen=1024,
         subtype='FILE_PATH',
+    )
+    loop_animation: BoolProperty(
+        name="",
+        description="Decides if animation should be looped.",
+        default=True,
+    )
+    anim_time_update: StringProperty(
+        name="",
+        description="Adds anim_time_update value unless is left empty.",
+        default="",
+        maxlen=1024
     )
     animation_name: StringProperty(
         name="",
@@ -72,6 +85,12 @@ class OBJECT_PT_ExportAnimationPanel(bpy.types.Panel):
         col.prop(context.scene.bedrock_exporter, "path_animation", text="")
         col.prop(
             context.scene.bedrock_exporter, "animation_name", text="Name"
+        )
+        col.prop(
+            context.scene.bedrock_exporter, "loop_animation", text="Loop"
+        )
+        col.prop(
+            context.scene.bedrock_exporter, "anim_time_update", text="anim_time_update"
         )
         self.layout.row().operator(
             "object.export_animation_operator", text="Export animation"
