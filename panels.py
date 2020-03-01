@@ -9,7 +9,7 @@ import pathlib
 
 
 class OBJECT_BedrockExporterProperties(bpy.types.PropertyGroup):
-    path: StringProperty(
+    path: StringProperty(  # type: ignore
         name="",
         description="Path to the file for exporting the model.",
         default=(
@@ -20,14 +20,14 @@ class OBJECT_BedrockExporterProperties(bpy.types.PropertyGroup):
         maxlen=1024,
         subtype='FILE_PATH',
     )
-    model_name: StringProperty(
+    model_name: StringProperty(  # type: ignore
         name="",
         description="Name of the model",
         default="b_model",
         maxlen=1024
     )
 
-    path_animation: StringProperty(
+    path_animation: StringProperty(  # type: ignore
         name="",
         description="Path to the file for exporting the animation.",
         default=(
@@ -38,18 +38,18 @@ class OBJECT_BedrockExporterProperties(bpy.types.PropertyGroup):
         maxlen=1024,
         subtype='FILE_PATH',
     )
-    loop_animation: BoolProperty(
+    loop_animation: BoolProperty(  # type: ignore
         name="",
         description="Decides if animation should be looped.",
         default=True,
     )
-    anim_time_update: StringProperty(
+    anim_time_update: StringProperty(  # type: ignore
         name="",
         description="Adds anim_time_update value unless is left empty.",
         default="",
         maxlen=1024
     )
-    animation_name: StringProperty(
+    animation_name: StringProperty(  # type: ignore
         name="",
         description="Name of the animation.",
         default="b_model_animation",

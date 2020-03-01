@@ -6,6 +6,7 @@ import numpy as np
 
 from .operator_funcs import *
 
+
 class OBJECT_OT_ExportOperator(bpy.types.Operator):
     '''Operator used for exporting minecraft models from blender'''
     bl_idname = "object.export_operator"
@@ -68,7 +69,7 @@ class OBJECT_OT_ExportAnimationOperator(bpy.types.Operator):
         object_properties = get_object_properties()
 
         start_frame = bpy.context.scene.frame_current
-        bone_data: tp.Dict[str, tp.Dict[str, tp.List[int]]] = (
+        bone_data: tp.Dict[str, tp.Dict[str, tp.List[tp.Dict]]] = (  # TODO - Create object for that for safer/cleaner code
             defaultdict(lambda: {
                 'scale': [], 'rotation': [], 'position': []
             })
@@ -83,10 +84,9 @@ class OBJECT_OT_ExportAnimationOperator(bpy.types.Operator):
         }
 
         next_keyframe = get_next_keyframe()
-        
+
         while next_keyframe is not None:
             bpy.context.scene.frame_set(math.ceil(next_keyframe))
-            print(f'setting frame {next_keyframe}')
             current_translations = get_transformations(object_properties)
             for d_key, d_val in default_translation.items():
                 # Get the difference from original
@@ -120,7 +120,6 @@ class OBJECT_OT_ExportAnimationOperator(bpy.types.Operator):
 
             next_keyframe = get_next_keyframe()
 
-
         animation_dict = get_animation_template(
             name=context.scene.bedrock_exporter.animation_name,
             length=bpy.context.scene.frame_end,
@@ -135,7 +134,6 @@ class OBJECT_OT_ExportAnimationOperator(bpy.types.Operator):
         with open(output, 'w') as f:
             json.dump(animation_dict, f) #, indent=4)
         return {'FINISHED'}
-
 
 
 # Aditional operators

@@ -16,7 +16,7 @@ MINECRAFT_SCALE_FACTOR = 16
 CUBE, BONE, BOTH = 'CUBE', 'BONE', "BOTH"
 
 
-#COMMON
+# COMMON
 def get_local_matrix(
     parent_world_matrix: mathutils.Matrix, child_world_matrix: mathutils.Matrix
 ) -> mathutils.Matrix:
@@ -28,6 +28,7 @@ def get_local_matrix(
         parent_world_matrix.inverted() @ child_world_matrix
     )
 
+
 def json_vect(arr: tp.Iterable) -> tp.List[float]:
     '''
     Changes the iterable whith numbers into basic python list of floats.
@@ -35,6 +36,7 @@ def json_vect(arr: tp.Iterable) -> tp.List[float]:
     digit.
     '''
     return [round(i, 3) for i in arr]
+
 
 def rotation(
     child_matrix: mathutils.Matrix,
@@ -119,7 +121,7 @@ def pivot(obj: bpy_types.Object) -> np.ndarray:
 
 
 def to_mc_bone(
-    bone: bpy_types.Object, cubes: tp.Optional[tp.List[bpy_types.Object]]=None
+    bone: bpy_types.Object, cubes: tp.List[bpy_types.Object]
 ) -> tp.Dict:
     '''
     :param bone: the main object that represents the bone.
@@ -209,32 +211,32 @@ def get_object_properties() -> tp.Dict:
 
     The properties are returned as dictionary.
     '''
-    temporary_properties = defaultdict(
-        lambda: {"mc_children": [], "mc_obj_type": None}
+    tmp_properties: tp.DefaultDict = defaultdict(
+        lambda: {"mc_children": [], "mc_obj_type": ""}
     )
 
     # Objects other than EMPTY and MESH are ignored.
     for obj in bpy.context.selected_objects:
         if obj.type == 'EMPTY' or obj.type == 'MESH':
             if "mc_parent" in obj:
-                temporary_properties[
+                tmp_properties[
                     obj["mc_parent"].name
                 ]["mc_children"].append(obj)
 
     for obj in bpy.context.selected_objects:
         if obj.type == 'EMPTY':
-            temporary_properties[obj.name]['mc_obj_type'] = BONE
+            tmp_properties[obj.name]['mc_obj_type'] = BONE
         elif obj.type == 'MESH':
-            if len(temporary_properties[obj.name]["mc_children"]) > 0:
-                temporary_properties[obj.name]['mc_obj_type'] = BOTH
+            if len(tmp_properties[obj.name]["mc_children"]) > 0:
+                tmp_properties[obj.name]['mc_obj_type'] = BOTH
             elif "mc_is_bone" in obj and obj["mc_is_bone"] == 1:
-                temporary_properties[obj.name]["mc_obj_type"] = BOTH
+                tmp_properties[obj.name]["mc_obj_type"] = BOTH
             elif "mc_parent" in obj:
-                temporary_properties[obj.name]["mc_obj_type"] = CUBE
+                tmp_properties[obj.name]["mc_obj_type"] = CUBE
             else:  # Not connected to anything
-                temporary_properties[obj.name]["mc_obj_type"] = BOTH
+                tmp_properties[obj.name]["mc_obj_type"] = BOTH
 
-    return dict(temporary_properties)
+    return dict(tmp_properties)
 
 
 # ANIMATIONS
@@ -341,7 +343,7 @@ def to_mc_translation_vectors(
 
 def get_animation_template(
     name: str, length: int, loop_animation: bool, anim_time_update: str,
-    bone_data: tp.Dict[str, tp.Dict[str, tp.List[int]]]
+    bone_data: tp.Dict[str, tp.Dict[str, tp.List[tp.Dict]]]
 ):
     '''
     :param str name: name of the animation
@@ -350,7 +352,7 @@ def get_animation_template(
     :param int loop_animation: Loops the animation
     :param int anim_time_update: Adds anim_time_update property to the
     animation.
-    :param tp.Dict[str, tp.Dict[str, tp.List[int]]] bone_data: Dictionary
+    :param tp.Dict[str, tp.Dict[str, tp.List[tp.Dict]]] bone_data: Dictionary
     filled with dictionaries that describe postition, rotation and scale
     for each frame (uses bone name as a key).
 
@@ -381,7 +383,7 @@ def get_animation_template(
         return result
 
     # Extract bones data
-    bones = {}
+    bones: tp.Dict = {}
     for bone_name, bone in bone_data.items():
         bones[bone_name] = {
             'position': {},
@@ -395,7 +397,7 @@ def get_animation_template(
         for prop in reduce_property(bone['scale']):
             bones[bone_name]['scale'][prop['time']] = prop['value']
     # Returning result
-    result = {
+    result: tp.Dict = {
         "format_version": "1.8.0",
         "animations": {
             f"animation.{name}": {
