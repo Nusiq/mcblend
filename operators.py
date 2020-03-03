@@ -69,7 +69,8 @@ class OBJECT_OT_ExportAnimationOperator(bpy.types.Operator):
         object_properties = get_object_properties()
 
         start_frame = bpy.context.scene.frame_current
-        bone_data: tp.Dict[str, tp.Dict[str, tp.List[tp.Dict]]] = (  # TODO - Create object for that for safer/cleaner code
+        
+        bone_data: tp.Dict[str, tp.Dict[str, tp.List[tp.Dict]]] = (  # TODO - Create object for that for safer/cleaner code - https://www.python.org/dev/peps/pep-0589/
             defaultdict(lambda: {
                 'scale': [], 'rotation': [], 'position': []
             })
