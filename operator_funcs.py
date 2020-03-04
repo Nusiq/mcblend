@@ -2,6 +2,7 @@ import bpy
 import mathutils
 import math
 import numpy as np
+from enum import Enum
 
 from collections import defaultdict
 
@@ -12,9 +13,131 @@ import typing as tp
 
 MINECRAFT_SCALE_FACTOR = 16
 
-# Names for temporary types of objects for the exporter
-CUBE, BONE, BOTH = 'CUBE', 'BONE', "BOTH"
+# Data structures/enums
+class MCObjType(Enum):
+    CUBE = 'CUBE'
+    BONE = 'BONE'
+    BOTH = 'BOTH'
 
+
+class ObjectMcProperties(tp.NamedTuple):
+    '''Temporary minecraft-related properties of an object (mesh or empty).'''
+    mcchildren: tp.Tuple[str]
+    mctype: MCObjType
+
+
+class ObjectMcTransformations(tp.NamedTuple):
+    '''
+    Temporary properties of transformations of an object (mesh or empty)
+    for the minecraft animation. Changes of these values over the frames of the
+    animation are used to calculate the values for minecraft animation json.
+    '''
+    location: np.array
+    scale: np.array
+    rotation: np.array
+
+
+# MAIN
+def export_model(context: bpy_types.Context, model_name: str):
+    object_properties = get_object_mcproperties(context)
+
+    mc_bones: tp.List[tp.Dict] = []
+
+    for obj in context.selected_objects:
+        if (
+            obj.name in object_properties and
+            object_properties[obj.name].mctype in
+            [MCObjType.BONE, MCObjType.BOTH]
+        ):
+            # Create cubes list
+            if object_properties[obj.name].mctype == MCObjType.BOTH:
+                cubes = [obj]
+            elif object_properties[obj.name].mctype == MCObjType.BONE:
+                cubes = []
+            # Add children cubes if they are MCObjType.CUBE type
+            for child_name in (
+                object_properties[obj.name].mcchildren
+            ):
+                if (
+                    child_name in object_properties and
+                    object_properties[child_name].mctype ==
+                    MCObjType.CUBE
+                ):
+                    cubes.append(bpy.data.objects[child_name])
+
+            mcbone = get_mcbone_json(obj, cubes)
+            mc_bones.append(mcbone)
+
+    result = get_mcmodel_json(model_name, mc_bones)
+    return result
+
+def export_animation(context: bpy_types.Context):
+    object_properties = get_object_mcproperties(context)
+
+    start_frame = context.scene.frame_current
+    
+    bone_data: tp.Dict[str, tp.Dict[str, tp.List[tp.Dict]]] = (  # TODO - Create object for that for safer/cleaner code - https://www.python.org/dev/peps/pep-0589/
+        defaultdict(lambda: {
+            'scale': [], 'rotation': [], 'position': []
+        })
+    )
+
+    # Stop animation if running & jump to the first frame
+    bpy.ops.screen.animation_cancel()
+    context.scene.frame_set(0)
+    default_translation = get_transformations(context, object_properties)
+    prev_rotation = {
+        name:np.zeros(3) for name in default_translation.keys()
+    }
+
+    next_keyframe = get_next_keyframe(context)
+
+    while next_keyframe is not None:
+        context.scene.frame_set(math.ceil(next_keyframe))
+        current_translations = get_transformations(context, object_properties)
+        for d_key, d_val in default_translation.items():
+            # Get the difference from original
+            loc, rot, scale = get_mctranslations(
+                d_val.rotation, current_translations[d_key].rotation,
+                d_val.scale, current_translations[d_key].scale,
+                d_val.location, current_translations[d_key].location
+            )
+            time = str(round(
+                (context.scene.frame_current-1) /
+                context.scene.render.fps, 4
+            ))
+            
+            bone_data[d_key]['position'].append({
+                'time': time,
+                'value': get_vect_json(loc)
+            })
+            rot = pick_closest_rotation(
+                rot, prev_rotation[d_key]
+            )
+            bone_data[d_key]['rotation'].append({
+                'time': time,
+                'value': get_vect_json(rot)
+            })
+            bone_data[d_key]['scale'].append({
+                'time': time,
+                'value': get_vect_json(scale)
+            })
+
+            prev_rotation[d_key] = rot  # Save previous rotation
+
+        next_keyframe = get_next_keyframe(context)
+
+    context.scene.frame_set(start_frame)
+    animation_dict = get_mcanimation_json(
+        context,
+        name=context.scene.bedrock_exporter.animation_name,
+        length=context.scene.frame_end,
+        loop_animation=context.scene.bedrock_exporter.loop_animation,
+        anim_time_update=context.scene.bedrock_exporter.anim_time_update,
+        bone_data=bone_data
+    )
+
+    return animation_dict
 
 # COMMON
 def get_local_matrix(
@@ -29,7 +152,7 @@ def get_local_matrix(
     )
 
 
-def json_vect(arr: tp.Iterable) -> tp.List[float]:
+def get_vect_json(arr: tp.Iterable) -> tp.List[float]:
     '''
     Changes the iterable whith numbers into basic python list of floats.
     Values from the original iterable are rounded to the 4th deimal
@@ -38,7 +161,7 @@ def json_vect(arr: tp.Iterable) -> tp.List[float]:
     return [round(i, 3) for i in arr]
 
 
-def rotation(
+def get_mcrotation(
     child_matrix: mathutils.Matrix,
     parent_matrix: tp.Optional[mathutils.Matrix]=None
 ) -> np.ndarray:
@@ -68,7 +191,7 @@ def rotation(
 
 
 # MODELS
-def cube_size(
+def get_mcube_size(
     obj: bpy_types.Object, translation: mathutils.Matrix
 ) -> np.ndarray:
     '''
@@ -81,7 +204,7 @@ def cube_size(
     return (np.array(obj.bound_box[6]) - np.array(obj.bound_box[0]))[[0, 2, 1]]
 
 
-def cube_position(
+def get_mccube_position(
     obj: bpy_types.Object, translation: mathutils.Matrix
 ) -> np.ndarray:
     '''
@@ -93,7 +216,7 @@ def cube_position(
     return np.array(obj.bound_box[0])[[0, 2, 1]]
 
 
-def pivot(obj: bpy_types.Object) -> np.ndarray:
+def get_mcpivot(obj: bpy_types.Object) -> np.ndarray:
     '''
     Returns the pivot point. Of a mcbone (or mccube represented by the "obj"
     object.
@@ -106,28 +229,28 @@ def pivot(obj: bpy_types.Object) -> np.ndarray:
         child_matrix = child_matrix.normalized()  # eliminate scale
         return get_local_matrix(parent_matrix, child_matrix).to_translation()
 
-    def _pivot(obj: bpy_types.Object) -> mathutils.Vector:
+    def _get_mcpivot(obj: bpy_types.Object) -> mathutils.Vector:
         if 'mc_parent' in obj:
             result = local_crds(
                 obj['mc_parent'].matrix_world,
                 obj.matrix_world
             )
-            result += _pivot(obj['mc_parent'])
+            result += _get_mcpivot(obj['mc_parent'])
         else:
             result = obj.matrix_world.to_translation()
         return result
 
-    return np.array(_pivot(obj).xzy)
+    return np.array(_get_mcpivot(obj).xzy)
 
 
-def to_mc_bone(
+def get_mcbone_json(
     bone: bpy_types.Object, cubes: tp.List[bpy_types.Object]
 ) -> tp.Dict:
     '''
-    :param bone: the main object that represents the bone.
-    :param cubes: the list of objects that represent the cubes that belong to
-    the bone. If the "bone" is one of the cubes it should be included on the
-    list.
+    - bone - the main object that represents the bone.
+    - cubes - the list of objects that represent the cubes that belong to
+      the bone. If the "bone" is one of the cubes it should be included on the
+      list.
 
     Returns the dictionary that represents a single mcbone in json file
     of exported model.
@@ -142,11 +265,11 @@ def to_mc_bone(
     # Code
     if 'mc_parent' in bone:
         mcbone['parent'] = bone['mc_parent'].name
-        b_rot = rotation(bone.matrix_world, bone['mc_parent'].matrix_world)
+        b_rot = get_mcrotation(bone.matrix_world, bone['mc_parent'].matrix_world)
     else:
-        b_rot = rotation(bone.matrix_world)
+        b_rot = get_mcrotation(bone.matrix_world)
 
-    b_pivot = pivot(bone) * MINECRAFT_SCALE_FACTOR
+    b_pivot = get_mcpivot(bone) * MINECRAFT_SCALE_FACTOR
 
     for cube in cubes:
         translation = get_local_matrix(
@@ -156,30 +279,30 @@ def to_mc_bone(
         _b_scale = _scale(cube)
 
         c_size = (
-            cube_size(cube, translation) * _b_scale *
+            get_mcube_size(cube, translation) * _b_scale *
             MINECRAFT_SCALE_FACTOR
         )
-        c_pivot = pivot(cube) * MINECRAFT_SCALE_FACTOR
+        c_pivot = get_mcpivot(cube) * MINECRAFT_SCALE_FACTOR
         c_origin = c_pivot + (
-            cube_position(cube, translation) * _b_scale *
+            get_mccube_position(cube, translation) * _b_scale *
             MINECRAFT_SCALE_FACTOR
         )
-        c_rot = rotation(cube.matrix_world, bone.matrix_world)
+        c_rot = get_mcrotation(cube.matrix_world, bone.matrix_world)
 
         mcbone['cubes'].append({
             'uv': [0, 0],
-            'size': json_vect(c_size),
-            'origin': json_vect(c_origin),
-            'pivot': json_vect(c_pivot),
-            'rotation': json_vect(c_rot)
+            'size': get_vect_json(c_size),
+            'origin': get_vect_json(c_origin),
+            'pivot': get_vect_json(c_pivot),
+            'rotation': get_vect_json(c_rot)
         })
 
-    mcbone['pivot'] = json_vect(b_pivot)
-    mcbone['rotation'] = json_vect(b_rot)
+    mcbone['pivot'] = get_vect_json(b_pivot)
+    mcbone['rotation'] = get_vect_json(b_rot)
     return mcbone
 
 
-def get_model_template(model_name: str, mc_bones: tp.List[tp.Dict]) -> tp.Dict:
+def get_mcmodel_json(model_name: str, mc_bones: tp.List[tp.Dict]) -> tp.Dict:
     '''
     Returns the dictionary that represents JSON file for exporting the model
     '''
@@ -201,11 +324,14 @@ def get_model_template(model_name: str, mc_bones: tp.List[tp.Dict]) -> tp.Dict:
     }
 
 
-def get_object_properties() -> tp.Dict:
+# TODO - update __doc__ string
+def get_object_mcproperties(
+    context: bpy_types.Context
+) -> tp.Dict[str, ObjectMcProperties]:
     '''
-    Loops through bpy.context.selected_objects and returns a dictionary with
+    Loops through context.selected_objects and returns a dictionary with
     some properties of selected objects:
-     - "mc_obj_type" with value "CUBE" or "BONE" or "BOTH".
+     - "mc_obj_type" with value "MCObjType.CUBE" or "MCObjType.BONE" or "MCObjType.BOTH".
      - "mc_children" properties for easy access to reverse relation
        of "mc_parent".
 
@@ -216,89 +342,100 @@ def get_object_properties() -> tp.Dict:
     )
 
     # Objects other than EMPTY and MESH are ignored.
-    for obj in bpy.context.selected_objects:
+    for obj in context.selected_objects:
         if obj.type == 'EMPTY' or obj.type == 'MESH':
             if "mc_parent" in obj:
                 tmp_properties[
                     obj["mc_parent"].name
                 ]["mc_children"].append(obj)
 
-    for obj in bpy.context.selected_objects:
+    properties: tp.Dict[str, ObjectMcProperties] = {}
+    for obj in context.selected_objects:
+        tmp_prop = tmp_properties[obj.name]
         if obj.type == 'EMPTY':
-            tmp_properties[obj.name]['mc_obj_type'] = BONE
+            tmp_prop['mc_obj_type'] = MCObjType.BONE
         elif obj.type == 'MESH':
             if len(tmp_properties[obj.name]["mc_children"]) > 0:
-                tmp_properties[obj.name]['mc_obj_type'] = BOTH
+                tmp_prop['mc_obj_type'] = MCObjType.BOTH
             elif "mc_is_bone" in obj and obj["mc_is_bone"] == 1:
-                tmp_properties[obj.name]["mc_obj_type"] = BOTH
+                tmp_prop["mc_obj_type"] = MCObjType.BOTH
             elif "mc_parent" in obj:
-                tmp_properties[obj.name]["mc_obj_type"] = CUBE
+                tmp_prop["mc_obj_type"] = MCObjType.CUBE
             else:  # Not connected to anything
-                tmp_properties[obj.name]["mc_obj_type"] = BOTH
+                tmp_prop["mc_obj_type"] = MCObjType.BOTH
 
-    return dict(tmp_properties)
+        properties[obj.name] = ObjectMcProperties(
+            mcchildren = tuple(i.name for i in tmp_prop['mc_children']),  # type: ignore
+            mctype = tmp_prop['mc_obj_type']
+        )
+
+    return properties
 
 
 # ANIMATIONS
 def get_transformations(
-    object_properties: tp.Dict
-) -> tp.Dict[str, tp.Dict[str, np.ndarray]]:
-    # TODO - update doc string (added object_properties property)
+    context: bpy_types.Context,
+    object_properties: tp.Dict[str, ObjectMcProperties]
+) -> tp.Dict[str, ObjectMcTransformations]:
     '''
-    Loops over bpy.context.selected_objects and returns the dictionary with
-    information about transformations of every bone.
+    Loops over context.selected_objects and returns the dictionary with
+    information about transformations of every bone. `object_properties` is
+    a dictionary that represents temporary properties of the object used for
+    exporting like classification of the object as a MCObjType.BONE,
+    MCObjType.CUBE or MCObjType.BOTH.
 
     Result is a dictionary with name of the bone as a key and whith another
     dictionary that contains the information about "rotation", "scale" and
     "location" of the bone. The scale is an np.ndarray Euler rotation in
     degrees.
     '''
-    transformations = {}
-    for obj in bpy.context.selected_objects:
+    transformations:tp.Dict[str, ObjectMcTransformations] = {}
+    for obj in context.selected_objects:
         if (
             obj.name in object_properties and
-            object_properties[obj.name]['mc_obj_type'] in [BONE, BOTH]
+            object_properties[obj.name].mctype in
+            [MCObjType.BONE, MCObjType.BOTH]
         ):
             if 'mc_parent' in obj:
-                # Calculate translation in parent axis
-                location = get_local_matrix(
-                    obj['mc_parent'].matrix_world.normalized(),
+                parent = obj['mc_parent']
+                # Scale
+                scale = (
+                    np.array(obj.matrix_world.to_scale()) /
+                    np.array(parent.matrix_world.to_scale())
+                )[[0, 2, 1]]
+                # Locatin
+                local_matrix = get_local_matrix(
+                    parent.matrix_world.normalized(),
                     obj.matrix_world.normalized()
-                ).to_translation()
-                # Add result
-                transformations[obj.name] = {
-                    'rotation': rotation(
-                        obj.matrix_world, obj['mc_parent'].matrix_world
-                    ),
-                    'scale': (
-                        np.array(obj.matrix_world.copy().to_scale()) /
-                        np.array(
-                            obj['mc_parent'].matrix_world.copy().to_scale()
-                        )
-                    ),
-                    'location': location
-                }
+                )
+                location = np.array(local_matrix.to_translation())
+                location = location[[0, 2, 1]] * MINECRAFT_SCALE_FACTOR
+                # Rotation
+                rotation = get_mcrotation(obj.matrix_world, parent.matrix_world)
             else:
-                scale = np.array(obj.matrix_world.copy().to_scale())
+                # Scale
+                scale = np.array(obj.matrix_world.to_scale())[[0, 2, 1]]
+                # Location
                 location = np.array(
                     obj.matrix_world.normalized().to_translation()
                 )
-                transformations[obj.name] = {
-                    'rotation': rotation(obj.matrix_world),
-                    'scale': scale,
-                    'location': location * scale
-                }
+                location = location[[0, 2, 1]] * scale * MINECRAFT_SCALE_FACTOR
+                # Rotation
+                rotation = get_mcrotation(obj.matrix_world)
+            transformations[obj.name] = ObjectMcTransformations(
+                location=location, scale=scale, rotation=rotation
+            )
     return transformations
 
 
-def get_next_keyframe() -> tp.Optional[int]:
+def get_next_keyframe(context: bpy_types.Context) -> tp.Optional[int]:
     '''
     Returns the index of next keyframe from selected objects.
     Returns None if there is no more keyframes to chose.
     '''
-    curr = bpy.context.scene.frame_current
+    curr = context.scene.frame_current
     next_keyframe = None
-    for obj in bpy.context.selected_objects:
+    for obj in context.selected_objects:
         if (
             obj.animation_data is not None and
             obj.animation_data.action is not None and
@@ -316,7 +453,7 @@ def get_next_keyframe() -> tp.Optional[int]:
     return next_keyframe
 
 
-def to_mc_translation_vectors(
+def get_mctranslations(
     parent_rot: np.ndarray, child_rot: np.ndarray,
     parent_scale: np.ndarray, child_scale: np.ndarray,
     parent_loc: np.ndarray, child_loc: np.ndarray
@@ -327,39 +464,38 @@ def to_mc_translation_vectors(
     (in this order) that can be used by the dictionary used for exporting the
     animation data to minecraft format.
     '''
-    child_scale = child_scale[[0, 2, 1]]
-    parent_scale = parent_scale[[0, 2, 1]]
+    child_scale = child_scale
+    parent_scale = parent_scale
     scale = child_scale / parent_scale
     scale = scale
 
     loc = child_loc - parent_loc
-    loc = np.array(loc) * MINECRAFT_SCALE_FACTOR
-    loc = loc[[0, 2, 1]] / parent_scale
+    loc = loc / parent_scale
 
     rot = child_rot - parent_rot
 
     return loc, rot, scale
 
 
-def get_animation_template(
+def get_mcanimation_json(
+    context: bpy_types.Context,
     name: str, length: int, loop_animation: bool, anim_time_update: str,
     bone_data: tp.Dict[str, tp.Dict[str, tp.List[tp.Dict]]]
 ):
     '''
-    :param str name: name of the animation
-    :param int length: the length of animation (in frames). The FPS vlaue
-    is extracted from bpy.context.scene.render.fps.
-    :param int loop_animation: Loops the animation
-    :param int anim_time_update: Adds anim_time_update property to the
-    animation.
-    :param tp.Dict[str, tp.Dict[str, tp.List[tp.Dict]]] bone_data: Dictionary
-    filled with dictionaries that describe postition, rotation and scale
-    for each frame (uses bone name as a key).
+    - name - name of the animation
+    - length - the length of animation (in frames). The FPS vlaue is extracted
+      from context.scene.render.fps.
+    - loop_animation - Loops the animation
+    - anim_time_update - Adds anim_time_update property to the animation.
+    - bone_data - Dictionary filled with dictionaries that describe postition,
+      rotation and scale for each frame (uses bone name as a key).
 
     Returns the tamplate of a dictionary that represents the JSON file with
     minecraft animation.
     '''
     def reduce_property(
+        context: bpy_types.Context,
         ls: tp.List[tp.Dict]
     ) -> tp.List[tp.Dict]:
         '''
@@ -369,18 +505,18 @@ def get_animation_template(
         if len(ls) == 0:
             return []
         last_val = ls[0]['value']
-        result = [ls[0]]
+        reduced_property = [ls[0]]
         for i in range(1, len(ls)-1):
             curr_val = ls[i]['value']
             next_val = ls[i+1]['value']
             if curr_val != last_val or curr_val != next_val:
-                result.append(ls[i])
+                reduced_property.append(ls[i])
                 last_val = curr_val
         # Add last element unless there is only one (in which case it's
         # already added)
         if len(ls) > 1:
-            result.append(ls[-1])
-        return result
+            reduced_property.append(ls[-1])
+        return reduced_property
 
     # Extract bones data
     bones: tp.Dict = {}
@@ -390,18 +526,18 @@ def get_animation_template(
             'rotation': {},
             'scale': {}
         }
-        for prop in reduce_property(bone['position']):
+        for prop in reduce_property(context, bone['position']):
             bones[bone_name]['position'][prop['time']] = prop['value']
-        for prop in reduce_property(bone['rotation']):
+        for prop in reduce_property(context, bone['rotation']):
             bones[bone_name]['rotation'][prop['time']] = prop['value']
-        for prop in reduce_property(bone['scale']):
+        for prop in reduce_property(context, bone['scale']):
             bones[bone_name]['scale'][prop['time']] = prop['value']
     # Returning result
     result: tp.Dict = {
         "format_version": "1.8.0",
         "animations": {
             f"animation.{name}": {
-                "animation_length": (length-1)/bpy.context.scene.render.fps,
+                "animation_length": (length-1)/context.scene.render.fps,
                 "bones": bones
             }
         }
@@ -462,12 +598,11 @@ def pick_closest_rotation(
 
 # TODO - porper naming of the functions below
 def get_uv_face(
-    obj: bpy_types.Object,
-    face: tp.Literal['front', 'back', 'left', 'right', 'top', 'bottom']
-) -> Dict[str, int]:
+    obj: bpy_types.Object, face_name: str
+) -> tp.Dict[str, int]:
     '''
     - obj - the mesh object with cube
-    - face - decides which face should be returned
+    - face_name - decides which face should be returned
 
     Returns a dictionary with list of integer indices of loops which are part
     of a UV of a cube.
@@ -477,7 +612,7 @@ def get_uv_face(
         'right': [3, 0, 1, 2], 'top': [1, 5, 6, 2], 'bottom': [4, 0, 3, 7]
     }
     # list with bound box vertex indices in order LD, RD, RU, LU
-    f = bound_box_faces[face]
+    f = bound_box_faces[face_name]
     bb = obj.bound_box
     bb_verts = {
         'LD': np.array(bb[f[0]]), 'RD': np.array(bb[f[1]]),
@@ -491,8 +626,8 @@ def get_uv_face(
                 if np.allclose(vertex, bbv_value):
                     confirmed_vertices[bbv_key] = loop_id
         if all([i is not None for i in confirmed_vertices.values()]):
-            return confirmed_vertices
-    return None
+            return tp.cast(tp.Dict[str, int], confirmed_vertices)
+    raise ValueError("Object is not a cube!")
 
 
 def set_uv(
@@ -535,6 +670,7 @@ def set_cube_uv(
     Sets the UV faces of a mesh object that represents a mccube in the same
     patter as minecraft UV mapping.
     '''
+    
     set_uv(
         obj, get_uv_face(obj, 'right'), crds, (depth, height)
     )
