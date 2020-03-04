@@ -25,8 +25,8 @@ def get_mcanimation_json(
     - bone_data - Dictionary filled with dictionaries that describe postition,
       rotation and scale for each frame (uses bone name as a key).
 
-    Returns the tamplate of a dictionary that represents the JSON file with
-    minecraft animation.
+    Returns a dictionary with animation for minecraft entity. Optimizes
+    bone_data to reduce the size of the animation file.
     '''
     def reduce_property(
         context: bpy_types.Context,
@@ -90,15 +90,12 @@ def get_transformations(
 ) -> tp.Dict[str, ObjectMcTransformations]:
     '''
     Loops over context.selected_objects and returns the dictionary with
-    information about transformations of every bone. `object_properties` is
-    a dictionary that represents temporary properties of the object used for
-    exporting like classification of the object as a MCObjType.BONE,
-    MCObjType.CUBE or MCObjType.BOTH.
+    information about transformations of every bone. Uses `object_properties`
+    to check if object should be animated (only bones can be animated in
+    minecraft)
 
-    Result is a dictionary with name of the bone as a key and whith another
-    dictionary that contains the information about "rotation", "scale" and
-    "location" of the bone. The scale is an np.ndarray Euler rotation in
-    degrees.
+    Returns a dicionary with name of the object as keys and transformation
+    properties as values.
     '''
     transformations:tp.Dict[str, ObjectMcTransformations] = {}
     for obj in context.selected_objects:
@@ -145,10 +142,10 @@ def get_mctranslations(
     parent_loc: np.ndarray, child_loc: np.ndarray
 ) -> tp.Tuple[np.ndarray, np.ndarray, np.ndarray]:
     '''
-    Compares original rotation, scale and translation with new rotation, scale
-    and translation of an object to return location, rotation and scale values
-    (in this order) that can be used by the dictionary used for exporting the
-    animation data to minecraft format.
+    Compares original transformations with new transformations of an object
+    to return location, rotation and scale values (in this order) that can be
+    used by the dictionary used for exporting the animation data to minecraft
+    format.
     '''
     child_scale = child_scale
     parent_scale = parent_scale
@@ -165,7 +162,7 @@ def get_mctranslations(
 
 def get_next_keyframe(context: bpy_types.Context) -> tp.Optional[int]:
     '''
-    Returns the index of next keyframe from selected objects.
+    Returns the index of next keyframe from all of selected objects.
     Returns None if there is no more keyframes to chose.
     '''
     curr = context.scene.frame_current

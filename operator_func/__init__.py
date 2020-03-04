@@ -32,9 +32,11 @@ from .common import (
     pick_closest_rotation
 )
 
-
-# MAIN
-def export_model(context: bpy_types.Context, model_name: str):
+def export_model(context: bpy_types.Context) -> tp.Dict:
+    '''
+    Uses context.selected_objects to create and return dictionary with
+    minecraft model.
+    '''
     object_properties = get_object_mcproperties(context)
 
     mc_bones: tp.List[tp.Dict] = []
@@ -64,10 +66,17 @@ def export_model(context: bpy_types.Context, model_name: str):
             mcbone = get_mcbone_json(obj, cubes)
             mc_bones.append(mcbone)
 
-    result = get_mcmodel_json(model_name, mc_bones)
+    result = get_mcmodel_json(
+        context.scene.bedrock_exporter.model_name,
+        mc_bones
+    )
     return result
 
 def export_animation(context: bpy_types.Context):
+    '''
+    Uses context.selected_objects to create and return dictionary with
+    minecraft animation.
+    '''
     object_properties = get_object_mcproperties(context)
 
     start_frame = context.scene.frame_current

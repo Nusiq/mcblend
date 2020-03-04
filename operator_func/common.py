@@ -15,13 +15,23 @@ MINECRAFT_SCALE_FACTOR = 16
 
 
 class MCObjType(Enum):
+    '''
+    Used to mark what type of minecraft object should be created from a mesh in
+    blender.
+
+    CUBE - is a cube which is a part of a bone.
+    BONE - is just a bone without cubes in it.
+    BOTH - is a bone with a cube inside.
+    '''
     CUBE = 'CUBE'
     BONE = 'BONE'
     BOTH = 'BOTH'
 
 
 class ObjectMcProperties(tp.NamedTuple):
-    '''Temporary minecraft-related properties of an object (mesh or empty).'''
+    '''
+    Temporary minecraft-related properties of an object (mesh or empty).
+    '''
     mcchildren: tp.Tuple[str]
     mctype: MCObjType
 
@@ -29,7 +39,7 @@ class ObjectMcProperties(tp.NamedTuple):
 class ObjectMcTransformations(tp.NamedTuple):
     '''
     Temporary properties of transformations of an object (mesh or empty)
-    for the minecraft animation. Changes of these values over the frames of the
+    for the minecraft animation. Changes in these values over the frames of the
     animation are used to calculate the values for minecraft animation json.
     '''
     location: np.array
@@ -41,7 +51,7 @@ class ObjectMcTransformations(tp.NamedTuple):
 def get_vect_json(arr: tp.Iterable) -> tp.List[float]:
     '''
     Changes the iterable whith numbers into basic python list of floats.
-    Values from the original iterable are rounded to the 4th deimal
+    Values from the original iterable are rounded to the 3rd deimal
     digit.
     '''
     return [round(i, 3) for i in arr]
@@ -59,11 +69,18 @@ def get_local_matrix(
     )
 
 
+# TODO - change stop using matrix_world and pass bpy_types.Object instead for
+# more consistency in functions of this module.
 def get_mcrotation(
     child_matrix: mathutils.Matrix,
     parent_matrix: tp.Optional[mathutils.Matrix]=None
 ) -> np.ndarray:
-    '''Returns the rotation of mcbone represented by the "obj" object.'''
+    '''
+    Returns the rotation of mcbone.
+    - child_matrix - the matrix_world of the object that represents the mcbone
+    - parent_matrix - optional. the matrix_world of the object that is a
+      mcparent (custom parenting) of the object that represents the mcbone.
+    '''
     def local_rotation(
         child_matrix: mathutils.Matrix, parent_matrix: mathutils.Matrix
     ) -> mathutils.Euler:
@@ -115,7 +132,7 @@ def get_mccube_position(
 
 def get_mcpivot(obj: bpy_types.Object) -> np.ndarray:
     '''
-    Returns the pivot point. Of a mcbone (or mccube represented by the "obj"
+    Returns the pivot point of a mcbone (or mccube) represented by the "obj"
     object.
     '''
     def local_crds(
@@ -144,13 +161,9 @@ def get_object_mcproperties(
     context: bpy_types.Context
 ) -> tp.Dict[str, ObjectMcProperties]:
     '''
-    Loops through context.selected_objects and returns a dictionary with
-    some properties of selected objects:
-     - "mc_obj_type" with value "MCObjType.CUBE" or "MCObjType.BONE" or "MCObjType.BOTH".
-     - "mc_children" properties for easy access to reverse relation
-       of "mc_parent".
-
-    The properties are returned as dictionary.
+    Loops through context.selected_objects and returns a dictionary with custom
+    properties of mcobjects. Returned dictionary uses the names of the objects
+    as keys and the custom properties as values.
     '''
     tmp_properties: tp.DefaultDict = defaultdict(
         lambda: {"mc_children": [], "mc_obj_type": ""}

@@ -43,7 +43,7 @@ def get_mcbone_json(
       list.
 
     Returns the dictionary that represents a single mcbone in json file
-    of exported model.
+    of model.
     '''
     def _scale(obj: bpy_types.Object) -> np.ndarray:
         '''Scale of a bone'''
