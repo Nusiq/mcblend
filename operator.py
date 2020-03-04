@@ -21,7 +21,7 @@ class OBJECT_OT_ExportOperator(bpy.types.Operator):
         output = context.scene.bedrock_exporter.path
         model_name = context.scene.bedrock_exporter.model_name
         result = export_model(context, model_name)
-
+        print('Ahahah')
         with open(output, 'w') as f:
             json.dump(result, f) #, indent=4)
 
@@ -40,7 +40,7 @@ class OBJECT_OT_ExportAnimationOperator(bpy.types.Operator):
     def execute(self, context):
         output = context.scene.bedrock_exporter.path_animation
         animation_dict = export_animation(context)
-
+        print('Bheheeh')
         # Save file and finish
         with open(output, 'w') as f:
             json.dump(animation_dict, f) #, indent=4)
