@@ -4,7 +4,7 @@ import json
 import numpy as np
 
 
-from .operator_funcs import *
+from .operator_func import *
 
 # Additional imports for mypy
 import bpy_types

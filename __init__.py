@@ -4,12 +4,12 @@ import bmesh
 import mathutils
 
 
-from .operators import (
+from .operator import (
     OBJECT_OT_ExportOperator, OBJECT_OT_ExportAnimationOperator,
     OBJECT_OT_BedrockParentOperator, menu_bedrock_parent,
     OBJECT_OT_BedrockParentClearOperator, menu_bedrock_parent_clear,
 )
-from .panels import (
+from .panel import (
     OBJECT_PT_ExportPanel,
     OBJECT_BedrockExporterProperties,
     OBJECT_PT_ExportAnimationPanel
