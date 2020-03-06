@@ -67,7 +67,7 @@ def export_model(context: bpy_types.Context) -> tp.Dict:
             mc_bones.append(mcbone)
 
     result = get_mcmodel_json(
-        context.scene.bedrock_exporter.model_name,
+        context.scene.nusiq_bmodel.model_name,
         mc_bones
     )
     return result
@@ -135,10 +135,10 @@ def export_animation(context: bpy_types.Context):
     context.scene.frame_set(start_frame)
     animation_dict = get_mcanimation_json(
         context,
-        name=context.scene.bedrock_exporter.animation_name,
+        name=context.scene.nusiq_bmodel.animation_name,
         length=context.scene.frame_end,
-        loop_animation=context.scene.bedrock_exporter.loop_animation,
-        anim_time_update=context.scene.bedrock_exporter.anim_time_update,
+        loop_animation=context.scene.nusiq_bmodel.loop_animation,
+        anim_time_update=context.scene.nusiq_bmodel.anim_time_update,
         bone_data=bone_data
     )
 

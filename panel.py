@@ -8,7 +8,7 @@ from bpy.types import Operator, AddonPreferences
 import pathlib
 
 
-class OBJECT_BedrockExporterProperties(bpy.types.PropertyGroup):
+class OBJECT_NusiqBmodelExporterProperties(bpy.types.PropertyGroup):
     path: StringProperty(  # type: ignore
         name="",
         description="Path to the file for exporting the model.",
@@ -57,7 +57,7 @@ class OBJECT_BedrockExporterProperties(bpy.types.PropertyGroup):
     )
 
 
-class OBJECT_PT_ExportPanel(bpy.types.Panel):
+class OBJECT_PT_NusiqBmodelExportPanel(bpy.types.Panel):
     bl_label = "Export bedrock model"
     bl_category = "MC Bedrock exporter"
     bl_space_type = "VIEW_3D"
@@ -65,16 +65,16 @@ class OBJECT_PT_ExportPanel(bpy.types.Panel):
 
     def draw(self, context):
         col = self.layout.column(align=True)
-        col.prop(context.scene.bedrock_exporter, "path", text="")
+        col.prop(context.scene.nusiq_bmodel, "path", text="")
         col.prop(
-            context.scene.bedrock_exporter, "model_name", text="Name"
+            context.scene.nusiq_bmodel, "model_name", text="Name"
         )
         self.layout.row().operator(
-            "object.export_operator", text="Export model"
+            "object.nusiq_bmodel_export_operator", text="Export model"
         )
 
 
-class OBJECT_PT_ExportAnimationPanel(bpy.types.Panel):
+class OBJECT_PT_NusiqBmodelExportAnimationPanel(bpy.types.Panel):
     bl_label = "Export bedrock animation"
     bl_category = "MC Bedrock exporter"
     bl_space_type = "VIEW_3D"
@@ -82,17 +82,17 @@ class OBJECT_PT_ExportAnimationPanel(bpy.types.Panel):
 
     def draw(self, context):
         col = self.layout.column(align=True)
-        col.prop(context.scene.bedrock_exporter, "path_animation", text="")
+        col.prop(context.scene.nusiq_bmodel, "path_animation", text="")
         col.prop(
-            context.scene.bedrock_exporter, "animation_name", text="Name"
+            context.scene.nusiq_bmodel, "animation_name", text="Name"
         )
         col.prop(
-            context.scene.bedrock_exporter, "loop_animation", text="Loop"
+            context.scene.nusiq_bmodel, "loop_animation", text="Loop"
         )
         col.prop(
-            context.scene.bedrock_exporter, "anim_time_update",
+            context.scene.nusiq_bmodel, "anim_time_update",
             text="anim_time_update"
         )
         self.layout.row().operator(
-            "object.export_animation_operator", text="Export animation"
+            "object.nusiq_bmodel_export_animation_operator", text="Export animation"
         )

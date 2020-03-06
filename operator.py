@@ -11,14 +11,14 @@ import bpy_types
 import typing as tp
 
 
-class OBJECT_OT_ExportOperator(bpy.types.Operator):
+class OBJECT_OT_NusiqBmodelExportOperator(bpy.types.Operator):
     '''Operator used for exporting minecraft models from blender'''
-    bl_idname = "object.export_operator"
+    bl_idname = "object.nusiq_bmodel_export_operator"
     bl_label = "Export Bedrock model."
     bl_description = "Exports selected objects from scene to bedrock model."
 
     def execute(self, context):
-        output = context.scene.bedrock_exporter.path
+        output = context.scene.nusiq_bmodel.path
         result = export_model(context)
 
         with open(output, 'w') as f:
@@ -27,9 +27,9 @@ class OBJECT_OT_ExportOperator(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class OBJECT_OT_ExportAnimationOperator(bpy.types.Operator):
+class OBJECT_OT_NusiqBmodelExportAnimationOperator(bpy.types.Operator):
     '''Operator used for exporting minecraft animations from blender'''
-    bl_idname = "object.export_animation_operator"
+    bl_idname = "object.nusiq_bmodel_export_animation_operator"
     bl_label = "Export animation for bedrock model."
     bl_description = (
         "Exports animation of selected objects to bedrock entity animation "
@@ -37,7 +37,7 @@ class OBJECT_OT_ExportAnimationOperator(bpy.types.Operator):
     )
 
     def execute(self, context):
-        output = context.scene.bedrock_exporter.path_animation
+        output = context.scene.nusiq_bmodel.path_animation
         animation_dict = export_animation(context)
 
         # Save file and finish
@@ -46,10 +46,22 @@ class OBJECT_OT_ExportAnimationOperator(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class OBJECT_OT_NusiqBmodelMapUvOperator(bpy.types.Operator):
+    '''Operator used for creating UV-mapping for minecraft model.'''
+    bl_idname = "object.nusiq_bmodel_map_uv_operator"
+    bl_label = "Map uv for bedrock model."
+    bl_description = (
+        "Set UV-mapping for minecraft objects."
+    )
+
+    def execute(self, context):
+        print("TEST")
+        return {'FINISHED'}
+
 # Aditional operators
-class OBJECT_OT_BedrockParentOperator(bpy.types.Operator):
+class OBJECT_OT_NusiqBmodelParentOperator(bpy.types.Operator):
     """Add parent child relation for bedrock model exporter."""
-    bl_idname = "object.parent_operator"
+    bl_idname = "object.nusiq_bmodel_parent_operator"
     bl_label = "Parent bedrock bone"
     bl_description = "Parent object for bedrock model exporter."
     bl_options = {'REGISTER', 'UNDO'}
@@ -85,16 +97,16 @@ class OBJECT_OT_BedrockParentOperator(bpy.types.Operator):
 
 
 def menu_bedrock_parent(self, context: bpy_types.Context):
-    '''Used for registration of OBJECT_OT_BedrockParentOperator class'''
+    '''Used for registration of OBJECT_OT_NusiqBmodelParentOperator class'''
     self.layout.operator(
-        OBJECT_OT_BedrockParentOperator.bl_idname,
-        text=OBJECT_OT_BedrockParentOperator.bl_label, icon="PLUGIN"
+        OBJECT_OT_NusiqBmodelParentOperator.bl_idname,
+        text=OBJECT_OT_NusiqBmodelParentOperator.bl_label, icon="PLUGIN"
     )
 
 
-class OBJECT_OT_BedrockParentClearOperator(bpy.types.Operator):
+class OBJECT_OT_NusiqBmodelParentClearOperator(bpy.types.Operator):
     """Clear parent child relation for bedrock model exporter."""
-    bl_idname = "object.parent_clear_operator"
+    bl_idname = "object.nusiq_bmodel_parent_clear_operator"
     bl_label = "Clear parent from bedrock bone"
     bl_description = "Clear parent for bedrock model exporter."
     bl_options = {'REGISTER', 'UNDO'}
@@ -113,8 +125,8 @@ class OBJECT_OT_BedrockParentClearOperator(bpy.types.Operator):
 
 
 def menu_bedrock_parent_clear(self, context: bpy_types.Context):
-    '''Used for registration of OBJECT_OT_BedrockParentClearOperator class'''
+    '''Used for registration of OBJECT_OT_NusiqBmodelParentClearOperator class'''
     self.layout.operator(
-        OBJECT_OT_BedrockParentClearOperator.bl_idname,
-        text=OBJECT_OT_BedrockParentClearOperator.bl_label, icon="PLUGIN"
+        OBJECT_OT_NusiqBmodelParentClearOperator.bl_idname,
+        text=OBJECT_OT_NusiqBmodelParentClearOperator.bl_label, icon="PLUGIN"
     )
