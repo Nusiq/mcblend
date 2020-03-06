@@ -7,11 +7,15 @@ import typing as tp
 
 from .common import (
     MINECRAFT_SCALE_FACTOR, get_mcrotation, get_mcpivot, get_local_matrix,
-    get_mcube_size, get_vect_json, get_mccube_position
+    get_mcube_size, get_vect_json, get_mccube_position,
+    get_object_mcproperties, MCObjType
 )
 
 
-def get_mcmodel_json(model_name: str, mc_bones: tp.List[tp.Dict]) -> tp.Dict:
+def get_mcmodel_json(
+    model_name: str, mc_bones: tp.List[tp.Dict],
+    texture_width: int, texture_height: int
+) -> tp.Dict:
     '''
     Returns the dictionary that represents JSON file for exporting the model
     '''
@@ -21,8 +25,8 @@ def get_mcmodel_json(model_name: str, mc_bones: tp.List[tp.Dict]) -> tp.Dict:
             {
                 "description": {
                     "identifier": f"geometry.{model_name}",
-                    "texture_width": 1,
-                    "texture_height": 1,
+                    "texture_width": texture_width,
+                    "texture_height": texture_height,
                     "visible_bounds_width": 10,
                     "visible_bounds_height": 10,
                     "visible_bounds_offset": [0, 2, 0]
@@ -66,22 +70,29 @@ def get_mcbone_json(
             bone.matrix_world, cube.matrix_world
         )
 
-        _b_scale = _scale(cube)
+        _c_scale = _scale(cube)
 
+        print(_c_scale)
         c_size = (
-            get_mcube_size(cube, translation) * _b_scale *
+            get_mcube_size(cube) * _c_scale *
             MINECRAFT_SCALE_FACTOR
         )
         c_pivot = get_mcpivot(cube) * MINECRAFT_SCALE_FACTOR
         c_origin = c_pivot + (
-            get_mccube_position(cube, translation) * _b_scale *
+            get_mccube_position(cube, translation) * _c_scale *
             MINECRAFT_SCALE_FACTOR
         )
         c_rot = get_mcrotation(cube.matrix_world, bone.matrix_world)
 
+        if 'mc_uv_u' in cube and 'mc_uv_v' in cube:
+            uv = (cube['mc_uv_u'], cube['mc_uv_v'])
+        else:
+            uv = (0, 0)
+
+
         mcbone['cubes'].append({
-            'uv': [0, 0],
-            'size': get_vect_json(c_size),
+            'uv': uv,
+            'size': [round(i) for i in get_vect_json(c_size)],  # TODO - add rounding option in the menu
             'origin': get_vect_json(c_origin),
             'pivot': get_vect_json(c_pivot),
             'rotation': get_vect_json(c_rot)

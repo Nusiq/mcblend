@@ -55,7 +55,7 @@ class OBJECT_OT_NusiqBmodelMapUvOperator(bpy.types.Operator):
     )
 
     def execute(self, context):
-        print("TEST")
+        set_uvs(context)
         return {'FINISHED'}
 
 # Aditional operators

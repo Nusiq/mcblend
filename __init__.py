@@ -13,7 +13,8 @@ from .operator import (
 from .panel import (
     OBJECT_PT_NusiqBmodelExportPanel,
     OBJECT_NusiqBmodelExporterProperties,
-    OBJECT_PT_NusiqBmodelExportAnimationPanel
+    OBJECT_PT_NusiqBmodelExportAnimationPanel,
+    OBJECT_PT_NusiqBmodelSetUvsPanel,
 )
 
 
@@ -38,6 +39,7 @@ classes = (
     OBJECT_OT_NusiqBmodelParentOperator,
     OBJECT_OT_NusiqBmodelParentClearOperator,
     OBJECT_OT_NusiqBmodelMapUvOperator,
+    OBJECT_PT_NusiqBmodelSetUvsPanel,
 )
 
 

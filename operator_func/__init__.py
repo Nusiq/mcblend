@@ -10,11 +10,9 @@ from collections import defaultdict
 import bpy_types
 import typing as tp
 
-# from .uv import (
-#     get_uv_face,
-#     set_cube_uv,
-#     set_uv
-# )
+from .uv import (
+    get_uv_mc_cubes, UvMcCube, plan_uv, set_cube_uv
+)
 from .animation import (
     get_mcanimation_json, 
     get_mctranslations,
@@ -38,6 +36,8 @@ def export_model(context: bpy_types.Context) -> tp.Dict:
     minecraft model.
     '''
     object_properties = get_object_mcproperties(context)
+    texture_width = context.scene.nusiq_bmodel.texture_width
+    texture_height = context.scene.nusiq_bmodel.texture_height
 
     mc_bones: tp.List[tp.Dict] = []
 
@@ -68,11 +68,12 @@ def export_model(context: bpy_types.Context) -> tp.Dict:
 
     result = get_mcmodel_json(
         context.scene.nusiq_bmodel.model_name,
-        mc_bones
+        mc_bones, texture_width,
+        texture_height
     )
     return result
 
-def export_animation(context: bpy_types.Context):
+def export_animation(context: bpy_types.Context) -> tp.Dict:
     '''
     Uses context.selected_objects to create and return dictionary with
     minecraft animation.
@@ -143,3 +144,44 @@ def export_animation(context: bpy_types.Context):
     )
 
     return animation_dict
+
+def set_uvs(context: bpy_types.Context) -> None:
+    width = context.scene.nusiq_bmodel.texture_width
+    height = context.scene.nusiq_bmodel.texture_height
+    move_blender_uvs = context.scene.nusiq_bmodel.move_blender_uvs
+    move_existing_mappings = context.scene.nusiq_bmodel.move_existing_mappings
+
+    objs = [obj for obj in bpy.context.selected_objects if obj.type == 'MESH']
+
+    uv_dict: tp.Dict[str, UvMcCube] = get_uv_mc_cubes(
+        objs, read_existing_uvs=not move_existing_mappings
+    )
+    uv_mc_cubes = [i for i in uv_dict.values()]
+    if height <= 0:
+        height = None
+
+    map_result = plan_uv(uv_mc_cubes, width, height)
+    print(f'REUSLT: {map_result} {width} {height}')
+    for obj in objs:
+        if obj.name in uv_dict:
+            curr_uv = uv_dict[obj.name]
+            obj['mc_uv_u'] = curr_uv.uv[0]
+            obj['mc_uv_v'] = curr_uv.uv[1]
+
+    if height is None:
+        new_height = max([i.uv[1] + i.size[1] for i in uv_dict.values()])
+    else:
+        new_height = height
+    context.scene.nusiq_bmodel.texture_height=new_height
+
+    if move_blender_uvs:
+        for obj in objs:
+            if obj.name in uv_dict:
+                curr_uv = uv_dict[obj.name]
+                obj.data.uv_layers.new()
+                set_cube_uv(
+                    obj, (curr_uv.uv[0], curr_uv.uv[1]),
+                    curr_uv.width, curr_uv.depth, curr_uv.height,
+                    width, new_height
+                )
+

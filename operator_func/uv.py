@@ -8,7 +8,7 @@ import bpy_types
 import typing as tp
 
 
-from .common import MINECRAFT_SCALE_FACTOR
+from .common import MINECRAFT_SCALE_FACTOR, get_mcube_size
 
 
 # TODO - porper naming of the functions below
@@ -67,9 +67,9 @@ def set_uv(
     uv_data[uv_face['LU']].uv = (crds[0], crds[1] + size[1])
 
 
-def set_cube_uv(
+def set_cube_uv(  # TODO - update documentation
     obj: bpy_types.Object, uv: tp.Tuple[float, float], width: float,
-    depth: float, height: float
+    depth: float, height: float, texture_width: int, texture_height: int
 ):
     '''
     - obj - the mesh object with cube
@@ -81,34 +81,42 @@ def set_cube_uv(
       uv mapping coordinates system.
     - height - value from 0 to 1 the height of the cube converted into blender
       uv mapping coordinates system.
-
+    - texture_width  - texture_width for scaling
+    - texture_height  - texture_height for scaling
     Sets the UV faces of a mesh object that represents a mccube in the same
     patter as minecraft UV mapping.
     '''
-    
+    uv = (uv[0], texture_height-uv[1]-depth-height)
     set_uv(
-        obj, get_uv_face(obj, 'right'), uv, (depth, height)
+        obj, get_uv_face(obj, 'right'), 
+        (uv[0]/texture_width, uv[1]/texture_height),
+        (depth/texture_width, height/texture_height)
     )
     set_uv(
         obj, get_uv_face(obj, 'front'),
-        (uv[0] + depth, uv[1]), (width, height)
+        ((uv[0] + depth)/texture_width, uv[1]/texture_height),
+        (width/texture_width, height/texture_height)
     )
     set_uv(
         obj, get_uv_face(obj, 'left'),
-        (uv[0] + depth + width, uv[1]), (depth, height)
+        ((uv[0] + depth + width)/texture_width, uv[1]/texture_height),
+        (depth/texture_width, height/texture_height)
     )
     set_uv(
         obj, get_uv_face(obj, 'back'),
-        (uv[0] + 2*depth + width, uv[1]), (width, height)
+        ((uv[0] + 2*depth + width)/texture_width, uv[1]/texture_height),
+        (width/texture_width, height/texture_height)
     )
     
     set_uv(
         obj, get_uv_face(obj, 'top'),
-        (uv[0] + depth, uv[1] + height), (width, depth)
+        ((uv[0] + depth)/texture_width, (uv[1] + height)/texture_height),
+        (width/texture_width, depth/texture_height)
     )
     set_uv(
         obj, get_uv_face(obj, 'bottom'),
-        (uv[0] + depth + width, uv[1] + height), (width, depth)
+        ((uv[0] + depth + width)/texture_width, (uv[1] + height)/texture_height),
+        (width/texture_width, depth/texture_height)
     )
 
 # (U, V) - 0, 0 = top left
@@ -338,3 +346,37 @@ def plan_uv(boxes: tp.List[UvBox], width: int, height: int=None) -> bool:
             box.uv = (0, 0)
             return False
     return True
+
+
+
+
+def get_uv_mc_cubes(
+    objects: tp.List[bpy_types.Object],
+    read_existing_uvs
+) -> tp.Dict[str, UvMcCube]:
+    '''
+    Returns name-uv_mc_cube dictionary with uv_mc_cubes of selected objects.
+
+    - objects - list of the objects
+    - read_existing_uvs - if set to True it will try to read the custom
+      properties of the `obj` to read its UV values.
+    '''
+    def _scale(obj: bpy_types.Object) -> np.ndarray:
+        '''Scale of a bone'''
+        _, _, scale = obj.matrix_world.decompose()
+        return np.array(scale.xzy)
+    
+    result = {}
+    for obj in objects:
+        scale = get_mcube_size(obj) * _scale(obj) * MINECRAFT_SCALE_FACTOR
+        width, height, depth = tuple([round(i) for i in scale])  # TODO - should this really be rounded?
+        if read_existing_uvs:
+            if 'mc_uv_u' in obj and 'mc_uv_v' in obj:
+                u = obj['mc_uv_u']
+                v = obj['mc_uv_v']
+                result[obj.name] = UvMcCube(width, depth, height, (u, v))
+            else:
+                result[obj.name] = UvMcCube(width, depth, height)
+        else:
+            result[obj.name] = UvMcCube(width, depth, height)
+    return result

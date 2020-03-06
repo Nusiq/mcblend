@@ -54,7 +54,11 @@ def get_vect_json(arr: tp.Iterable) -> tp.List[float]:
     Values from the original iterable are rounded to the 3rd deimal
     digit.
     '''
-    return [round(i, 3) for i in arr]
+    result = [round(i, 3) for i in arr]
+    for i in range(len(result)):
+        if result[i] == -0.0:
+            result[i] = 0.0
+    return result
 
 
 def get_local_matrix(
@@ -106,7 +110,7 @@ def get_mcrotation(
 
 
 def get_mcube_size(
-    obj: bpy_types.Object, translation: mathutils.Matrix
+    obj: bpy_types.Object
 ) -> np.ndarray:
     '''
     Returns cube size based on the bounding box of an object.
@@ -114,7 +118,6 @@ def get_mcube_size(
     '''
     # 0. ---; 1. --+; 2. -++; 3. -+-; 4. +--; 5. +-+; 6. +++; 7. ++-
     bound_box = obj.bound_box
-    bound_box = [translation @ mathutils.Vector(i) for i in bound_box]
     return (np.array(obj.bound_box[6]) - np.array(obj.bound_box[0]))[[0, 2, 1]]
 
 

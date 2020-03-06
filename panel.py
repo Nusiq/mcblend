@@ -56,6 +56,42 @@ class OBJECT_NusiqBmodelExporterProperties(bpy.types.PropertyGroup):
         maxlen=1024
     )
 
+    texture_width: IntProperty(  # type: ignore
+        name="",
+        description="Minecraft UV parameter width.",
+        default=512,
+        min=1
+    )
+
+    texture_height: IntProperty(  # type: ignore
+        name="",
+        description=(
+            "Minecraft UV parameter height. If you set it to 0 than the height"
+            " of the texture will be picked automatically for you."
+        ),
+        default=0,
+        min=0
+    )
+
+
+    move_blender_uvs: BoolProperty(  # type: ignore
+        name="Move blender UVs",
+        description=(
+            "Decides if the UV mapping in blender should be moved to fit the"
+            " minecraft UV mapping."
+        ),
+        default=False
+    )
+
+    move_existing_mappings: BoolProperty(  # type: ignore
+        name="Move existing mappings",
+        description=(
+            "Decides if the minecraft UV mappings that already exist should be"
+            " moved during planning the minecraft UV map."
+        ),
+        default=False
+    )
+
 
 class OBJECT_PT_NusiqBmodelExportPanel(bpy.types.Panel):
     bl_label = "Export bedrock model"
@@ -95,4 +131,32 @@ class OBJECT_PT_NusiqBmodelExportAnimationPanel(bpy.types.Panel):
         )
         self.layout.row().operator(
             "object.nusiq_bmodel_export_animation_operator", text="Export animation"
+        )
+
+
+class OBJECT_PT_NusiqBmodelSetUvsPanel(bpy.types.Panel):
+    bl_label = "Set bedrock UVs"
+    bl_category = "MC Bedrock exporter"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+
+
+    def draw(self, context):
+        col = self.layout.column(align=True)
+        col.prop(
+            context.scene.nusiq_bmodel, "texture_width", text="Texture width"
+        )
+        col.prop(
+            context.scene.nusiq_bmodel, "texture_height", text="Texture height"
+        )
+        col.prop(
+            context.scene.nusiq_bmodel, "move_existing_mappings",
+            text="Move existing mcUv mappings"
+        )
+        col.prop(
+            context.scene.nusiq_bmodel, "move_blender_uvs",
+            text="Move blender UV mappings"
+        )
+        self.layout.row().operator(
+            "object.nusiq_bmodel_map_uv_operator", text="Set minecraft UVs"
         )
