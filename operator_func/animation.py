@@ -1,5 +1,6 @@
 import bpy
 import numpy as np
+import mathutils
 
 # Additional imports for mypy
 import bpy_types
@@ -105,31 +106,24 @@ def get_transformations(
             [MCObjType.BONE, MCObjType.BOTH]
         ):
             if 'mc_parent' in obj:
-                parent = obj['mc_parent']
-                # Scale
-                scale = (
-                    np.array(obj.matrix_world.to_scale()) /
-                    np.array(parent.matrix_world.to_scale())
-                )[[0, 2, 1]]
-                # Locatin
-                local_matrix = get_local_matrix(
-                    parent.matrix_world.normalized(),
-                    obj.matrix_world.normalized()
-                )
-                location = np.array(local_matrix.to_translation())
-                location = location[[0, 2, 1]] * MINECRAFT_SCALE_FACTOR
-                # Rotation
-                rotation = get_mcrotation(obj.matrix_world, parent.matrix_world)
+                parent_matrix = obj['mc_parent'].matrix_world.copy()
             else:
-                # Scale
-                scale = np.array(obj.matrix_world.to_scale())[[0, 2, 1]]
-                # Location
-                location = np.array(
-                    obj.matrix_world.normalized().to_translation()
-                )
-                location = location[[0, 2, 1]] * scale * MINECRAFT_SCALE_FACTOR
-                # Rotation
-                rotation = get_mcrotation(obj.matrix_world)
+                parent_matrix = mathutils.Matrix()
+            # Scale
+            scale = (
+                np.array(obj.matrix_world.to_scale()) /
+                np.array(parent_matrix.to_scale())
+            )[[0, 2, 1]]
+            # Locatin
+            local_matrix = get_local_matrix(
+                parent_matrix.normalized(),
+                obj.matrix_world.normalized()
+            )
+            location = np.array(local_matrix.to_translation())
+            location = location[[0, 2, 1]] * MINECRAFT_SCALE_FACTOR
+            # Rotation
+            rotation = get_mcrotation(obj.matrix_world, parent_matrix)
+
             transformations[obj.name] = ObjectMcTransformations(
                 location=location, scale=scale, rotation=rotation
             )
@@ -147,14 +141,16 @@ def get_mctranslations(
     used by the dictionary used for exporting the animation data to minecraft
     format.
     '''
+    # Scale
     child_scale = child_scale
     parent_scale = parent_scale
     scale = child_scale / parent_scale
     scale = scale
 
+    # Location
     loc = child_loc - parent_loc
-    loc = loc / parent_scale
 
+    # Rotation
     rot = child_rot - parent_rot
 
     return loc, rot, scale

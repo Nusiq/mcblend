@@ -160,8 +160,9 @@ def set_uvs(context: bpy_types.Context) -> None:
     if height <= 0:
         height = None
 
+    # TODO - handle mapping fail
     map_result = plan_uv(uv_mc_cubes, width, height)
-    print(f'REUSLT: {map_result} {width} {height}')
+
     for obj in objs:
         if obj.name in uv_dict:
             curr_uv = uv_dict[obj.name]

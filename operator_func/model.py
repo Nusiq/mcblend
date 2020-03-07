@@ -72,7 +72,6 @@ def get_mcbone_json(
 
         _c_scale = _scale(cube)
 
-        print(_c_scale)
         c_size = (
             get_mcube_size(cube) * _c_scale *
             MINECRAFT_SCALE_FACTOR
