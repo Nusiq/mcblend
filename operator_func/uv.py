@@ -2,6 +2,7 @@ import bpy
 import numpy as np
 from enum import Enum
 from collections import defaultdict, deque
+from dataclasses import dataclass, field
 
 # Additional imports for mypy
 import bpy_types
@@ -24,7 +25,7 @@ def get_uv_face(
     '''
     bound_box_faces = {
         'front': [0, 4, 5, 1], 'back': [7, 3, 2, 6], 'left': [4, 7, 6, 5],
-        'right': [3, 0, 1, 2], 'top': [1, 5, 6, 2], 'bottom': [4, 0, 3, 7]
+        'right': [3, 0, 1, 2], 'top': [1, 5, 6, 2], 'bottom': [0, 4, 7, 3]
     }
     # list with bound box vertex indices in order LD, RD, RU, LU
     f = bound_box_faces[face_name]
@@ -47,7 +48,8 @@ def get_uv_face(
 
 def set_uv(
     obj: bpy_types.Object, uv_face: tp.Dict[str, int],
-    crds: tp.Tuple[float, float], size: tp.Tuple[float, float]
+    crds: tp.Tuple[float, float], size: tp.Tuple[float, float],
+    mirror: bool
 ):
     '''
     - obj - the mesh object with cube
@@ -60,11 +62,16 @@ def set_uv(
       coordinates system.
     '''
     uv_data = obj.data.uv_layers.active.data
-    
-    uv_data[uv_face['LD']].uv = crds
-    uv_data[uv_face['RD']].uv = (crds[0] + size[0], crds[1])
-    uv_data[uv_face['RU']].uv = (crds[0] + size[0], crds[1] + size[1])
-    uv_data[uv_face['LU']].uv = (crds[0], crds[1] + size[1])
+    if mirror:
+        uv_data[uv_face['RD']].uv = crds
+        uv_data[uv_face['LD']].uv = (crds[0] + size[0], crds[1])
+        uv_data[uv_face['LU']].uv = (crds[0] + size[0], crds[1] + size[1])
+        uv_data[uv_face['RU']].uv = (crds[0], crds[1] + size[1])
+    else:
+        uv_data[uv_face['LD']].uv = crds
+        uv_data[uv_face['RD']].uv = (crds[0] + size[0], crds[1])
+        uv_data[uv_face['RU']].uv = (crds[0] + size[0], crds[1] + size[1])
+        uv_data[uv_face['LU']].uv = (crds[0], crds[1] + size[1])
 
 
 def set_cube_uv(  # TODO - update documentation
@@ -87,37 +94,70 @@ def set_cube_uv(  # TODO - update documentation
     patter as minecraft UV mapping.
     '''
     uv = (uv[0], texture_height-uv[1]-depth-height)
-    set_uv(
-        obj, get_uv_face(obj, 'right'), 
-        (uv[0]/texture_width, uv[1]/texture_height),
-        (depth/texture_width, height/texture_height)
-    )
-    set_uv(
-        obj, get_uv_face(obj, 'front'),
-        ((uv[0] + depth)/texture_width, uv[1]/texture_height),
-        (width/texture_width, height/texture_height)
-    )
-    set_uv(
-        obj, get_uv_face(obj, 'left'),
-        ((uv[0] + depth + width)/texture_width, uv[1]/texture_height),
-        (depth/texture_width, height/texture_height)
-    )
-    set_uv(
-        obj, get_uv_face(obj, 'back'),
-        ((uv[0] + 2*depth + width)/texture_width, uv[1]/texture_height),
-        (width/texture_width, height/texture_height)
-    )
-    
-    set_uv(
-        obj, get_uv_face(obj, 'top'),
-        ((uv[0] + depth)/texture_width, (uv[1] + height)/texture_height),
-        (width/texture_width, depth/texture_height)
-    )
-    set_uv(
-        obj, get_uv_face(obj, 'bottom'),
-        ((uv[0] + depth + width)/texture_width, (uv[1] + height)/texture_height),
-        (width/texture_width, depth/texture_height)
-    )
+    if 'mc_mirror' in obj and obj['mc_mirror'] == 1:
+        set_uv(
+            obj, get_uv_face(obj, 'left'), 
+            (uv[0]/texture_width, uv[1]/texture_height),
+            (depth/texture_width, height/texture_height), False
+        )
+        set_uv(
+            obj, get_uv_face(obj, 'front'),
+            ((uv[0] + depth)/texture_width, uv[1]/texture_height),
+            (width/texture_width, height/texture_height), True
+        )
+        set_uv(
+            obj, get_uv_face(obj, 'right'),
+            ((uv[0] + depth + width)/texture_width, uv[1]/texture_height),
+            (depth/texture_width, height/texture_height), False
+        )
+        set_uv(
+            obj, get_uv_face(obj, 'back'),
+            ((uv[0] + 2*depth + width)/texture_width, uv[1]/texture_height),
+            (width/texture_width, height/texture_height), True
+        )
+        
+        set_uv(
+            obj, get_uv_face(obj, 'top'),
+            ((uv[0] + depth)/texture_width, (uv[1] + height)/texture_height),
+            (width/texture_width, depth/texture_height), True
+        )
+        set_uv(
+            obj, get_uv_face(obj, 'bottom'),
+            ((uv[0] + depth + width)/texture_width, (uv[1] + height)/texture_height),
+            (width/texture_width, depth/texture_height), True
+        )
+    else:
+        set_uv(
+            obj, get_uv_face(obj, 'right'), 
+            (uv[0]/texture_width, uv[1]/texture_height),
+            (depth/texture_width, height/texture_height), False
+        )
+        set_uv(
+            obj, get_uv_face(obj, 'front'),
+            ((uv[0] + depth)/texture_width, uv[1]/texture_height),
+            (width/texture_width, height/texture_height), False
+        )
+        set_uv(
+            obj, get_uv_face(obj, 'left'),
+            ((uv[0] + depth + width)/texture_width, uv[1]/texture_height),
+            (depth/texture_width, height/texture_height), False
+        )
+        set_uv(
+            obj, get_uv_face(obj, 'back'),
+            ((uv[0] + 2*depth + width)/texture_width, uv[1]/texture_height),
+            (width/texture_width, height/texture_height), False
+        )
+        
+        set_uv(
+            obj, get_uv_face(obj, 'top'),
+            ((uv[0] + depth)/texture_width, (uv[1] + height)/texture_height),
+            (width/texture_width, depth/texture_height), False
+        )
+        set_uv(
+            obj, get_uv_face(obj, 'bottom'),
+            ((uv[0] + depth + width)/texture_width, (uv[1] + height)/texture_height),
+            (width/texture_width, depth/texture_height), False
+        )
 
 # (U, V) - 0, 0 = top left
 class UvCorner(Enum):
@@ -294,6 +334,7 @@ def plan_uv(boxes: tp.List[UvBox], width: int, height: int=None) -> bool:
 
     Returns success result.
     '''
+    boxes = list(set(boxes))
     boxes.sort(key=lambda box: box.size[0], reverse=True)
 
     suggestions: tp.List[
@@ -348,6 +389,20 @@ def plan_uv(boxes: tp.List[UvBox], width: int, height: int=None) -> bool:
     return True
 
 
+@dataclass
+class _UvGroup:
+    '''
+    Stores information about one UvGroup in get_uv_mc_cubes() function.
+
+    This class has one value `items` - a dictionary that uses 
+    (width, depth, height) tuple as a key and has a UvMcCube as a valule.
+    
+    Its used to make sure that the cubes with same mc_uv_groups and size use
+    the same UvMcCube mapping.
+    '''
+    items: tp.Dict[tp.Tuple[int, int, int], UvMcCube] = field(
+        default_factory=lambda: {}
+    )
 
 
 def get_uv_mc_cubes(
@@ -366,17 +421,30 @@ def get_uv_mc_cubes(
         _, _, scale = obj.matrix_world.decompose()
         return np.array(scale.xzy)
     
+    uv_groups: tp.Dict[str, _UvGroup] = defaultdict(lambda: _UvGroup())
     result = {}
+
     for obj in objects:
         scale = get_mcube_size(obj) * _scale(obj) * MINECRAFT_SCALE_FACTOR
-        width, height, depth = tuple([round(i) for i in scale])  # TODO - should this really be rounded?
-        if read_existing_uvs:
-            if 'mc_uv_u' in obj and 'mc_uv_v' in obj:
+        # width, height, depth
+        w, h, d = tuple([round(i) for i in scale])  # TODO - should this really be rounded?
+
+        if read_existing_uvs and 'mc_uv_u' in obj and 'mc_uv_v' in obj:
                 u = obj['mc_uv_u']
                 v = obj['mc_uv_v']
-                result[obj.name] = UvMcCube(width, depth, height, (u, v))
-            else:
-                result[obj.name] = UvMcCube(width, depth, height)
+                result[obj.name] = UvMcCube(w, d, h, (u, v))
         else:
-            result[obj.name] = UvMcCube(width, depth, height)
+            if (
+                'mc_uv_group' in obj and
+                (w, d, h) in uv_groups[obj['mc_uv_group']].items
+            ):
+                    result[obj.name] =  uv_groups[
+                        obj['mc_uv_group']
+                    ].items[(w, d, h)]
+            else:
+                result[obj.name] = UvMcCube(w, d, h)
+                if 'mc_uv_group' in obj:
+                    uv_groups[
+                        obj['mc_uv_group']
+                    ].items[(w, d, h)] = result[obj.name]
     return result

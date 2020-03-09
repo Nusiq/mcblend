@@ -88,14 +88,19 @@ def get_mcbone_json(
         else:
             uv = (0, 0)
 
-
-        mcbone['cubes'].append({
+        cube_dict = {
             'uv': uv,
             'size': [round(i) for i in get_vect_json(c_size)],  # TODO - add rounding option in the menu
             'origin': get_vect_json(c_origin),
             'pivot': get_vect_json(c_pivot),
             'rotation': get_vect_json(c_rot)
-        })
+        }
+        if 'mc_mirror' in cube:
+            if cube['mc_mirror'] == 1:
+                cube_dict['mirror'] = True
+
+        mcbone['cubes'].append(cube_dict)
+
 
     mcbone['pivot'] = get_vect_json(b_pivot)
     mcbone['rotation'] = get_vect_json(b_rot)
