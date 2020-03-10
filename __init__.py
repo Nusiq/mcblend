@@ -8,13 +8,16 @@ from .operator import (
     OBJECT_OT_NusiqBmodelExportOperator, OBJECT_OT_NusiqBmodelExportAnimationOperator,
     OBJECT_OT_NusiqBmodelParentOperator, menu_bedrock_parent,
     OBJECT_OT_NusiqBmodelParentClearOperator, menu_bedrock_parent_clear,
-    OBJECT_OT_NusiqBmodelMapUvOperator,
+    OBJECT_OT_NusiqBmodelMapUvOperator, OBJECT_OT_NusiqBmodelUvGroupOperator,
+    OBJECT_OT_NusiqBmodelToggleMcIsBoneOperator,
+    OBJECT_OT_NusiqBmodelToggleMcMirrorOperator,
 )
 from .panel import (
     OBJECT_PT_NusiqBmodelExportPanel,
     OBJECT_NusiqBmodelExporterProperties,
     OBJECT_PT_NusiqBmodelExportAnimationPanel,
     OBJECT_PT_NusiqBmodelSetUvsPanel,
+    OBJECT_PT_NusiqBmodelCustomPropertiesPanel,
 )
 
 
@@ -40,6 +43,10 @@ classes = (
     OBJECT_OT_NusiqBmodelParentClearOperator,
     OBJECT_OT_NusiqBmodelMapUvOperator,
     OBJECT_PT_NusiqBmodelSetUvsPanel,
+    OBJECT_OT_NusiqBmodelUvGroupOperator,
+    OBJECT_OT_NusiqBmodelToggleMcIsBoneOperator,
+    OBJECT_OT_NusiqBmodelToggleMcMirrorOperator,
+    OBJECT_PT_NusiqBmodelCustomPropertiesPanel,
 )
 
 

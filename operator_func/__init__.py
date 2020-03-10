@@ -145,11 +145,12 @@ def export_animation(context: bpy_types.Context) -> tp.Dict:
 
     return animation_dict
 
-def set_uvs(context: bpy_types.Context) -> None:
+def set_uvs(context: bpy_types.Context) -> bool:
     width = context.scene.nusiq_bmodel.texture_width
     height = context.scene.nusiq_bmodel.texture_height
     move_blender_uvs = context.scene.nusiq_bmodel.move_blender_uvs
     move_existing_mappings = context.scene.nusiq_bmodel.move_existing_mappings
+    remove_old_mappings = context.scene.nusiq_bmodel.remove_old_mappings
 
     objs = [obj for obj in bpy.context.selected_objects if obj.type == 'MESH']
 
@@ -162,6 +163,14 @@ def set_uvs(context: bpy_types.Context) -> None:
 
     # TODO - handle mapping fail
     map_result = plan_uv(uv_mc_cubes, width, height)
+    if map_result is False:
+        return False
+
+    if remove_old_mappings:
+        for obj in objs:
+            while len(obj.data.uv_layers) > 0:
+                obj.data.uv_layers.remove(obj.data.uv_layers[0])
+
 
     for obj in objs:
         if obj.name in uv_dict:
@@ -185,4 +194,5 @@ def set_uvs(context: bpy_types.Context) -> None:
                     curr_uv.width, curr_uv.depth, curr_uv.height,
                     width, new_height
                 )
+    return True
 

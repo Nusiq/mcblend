@@ -91,6 +91,14 @@ class OBJECT_NusiqBmodelExporterProperties(bpy.types.PropertyGroup):
         ),
         default=False
     )
+    remove_old_mappings: BoolProperty(  # type: ignore
+        name="Remove old UV-maps",
+        description=(
+            "Decides if current UV-mapping should be removed from selected "
+            "objects."
+        ),
+        default=True
+    )
 
 
 class OBJECT_PT_NusiqBmodelExportPanel(bpy.types.Panel):
@@ -157,6 +165,33 @@ class OBJECT_PT_NusiqBmodelSetUvsPanel(bpy.types.Panel):
             context.scene.nusiq_bmodel, "move_blender_uvs",
             text="Move blender UV mappings"
         )
+        col.prop(
+            context.scene.nusiq_bmodel, "remove_old_mappings",
+            text="Remove old UV maps"
+        )
         self.layout.row().operator(
             "object.nusiq_bmodel_map_uv_operator", text="Set minecraft UVs"
+        )
+
+
+class OBJECT_PT_NusiqBmodelCustomPropertiesPanel(bpy.types.Panel):
+    bl_label = "Custom properties"
+    bl_category = "MC Bedrock exporter"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+
+
+    def draw(self, context):
+        col = self.layout.column(align=True)
+        self.layout.row().operator(
+            "object.nusiq_bmodel_toggle_mc_mirror_operator",
+            text="Toggle mc_mirror"
+        )
+        self.layout.row().operator(
+            "object.nusiq_bmodel_uv_group_operator",
+            text="Set mc_uv_group"
+        )
+        self.layout.row().operator(
+            "object.nusiq_bmodel_toggle_mc_is_bone_operator",
+            text="Toggle mc_is_bone"
         )
