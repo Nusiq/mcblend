@@ -112,7 +112,7 @@ class OBJECT_OT_NusiqBmodelUvGroupOperator(bpy.types.Operator):
         "same spot on the texutre"
     )
 
-    group_name: StringProperty(default="", name="Name")
+    group_name: StringProperty(default="", name="Name")  # type: ignore
 
     @classmethod
     def poll(cls, context: bpy_types.Context):

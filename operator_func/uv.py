@@ -274,7 +274,7 @@ class UvMcCube(UvBox):
         self.bottom = UvBox((width, depth), (depth + width, 0))
         super().__init__(size, uv)
 
-    @UvBox.uv.setter
+    @UvBox.uv.setter  # type: ignore
     def uv(self, uv):
         self._uv = uv
         self.right.uv = (uv[0], uv[1] + self.depth)
@@ -327,7 +327,7 @@ class UvMcCube(UvBox):
         return result
 
 
-def plan_uv(boxes: tp.List[UvBox], width: int, height: int=None) -> bool:
+def plan_uv(boxes: tp.List[UvMcCube], width: int, height: int=None) -> bool:
     '''
     Plans UVs for all of the boxes on the list. The size of the texture is
     limited by width and optionally by height.
