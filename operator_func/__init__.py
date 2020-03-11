@@ -151,6 +151,7 @@ def set_uvs(context: bpy_types.Context) -> bool:
     move_blender_uvs = context.scene.nusiq_bmodel.move_blender_uvs
     move_existing_mappings = context.scene.nusiq_bmodel.move_existing_mappings
     remove_old_mappings = context.scene.nusiq_bmodel.remove_old_mappings
+    resolution = context.scene.nusiq_bmodel.texture_template_resolution
 
     objs = [obj for obj in bpy.context.selected_objects if obj.type == 'MESH']
 
@@ -161,7 +162,6 @@ def set_uvs(context: bpy_types.Context) -> bool:
     if height <= 0:
         height = None
 
-    # TODO - handle mapping fail
     map_result = plan_uv(uv_mc_cubes, width, height)
     if map_result is False:
         return False
@@ -170,6 +170,7 @@ def set_uvs(context: bpy_types.Context) -> bool:
         for obj in objs:
             while len(obj.data.uv_layers) > 0:
                 obj.data.uv_layers.remove(obj.data.uv_layers[0])
+
 
 
     for obj in objs:
@@ -183,6 +184,41 @@ def set_uvs(context: bpy_types.Context) -> bool:
     else:
         new_height = height
     context.scene.nusiq_bmodel.texture_height=new_height
+
+    # TODO - Create texture template
+    if resolution >= 1:
+        image = bpy.data.images.new(
+            "template",
+            width*resolution,
+            new_height*resolution,
+            alpha=True
+        )
+        def paint_texture(arr, uv_box, color, resolution):
+            min1 = int(arr.shape[0]/resolution)-int(uv_box.uv[1]+uv_box.size[1])
+            max1 = int(arr.shape[0]/resolution)-int(uv_box.uv[1])
+            min2, max2 = int(uv_box.uv[0]), int(uv_box.uv[0]+uv_box.size[0])
+            min1 = min1 * resolution
+            min2 = min2 * resolution
+            max1 = max1 * resolution
+            max2 = max2 * resolution
+            a = arr[min1:max1, min2:max2]
+            a[...,0] = color[0]
+            a[...,1] = color[1]
+            a[...,2] = color[2]
+            a[...,3] = color[3]
+
+        # This array represents new texture
+        # DIM0:up axis DIM1:right axis DIM2:rgba axis
+        arr = np.zeros([image.size[1], image.size[0], 4])
+
+        for uv_cube in uv_dict.values():
+            paint_texture(arr, uv_cube.front, [0, 1, 0, 1], resolution)
+            paint_texture(arr, uv_cube.back, [1, 0, 1, 1], resolution)
+            paint_texture(arr, uv_cube.right, [1, 0, 0, 1], resolution)
+            paint_texture(arr, uv_cube.left, [0, 1, 1, 1], resolution)
+            paint_texture(arr, uv_cube.top, [0, 0, 1, 1], resolution)
+            paint_texture(arr, uv_cube.bottom, [1, 1, 0, 1], resolution)
+        image.pixels = arr.ravel()  # Apply texture pixels values
 
     if move_blender_uvs:
         for obj in objs:

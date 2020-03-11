@@ -99,6 +99,20 @@ class OBJECT_NusiqBmodelExporterProperties(bpy.types.PropertyGroup):
         ),
         default=True
     )
+    texture_template_resolution: IntProperty(  # type: ignore
+        name="Template texture resolution",
+        description=(
+            'Sets the resolution of the template texture. Setting this to 0 '
+            'prevents the creation of the template texture. This value '
+            'describes how many pixels on the image is represented by one '
+            'texture_widht or texture_height unit in model definition. '
+            'The value of 1 gives the standard minecraft texture '
+            'resolution.'
+        ),
+        default=0,
+        min=0,
+        soft_max=5,
+    )
 
 
 class OBJECT_PT_NusiqBmodelExportPanel(bpy.types.Panel):
@@ -168,6 +182,10 @@ class OBJECT_PT_NusiqBmodelSetUvsPanel(bpy.types.Panel):
         col.prop(
             context.scene.nusiq_bmodel, "remove_old_mappings",
             text="Remove old UV maps"
+        )
+        col.prop(
+            context.scene.nusiq_bmodel, "texture_template_resolution",
+            text="Template resolution"
         )
         self.layout.row().operator(
             "object.nusiq_bmodel_map_uv_operator", text="Set minecraft UVs"

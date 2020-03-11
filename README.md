@@ -1,5 +1,6 @@
 # Blender-Export-MC-Bedrock-Model
-Blender addon that exports models for custom entities for Minecraft Bedrock Edition.
+Blender addon that exports models for custom entities for Minecraft Bedrock
+Edition.
 
 ## Features
 - Exporting models into json files that for minecraft bedrock edition.
@@ -27,8 +28,9 @@ isn't considered to be a cuboid. Tip: You can enable display of bounding box
 in object properties in Blender see if object is a proper cuboid.
 
 ### Mcbones and mccubes
-To avoid confusion minecraft bones and cubes will be called mcbones and mccubes respectively. Bones of armature in Blender will
-be refered as bones and meshes in shape of cube/cuboid will be refered as cubes.
+To avoid confusion minecraft bones and cubes will be called mcbones and mccubes
+respectively. Bones of armature in Blender will be refered as bones and meshes
+in shape of cube/cuboid will be refered as cubes.
 
 ### Parenting mcbones
 The add-on implements custom parenting system disconected from default Blender
@@ -115,6 +117,11 @@ have their UV-mapping moved to match the minecraft model.
 - Remove old UV maps. If set to true running the "Set bedrock UV" will remove
 old uv mapping from the selected objects (objects in blender can have multiple
 uv-maps, you can acces them in "Object data properties").
+- Template resolution - Sets the resolution of the template texture.
+Setting this to 0 prevents the creation of the template texture. This value
+describes how many pixels on the image is represented by one texture_widht or
+texture_height unit in model definition. The value of 1 gives the standard
+minecraft texture resolution.
 - "Set minecraft UVs" button runs the operator which plans the UV-mapping.
 ### Custom properties
 This panel adds easy acces for managing some of the custom properties used by
