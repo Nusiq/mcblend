@@ -3,7 +3,7 @@ import math
 import json
 import numpy as np
 
-from bpy.props import StringProperty
+from bpy.props import StringProperty, FloatProperty
 
 from .operator_func import *
 
@@ -228,6 +228,42 @@ class OBJECT_OT_NusiqBmodelToggleMcIsBoneOperator(bpy.types.Operator):
             
 
         return {'FINISHED'}
+
+class OBJECT_OT_NusiqBmodelSetInflateOperator(bpy.types.Operator):
+    '''
+    Operator used for setting the inflate value of selected objects. It changes
+    the dimensions of selected object and adds custom property called
+    mc_inflate.
+    '''
+    bl_idname = "object.nusiq_bmodel_set_inflate_operator"
+    bl_label = "Set the mc_inflate vale for selected objects and resise them."
+    bl_description = (
+        "Set the mc_inflate vale for selected objects and change their "
+        "dimensions to fit the inflate values."
+    )
+
+    inflate_value: FloatProperty(default=0)  # type: ignore
+
+    @classmethod
+    def poll(cls, context: bpy_types.Context):
+        if context.mode != 'OBJECT':
+            return False
+        if len(context.selected_objects) < 1:
+            return False
+        return True
+
+    def invoke(self, context, event):
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self)
+
+    def execute(self, context):
+        n_objects = set_inflate(context, self.inflate_value)
+        self.inflate_value = 0
+        self.report(
+            {'INFO'} , f'Changed the inflate value of {n_objects} objects.'
+        )
+        return {'FINISHED'}
+
 
 # Aditional operators
 class OBJECT_OT_NusiqBmodelParentOperator(bpy.types.Operator):

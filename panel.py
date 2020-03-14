@@ -213,3 +213,7 @@ class OBJECT_PT_NusiqBmodelCustomPropertiesPanel(bpy.types.Panel):
             "object.nusiq_bmodel_toggle_mc_is_bone_operator",
             text="Toggle mc_is_bone"
         )
+        self.layout.row().operator(
+            "object.nusiq_bmodel_set_inflate_operator",
+            text="Set mc_inflate"
+        )

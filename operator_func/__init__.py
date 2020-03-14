@@ -27,7 +27,7 @@ from .common import (
     MCObjType,
     get_object_mcproperties,
     get_vect_json,
-    pick_closest_rotation
+    pick_closest_rotation,
 )
 
 def export_model(context: bpy_types.Context) -> tp.Dict:
@@ -232,3 +232,45 @@ def set_uvs(context: bpy_types.Context) -> bool:
                 )
     return True
 
+def set_inflate(context: bpy_types.Context, inflate: float) -> int:
+    '''
+    Adds mc_inflate property to objects and changes their dimensions. Returns
+    the number of edited objects.
+    Returns the number of edited objects.
+    '''
+    counter = 0
+    for obj in context.selected_objects:
+        if obj.type == 'MESH':  # Only mc_cubes can be inflated
+            if 'mc_inflate' in obj:
+                old_inflate = obj['mc_inflate']
+                delta_inflate = inflate - old_inflate
+                if inflate != 0:
+                    obj['mc_inflate'] = inflate
+                else:
+                    del obj['mc_inflate']
+            else:
+                delta_inflate = inflate
+                if inflate != 0:
+                    obj['mc_inflate'] = inflate
+            # Clear parent from children for a moment
+            children = obj.children
+            matrix_world_dict = {}
+            for c in children:
+                matrix_world_dict[c] = c.matrix_world.copy()
+                c.parent = None
+
+            # Set new dimensions
+            obj.dimensions = (
+                np.array(obj.dimensions) +
+                2*delta_inflate/bpy.context.scene.unit_settings.scale_length
+            )
+
+            # Add children back and set their previous transformations
+            for c in children:
+                c.matrix_world = matrix_world_dict[c]
+                context.view_layer.update()
+                c.parent = obj
+                c.matrix_parent_inverse = obj.matrix_world.inverted()
+
+            counter += 1
+    return counter

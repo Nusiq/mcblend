@@ -426,6 +426,10 @@ def get_uv_mc_cubes(
 
     for obj in objects:
         scale = get_mcube_size(obj) * _scale(obj) * MINECRAFT_SCALE_FACTOR
+
+        if 'mc_inflate' in obj:
+            scale = scale - obj['mc_inflate']*2
+
         # width, height, depth
         w, h, d = tuple([round(i) for i in scale])  # TODO - should this really be rounded?
 

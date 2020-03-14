@@ -134,6 +134,7 @@ the same spot on the texutre.
 - Toggle mc_is_bone - Toggles mc_is_bone for selected objects. Setting
 mc_is_bone property to 1 ensures that the object will be converted to a mcbone
 in minecraft model
+- Set mc_inflate - Set the mc_inflate vale for selected objects and change their dimensions to fit the inflate values.
 
 
 ## List of custom object properties used by the plug-in
@@ -143,3 +144,4 @@ same uv-mapping to them.
 - mc_uv_u - U value of mcmodel uv-mapping.
 - mc_uv_v - V value of mcmodel uv-mapping.
 - mc_is_bone - if set to 1 marks an object as a mcbone.
+- mc_inflate - the inflate value of mc_cube in minecraft model.

@@ -76,6 +76,7 @@ def get_mcbone_json(
             get_mcube_size(cube) * _c_scale *
             MINECRAFT_SCALE_FACTOR
         )
+
         c_pivot = get_mcpivot(cube) * MINECRAFT_SCALE_FACTOR
         c_origin = c_pivot + (
             get_mccube_position(cube, translation) * _c_scale *
@@ -88,6 +89,10 @@ def get_mcbone_json(
         else:
             uv = (0, 0)
 
+        if 'mc_inflate' in cube:
+            c_size = c_size - cube['mc_inflate']*2
+            c_origin = c_origin + cube['mc_inflate']
+
         cube_dict = {
             'uv': uv,
             'size': [round(i) for i in get_vect_json(c_size)],  # TODO - add rounding option in the menu
@@ -95,6 +100,10 @@ def get_mcbone_json(
             'pivot': get_vect_json(c_pivot),
             'rotation': get_vect_json(c_rot)
         }
+
+        if 'mc_inflate' in cube:
+            cube_dict['inflate'] = cube['mc_inflate']
+
         if 'mc_mirror' in cube:
             if cube['mc_mirror'] == 1:
                 cube_dict['mirror'] = True

@@ -11,6 +11,7 @@ from .operator import (
     OBJECT_OT_NusiqBmodelMapUvOperator, OBJECT_OT_NusiqBmodelUvGroupOperator,
     OBJECT_OT_NusiqBmodelToggleMcIsBoneOperator,
     OBJECT_OT_NusiqBmodelToggleMcMirrorOperator,
+    OBJECT_OT_NusiqBmodelSetInflateOperator,
 )
 from .panel import (
     OBJECT_PT_NusiqBmodelExportPanel,
@@ -47,6 +48,7 @@ classes = (
     OBJECT_OT_NusiqBmodelToggleMcIsBoneOperator,
     OBJECT_OT_NusiqBmodelToggleMcMirrorOperator,
     OBJECT_PT_NusiqBmodelCustomPropertiesPanel,
+    OBJECT_OT_NusiqBmodelSetInflateOperator,
 )
 
 
