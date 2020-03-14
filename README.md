@@ -6,10 +6,10 @@ Edition.
 - Exporting models into json files that for minecraft bedrock edition.
 - Exporting animations into json files that for minecraft bedrock edition.
 - UV Mapping/Texturing
-## Planned features
 - Exporting minecraft models that use "inflate" option.
 - Creating UV-mapping template textures.
-- Other planned small features can be found in the
+## Planned features
+- Some planned features can be found in the
 ["Issues"](https://github.com/Nusiq/Blender-Export-MC-Bedrock-Model/issues])
 tab of this project on Github.
 
