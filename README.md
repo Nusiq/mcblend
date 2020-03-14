@@ -3,8 +3,8 @@ Blender addon that exports models for custom entities for Minecraft Bedrock
 Edition.
 
 ## Features
-- Exporting models into json files that for minecraft bedrock edition.
-- Exporting animations into json files that for minecraft bedrock edition.
+- Exporting models into json files for minecraft bedrock edition.
+- Exporting animations into json files for minecraft bedrock edition.
 - UV Mapping/Texturing
 - Exporting minecraft models that use "inflate" option.
 - Creating UV-mapping template textures.
