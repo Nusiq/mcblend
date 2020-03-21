@@ -176,12 +176,12 @@ class OBJECT_OT_NusiqBmodelToggleMcMirrorOperator(bpy.types.Operator):
                 if obj.type == "MESH":
                     if 'mc_mirror' in obj:
                         del obj['mc_mirror']
-            self.report({'INFO'} , f'Set mc_mirror to property 1.')
+            self.report({'INFO'} , f'Cleared mc_mirror.')
         else:
             for obj in context.selected_objects:
                 if obj.type == "MESH":
                     obj['mc_mirror'] = 1
-            self.report({'INFO'} , f'Cleared mc_mirror.')
+            self.report({'INFO'} , f'Set mc_mirror to property 1.')
 
         return {'FINISHED'}
 
