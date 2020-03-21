@@ -49,7 +49,7 @@ def get_uv_face(
 def set_uv(
     obj: bpy_types.Object, uv_face: tp.Dict[str, int],
     crds: tp.Tuple[float, float], size: tp.Tuple[float, float],
-    mirror: bool
+    mirror_y: bool, mirror_x: bool
 ):
     '''
     - obj - the mesh object with cube
@@ -62,16 +62,17 @@ def set_uv(
       coordinates system.
     '''
     uv_data = obj.data.uv_layers.active.data
-    if mirror:
-        uv_data[uv_face['RD']].uv = crds
-        uv_data[uv_face['LD']].uv = (crds[0] + size[0], crds[1])
-        uv_data[uv_face['LU']].uv = (crds[0] + size[0], crds[1] + size[1])
-        uv_data[uv_face['RU']].uv = (crds[0], crds[1] + size[1])
-    else:
-        uv_data[uv_face['LD']].uv = crds
-        uv_data[uv_face['RD']].uv = (crds[0] + size[0], crds[1])
-        uv_data[uv_face['RU']].uv = (crds[0] + size[0], crds[1] + size[1])
-        uv_data[uv_face['LU']].uv = (crds[0], crds[1] + size[1])
+    order = ['LD', 'RD', 'RU', 'LU']
+
+    if mirror_x:
+        order = [order[i] for i in [1, 0, 3, 2]]
+    if mirror_y:
+        order = [order[i] for i in [2, 3, 0, 1]]
+
+    uv_data[uv_face[order[0]]].uv = crds
+    uv_data[uv_face[order[1]]].uv = (crds[0] + size[0], crds[1])
+    uv_data[uv_face[order[2]]].uv = (crds[0] + size[0], crds[1] + size[1])
+    uv_data[uv_face[order[3]]].uv = (crds[0], crds[1] + size[1])
 
 
 def set_cube_uv(  # TODO - update documentation
@@ -98,65 +99,65 @@ def set_cube_uv(  # TODO - update documentation
         set_uv(
             obj, get_uv_face(obj, 'left'), 
             (uv[0]/texture_width, uv[1]/texture_height),
-            (depth/texture_width, height/texture_height), False
+            (depth/texture_width, height/texture_height), False, True
         )
         set_uv(
             obj, get_uv_face(obj, 'front'),
             ((uv[0] + depth)/texture_width, uv[1]/texture_height),
-            (width/texture_width, height/texture_height), True
+            (width/texture_width, height/texture_height), True, False
         )
         set_uv(
             obj, get_uv_face(obj, 'right'),
             ((uv[0] + depth + width)/texture_width, uv[1]/texture_height),
-            (depth/texture_width, height/texture_height), False
+            (depth/texture_width, height/texture_height), False, True
         )
         set_uv(
             obj, get_uv_face(obj, 'back'),
             ((uv[0] + 2*depth + width)/texture_width, uv[1]/texture_height),
-            (width/texture_width, height/texture_height), True
+            (width/texture_width, height/texture_height), True, False
         )
         
         set_uv(
             obj, get_uv_face(obj, 'top'),
             ((uv[0] + depth)/texture_width, (uv[1] + height)/texture_height),
-            (width/texture_width, depth/texture_height), True
+            (width/texture_width, depth/texture_height), False, True
         )
         set_uv(
             obj, get_uv_face(obj, 'bottom'),
             ((uv[0] + depth + width)/texture_width, (uv[1] + height)/texture_height),
-            (width/texture_width, depth/texture_height), True
+            (width/texture_width, depth/texture_height), False, True
         )
     else:
         set_uv(
             obj, get_uv_face(obj, 'right'), 
             (uv[0]/texture_width, uv[1]/texture_height),
-            (depth/texture_width, height/texture_height), False
+            (depth/texture_width, height/texture_height), False, False
         )
         set_uv(
             obj, get_uv_face(obj, 'front'),
             ((uv[0] + depth)/texture_width, uv[1]/texture_height),
-            (width/texture_width, height/texture_height), False
+            (width/texture_width, height/texture_height), False, False
         )
         set_uv(
             obj, get_uv_face(obj, 'left'),
             ((uv[0] + depth + width)/texture_width, uv[1]/texture_height),
-            (depth/texture_width, height/texture_height), False
+            (depth/texture_width, height/texture_height), False, False
         )
         set_uv(
             obj, get_uv_face(obj, 'back'),
             ((uv[0] + 2*depth + width)/texture_width, uv[1]/texture_height),
-            (width/texture_width, height/texture_height), False
+            (width/texture_width, height/texture_height), False, False
         )
         
         set_uv(
             obj, get_uv_face(obj, 'top'),
             ((uv[0] + depth)/texture_width, (uv[1] + height)/texture_height),
-            (width/texture_width, depth/texture_height), False
+            (width/texture_width, depth/texture_height), False, False
         )
         set_uv(
             obj, get_uv_face(obj, 'bottom'),
             ((uv[0] + depth + width)/texture_width, (uv[1] + height)/texture_height),
-            (width/texture_width, depth/texture_height), False
+            (width/texture_width, depth/texture_height), False, False
         )
 
 # (U, V) - 0, 0 = top left
