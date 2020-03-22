@@ -434,10 +434,8 @@ def get_uv_mc_cubes(
         # width, height, depth
         w, h, d = tuple([round(i) for i in scale])  # TODO - should this really be rounded?
 
-        if read_existing_uvs and 'mc_uv_u' in obj and 'mc_uv_v' in obj:
-                u = obj['mc_uv_u']
-                v = obj['mc_uv_v']
-                result[obj.name] = UvMcCube(w, d, h, (u, v))
+        if read_existing_uvs and 'mc_uv' in obj:
+                result[obj.name] = UvMcCube(w, d, h, tuple(obj['mc_uv']))
         else:
             if (
                 'mc_uv_group' in obj and

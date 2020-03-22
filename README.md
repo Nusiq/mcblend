@@ -8,6 +8,7 @@ Edition.
 - UV Mapping/Texturing
 - Exporting minecraft models that use "inflate" option.
 - Creating UV-mapping template textures.
+- Adding locators
 ## Planned features
 - Some planned features can be found in the
 ["Issues"](https://github.com/Nusiq/Blender-Export-MC-Bedrock-Model/issues])
@@ -49,19 +50,26 @@ bedrock bone" operator which can be accessed from F3 button menu. Tip: You can
 setup as shortcut to this function in Object Mode -> Object -> Parent -> right
 click "Clear parent from bedrock bone" -> Add Shortcut.
 
-## What becomes a mcbone and what becomes a mccube?
+## Mapping of blender objects into mcbones, mccubes and locators
 The add-on takes two types of object while creating the models - meshes and
-empties. Addon decides what should become an mcbone or mccube automatically by
-following the certain set of rules (the order of checking this rules is the
-same as in this document):
-1. If object type is "empty" it creates an mcbone (without mccubes)
-2. If the object is a mesh with a child defined by custom property ("mc_parent"
-in another mesh) it creates mcbone with one mccube in it.
-3. If the object is a mesh with custom property "mc_is_bone" with value set
-to 1 than the object becomes a mcbone with one mccube in it.
-4. Mesh with parent and without children becomes a mccube and is added to a
+empties. Addon decides what should become an mcbone, mccube or locator
+automatically by following the certain set of rules (the order of checking
+this rules is the same as in this document):
+
+#### Mapping rules for empties:
+1. Empty with "mc_is_bone" property becomes an mcbone.
+1. Empty without parents becomes an mcbone
+2. Empty with children ("mc_parent" in another object pointing at the empty)
+becomes mcbone
+3. Every other case (empty with no "mc_is_bone" propety, with parent and
+without children) becomes a locator.
+#### Mapping rules for meshes:
+1. If the mesh has a child defined by custom property ("mc_parent" in another
+object) it creates mcbone with one mccube in it.
+2. If the mesh has custom property "mc_is_bone" than the object becomes a mcbone with one mccube in it.
+3. Mesh with parent and without children becomes a mccube and is added to a
 list of mccubes of parent mcbone.
-5. In every other case (mesh without parent and without children) becomes a
+4. In every other case (mesh without parent and without children) becomes a
 mcbone with single mccube in it.
 
 Waring: A mesh that becomes mccube can't be animated. If you wan't to animate
@@ -105,7 +113,7 @@ anim_time_update property.
 This panel is used to plan the UV mapping of the model. By default all of the
 cubes in the model have uv-mapping set to [0, 0]. Use this panel before
 exporting the model to get proper UV-mapping. The uv mapping vlaues are stored
-on custom properties of the object in `mc_uv_u` and `mc_uv_v`.
+on custom properties of the object in `mc_uv`.
 - Texture width - the texture width property used for exporting of mcmodel.
 - Texture height - the texture height property used for exporting of mcmodel.
 If you sent this property to 0 the texture height will be selected
@@ -141,7 +149,6 @@ in minecraft model
 - mc_parent - points to an parent object in mcmodel.
 - mc_uv_group - used to group cubes with same width, depth and height to assign
 same uv-mapping to them.
-- mc_uv_u - U value of mcmodel uv-mapping.
-- mc_uv_v - V value of mcmodel uv-mapping.
-- mc_is_bone - if set to 1 marks an object as a mcbone.
+- mc_uv - U and V value of mcmodel uv-mapping.
+- mc_is_bone - if exists it marks an object as a mcbone.
 - mc_inflate - the inflate value of mc_cube in minecraft model.

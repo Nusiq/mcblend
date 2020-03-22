@@ -31,7 +31,7 @@ class OBJECT_OT_NusiqBmodelExportOperator(bpy.types.Operator):
         result = export_model(context)
 
         with open(output, 'w') as f:
-            json.dump(result, f) #, indent=4)
+            json.dump(result, f, indent='\t')
 
         self.report(
                 {'INFO'} ,
@@ -63,7 +63,7 @@ class OBJECT_OT_NusiqBmodelExportAnimationOperator(bpy.types.Operator):
 
         # Save file and finish
         with open(output, 'w') as f:
-            json.dump(animation_dict, f) #, indent=4)
+            json.dump(animation_dict, f, indent='\t')
         self.report(
                 {'INFO'} ,
                 f'Animation saved in {output}.'
@@ -98,6 +98,7 @@ class OBJECT_OT_NusiqBmodelMapUvOperator(bpy.types.Operator):
         else:
             self.report({'ERROR'}, "Unable to create UV-mapping.")
         return {'FINISHED'}
+
 
 class OBJECT_OT_NusiqBmodelUvGroupOperator(bpy.types.Operator):
     '''
@@ -143,6 +144,7 @@ class OBJECT_OT_NusiqBmodelUvGroupOperator(bpy.types.Operator):
         
         return {'FINISHED'}
 
+
 class OBJECT_OT_NusiqBmodelToggleMcMirrorOperator(bpy.types.Operator):
     '''
     Operator used for toggling custom property called mc_mirror for selected
@@ -185,6 +187,7 @@ class OBJECT_OT_NusiqBmodelToggleMcMirrorOperator(bpy.types.Operator):
 
         return {'FINISHED'}
 
+
 class OBJECT_OT_NusiqBmodelToggleMcIsBoneOperator(bpy.types.Operator):
     '''
     Operator used for toggling custom property called mc_is_bone for selected
@@ -204,14 +207,16 @@ class OBJECT_OT_NusiqBmodelToggleMcIsBoneOperator(bpy.types.Operator):
             return False
         if len(context.selected_objects) < 1:
             return False
-        return True
+        for obj in context.selected_objects:
+            if obj.type == "MESH":
+                return True
+        return False
 
     def execute(self, context):
         is_clearing = False
         for obj in context.selected_objects:
             if obj.type == "MESH":
                 if 'mc_is_bone' in obj:
-                    obj['mc_is_bone'] == 1
                     is_clearing = True
                     break
         if is_clearing:
@@ -223,11 +228,11 @@ class OBJECT_OT_NusiqBmodelToggleMcIsBoneOperator(bpy.types.Operator):
         else:
             for obj in context.selected_objects:
                 if obj.type == "MESH":
-                    obj['mc_is_bone'] = 1
-            self.report({'INFO'} , f'Set mc_is_bone property to 1.')
-            
+                    obj['mc_is_bone'] = {}
+            self.report({'INFO'} , f'Marked slected objects as mcbones.')
 
         return {'FINISHED'}
+
 
 class OBJECT_OT_NusiqBmodelSetInflateOperator(bpy.types.Operator):
     '''

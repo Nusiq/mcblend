@@ -38,13 +38,16 @@ def get_mcmodel_json(
 
 
 def get_mcbone_json(
-    bone: bpy_types.Object, cubes: tp.List[bpy_types.Object]
+    bone: bpy_types.Object, cubes: tp.List[bpy_types.Object],
+    locators: tp.List[bpy_types.Object]
 ) -> tp.Dict:
     '''
     - bone - the main object that represents the bone.
     - cubes - the list of objects that represent the cubes that belong to
       the bone. If the "bone" is one of the cubes it should be included on the
       list.
+    - locators - the list of objects that represent the locators that belong to
+      the bone.
 
     Returns the dictionary that represents a single mcbone in json file
     of model.
@@ -54,38 +57,43 @@ def get_mcbone_json(
         _, _, scale = obj.matrix_world.decompose()
         return np.array(scale.xzy)
 
+    # Set basic bone properties
     mcbone = {'name': bone.name, 'cubes': []}
-
-    # Code
     if 'mc_parent' in bone:
         mcbone['parent'] = bone['mc_parent'].name
         b_rot = get_mcrotation(bone.matrix_world, bone['mc_parent'].matrix_world)
     else:
         b_rot = get_mcrotation(bone.matrix_world)
-
     b_pivot = get_mcpivot(bone) * MINECRAFT_SCALE_FACTOR
+    mcbone['pivot'] = get_vect_json(b_pivot)
+    mcbone['rotation'] = get_vect_json(b_rot)
 
+    # Set locators
+    if len(locators) > 0:
+        mcbone['locators'] = {}
+    for locator in locators:
+        translation = get_local_matrix(bone.matrix_world, locator.matrix_world)
+        _l_scale = _scale(locator)
+        l_pivot = get_mcpivot(locator) * MINECRAFT_SCALE_FACTOR
+        l_origin = l_pivot + (get_mccube_position(locator, translation) *
+            _l_scale * MINECRAFT_SCALE_FACTOR
+        )
+        mcbone['locators'][locator.name] = get_vect_json(l_origin)
+        print('ABC')
+
+    # Set cubes
     for cube in cubes:
-        translation = get_local_matrix(
-            bone.matrix_world, cube.matrix_world
-        )
-
+        translation = get_local_matrix(bone.matrix_world, cube.matrix_world)
         _c_scale = _scale(cube)
-
-        c_size = (
-            get_mcube_size(cube) * _c_scale *
-            MINECRAFT_SCALE_FACTOR
-        )
-
+        c_size = get_mcube_size(cube) * _c_scale * MINECRAFT_SCALE_FACTOR
         c_pivot = get_mcpivot(cube) * MINECRAFT_SCALE_FACTOR
-        c_origin = c_pivot + (
-            get_mccube_position(cube, translation) * _c_scale *
-            MINECRAFT_SCALE_FACTOR
+        c_origin = c_pivot + (get_mccube_position(cube, translation) *
+            _c_scale * MINECRAFT_SCALE_FACTOR
         )
         c_rot = get_mcrotation(cube.matrix_world, bone.matrix_world)
 
-        if 'mc_uv_u' in cube and 'mc_uv_v' in cube:
-            uv = (cube['mc_uv_u'], cube['mc_uv_v'])
+        if 'mc_uv' in cube:
+            uv = tuple(cube['mc_uv'])
         else:
             uv = (0, 0)
 
@@ -95,7 +103,8 @@ def get_mcbone_json(
 
         cube_dict = {
             'uv': uv,
-            'size': [round(i) for i in get_vect_json(c_size)],  # TODO - add rounding option in the menu
+            # TODO - add rounding option in the menu
+            'size': [round(i) for i in get_vect_json(c_size)],
             'origin': get_vect_json(c_origin),
             'pivot': get_vect_json(c_pivot),
             'rotation': get_vect_json(c_rot)
@@ -110,7 +119,4 @@ def get_mcbone_json(
 
         mcbone['cubes'].append(cube_dict)
 
-
-    mcbone['pivot'] = get_vect_json(b_pivot)
-    mcbone['rotation'] = get_vect_json(b_rot)
     return mcbone

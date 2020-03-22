@@ -26,6 +26,7 @@ class MCObjType(Enum):
     CUBE = 'CUBE'
     BONE = 'BONE'
     BOTH = 'BOTH'
+    LOCATOR = 'LOCATOR'
 
 
 class ObjectMcProperties(tp.NamedTuple):
@@ -184,11 +185,18 @@ def get_object_mcproperties(
     for obj in context.selected_objects:
         tmp_prop = tmp_properties[obj.name]
         if obj.type == 'EMPTY':
-            tmp_prop['mc_obj_type'] = MCObjType.BONE
+            if "mc_is_bone" in obj:
+                tmp_prop['mc_obj_type'] = MCObjType.BONE
+            elif "mc_parent" not in obj:
+                tmp_prop['mc_obj_type'] = MCObjType.BONE
+            elif len(tmp_properties[obj.name]["mc_children"]) > 0:
+                tmp_prop['mc_obj_type'] = MCObjType.BONE
+            else:
+                tmp_prop['mc_obj_type'] = MCObjType.LOCATOR
         elif obj.type == 'MESH':
             if len(tmp_properties[obj.name]["mc_children"]) > 0:
                 tmp_prop['mc_obj_type'] = MCObjType.BOTH
-            elif "mc_is_bone" in obj and obj["mc_is_bone"] == 1:
+            elif "mc_is_bone" in obj:
                 tmp_prop["mc_obj_type"] = MCObjType.BOTH
             elif "mc_parent" in obj:
                 tmp_prop["mc_obj_type"] = MCObjType.CUBE

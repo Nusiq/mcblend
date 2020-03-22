@@ -47,23 +47,26 @@ def export_model(context: bpy_types.Context) -> tp.Dict:
             object_properties[obj.name].mctype in
             [MCObjType.BONE, MCObjType.BOTH]
         ):
-            # Create cubes list
+            # Create cubes and locators list
             if object_properties[obj.name].mctype == MCObjType.BOTH:
                 cubes = [obj]
             elif object_properties[obj.name].mctype == MCObjType.BONE:
                 cubes = []
+            locators = []
             # Add children cubes if they are MCObjType.CUBE type
             for child_name in (
                 object_properties[obj.name].mcchildren
             ):
-                if (
-                    child_name in object_properties and
-                    object_properties[child_name].mctype ==
-                    MCObjType.CUBE
-                ):
-                    cubes.append(bpy.data.objects[child_name])
+                if child_name in object_properties:
+                    if object_properties[child_name].mctype == MCObjType.CUBE:
+                        cubes.append(bpy.data.objects[child_name])
+                    elif (
+                        object_properties[child_name].mctype ==
+                        MCObjType.LOCATOR
+                    ):
+                        locators.append(bpy.data.objects[child_name])
 
-            mcbone = get_mcbone_json(obj, cubes)
+            mcbone = get_mcbone_json(obj, cubes, locators)
             mc_bones.append(mcbone)
 
     result = get_mcmodel_json(
@@ -176,8 +179,7 @@ def set_uvs(context: bpy_types.Context) -> bool:
     for obj in objs:
         if obj.name in uv_dict:
             curr_uv = uv_dict[obj.name]
-            obj['mc_uv_u'] = curr_uv.uv[0]
-            obj['mc_uv_v'] = curr_uv.uv[1]
+            obj['mc_uv'] = (curr_uv.uv[0], curr_uv.uv[1])
 
     if height is None:
         new_height = max([i.uv[1] + i.size[1] for i in uv_dict.values()])
