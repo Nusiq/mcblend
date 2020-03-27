@@ -17,7 +17,7 @@ tab of this project on Github.
 1. Download the zip file from github.
 2. In Blender do: Edit -> Preferences -> Add-ons -> Install... -> Select the
 zip file in file explorer.
-3. Serch for "MC Bedrock Export" in Add-ons. Check the box to enable the add-on
+3. Serch for "Mcblend" in Add-ons. Check the box to enable the add-on
 
 ## How to use it
 Minecraft models for bedrock edition support only cuboids. This means that the
