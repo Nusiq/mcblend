@@ -14,7 +14,7 @@ Blender addon for working with Minecraft models.
 tab of this project on Github.
 
 ## Instalation
-1. Download the zip file from github.
+1. Download the zip file from github (you can find the file in release tab).
 2. In Blender do: Edit -> Preferences -> Add-ons -> Install... -> Select the
 zip file in file explorer.
 3. Serch for "Mcblend" in Add-ons. Check the box to enable the add-on
