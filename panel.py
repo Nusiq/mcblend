@@ -8,7 +8,7 @@ from bpy.types import Operator, AddonPreferences
 import pathlib
 
 
-class OBJECT_NusiqBmodelExporterProperties(bpy.types.PropertyGroup):
+class OBJECT_NusiqMcblendExporterProperties(bpy.types.PropertyGroup):
     path: StringProperty(  # type: ignore
         name="",
         description="Path to the file for exporting the model.",
@@ -115,50 +115,50 @@ class OBJECT_NusiqBmodelExporterProperties(bpy.types.PropertyGroup):
     )
 
 
-class OBJECT_PT_NusiqBmodelExportPanel(bpy.types.Panel):
+class OBJECT_PT_NusiqMcblendExportPanel(bpy.types.Panel):
     bl_label = "Export bedrock model"
-    bl_category = "MC Bedrock exporter"
+    bl_category = "Mcblend"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
 
     def draw(self, context):
         col = self.layout.column(align=True)
-        col.prop(context.scene.nusiq_bmodel, "path", text="")
+        col.prop(context.scene.nusiq_mcblend, "path", text="")
         col.prop(
-            context.scene.nusiq_bmodel, "model_name", text="Name"
+            context.scene.nusiq_mcblend, "model_name", text="Name"
         )
         self.layout.row().operator(
-            "object.nusiq_bmodel_export_operator", text="Export model"
+            "object.nusiq_mcblend_export_operator", text="Export model"
         )
 
 
-class OBJECT_PT_NusiqBmodelExportAnimationPanel(bpy.types.Panel):
+class OBJECT_PT_NusiqMcblendExportAnimationPanel(bpy.types.Panel):
     bl_label = "Export bedrock animation"
-    bl_category = "MC Bedrock exporter"
+    bl_category = "Mcblend"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
 
     def draw(self, context):
         col = self.layout.column(align=True)
-        col.prop(context.scene.nusiq_bmodel, "path_animation", text="")
+        col.prop(context.scene.nusiq_mcblend, "path_animation", text="")
         col.prop(
-            context.scene.nusiq_bmodel, "animation_name", text="Name"
+            context.scene.nusiq_mcblend, "animation_name", text="Name"
         )
         col.prop(
-            context.scene.nusiq_bmodel, "loop_animation", text="Loop"
+            context.scene.nusiq_mcblend, "loop_animation", text="Loop"
         )
         col.prop(
-            context.scene.nusiq_bmodel, "anim_time_update",
+            context.scene.nusiq_mcblend, "anim_time_update",
             text="anim_time_update"
         )
         self.layout.row().operator(
-            "object.nusiq_bmodel_export_animation_operator", text="Export animation"
+            "object.nusiq_mcblend_export_animation_operator", text="Export animation"
         )
 
 
-class OBJECT_PT_NusiqBmodelSetUvsPanel(bpy.types.Panel):
+class OBJECT_PT_NusiqMcblendSetUvsPanel(bpy.types.Panel):
     bl_label = "Set bedrock UVs"
-    bl_category = "MC Bedrock exporter"
+    bl_category = "Mcblend"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
 
@@ -166,35 +166,35 @@ class OBJECT_PT_NusiqBmodelSetUvsPanel(bpy.types.Panel):
     def draw(self, context):
         col = self.layout.column(align=True)
         col.prop(
-            context.scene.nusiq_bmodel, "texture_width", text="Texture width"
+            context.scene.nusiq_mcblend, "texture_width", text="Texture width"
         )
         col.prop(
-            context.scene.nusiq_bmodel, "texture_height", text="Texture height"
+            context.scene.nusiq_mcblend, "texture_height", text="Texture height"
         )
         col.prop(
-            context.scene.nusiq_bmodel, "move_existing_mappings",
+            context.scene.nusiq_mcblend, "move_existing_mappings",
             text="Move existing mcUv mappings"
         )
         col.prop(
-            context.scene.nusiq_bmodel, "move_blender_uvs",
+            context.scene.nusiq_mcblend, "move_blender_uvs",
             text="Move blender UV mappings"
         )
         col.prop(
-            context.scene.nusiq_bmodel, "remove_old_mappings",
+            context.scene.nusiq_mcblend, "remove_old_mappings",
             text="Remove old UV maps"
         )
         col.prop(
-            context.scene.nusiq_bmodel, "texture_template_resolution",
+            context.scene.nusiq_mcblend, "texture_template_resolution",
             text="Template resolution"
         )
         self.layout.row().operator(
-            "object.nusiq_bmodel_map_uv_operator", text="Set minecraft UVs"
+            "object.nusiq_mcblend_map_uv_operator", text="Set minecraft UVs"
         )
 
 
-class OBJECT_PT_NusiqBmodelCustomPropertiesPanel(bpy.types.Panel):
+class OBJECT_PT_NusiqMcblendCustomPropertiesPanel(bpy.types.Panel):
     bl_label = "Custom properties"
-    bl_category = "MC Bedrock exporter"
+    bl_category = "Mcblend"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
 
@@ -202,18 +202,18 @@ class OBJECT_PT_NusiqBmodelCustomPropertiesPanel(bpy.types.Panel):
     def draw(self, context):
         col = self.layout.column(align=True)
         self.layout.row().operator(
-            "object.nusiq_bmodel_toggle_mc_mirror_operator",
+            "object.nusiq_mcblend_toggle_mc_mirror_operator",
             text="Toggle mc_mirror"
         )
         self.layout.row().operator(
-            "object.nusiq_bmodel_uv_group_operator",
+            "object.nusiq_mcblend_uv_group_operator",
             text="Set mc_uv_group"
         )
         self.layout.row().operator(
-            "object.nusiq_bmodel_toggle_mc_is_bone_operator",
+            "object.nusiq_mcblend_toggle_mc_is_bone_operator",
             text="Toggle mc_is_bone"
         )
         self.layout.row().operator(
-            "object.nusiq_bmodel_set_inflate_operator",
+            "object.nusiq_mcblend_set_inflate_operator",
             text="Set mc_inflate"
         )

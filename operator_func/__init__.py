@@ -36,8 +36,8 @@ def export_model(context: bpy_types.Context) -> tp.Dict:
     minecraft model.
     '''
     object_properties = get_object_mcproperties(context)
-    texture_width = context.scene.nusiq_bmodel.texture_width
-    texture_height = context.scene.nusiq_bmodel.texture_height
+    texture_width = context.scene.nusiq_mcblend.texture_width
+    texture_height = context.scene.nusiq_mcblend.texture_height
 
     mc_bones: tp.List[tp.Dict] = []
 
@@ -70,7 +70,7 @@ def export_model(context: bpy_types.Context) -> tp.Dict:
             mc_bones.append(mcbone)
 
     result = get_mcmodel_json(
-        context.scene.nusiq_bmodel.model_name,
+        context.scene.nusiq_mcblend.model_name,
         mc_bones, texture_width,
         texture_height
     )
@@ -139,22 +139,22 @@ def export_animation(context: bpy_types.Context) -> tp.Dict:
     context.scene.frame_set(start_frame)
     animation_dict = get_mcanimation_json(
         context,
-        name=context.scene.nusiq_bmodel.animation_name,
+        name=context.scene.nusiq_mcblend.animation_name,
         length=context.scene.frame_end,
-        loop_animation=context.scene.nusiq_bmodel.loop_animation,
-        anim_time_update=context.scene.nusiq_bmodel.anim_time_update,
+        loop_animation=context.scene.nusiq_mcblend.loop_animation,
+        anim_time_update=context.scene.nusiq_mcblend.anim_time_update,
         bone_data=bone_data
     )
 
     return animation_dict
 
 def set_uvs(context: bpy_types.Context) -> bool:
-    width = context.scene.nusiq_bmodel.texture_width
-    height = context.scene.nusiq_bmodel.texture_height
-    move_blender_uvs = context.scene.nusiq_bmodel.move_blender_uvs
-    move_existing_mappings = context.scene.nusiq_bmodel.move_existing_mappings
-    remove_old_mappings = context.scene.nusiq_bmodel.remove_old_mappings
-    resolution = context.scene.nusiq_bmodel.texture_template_resolution
+    width = context.scene.nusiq_mcblend.texture_width
+    height = context.scene.nusiq_mcblend.texture_height
+    move_blender_uvs = context.scene.nusiq_mcblend.move_blender_uvs
+    move_existing_mappings = context.scene.nusiq_mcblend.move_existing_mappings
+    remove_old_mappings = context.scene.nusiq_mcblend.remove_old_mappings
+    resolution = context.scene.nusiq_mcblend.texture_template_resolution
 
     objs = [obj for obj in bpy.context.selected_objects if obj.type == 'MESH']
 
@@ -185,7 +185,7 @@ def set_uvs(context: bpy_types.Context) -> bool:
         new_height = max([i.uv[1] + i.size[1] for i in uv_dict.values()])
     else:
         new_height = height
-    context.scene.nusiq_bmodel.texture_height=new_height
+    context.scene.nusiq_mcblend.texture_height=new_height
 
     # TODO - Create texture template
     if resolution >= 1:

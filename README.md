@@ -1,6 +1,5 @@
-# Blender-Export-MC-Bedrock-Model
-Blender addon that exports models for custom entities for Minecraft Bedrock
-Edition.
+# MCblend
+Blender addon for working with Minecraft models.
 
 ## Features
 - Exporting models into json files for minecraft bedrock edition.
@@ -78,7 +77,7 @@ add "mc_is_bone" property to it.
 
 ## Exporting the models and the animations:
 After installation and enabling the add-on there should be an additional tab
-called "MC Bedrock exporter" on the right sidebar of 3d-viewport (default key
+called "Mcblend" on the right sidebar of 3d-viewport (default key
 to open/close the sidebar in Blender is N). Opening this tab reveals four
 panels:
 - Export bedrock animation

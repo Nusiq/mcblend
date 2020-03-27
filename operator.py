@@ -12,9 +12,9 @@ import bpy_types
 import typing as tp
 
 
-class OBJECT_OT_NusiqBmodelExportOperator(bpy.types.Operator):
+class OBJECT_OT_NusiqMcblendExportOperator(bpy.types.Operator):
     '''Operator used for exporting minecraft models from blender'''
-    bl_idname = "object.nusiq_bmodel_export_operator"
+    bl_idname = "object.nusiq_mcblend_export_operator"
     bl_label = "Export Bedrock model."
     bl_description = "Exports selected objects from scene to bedrock model."
 
@@ -27,7 +27,7 @@ class OBJECT_OT_NusiqBmodelExportOperator(bpy.types.Operator):
         return True
 
     def execute(self, context):
-        output = context.scene.nusiq_bmodel.path
+        output = context.scene.nusiq_mcblend.path
         result = export_model(context)
 
         with open(output, 'w') as f:
@@ -40,9 +40,9 @@ class OBJECT_OT_NusiqBmodelExportOperator(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class OBJECT_OT_NusiqBmodelExportAnimationOperator(bpy.types.Operator):
+class OBJECT_OT_NusiqMcblendExportAnimationOperator(bpy.types.Operator):
     '''Operator used for exporting minecraft animations from blender'''
-    bl_idname = "object.nusiq_bmodel_export_animation_operator"
+    bl_idname = "object.nusiq_mcblend_export_animation_operator"
     bl_label = "Export animation for bedrock model."
     bl_description = (
         "Exports animation of selected objects to bedrock entity animation "
@@ -58,7 +58,7 @@ class OBJECT_OT_NusiqBmodelExportAnimationOperator(bpy.types.Operator):
         return True
 
     def execute(self, context):
-        output = context.scene.nusiq_bmodel.path_animation
+        output = context.scene.nusiq_mcblend.path_animation
         animation_dict = export_animation(context)
 
         # Save file and finish
@@ -71,9 +71,9 @@ class OBJECT_OT_NusiqBmodelExportAnimationOperator(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class OBJECT_OT_NusiqBmodelMapUvOperator(bpy.types.Operator):
+class OBJECT_OT_NusiqMcblendMapUvOperator(bpy.types.Operator):
     '''Operator used for creating UV-mapping for minecraft model.'''
-    bl_idname = "object.nusiq_bmodel_map_uv_operator"
+    bl_idname = "object.nusiq_mcblend_map_uv_operator"
     bl_label = "Map uv for bedrock model."
     bl_description = (
         "Set UV-mapping for minecraft objects."
@@ -89,8 +89,8 @@ class OBJECT_OT_NusiqBmodelMapUvOperator(bpy.types.Operator):
 
     def execute(self, context):
         if set_uvs(context):
-            width = context.scene.nusiq_bmodel.texture_width
-            height = context.scene.nusiq_bmodel.texture_height
+            width = context.scene.nusiq_mcblend.texture_width
+            height = context.scene.nusiq_mcblend.texture_height
             self.report(
                 {'INFO'} ,
                 f'UV map created successfuly for {width}x{height} texture.'
@@ -100,12 +100,12 @@ class OBJECT_OT_NusiqBmodelMapUvOperator(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class OBJECT_OT_NusiqBmodelUvGroupOperator(bpy.types.Operator):
+class OBJECT_OT_NusiqMcblendUvGroupOperator(bpy.types.Operator):
     '''
     Operator used for setting custom property called mc_uv_group for selected
     objects.
     '''
-    bl_idname = "object.nusiq_bmodel_uv_group_operator"
+    bl_idname = "object.nusiq_mcblend_uv_group_operator"
     bl_label = "Set mc_uv_group for bedrock model."
     bl_description = (
         "Set mc_uv_group for bedrock model. Objects that have the same width, "
@@ -145,12 +145,12 @@ class OBJECT_OT_NusiqBmodelUvGroupOperator(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class OBJECT_OT_NusiqBmodelToggleMcMirrorOperator(bpy.types.Operator):
+class OBJECT_OT_NusiqMcblendToggleMcMirrorOperator(bpy.types.Operator):
     '''
     Operator used for toggling custom property called mc_mirror for selected
     objects
     '''
-    bl_idname = "object.nusiq_bmodel_toggle_mc_mirror_operator"
+    bl_idname = "object.nusiq_mcblend_toggle_mc_mirror_operator"
     bl_label = "Toggle mc_mirror for selected objects."
     bl_description = (
         "Toggle mc_mirror for selected objects. Adds or removes mirror "
@@ -188,12 +188,12 @@ class OBJECT_OT_NusiqBmodelToggleMcMirrorOperator(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class OBJECT_OT_NusiqBmodelToggleMcIsBoneOperator(bpy.types.Operator):
+class OBJECT_OT_NusiqMcblendToggleMcIsBoneOperator(bpy.types.Operator):
     '''
     Operator used for toggling custom property called mc_is_bone for selected
     objects.
     '''
-    bl_idname = "object.nusiq_bmodel_toggle_mc_is_bone_operator"
+    bl_idname = "object.nusiq_mcblend_toggle_mc_is_bone_operator"
     bl_label = "Toggle mc_is_bone for selected objects."
     bl_description = (
         "Toggles mc_is_bone for selected objects. Setting mc_is_bone property "
@@ -234,13 +234,13 @@ class OBJECT_OT_NusiqBmodelToggleMcIsBoneOperator(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class OBJECT_OT_NusiqBmodelSetInflateOperator(bpy.types.Operator):
+class OBJECT_OT_NusiqMcblendSetInflateOperator(bpy.types.Operator):
     '''
     Operator used for setting the inflate value of selected objects. It changes
     the dimensions of selected object and adds custom property called
     mc_inflate.
     '''
-    bl_idname = "object.nusiq_bmodel_set_inflate_operator"
+    bl_idname = "object.nusiq_mcblend_set_inflate_operator"
     bl_label = "Set the mc_inflate vale for selected objects and resise them."
     bl_description = (
         "Set the mc_inflate vale for selected objects and change their "
@@ -271,9 +271,9 @@ class OBJECT_OT_NusiqBmodelSetInflateOperator(bpy.types.Operator):
 
 
 # Aditional operators
-class OBJECT_OT_NusiqBmodelParentOperator(bpy.types.Operator):
+class OBJECT_OT_NusiqMcblendParentOperator(bpy.types.Operator):
     """Add parent child relation for bedrock model exporter."""
-    bl_idname = "object.nusiq_bmodel_parent_operator"
+    bl_idname = "object.nusiq_mcblend_parent_operator"
     bl_label = "Parent bedrock bone"
     bl_description = "Parent object for bedrock model exporter."
     bl_options = {'REGISTER', 'UNDO'}
@@ -312,16 +312,16 @@ class OBJECT_OT_NusiqBmodelParentOperator(bpy.types.Operator):
 
 
 def menu_bedrock_parent(self, context: bpy_types.Context):
-    '''Used for registration of OBJECT_OT_NusiqBmodelParentOperator class'''
+    '''Used for registration of OBJECT_OT_NusiqMcblendParentOperator class'''
     self.layout.operator(
-        OBJECT_OT_NusiqBmodelParentOperator.bl_idname,
-        text=OBJECT_OT_NusiqBmodelParentOperator.bl_label, icon="PLUGIN"
+        OBJECT_OT_NusiqMcblendParentOperator.bl_idname,
+        text=OBJECT_OT_NusiqMcblendParentOperator.bl_label, icon="PLUGIN"
     )
 
 
-class OBJECT_OT_NusiqBmodelParentClearOperator(bpy.types.Operator):
+class OBJECT_OT_NusiqMcblendParentClearOperator(bpy.types.Operator):
     """Clear parent child relation for bedrock model exporter."""
-    bl_idname = "object.nusiq_bmodel_parent_clear_operator"
+    bl_idname = "object.nusiq_mcblend_parent_clear_operator"
     bl_label = "Clear parent from bedrock bone"
     bl_description = "Clear parent for bedrock model exporter."
     bl_options = {'REGISTER', 'UNDO'}
@@ -345,8 +345,8 @@ class OBJECT_OT_NusiqBmodelParentClearOperator(bpy.types.Operator):
 
 
 def menu_bedrock_parent_clear(self, context: bpy_types.Context):
-    '''Used for registration of OBJECT_OT_NusiqBmodelParentClearOperator class'''
+    '''Used for registration of OBJECT_OT_NusiqMcblendParentClearOperator class'''
     self.layout.operator(
-        OBJECT_OT_NusiqBmodelParentClearOperator.bl_idname,
-        text=OBJECT_OT_NusiqBmodelParentClearOperator.bl_label, icon="PLUGIN"
+        OBJECT_OT_NusiqMcblendParentClearOperator.bl_idname,
+        text=OBJECT_OT_NusiqMcblendParentClearOperator.bl_label, icon="PLUGIN"
     )
