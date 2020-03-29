@@ -12,6 +12,7 @@ import bpy_types
 import typing as tp
 
 
+# Export model
 class OBJECT_OT_NusiqMcblendExportOperator(bpy.types.Operator):
     '''Operator used for exporting minecraft models from blender'''
     bl_idname = "object.nusiq_mcblend_export_operator"
@@ -40,6 +41,7 @@ class OBJECT_OT_NusiqMcblendExportOperator(bpy.types.Operator):
         return {'FINISHED'}
 
 
+# Export animation
 class OBJECT_OT_NusiqMcblendExportAnimationOperator(bpy.types.Operator):
     '''Operator used for exporting minecraft animations from blender'''
     bl_idname = "object.nusiq_mcblend_export_animation_operator"
@@ -71,6 +73,7 @@ class OBJECT_OT_NusiqMcblendExportAnimationOperator(bpy.types.Operator):
         return {'FINISHED'}
 
 
+# Uv map
 class OBJECT_OT_NusiqMcblendMapUvOperator(bpy.types.Operator):
     '''Operator used for creating UV-mapping for minecraft model.'''
     bl_idname = "object.nusiq_mcblend_map_uv_operator"
@@ -100,6 +103,7 @@ class OBJECT_OT_NusiqMcblendMapUvOperator(bpy.types.Operator):
         return {'FINISHED'}
 
 
+# Uv group
 class OBJECT_OT_NusiqMcblendUvGroupOperator(bpy.types.Operator):
     '''
     Operator used for setting custom property called mc_uv_group for selected
@@ -145,6 +149,7 @@ class OBJECT_OT_NusiqMcblendUvGroupOperator(bpy.types.Operator):
         return {'FINISHED'}
 
 
+# Toogle mc_mirror
 class OBJECT_OT_NusiqMcblendToggleMcMirrorOperator(bpy.types.Operator):
     '''
     Operator used for toggling custom property called mc_mirror for selected
@@ -188,6 +193,7 @@ class OBJECT_OT_NusiqMcblendToggleMcMirrorOperator(bpy.types.Operator):
         return {'FINISHED'}
 
 
+# Toggle mc_is_bone
 class OBJECT_OT_NusiqMcblendToggleMcIsBoneOperator(bpy.types.Operator):
     '''
     Operator used for toggling custom property called mc_is_bone for selected
@@ -234,6 +240,7 @@ class OBJECT_OT_NusiqMcblendToggleMcIsBoneOperator(bpy.types.Operator):
         return {'FINISHED'}
 
 
+# Inflate
 class OBJECT_OT_NusiqMcblendSetInflateOperator(bpy.types.Operator):
     '''
     Operator used for setting the inflate value of selected objects. It changes
@@ -270,7 +277,8 @@ class OBJECT_OT_NusiqMcblendSetInflateOperator(bpy.types.Operator):
         return {'FINISHED'}
 
 
-# Aditional operators
+### Aditional operators
+# Set parent
 class OBJECT_OT_NusiqMcblendParentOperator(bpy.types.Operator):
     """Add parent child relation for bedrock model exporter."""
     bl_idname = "object.nusiq_mcblend_parent_operator"
@@ -319,6 +327,7 @@ def menu_bedrock_parent(self, context: bpy_types.Context):
     )
 
 
+# Clear parent
 class OBJECT_OT_NusiqMcblendParentClearOperator(bpy.types.Operator):
     """Clear parent child relation for bedrock model exporter."""
     bl_idname = "object.nusiq_mcblend_parent_clear_operator"

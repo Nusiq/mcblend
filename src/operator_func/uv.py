@@ -421,7 +421,7 @@ def get_uv_mc_cubes(
         '''Scale of a bone'''
         _, _, scale = obj.matrix_world.decompose()
         return np.array(scale.xzy)
-    
+
     uv_groups: tp.Dict[str, _UvGroup] = defaultdict(lambda: _UvGroup())
     result = {}
 
@@ -432,18 +432,22 @@ def get_uv_mc_cubes(
             scale = scale - obj['mc_inflate']*2
 
         # width, height, depth
-        w, h, d = tuple([round(i) for i in scale])  # TODO - should this really be rounded?
+        # TODO - should this really be rounded?
+        w, h, d = tuple([round(i) for i in scale])
 
         if read_existing_uvs and 'mc_uv' in obj:
-                result[obj.name] = UvMcCube(w, d, h, tuple(obj['mc_uv']))
+            result[obj.name] = UvMcCube(
+                w, d, h,
+                tuple(obj['mc_uv'])  # type: ignore
+            )
         else:
             if (
                 'mc_uv_group' in obj and
                 (w, d, h) in uv_groups[obj['mc_uv_group']].items
             ):
-                    result[obj.name] =  uv_groups[
-                        obj['mc_uv_group']
-                    ].items[(w, d, h)]
+                result[obj.name] = uv_groups[
+                    obj['mc_uv_group']
+                ].items[(w, d, h)]
             else:
                 result[obj.name] = UvMcCube(w, d, h)
                 if 'mc_uv_group' in obj:

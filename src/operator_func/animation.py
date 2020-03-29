@@ -98,7 +98,7 @@ def get_transformations(
     Returns a dicionary with name of the object as keys and transformation
     properties as values.
     '''
-    transformations:tp.Dict[str, ObjectMcTransformations] = {}
+    transformations: tp.Dict[str, ObjectMcTransformations] = {}
     for obj in context.selected_objects:
         if (
             obj.name in object_properties and

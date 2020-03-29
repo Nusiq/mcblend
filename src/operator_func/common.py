@@ -48,6 +48,15 @@ class ObjectMcTransformations(tp.NamedTuple):
     rotation: np.array
 
 
+class McConvertibleType(Enum):
+    '''
+    Type of an object in blender that can be converted into something in
+    minecraft model.
+    '''
+    BONE = 'BONE'
+    MESH = 'MESH'
+    EMPTY = 'EMPTY'
+
 
 def get_vect_json(arr: tp.Iterable) -> tp.List[float]:
     '''
@@ -255,3 +264,21 @@ def pick_closest_rotation(
         return choice2
     else:
         return choice1
+
+
+def loop_objects_and_bones(objects) -> tp.Iterator[
+    tp.Tuple[tp.Union[bpy.types.Bone, bpy.types.Objec], McConvertibleType]
+]:
+    '''
+    An iterator that loops over the objects and yields the objects with their
+    types. If the object.type is ARMATRE than it yields the bones and returns
+    'BONE' as a type value.
+    '''
+    for obj in objects:
+        if obj.type == 'ARMATURE':
+            for bone in obj.data.bones:
+                yield bone, McConvertibleType.BONE
+        elif obj.type == 'EMPTY':
+            yield obj, McConvertibleType.EMPTY
+        elif obj.type == 'MESH':
+            yield obj, McConvertibleType.MESH

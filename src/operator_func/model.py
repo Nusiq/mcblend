@@ -87,8 +87,8 @@ def get_mcbone_json(
         _c_scale = _scale(cube)
         c_size = get_mcube_size(cube) * _c_scale * MINECRAFT_SCALE_FACTOR
         c_pivot = get_mcpivot(cube) * MINECRAFT_SCALE_FACTOR
-        c_origin = c_pivot + (get_mccube_position(cube, translation) *
-            _c_scale * MINECRAFT_SCALE_FACTOR
+        c_origin = c_pivot + (get_mccube_position(
+            cube, translation) * _c_scale * MINECRAFT_SCALE_FACTOR
         )
         c_rot = get_mcrotation(cube.matrix_world, bone.matrix_world)
 
@@ -101,7 +101,7 @@ def get_mcbone_json(
             c_size = c_size - cube['mc_inflate']*2
             c_origin = c_origin + cube['mc_inflate']
 
-        cube_dict = {
+        cube_dict: tp.Dict = {
             'uv': uv,
             # TODO - add rounding option in the menu
             'size': [round(i) for i in get_vect_json(c_size)],
