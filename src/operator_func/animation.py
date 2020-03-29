@@ -8,14 +8,15 @@ import typing as tp
 
 from .common import (
     MINECRAFT_SCALE_FACTOR, ObjectMcProperties, ObjectMcTransformations,
-    MCObjType, get_local_matrix, get_mcrotation
+    MCObjType, get_local_matrix, get_mcrotation, ObjectId
 )
 
 # ANIMATIONS
+# TODO - update documentation (added ObjectID)
 def get_mcanimation_json(
     context: bpy_types.Context,
     name: str, length: int, loop_animation: bool, anim_time_update: str,
-    bone_data: tp.Dict[str, tp.Dict[str, tp.List[tp.Dict]]]
+    bone_data: tp.Dict[ObjectId, tp.Dict[str, tp.List[tp.Dict]]]
 ):
     '''
     - name - name of the animation
@@ -56,17 +57,17 @@ def get_mcanimation_json(
     # Extract bones data
     bones: tp.Dict = {}
     for bone_name, bone in bone_data.items():
-        bones[bone_name] = {
+        bones[bone_name.name] = {
             'position': {},
             'rotation': {},
             'scale': {}
         }
         for prop in reduce_property(context, bone['position']):
-            bones[bone_name]['position'][prop['time']] = prop['value']
+            bones[bone_name.name]['position'][prop['time']] = prop['value']
         for prop in reduce_property(context, bone['rotation']):
-            bones[bone_name]['rotation'][prop['time']] = prop['value']
+            bones[bone_name.name]['rotation'][prop['time']] = prop['value']
         for prop in reduce_property(context, bone['scale']):
-            bones[bone_name]['scale'][prop['time']] = prop['value']
+            bones[bone_name.name]['scale'][prop['time']] = prop['value']
     # Returning result
     result: tp.Dict = {
         "format_version": "1.8.0",
@@ -85,10 +86,11 @@ def get_mcanimation_json(
     return result
 
 
+# TODO - update documentation (added ObjectID)
 def get_transformations(
     context: bpy_types.Context,
-    object_properties: tp.Dict[str, ObjectMcProperties]
-) -> tp.Dict[str, ObjectMcTransformations]:
+    object_properties: tp.Dict[ObjectId, ObjectMcProperties]
+) -> tp.Dict[ObjectId, ObjectMcTransformations]:
     '''
     Loops over context.selected_objects and returns the dictionary with
     information about transformations of every bone. Uses `object_properties`
@@ -98,11 +100,11 @@ def get_transformations(
     Returns a dicionary with name of the object as keys and transformation
     properties as values.
     '''
-    transformations: tp.Dict[str, ObjectMcTransformations] = {}
+    transformations: tp.Dict[ObjectId, ObjectMcTransformations] = {}
     for obj in context.selected_objects:
         if (
-            obj.name in object_properties and
-            object_properties[obj.name].mctype in
+            ObjectId(obj.name, '') in object_properties and
+            object_properties[ObjectId(obj.name, '')].mctype in
             [MCObjType.BONE, MCObjType.BOTH]
         ):
             if 'mc_parent' in obj:
@@ -124,7 +126,7 @@ def get_transformations(
             # Rotation
             rotation = get_mcrotation(obj.matrix_world, parent_matrix)
 
-            transformations[obj.name] = ObjectMcTransformations(
+            transformations[ObjectId(obj.name, '')] = ObjectMcTransformations(
                 location=location, scale=scale, rotation=rotation
             )
     return transformations

@@ -28,8 +28,10 @@ from .common import (
     get_object_mcproperties,
     get_vect_json,
     pick_closest_rotation,
+    ObjectId,
 )
 
+# TODO - update documentation (added ObjectID)
 def export_model(context: bpy_types.Context) -> tp.Dict:
     '''
     Uses context.selected_objects to create and return dictionary with
@@ -43,25 +45,25 @@ def export_model(context: bpy_types.Context) -> tp.Dict:
 
     for obj in context.selected_objects:
         if (
-            obj.name in object_properties and
-            object_properties[obj.name].mctype in
+            ObjectId(obj.name, '') in object_properties and
+            object_properties[ObjectId(obj.name, '')].mctype in
             [MCObjType.BONE, MCObjType.BOTH]
         ):
             # Create cubes and locators list
-            if object_properties[obj.name].mctype == MCObjType.BOTH:
+            if object_properties[ObjectId(obj.name, '')].mctype == MCObjType.BOTH:
                 cubes = [obj]
-            elif object_properties[obj.name].mctype == MCObjType.BONE:
+            elif object_properties[ObjectId(obj.name, '')].mctype == MCObjType.BONE:
                 cubes = []
             locators = []
             # Add children cubes if they are MCObjType.CUBE type
             for child_name in (
-                object_properties[obj.name].mcchildren
+                object_properties[ObjectId(obj.name, '')].mcchildren
             ):
-                if child_name in object_properties:
-                    if object_properties[child_name].mctype == MCObjType.CUBE:
+                if ObjectId(child_name, '') in object_properties:
+                    if object_properties[ObjectId(child_name, '')].mctype == MCObjType.CUBE:
                         cubes.append(bpy.data.objects[child_name])
                     elif (
-                        object_properties[child_name].mctype ==
+                        object_properties[ObjectId(child_name, '')].mctype ==
                         MCObjType.LOCATOR
                     ):
                         locators.append(bpy.data.objects[child_name])
@@ -76,6 +78,8 @@ def export_model(context: bpy_types.Context) -> tp.Dict:
     )
     return result
 
+
+# TODO - update documentation (added ObjectID)
 def export_animation(context: bpy_types.Context) -> tp.Dict:
     '''
     Uses context.selected_objects to create and return dictionary with
@@ -85,7 +89,7 @@ def export_animation(context: bpy_types.Context) -> tp.Dict:
 
     start_frame = context.scene.frame_current
     
-    bone_data: tp.Dict[str, tp.Dict[str, tp.List[tp.Dict]]] = (  # TODO - Create object for that for safer/cleaner code - https://www.python.org/dev/peps/pep-0589/
+    bone_data: tp.Dict[ObjectId, tp.Dict[str, tp.List[tp.Dict]]] = (  # TODO - Create object for that for safer/cleaner code - https://www.python.org/dev/peps/pep-0589/
         defaultdict(lambda: {
             'scale': [], 'rotation': [], 'position': []
         })

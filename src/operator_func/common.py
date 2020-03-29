@@ -33,9 +33,23 @@ class ObjectMcProperties(tp.NamedTuple):
     '''
     Temporary minecraft-related properties of an object (mesh or empty).
     '''
+    mcparent: tp.Optional[str]
     mcchildren: tp.Tuple[str]
     mctype: MCObjType
 
+
+class ObjectId(tp.NamedTuple):
+    '''
+    Unique ID of a mesh, empty or a bone.
+    
+    For meshes and empties it's armature_name is just an empty string and the
+    name is the name of the object.
+
+    For bones the ID uses both the name (name of the bone) and armature name
+    which is the name of the armature containing the bone.
+    '''
+    name: str
+    armature_name: str
 
 class ObjectMcTransformations(tp.NamedTuple):
     '''
@@ -169,10 +183,10 @@ def get_mcpivot(obj: bpy_types.Object) -> np.ndarray:
 
     return np.array(_get_mcpivot(obj).xzy)
 
-
+# TODO - update documentation (added ObjectID)
 def get_object_mcproperties(
     context: bpy_types.Context
-) -> tp.Dict[str, ObjectMcProperties]:
+) -> tp.Dict[ObjectId, ObjectMcProperties]:
     '''
     Loops through context.selected_objects and returns a dictionary with custom
     properties of mcobjects. Returned dictionary uses the names of the objects
@@ -190,7 +204,7 @@ def get_object_mcproperties(
                     obj["mc_parent"].name
                 ]["mc_children"].append(obj)
 
-    properties: tp.Dict[str, ObjectMcProperties] = {}
+    properties: tp.Dict[ObjectId, ObjectMcProperties] = {}
     for obj in context.selected_objects:
         tmp_prop = tmp_properties[obj.name]
         if obj.type == 'EMPTY':
@@ -211,8 +225,9 @@ def get_object_mcproperties(
                 tmp_prop["mc_obj_type"] = MCObjType.CUBE
             else:  # Not connected to anything
                 tmp_prop["mc_obj_type"] = MCObjType.BOTH
-
-        properties[obj.name] = ObjectMcProperties(
+                  
+        properties[ObjectId(obj.name, '')] = ObjectMcProperties(
+            mcparent = obj.parent if obj.parent is not None else None,
             mcchildren = tuple(i.name for i in tmp_prop['mc_children']),  # type: ignore
             mctype = tmp_prop['mc_obj_type']
         )
@@ -264,21 +279,3 @@ def pick_closest_rotation(
         return choice2
     else:
         return choice1
-
-
-def loop_objects_and_bones(objects) -> tp.Iterator[
-    tp.Tuple[tp.Union[bpy.types.Bone, bpy.types.Objec], McConvertibleType]
-]:
-    '''
-    An iterator that loops over the objects and yields the objects with their
-    types. If the object.type is ARMATRE than it yields the bones and returns
-    'BONE' as a type value.
-    '''
-    for obj in objects:
-        if obj.type == 'ARMATURE':
-            for bone in obj.data.bones:
-                yield bone, McConvertibleType.BONE
-        elif obj.type == 'EMPTY':
-            yield obj, McConvertibleType.EMPTY
-        elif obj.type == 'MESH':
-            yield obj, McConvertibleType.MESH
