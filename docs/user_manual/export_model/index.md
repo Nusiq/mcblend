@@ -2,7 +2,7 @@
 
 This panel is used for exporting the models.
 
-![](/img/export_model_panel.png)
+![](../../img/export_model_panel.png)
 
 ## Usage
 1. Set the model to its neutral pose. Tip: You can use frame 0 (frame before

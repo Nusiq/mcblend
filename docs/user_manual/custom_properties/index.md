@@ -3,7 +3,7 @@
 This panel adds easy acces for managing some of the custom properties used by
 the plugin.
 
-![](/img/custom_properties_panel.png)
+![](../../img/custom_properties_panel.png)
 
 ## Usage
 - **Toggles mc_mirror** - Toggles `mc_mirror` property for selected object.

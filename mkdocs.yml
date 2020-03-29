@@ -3,17 +3,17 @@ site_name: Mcblend
 nav:
     - Home:
       - About: index.md
-      - Installation: installation.md
+      - Installation: installation
 
     - User manual:
-      - user_manual/basics.md
-      - user_manual/conversion_rules.md
-      - user_manual/custom_properties.md
-      - user_manual/export_model.md
-      - user_manual/export_animation.md
-      - user_manual/set_uvs.md
-      - user_manual/parenting.md
-      - user_manual/glossary.md
+      - Basics: user_manual/basics
+      - Conversion rules: user_manual/conversion_rules
+      - Custom properties - panel: user_manual/custom_properties
+      - Export bedrock model - panel: user_manual/export_model
+      - Export bedrock animation - panel: user_manual/export_animation
+      - Set bedrock UVs - panel: user_manual/set_uvs
+      - Parenting mcbones: user_manual/parenting
+      - Glossary: user_manual/glossary
 
 
 theme: 

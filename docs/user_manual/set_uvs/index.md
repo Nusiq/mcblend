@@ -3,7 +3,7 @@
 This panel is used for creating UV-mapping for the model and generating
 template textures.
 
-![](/img/set_bedrock_uvs_panel.png)
+![](../../img/set_bedrock_uvs_panel.png)
 
 ## Usage
 By default all of the cubes in the model have the [0, 0] uv-mapping.

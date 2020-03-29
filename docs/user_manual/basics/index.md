@@ -1,6 +1,6 @@
 # Basics
 
-![](/img/mcblend_gui_image.png)
+![](../../img/mcblend_gui_image.png)
 
 ## GUI
 After installation and enabling the add-on there should be an additional tab
@@ -29,4 +29,4 @@ proper cuboid
 Mcblend uses custom object properties to store some data about minecraft model
 You can view the these porperties in `Object properties -> Custom properties`.
 
-![](/img/custom_properties.png)
+![](../../img/custom_properties.png)

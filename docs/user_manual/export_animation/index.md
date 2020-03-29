@@ -2,7 +2,7 @@
 
 This panel is used for exporting animations.
 
-![](/img/export_animation_panel.png)
+![](../../img/export_animation_panel.png)
 
 ## Usage
 1. Select all of the objects to export. If the model uses a rig for
