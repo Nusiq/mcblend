@@ -9,14 +9,16 @@ import bpy_types
 import typing as tp
 
 
-from .common import MINECRAFT_SCALE_FACTOR, get_mcube_size
+from .common import (
+    MINECRAFT_SCALE_FACTOR, get_mcube_size, ObjectId, ObjectMcProperties
+)
 
 
 def get_uv_face(
-    obj: bpy_types.Object, face_name: str
+    objprop: ObjectMcProperties, face_name: str
 ) -> tp.Dict[str, int]:
     '''
-    - obj - the mesh object with cube
+    - objprop - the properties of the object
     - face_name - decides which face should be returned
 
     Returns a dictionary with list of integer indices of loops which are part
@@ -28,15 +30,15 @@ def get_uv_face(
     }
     # list with bound box vertex indices in order LD, RD, RU, LU
     f = bound_box_faces[face_name]
-    bb = obj.bound_box
+    bb = objprop.bound_box()
     bb_verts = {
         'LD': np.array(bb[f[0]]), 'RD': np.array(bb[f[1]]),
         'RU': np.array(bb[f[2]]), 'LU': np.array(bb[f[3]]),
     }
-    for face in obj.data.polygons:
+    for face in objprop.thisobj.data.polygons:
         confirmed_vertices = {'LD': None, 'RD': None, 'RU': None, 'LU': None}
         for vertex_id, loop_id in zip(face.vertices, face.loop_indices):
-            vertex = np.array(obj.data.vertices[vertex_id].co)
+            vertex = np.array(objprop.thisobj.data.vertices[vertex_id].co)
             for bbv_key , bbv_value in bb_verts.items():
                 if np.allclose(vertex, bbv_value):
                     confirmed_vertices[bbv_key] = loop_id
@@ -46,13 +48,12 @@ def get_uv_face(
 
 
 def set_uv(
-    obj: bpy_types.Object, uv_face: tp.Dict[str, int],
+    objprop: ObjectMcProperties, uv_face: tp.Dict[str, int],
     crds: tp.Tuple[float, float], size: tp.Tuple[float, float],
     mirror_y: bool, mirror_x: bool
 ):
     '''
-    - obj - the mesh object with cube
-
+    - objprop - the data of the object
     - uv_face - the dictionary with loop indices used to define which loops
       of the uv should be moved.
     - crds - value from 0 to 1 the position of the bottom left loop on blender
@@ -60,7 +61,7 @@ def set_uv(
     - size - value from 0 to 1 the size of the rectangle in blender uv mapping
       coordinates system.
     '''
-    uv_data = obj.data.uv_layers.active.data
+    uv_data = objprop.thisobj.data.uv_layers.active.data
     order = ['LD', 'RD', 'RU', 'LU']
 
     if mirror_x:
@@ -75,11 +76,11 @@ def set_uv(
 
 
 def set_cube_uv(
-    obj: bpy_types.Object, uv: tp.Tuple[float, float], width: float,
+    objprop: ObjectMcProperties, uv: tp.Tuple[float, float], width: float,
     depth: float, height: float, texture_width: int, texture_height: int
 ):
     '''
-    - obj - the mesh object with cube
+    - objprop - properties of the object
     - uv - value from 0 to 1 the position of the bottom left loop on blender
       uv mapping coordinates system.
     - width - value from 0 to 1 the width of the cube converted into blender
@@ -94,67 +95,67 @@ def set_cube_uv(
     patter as minecraft UV mapping.
     '''
     uv = (uv[0], texture_height-uv[1]-depth-height)
-    if 'mc_mirror' in obj and obj['mc_mirror'] == 1:
+    if 'mc_mirror' in objprop.thisobj and objprop.thisobj['mc_mirror'] == 1:
         set_uv(
-            obj, get_uv_face(obj, 'left'), 
+            objprop, get_uv_face(objprop, 'left'), 
             (uv[0]/texture_width, uv[1]/texture_height),
             (depth/texture_width, height/texture_height), False, True
         )
         set_uv(
-            obj, get_uv_face(obj, 'front'),
+            objprop, get_uv_face(objprop, 'front'),
             ((uv[0] + depth)/texture_width, uv[1]/texture_height),
             (width/texture_width, height/texture_height), True, False
         )
         set_uv(
-            obj, get_uv_face(obj, 'right'),
+            objprop, get_uv_face(objprop, 'right'),
             ((uv[0] + depth + width)/texture_width, uv[1]/texture_height),
             (depth/texture_width, height/texture_height), False, True
         )
         set_uv(
-            obj, get_uv_face(obj, 'back'),
+            objprop, get_uv_face(objprop, 'back'),
             ((uv[0] + 2*depth + width)/texture_width, uv[1]/texture_height),
             (width/texture_width, height/texture_height), True, False
         )
         
         set_uv(
-            obj, get_uv_face(obj, 'top'),
+            objprop, get_uv_face(objprop, 'top'),
             ((uv[0] + depth)/texture_width, (uv[1] + height)/texture_height),
             (width/texture_width, depth/texture_height), False, True
         )
         set_uv(
-            obj, get_uv_face(obj, 'bottom'),
+            objprop, get_uv_face(objprop, 'bottom'),
             ((uv[0] + depth + width)/texture_width, (uv[1] + height)/texture_height),
             (width/texture_width, depth/texture_height), False, True
         )
     else:
         set_uv(
-            obj, get_uv_face(obj, 'right'), 
+            objprop, get_uv_face(objprop, 'right'), 
             (uv[0]/texture_width, uv[1]/texture_height),
             (depth/texture_width, height/texture_height), False, False
         )
         set_uv(
-            obj, get_uv_face(obj, 'front'),
+            objprop, get_uv_face(objprop, 'front'),
             ((uv[0] + depth)/texture_width, uv[1]/texture_height),
             (width/texture_width, height/texture_height), False, False
         )
         set_uv(
-            obj, get_uv_face(obj, 'left'),
+            objprop, get_uv_face(objprop, 'left'),
             ((uv[0] + depth + width)/texture_width, uv[1]/texture_height),
             (depth/texture_width, height/texture_height), False, False
         )
         set_uv(
-            obj, get_uv_face(obj, 'back'),
+            objprop, get_uv_face(objprop, 'back'),
             ((uv[0] + 2*depth + width)/texture_width, uv[1]/texture_height),
             (width/texture_width, height/texture_height), False, False
         )
         
         set_uv(
-            obj, get_uv_face(obj, 'top'),
+            objprop, get_uv_face(objprop, 'top'),
             ((uv[0] + depth)/texture_width, (uv[1] + height)/texture_height),
             (width/texture_width, depth/texture_height), False, False
         )
         set_uv(
-            obj, get_uv_face(obj, 'bottom'),
+            objprop, get_uv_face(objprop, 'bottom'),
             ((uv[0] + depth + width)/texture_width, (uv[1] + height)/texture_height),
             (width/texture_width, depth/texture_height), False, False
         )
@@ -406,51 +407,54 @@ class _UvGroup:
 
 
 def get_uv_mc_cubes(
-    objects: tp.List[bpy_types.Object],
+    objprops: tp.List[ObjectMcProperties],
     read_existing_uvs
 ) -> tp.Dict[str, UvMcCube]:
     '''
     Returns name-uv_mc_cube dictionary with uv_mc_cubes of selected objects.
 
-    - objects - list of the objects
+    - objprops - list of the properties of the objects
     - read_existing_uvs - if set to True it will try to read the custom
       properties of the `obj` to read its UV values.
     '''
-    def _scale(obj: bpy_types.Object) -> np.ndarray:
+    def _scale(objprop: ObjectMcProperties) -> np.ndarray:
         '''Scale of a bone'''
-        _, _, scale = obj.matrix_world.decompose()
+        _, _, scale = objprop.matrix_world().decompose()
         return np.array(scale.xzy)
 
     uv_groups: tp.Dict[str, _UvGroup] = defaultdict(lambda: _UvGroup())
     result = {}
 
-    for obj in objects:
-        scale = get_mcube_size(obj) * _scale(obj) * MINECRAFT_SCALE_FACTOR
+    for objprop in objprops:
+        scale = (
+            get_mcube_size(objprop) * _scale(objprop) *
+            MINECRAFT_SCALE_FACTOR
+        )
 
-        if 'mc_inflate' in obj:
-            scale = scale - obj['mc_inflate']*2
+        if 'mc_inflate' in objprop.thisobj:
+            scale = scale - objprop.thisobj['mc_inflate']*2
 
         # width, height, depth
         # TODO - should this really be rounded?
         w, h, d = tuple([round(i) for i in scale])
 
-        if read_existing_uvs and 'mc_uv' in obj:
-            result[obj.name] = UvMcCube(
+        if read_existing_uvs and 'mc_uv' in objprop.thisobj:
+            result[objprop.thisobj.name] = UvMcCube(
                 w, d, h,
-                tuple(obj['mc_uv'])  # type: ignore
+                tuple(objprop.thisobj['mc_uv'])  # type: ignore
             )
         else:
             if (
-                'mc_uv_group' in obj and
-                (w, d, h) in uv_groups[obj['mc_uv_group']].items
+                'mc_uv_group' in objprop.thisobj and
+                (w, d, h) in uv_groups[objprop.thisobj['mc_uv_group']].items
             ):
-                result[obj.name] = uv_groups[
-                    obj['mc_uv_group']
+                result[objprop.thisobj.name] = uv_groups[
+                    objprop.thisobj['mc_uv_group']
                 ].items[(w, d, h)]
             else:
-                result[obj.name] = UvMcCube(w, d, h)
-                if 'mc_uv_group' in obj:
+                result[objprop.thisobj.name] = UvMcCube(w, d, h)
+                if 'mc_uv_group' in objprop.thisobj:
                     uv_groups[
-                        obj['mc_uv_group']
-                    ].items[(w, d, h)] = result[obj.name]
+                        objprop.thisobj['mc_uv_group']
+                    ].items[(w, d, h)] = result[objprop.thisobj.name]
     return result

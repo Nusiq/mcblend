@@ -56,6 +56,9 @@ class ObjectMcProperties(object):
         self.mcchildren: tp.Tuple[ObjectId] = mcchildren
         self.mctype: MCObjType = mctype
 
+    def bound_box(self) -> tp.Any:  # Undefined type?
+        return self.thisobj.bound_box
+
     def matrix_world(self) -> mathutils.Matrix:
         return self.thisobj.matrix_world.copy()
 
@@ -142,27 +145,28 @@ def get_mcrotation(
 
 
 def get_mcube_size(
-    obj: bpy_types.Object
+    objprop: ObjectMcProperties
 ) -> np.ndarray:
     '''
     Returns cube size based on the bounding box of an object.
     The returned value is moved by the translation matrix from "translation"
     '''
     # 0. ---; 1. --+; 2. -++; 3. -+-; 4. +--; 5. +-+; 6. +++; 7. ++-
-    bound_box = obj.bound_box
-    return (np.array(obj.bound_box[6]) - np.array(obj.bound_box[0]))[[0, 2, 1]]
+    bound_box = objprop.bound_box()
+    return (np.array(bound_box[6]) - np.array(bound_box[0]))[[0, 2, 1]]
 
 
 def get_mccube_position(
-    obj: bpy_types.Object, translation: mathutils.Matrix
+    objprop: ObjectMcProperties, translation: mathutils.Matrix
 ) -> np.ndarray:
     '''
     Returns cube position based on the bounding box of an object.
     The returned value is moved by the translation matrix from "translation"
     '''
-    bound_box = obj.bound_box
-    bound_box = [translation @ mathutils.Vector(i) for i in bound_box]
-    return np.array(obj.bound_box[0])[[0, 2, 1]]
+    # TODO - is this unused code important?
+    # bound_box = obj.bound_box
+    # bound_box = [translation @ mathutils.Vector(i) for i in bound_box]
+    return np.array(objprop.bound_box()[0])[[0, 2, 1]]
 
 
 def get_mcpivot(

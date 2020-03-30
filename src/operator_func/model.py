@@ -55,9 +55,9 @@ def get_mcbone_json(
     Returns the dictionary that represents a single mcbone in json file
     of model.
     '''
-    def _scale(obj: bpy_types.Object) -> np.ndarray:
+    def _scale(objprop: ObjectMcProperties) -> np.ndarray:
         '''Scale of a bone'''
-        _, _, scale = obj.matrix_world.decompose()
+        _, _, scale = objprop.matrix_world().decompose()
         return np.array(scale.xzy)
 
     # Set basic bone properties
@@ -81,12 +81,12 @@ def get_mcbone_json(
         translation = get_local_matrix(
             boneprop.matrix_world(), locatorprop.matrix_world()
         )
-        _l_scale = _scale(locatorprop.thisobj)
+        _l_scale = _scale(locatorprop)
         l_pivot = get_mcpivot(
             locatorprop, object_properties
         ) * MINECRAFT_SCALE_FACTOR
         l_origin = l_pivot + (
-            get_mccube_position(locatorprop.thisobj, translation) *
+            get_mccube_position(locatorprop, translation) *
             _l_scale * MINECRAFT_SCALE_FACTOR
         )
         mcbone['locators'][locatorprop.thisobj.name] = get_vect_json(l_origin)
@@ -97,15 +97,15 @@ def get_mcbone_json(
         translation = get_local_matrix(
             boneprop.matrix_world(), cubeprop.matrix_world()
         )
-        _c_scale = _scale(cubeprop.thisobj)
+        _c_scale = _scale(cubeprop)
         c_size = get_mcube_size(
-            cubeprop.thisobj
+            cubeprop
         ) * _c_scale * MINECRAFT_SCALE_FACTOR
         c_pivot = get_mcpivot(
             cubeprop, object_properties
         ) * MINECRAFT_SCALE_FACTOR
         c_origin = c_pivot + (
-            get_mccube_position(cubeprop.thisobj, translation) * _c_scale *
+            get_mccube_position(cubeprop, translation) * _c_scale *
             MINECRAFT_SCALE_FACTOR
         )
         c_rot = get_mcrotation(

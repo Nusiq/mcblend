@@ -149,10 +149,14 @@ def set_uvs(context: bpy_types.Context) -> bool:
     remove_old_mappings = context.scene.nusiq_mcblend.remove_old_mappings
     resolution = context.scene.nusiq_mcblend.texture_template_resolution
 
-    objs = [obj for obj in bpy.context.selected_objects if obj.type == 'MESH']
+    object_properties = get_object_mcproperties(context)
+    objprops = [
+        o for o in object_properties.values()
+        if o.thisobj.type == 'MESH'
+    ]
 
     uv_dict: tp.Dict[str, UvMcCube] = get_uv_mc_cubes(
-        objs, read_existing_uvs=not move_existing_mappings
+        objprops, read_existing_uvs=not move_existing_mappings
     )
     uv_mc_cubes = [i for i in uv_dict.values()]
     if height <= 0:
@@ -163,16 +167,16 @@ def set_uvs(context: bpy_types.Context) -> bool:
         return False
 
     if remove_old_mappings:
-        for obj in objs:
-            while len(obj.data.uv_layers) > 0:
-                obj.data.uv_layers.remove(obj.data.uv_layers[0])
+        for objprop in objprops:
+            while len(objprop.thisobj.data.uv_layers) > 0:
+                objprop.thisobj.data.uv_layers.remove(
+                    objprop.thisobj.data.uv_layers[0]
+                )
 
-
-
-    for obj in objs:
-        if obj.name in uv_dict:
-            curr_uv = uv_dict[obj.name]
-            obj['mc_uv'] = (curr_uv.uv[0], curr_uv.uv[1])
+    for objprop in objprops:
+        if objprop.thisobj.name in uv_dict:
+            curr_uv = uv_dict[objprop.thisobj.name]
+            objprop.thisobj['mc_uv'] = (curr_uv.uv[0], curr_uv.uv[1])
 
     if height is None:
         new_height = max([i.uv[1] + i.size[1] for i in uv_dict.values()])
@@ -215,12 +219,12 @@ def set_uvs(context: bpy_types.Context) -> bool:
         image.pixels = arr.ravel()  # Apply texture pixels values
 
     if move_blender_uvs:
-        for obj in objs:
-            if obj.name in uv_dict:
-                curr_uv = uv_dict[obj.name]
-                obj.data.uv_layers.new()
+        for objprop in objprops:
+            if objprop.thisobj.name in uv_dict:
+                curr_uv = uv_dict[objprop.thisobj.name]
+                objprop.thisobj.data.uv_layers.new()
                 set_cube_uv(
-                    obj, (curr_uv.uv[0], curr_uv.uv[1]),
+                    objprop, (curr_uv.uv[0], curr_uv.uv[1]),
                     curr_uv.width, curr_uv.depth, curr_uv.height,
                     width, new_height
                 )
