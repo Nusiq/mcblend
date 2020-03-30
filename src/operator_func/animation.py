@@ -100,29 +100,27 @@ def get_transformations(
             if objprop.mcparent is not None:
                 parent_matrix = object_properties[
                     objprop.mcparent
-                ].thisobj.matrix_world.copy()
+                ].matrix_world()
             else:
                 parent_matrix = mathutils.Matrix()
             # Scale
             scale = (
-                np.array(objprop.thisobj.matrix_world.to_scale()) /
+                np.array(objprop.matrix_world().to_scale()) /
                 np.array(parent_matrix.to_scale())
             )[[0, 2, 1]]
             # Locatin
             local_matrix = get_local_matrix(
                 parent_matrix.normalized(),
-                objprop.thisobj.matrix_world.normalized()
+                objprop.matrix_world().normalized()
             )
             location = np.array(local_matrix.to_translation())
             location = location[[0, 2, 1]] * MINECRAFT_SCALE_FACTOR
             # Rotation
             rotation = get_mcrotation(
-                objprop.thisobj.matrix_world, parent_matrix
+                objprop.matrix_world(), parent_matrix
             )
 
-            transformations[
-                ObjectId(objprop.thisobj.name, '')
-            ] = ObjectMcTransformations(
+            transformations[objid] = ObjectMcTransformations(
                 location=location, scale=scale, rotation=rotation
             )
     return transformations
