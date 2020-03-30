@@ -29,15 +29,6 @@ class MCObjType(Enum):
     LOCATOR = 'LOCATOR'
 
 
-class ObjectMcProperties(tp.NamedTuple):
-    '''
-    Temporary minecraft-related properties of an object (mesh or empty).
-    '''
-    mcparent: tp.Optional[str]
-    mcchildren: tp.Tuple[str]
-    mctype: MCObjType
-
-
 class ObjectId(tp.NamedTuple):
     '''
     Unique ID of a mesh, empty or a bone.
@@ -50,6 +41,25 @@ class ObjectId(tp.NamedTuple):
     '''
     name: str
     armature_name: str
+
+
+class ObjectMcProperties(object):
+    '''
+    Temporary minecraft-related properties of an object (mesh or empty).
+    '''
+    def __init__(
+        self, thisobj: bpy_types.Object, mcparent: tp.Optional[ObjectId],
+        mcchildren: tp.Tuple[ObjectId], mctype: MCObjType
+    ):
+        self.thisobj: bpy_types.Object = thisobj
+        self.mcparent: tp.Optional[ObjectId] = mcparent
+        self.mcchildren: tp.Tuple[ObjectId] = mcchildren
+        self.mctype: MCObjType = mctype
+
+    def matrix_world(self) -> mathutils.Matrix:
+        return self.thisobj.matrix_world.copy()
+
+
 
 class ObjectMcTransformations(tp.NamedTuple):
     '''
@@ -97,8 +107,6 @@ def get_local_matrix(
     )
 
 
-# TODO - change stop using matrix_world and pass bpy_types.Object instead for
-# more consistency in functions of this module.
 def get_mcrotation(
     child_matrix: mathutils.Matrix,
     parent_matrix: tp.Optional[mathutils.Matrix]=None
@@ -157,10 +165,15 @@ def get_mccube_position(
     return np.array(obj.bound_box[0])[[0, 2, 1]]
 
 
-def get_mcpivot(obj: bpy_types.Object) -> np.ndarray:
+def get_mcpivot(
+    objprop: ObjectMcProperties,
+    object_properties: tp.Dict[ObjectId, ObjectMcProperties]
+) -> np.ndarray:
     '''
-    Returns the pivot point of a mcbone (or mccube) represented by the "obj"
-    object.
+    Returns the pivot point of a mcbone (or mccube).
+    - objprop - the properties of this mcbone/mccube
+    - object_properties - the properties of all of the mccubes and mcbones in
+      minecraft model
     '''
     def local_crds(
         parent_matrix: mathutils.Matrix, child_matrix: mathutils.Matrix
@@ -170,27 +183,27 @@ def get_mcpivot(obj: bpy_types.Object) -> np.ndarray:
         child_matrix = child_matrix.normalized()  # eliminate scale
         return get_local_matrix(parent_matrix, child_matrix).to_translation()
 
-    def _get_mcpivot(obj: bpy_types.Object) -> mathutils.Vector:
-        if 'mc_parent' in obj:
+    def _get_mcpivot(objprop: ObjectMcProperties) -> mathutils.Vector:
+        if objprop.mcparent is not None:
             result = local_crds(
-                obj['mc_parent'].matrix_world,
-                obj.matrix_world
+                object_properties[objprop.mcparent].matrix_world(),
+                objprop.matrix_world()
             )
-            result += _get_mcpivot(obj['mc_parent'])
+            result += _get_mcpivot(object_properties[objprop.mcparent])
         else:
-            result = obj.matrix_world.to_translation()
+            result = objprop.matrix_world().to_translation()
         return result
 
-    return np.array(_get_mcpivot(obj).xzy)
+    return np.array(_get_mcpivot(objprop).xzy)
 
-# TODO - update documentation (added ObjectID)
+
 def get_object_mcproperties(
     context: bpy_types.Context
 ) -> tp.Dict[ObjectId, ObjectMcProperties]:
     '''
     Loops through context.selected_objects and returns a dictionary with custom
-    properties of mcobjects. Returned dictionary uses the names of the objects
-    as keys and the custom properties as values.
+    properties of mcobjects. Returned dictionary uses the ObjectId of the
+    objects as keys and the custom properties as values.
     '''
     tmp_properties: tp.DefaultDict = defaultdict(
         lambda: {"mc_children": [], "mc_obj_type": ""}
@@ -206,6 +219,8 @@ def get_object_mcproperties(
 
     properties: tp.Dict[ObjectId, ObjectMcProperties] = {}
     for obj in context.selected_objects:
+        if obj.type == "":  # Invalid object (like Camera)
+            continue
         tmp_prop = tmp_properties[obj.name]
         if obj.type == 'EMPTY':
             if "mc_is_bone" in obj:
@@ -225,10 +240,11 @@ def get_object_mcproperties(
                 tmp_prop["mc_obj_type"] = MCObjType.CUBE
             else:  # Not connected to anything
                 tmp_prop["mc_obj_type"] = MCObjType.BOTH
-                  
+
         properties[ObjectId(obj.name, '')] = ObjectMcProperties(
-            mcparent = obj.parent if obj.parent is not None else None,
-            mcchildren = tuple(i.name for i in tmp_prop['mc_children']),  # type: ignore
+            thisobj = obj,
+            mcparent = ObjectId(obj['mc_parent'].name, '') if 'mc_parent' in obj else None,
+            mcchildren = tuple(ObjectId(i.name, '') for i in tmp_prop['mc_children']),  # type: ignore
             mctype = tmp_prop['mc_obj_type']
         )
 

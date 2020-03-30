@@ -28,10 +28,10 @@ from .common import (
     get_object_mcproperties,
     get_vect_json,
     pick_closest_rotation,
-    ObjectId,
+    ObjectId, ObjectMcProperties,
 )
 
-# TODO - update documentation (added ObjectID)
+
 def export_model(context: bpy_types.Context) -> tp.Dict:
     '''
     Uses context.selected_objects to create and return dictionary with
@@ -40,56 +40,46 @@ def export_model(context: bpy_types.Context) -> tp.Dict:
     object_properties = get_object_mcproperties(context)
     texture_width = context.scene.nusiq_mcblend.texture_width
     texture_height = context.scene.nusiq_mcblend.texture_height
-
+    model_name = context.scene.nusiq_mcblend.model_name
     mc_bones: tp.List[tp.Dict] = []
 
-    for obj in context.selected_objects:
-        if (
-            ObjectId(obj.name, '') in object_properties and
-            object_properties[ObjectId(obj.name, '')].mctype in
-            [MCObjType.BONE, MCObjType.BOTH]
-        ):
+    for objid, objprop in object_properties.items():
+        if (objprop.mctype in [MCObjType.BONE, MCObjType.BOTH]):
             # Create cubes and locators list
-            if object_properties[ObjectId(obj.name, '')].mctype == MCObjType.BOTH:
-                cubes = [obj]
-            elif object_properties[ObjectId(obj.name, '')].mctype == MCObjType.BONE:
-                cubes = []
-            locators = []
+            cubes: tp.List[ObjectMcProperties] = []
+            if objprop.mctype == MCObjType.BOTH:  # Else MCObjType == BOTH
+                cubes = [objprop]
+            locators: tp.List[ObjectMcProperties] = []
             # Add children cubes if they are MCObjType.CUBE type
-            for child_name in (
-                object_properties[ObjectId(obj.name, '')].mcchildren
-            ):
-                if ObjectId(child_name, '') in object_properties:
-                    if object_properties[ObjectId(child_name, '')].mctype == MCObjType.CUBE:
-                        cubes.append(bpy.data.objects[child_name])
+            for child_id in objprop.mcchildren:
+                if child_id in object_properties:
+                    if object_properties[child_id].mctype == MCObjType.CUBE:
+                        cubes.append(object_properties[child_id])
                     elif (
-                        object_properties[ObjectId(child_name, '')].mctype ==
-                        MCObjType.LOCATOR
+                        object_properties[child_id].mctype == MCObjType.LOCATOR
                     ):
-                        locators.append(bpy.data.objects[child_name])
+                        locators.append(object_properties[child_id])
 
-            mcbone = get_mcbone_json(obj, cubes, locators)
+            mcbone = get_mcbone_json(
+                objprop, cubes, locators, object_properties
+            )
             mc_bones.append(mcbone)
 
     result = get_mcmodel_json(
-        context.scene.nusiq_mcblend.model_name,
-        mc_bones, texture_width,
-        texture_height
+        model_name, mc_bones, texture_width, texture_height
     )
     return result
 
 
-# TODO - update documentation (added ObjectID)
 def export_animation(context: bpy_types.Context) -> tp.Dict:
     '''
     Uses context.selected_objects to create and return dictionary with
     minecraft animation.
     '''
     object_properties = get_object_mcproperties(context)
-
     start_frame = context.scene.frame_current
-    
-    bone_data: tp.Dict[ObjectId, tp.Dict[str, tp.List[tp.Dict]]] = (  # TODO - Create object for that for safer/cleaner code - https://www.python.org/dev/peps/pep-0589/
+
+    bone_data: tp.Dict[ObjectId, tp.Dict[str, tp.List[tp.Dict]]] = (
         defaultdict(lambda: {
             'scale': [], 'rotation': [], 'position': []
         })
@@ -98,7 +88,7 @@ def export_animation(context: bpy_types.Context) -> tp.Dict:
     # Stop animation if running & jump to the first frame
     bpy.ops.screen.animation_cancel()
     context.scene.frame_set(0)
-    default_translation = get_transformations(context, object_properties)
+    default_translation = get_transformations(object_properties)
     prev_rotation = {
         name:np.zeros(3) for name in default_translation.keys()
     }
@@ -107,7 +97,7 @@ def export_animation(context: bpy_types.Context) -> tp.Dict:
 
     while next_keyframe is not None:
         context.scene.frame_set(math.ceil(next_keyframe))
-        current_translations = get_transformations(context, object_properties)
+        current_translations = get_transformations(object_properties)
         for d_key, d_val in default_translation.items():
             # Get the difference from original
             loc, rot, scale = get_mctranslations(
@@ -116,8 +106,8 @@ def export_animation(context: bpy_types.Context) -> tp.Dict:
                 d_val.location, current_translations[d_key].location
             )
             time = str(round(
-                (context.scene.frame_current-1) /
-                context.scene.render.fps, 4
+                (context.scene.frame_current-1) / context.scene.render.fps,
+                4
             ))
             
             bone_data[d_key]['position'].append({
@@ -142,9 +132,8 @@ def export_animation(context: bpy_types.Context) -> tp.Dict:
 
     context.scene.frame_set(start_frame)
     animation_dict = get_mcanimation_json(
-        context,
         name=context.scene.nusiq_mcblend.animation_name,
-        length=context.scene.frame_end,
+        length=(context.scene.frame_end-1)/context.scene.render.fps,
         loop_animation=context.scene.nusiq_mcblend.loop_animation,
         anim_time_update=context.scene.nusiq_mcblend.anim_time_update,
         bone_data=bone_data
@@ -191,7 +180,6 @@ def set_uvs(context: bpy_types.Context) -> bool:
         new_height = height
     context.scene.nusiq_mcblend.texture_height=new_height
 
-    # TODO - Create texture template
     if resolution >= 1:
         image = bpy.data.images.new(
             "template",

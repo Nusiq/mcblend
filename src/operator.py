@@ -279,6 +279,7 @@ class OBJECT_OT_NusiqMcblendSetInflateOperator(bpy.types.Operator):
 
 ### Aditional operators
 # Set parent
+# TODO - REMOVE THIS OPERATOR
 class OBJECT_OT_NusiqMcblendParentOperator(bpy.types.Operator):
     """Add parent child relation for bedrock model exporter."""
     bl_idname = "object.nusiq_mcblend_parent_operator"
@@ -328,6 +329,7 @@ def menu_bedrock_parent(self, context: bpy_types.Context):
 
 
 # Clear parent
+# TODO - remove this operator
 class OBJECT_OT_NusiqMcblendParentClearOperator(bpy.types.Operator):
     """Clear parent child relation for bedrock model exporter."""
     bl_idname = "object.nusiq_mcblend_parent_clear_operator"

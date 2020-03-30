@@ -12,7 +12,6 @@ import typing as tp
 from .common import MINECRAFT_SCALE_FACTOR, get_mcube_size
 
 
-# TODO - porper naming of the functions below
 def get_uv_face(
     obj: bpy_types.Object, face_name: str
 ) -> tp.Dict[str, int]:
@@ -75,7 +74,7 @@ def set_uv(
     uv_data[uv_face[order[3]]].uv = (crds[0], crds[1] + size[1])
 
 
-def set_cube_uv(  # TODO - update documentation
+def set_cube_uv(
     obj: bpy_types.Object, uv: tp.Tuple[float, float], width: float,
     depth: float, height: float, texture_width: int, texture_height: int
 ):

@@ -12,28 +12,23 @@ from .common import (
 )
 
 # ANIMATIONS
-# TODO - update documentation (added ObjectID)
 def get_mcanimation_json(
-    context: bpy_types.Context,
-    name: str, length: int, loop_animation: bool, anim_time_update: str,
+    name: str, length: float, loop_animation: bool, anim_time_update: str,
     bone_data: tp.Dict[ObjectId, tp.Dict[str, tp.List[tp.Dict]]]
-):
+) -> tp.Dict:
     '''
     - name - name of the animation
-    - length - the length of animation (in frames). The FPS vlaue is extracted
-      from context.scene.render.fps.
+    - length - the length of animation (seconds)
     - loop_animation - Loops the animation
     - anim_time_update - Adds anim_time_update property to the animation.
     - bone_data - Dictionary filled with dictionaries that describe postition,
-      rotation and scale for each frame (uses bone name as a key).
+      rotation and scale for each frame (uses bone ObjectId as a key).
 
-    Returns a dictionary with animation for minecraft entity. Optimizes
-    bone_data to reduce the size of the animation file.
+    Returns a dictionary with animation for minecraft entity. The animation is
+    optimised. Unnecessary keyframes from bone_data are not used in the result
+    dictionary.
     '''
-    def reduce_property(
-        context: bpy_types.Context,
-        ls: tp.List[tp.Dict]
-    ) -> tp.List[tp.Dict]:
+    def reduce_property(ls: tp.List[tp.Dict]) -> tp.List[tp.Dict]:
         '''
         Removes some of the keyframes from list of keyframes values of
         a property (rotation, location or scale)
@@ -56,24 +51,24 @@ def get_mcanimation_json(
 
     # Extract bones data
     bones: tp.Dict = {}
-    for bone_name, bone in bone_data.items():
-        bones[bone_name.name] = {
+    for boneid, bone in bone_data.items():
+        bones[boneid.name] = {
             'position': {},
             'rotation': {},
             'scale': {}
         }
-        for prop in reduce_property(context, bone['position']):
-            bones[bone_name.name]['position'][prop['time']] = prop['value']
-        for prop in reduce_property(context, bone['rotation']):
-            bones[bone_name.name]['rotation'][prop['time']] = prop['value']
-        for prop in reduce_property(context, bone['scale']):
-            bones[bone_name.name]['scale'][prop['time']] = prop['value']
+        for prop in reduce_property(bone['position']):
+            bones[boneid.name]['position'][prop['time']] = prop['value']
+        for prop in reduce_property(bone['rotation']):
+            bones[boneid.name]['rotation'][prop['time']] = prop['value']
+        for prop in reduce_property(bone['scale']):
+            bones[boneid.name]['scale'][prop['time']] = prop['value']
     # Returning result
     result: tp.Dict = {
         "format_version": "1.8.0",
         "animations": {
             f"animation.{name}": {
-                "animation_length": (length-1)/context.scene.render.fps,
+                "animation_length": length,
                 "bones": bones
             }
         }
@@ -86,47 +81,48 @@ def get_mcanimation_json(
     return result
 
 
-# TODO - update documentation (added ObjectID)
 def get_transformations(
-    context: bpy_types.Context,
     object_properties: tp.Dict[ObjectId, ObjectMcProperties]
 ) -> tp.Dict[ObjectId, ObjectMcTransformations]:
     '''
-    Loops over context.selected_objects and returns the dictionary with
-    information about transformations of every bone. Uses `object_properties`
-    to check if object should be animated (only bones can be animated in
-    minecraft)
+    Loops over object_properties and returns the dictionary with
+    information about transformations of every bone.
 
     Returns a dicionary with name of the object as keys and transformation
     properties as values.
     '''
     transformations: tp.Dict[ObjectId, ObjectMcTransformations] = {}
-    for obj in context.selected_objects:
+    for objid, objprop in object_properties.items():
         if (
-            ObjectId(obj.name, '') in object_properties and
-            object_properties[ObjectId(obj.name, '')].mctype in
+            objprop.mctype in
             [MCObjType.BONE, MCObjType.BOTH]
         ):
-            if 'mc_parent' in obj:
-                parent_matrix = obj['mc_parent'].matrix_world.copy()
+            if objprop.mcparent is not None:
+                parent_matrix = object_properties[
+                    objprop.mcparent
+                ].thisobj.matrix_world.copy()
             else:
                 parent_matrix = mathutils.Matrix()
             # Scale
             scale = (
-                np.array(obj.matrix_world.to_scale()) /
+                np.array(objprop.thisobj.matrix_world.to_scale()) /
                 np.array(parent_matrix.to_scale())
             )[[0, 2, 1]]
             # Locatin
             local_matrix = get_local_matrix(
                 parent_matrix.normalized(),
-                obj.matrix_world.normalized()
+                objprop.thisobj.matrix_world.normalized()
             )
             location = np.array(local_matrix.to_translation())
             location = location[[0, 2, 1]] * MINECRAFT_SCALE_FACTOR
             # Rotation
-            rotation = get_mcrotation(obj.matrix_world, parent_matrix)
+            rotation = get_mcrotation(
+                objprop.thisobj.matrix_world, parent_matrix
+            )
 
-            transformations[ObjectId(obj.name, '')] = ObjectMcTransformations(
+            transformations[
+                ObjectId(objprop.thisobj.name, '')
+            ] = ObjectMcTransformations(
                 location=location, scale=scale, rotation=rotation
             )
     return transformations
