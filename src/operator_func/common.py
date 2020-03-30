@@ -45,7 +45,9 @@ class ObjectId(tp.NamedTuple):
 
 class ObjectMcProperties(object):
     '''
-    Temporary minecraft-related properties of an object (mesh or empty).
+    Wrapper class for the objects used by the addon to create some parts of
+    the minecraft model. This class can be used to containg bpy_types.Object
+    and bones from the armature to provide for them similar functionallity.
     '''
     def __init__(
         self, thisobj: bpy_types.Object, mcparent: tp.Optional[ObjectId],
@@ -55,6 +57,87 @@ class ObjectMcProperties(object):
         self.mcparent: tp.Optional[ObjectId] = mcparent
         self.mcchildren: tp.Tuple[ObjectId] = mcchildren
         self.mctype: MCObjType = mctype
+
+    def clear_uv_layers(self):
+        '''Clears the uv layers from the object'''
+        # TODO - do nothing when the object is bone
+        while len(self.thisobj.data.uv_layers) > 0:
+            self.thisobj.data.uv_layers.remove(
+                self.thisobj.data.uv_layers[0]
+            )
+
+    def set_mc_uv(self, uv: tp.Tuple[int, int]):
+        '''Sets the mc_uv property of the cube'''
+        # TODO - raise exception when the object is not CUBE or BOTH
+        self.thisobj['mc_uv'] = uv
+
+    def get_mc_uv(self) -> tp.Tuple[int, int]:
+        '''Returns the mc_uv property of the object'''
+        # TODO - return none if the object is not CUBE or BOTH
+        return tuple(self.thisobj['mc_uv'])  # type: ignore
+
+    def has_uv(self):
+        '''Returns true if the object has mc_uv property'''
+        # TODO - return false when object is not a CUBE or BOTH
+        return 'mc_uv' in self.thisobj
+
+    def has_mc_inflate(self) -> bool:
+        '''Returns true if the object has the mc_inflate property'''
+        # TODO - return false when object is not a CUBE or BOTH
+        return 'mc_inflate' in self.thisobj
+
+    def get_mc_inflate(self) -> float:
+        '''Returns the value of mc_inflate property of the object'''
+        # TODO - raise exception when the object is not a CUBE or BOTH
+        return self.thisobj['mc_inflate']
+
+    def has_mc_mirror(self) -> bool:
+        '''Returns true if the object has mc_mirror object'''
+        return 'mc_mirror' in self.thisobj
+
+    def get_mc_mirror(self) -> int:
+        '''Returns the value of mc_mirror property of the object'''
+        # TODO - this shouldnt be used. has_mc_mirror is enough
+        return self.thisobj['mc_mirror']
+
+    def has_mc_uv_group(self) -> bool:
+        # TODO - raise exception when the object is not a CUBE or BOTH
+        return 'mc_uv_group' in self.thisobj
+
+    def get_mc_uv_group(self) -> str:
+        '''Returns the value of mc_uv_group property of the object'''
+        # TODO - raise exception when the object is not a CUBE or BOTH
+        return self.thisobj['mc_uv_group']
+
+    def data_polygons(self) -> tp.Any:
+        '''Returns the polygons (faces) of the object'''
+        # TODO - raise exception when the object is not a CUBE or BOTH
+        return self.thisobj.data.polygons
+
+    def data_vertices(self) -> tp.Any:
+        '''Returns the vertices of the object'''
+        # TODO - raise exception when the object is not a CUBE or BOTH
+        return self.thisobj.data.vertices
+
+    def data_uv_layers_active_data(self) -> tp.Any:
+        '''Return the data of active uv-layers of the object'''
+        # TODO - raise exception when the object is not CUBE or BOTH
+        return self.thisobj.data.uv_layers.active.data
+
+    def data_uv_layers_new(self):
+        '''Adds UV-layer to an object.'''
+        # TODO - raise exception when the object is not CUBE or BOTH
+        self.thisobj.data.uv_layers.new()
+
+    def name(self) -> str:
+        '''Returns the name of the object'''
+        # TODO - resolve name conflicts when the object is bone
+        return self.thisobj.name
+
+    def type(self) -> str:
+        '''Returns the type of the object.'''
+        # TODO - return BONE when the object is bone
+        return self.thisobj.type
 
     def bound_box(self) -> tp.Any:  # Undefined type?
         return self.thisobj.bound_box

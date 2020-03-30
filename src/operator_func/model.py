@@ -61,9 +61,9 @@ def get_mcbone_json(
         return np.array(scale.xzy)
 
     # Set basic bone properties
-    mcbone = {'name': boneprop.thisobj.name, 'cubes': []}
+    mcbone: tp.Dict = {'name': boneprop.name(), 'cubes': []}
     if boneprop.mcparent is not None:
-        mcbone['parent'] = object_properties[boneprop.mcparent].thisobj.name
+        mcbone['parent'] = object_properties[boneprop.mcparent].name()
         b_rot = get_mcrotation(
             boneprop.matrix_world(),
             object_properties[boneprop.mcparent].matrix_world()
@@ -89,8 +89,7 @@ def get_mcbone_json(
             get_mccube_position(locatorprop, translation) *
             _l_scale * MINECRAFT_SCALE_FACTOR
         )
-        mcbone['locators'][locatorprop.thisobj.name] = get_vect_json(l_origin)
-        print('ABC')
+        mcbone['locators'][locatorprop.name()] = get_vect_json(l_origin)
 
     # Set cubes
     for cubeprop in cubeprops:
@@ -112,14 +111,14 @@ def get_mcbone_json(
             cubeprop.matrix_world(), boneprop.matrix_world()
         )
 
-        if 'mc_uv' in cubeprop.thisobj:
-            uv = tuple(cubeprop.thisobj['mc_uv'])
+        if cubeprop.has_uv():
+            uv = cubeprop.get_mc_uv()
         else:
             uv = (0, 0)
 
-        if 'mc_inflate' in cubeprop.thisobj:
-            c_size = c_size - cubeprop.thisobj['mc_inflate']*2
-            c_origin = c_origin + cubeprop.thisobj['mc_inflate']
+        if cubeprop.has_mc_inflate():
+            c_size = c_size - cubeprop.get_mc_inflate()*2
+            c_origin = c_origin + cubeprop.get_mc_inflate()
 
         cube_dict: tp.Dict = {
             'uv': uv,
@@ -130,11 +129,11 @@ def get_mcbone_json(
             'rotation': get_vect_json(c_rot)
         }
 
-        if 'mc_inflate' in cubeprop.thisobj:
-            cube_dict['inflate'] = cubeprop.thisobj['mc_inflate']
+        if cubeprop.has_mc_inflate():
+            cube_dict['inflate'] = cubeprop.get_mc_inflate()
 
-        if 'mc_mirror' in cubeprop.thisobj:
-            if cubeprop.thisobj['mc_mirror'] == 1:
+        if cubeprop.has_mc_mirror():
+            if cubeprop.get_mc_mirror() == 1:
                 cube_dict['mirror'] = True
 
         mcbone['cubes'].append(cube_dict)

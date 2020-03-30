@@ -35,10 +35,11 @@ def get_uv_face(
         'LD': np.array(bb[f[0]]), 'RD': np.array(bb[f[1]]),
         'RU': np.array(bb[f[2]]), 'LU': np.array(bb[f[3]]),
     }
-    for face in objprop.thisobj.data.polygons:
+
+    for face in objprop.data_polygons():
         confirmed_vertices = {'LD': None, 'RD': None, 'RU': None, 'LU': None}
         for vertex_id, loop_id in zip(face.vertices, face.loop_indices):
-            vertex = np.array(objprop.thisobj.data.vertices[vertex_id].co)
+            vertex = np.array(objprop.data_vertices()[vertex_id].co)
             for bbv_key , bbv_value in bb_verts.items():
                 if np.allclose(vertex, bbv_value):
                     confirmed_vertices[bbv_key] = loop_id
@@ -61,7 +62,7 @@ def set_uv(
     - size - value from 0 to 1 the size of the rectangle in blender uv mapping
       coordinates system.
     '''
-    uv_data = objprop.thisobj.data.uv_layers.active.data
+    uv_data = objprop.data_uv_layers_active_data()
     order = ['LD', 'RD', 'RU', 'LU']
 
     if mirror_x:
@@ -95,7 +96,7 @@ def set_cube_uv(
     patter as minecraft UV mapping.
     '''
     uv = (uv[0], texture_height-uv[1]-depth-height)
-    if 'mc_mirror' in objprop.thisobj and objprop.thisobj['mc_mirror'] == 1:
+    if objprop.has_mc_mirror() and objprop.get_mc_mirror() == 1:
         set_uv(
             objprop, get_uv_face(objprop, 'left'), 
             (uv[0]/texture_width, uv[1]/texture_height),
@@ -431,30 +432,30 @@ def get_uv_mc_cubes(
             MINECRAFT_SCALE_FACTOR
         )
 
-        if 'mc_inflate' in objprop.thisobj:
-            scale = scale - objprop.thisobj['mc_inflate']*2
+        if objprop.has_mc_inflate():
+            scale = scale - objprop.get_mc_inflate()*2
 
         # width, height, depth
         # TODO - should this really be rounded?
         w, h, d = tuple([round(i) for i in scale])
 
-        if read_existing_uvs and 'mc_uv' in objprop.thisobj:
-            result[objprop.thisobj.name] = UvMcCube(
+        if read_existing_uvs and objprop.has_uv():
+            result[objprop.name()] = UvMcCube(
                 w, d, h,
-                tuple(objprop.thisobj['mc_uv'])  # type: ignore
+                objprop.get_mc_uv()
             )
         else:
             if (
-                'mc_uv_group' in objprop.thisobj and
-                (w, d, h) in uv_groups[objprop.thisobj['mc_uv_group']].items
+                objprop.has_mc_uv_group() and
+                (w, d, h) in uv_groups[objprop.get_mc_uv_group()].items
             ):
-                result[objprop.thisobj.name] = uv_groups[
-                    objprop.thisobj['mc_uv_group']
+                result[objprop.name()] = uv_groups[
+                    objprop.get_mc_uv_group()
                 ].items[(w, d, h)]
             else:
-                result[objprop.thisobj.name] = UvMcCube(w, d, h)
-                if 'mc_uv_group' in objprop.thisobj:
+                result[objprop.name()] = UvMcCube(w, d, h)
+                if objprop.has_mc_uv_group():
                     uv_groups[
-                        objprop.thisobj['mc_uv_group']
-                    ].items[(w, d, h)] = result[objprop.thisobj.name]
+                        objprop.get_mc_uv_group()
+                    ].items[(w, d, h)] = result[objprop.name()]
     return result

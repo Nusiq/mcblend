@@ -152,7 +152,7 @@ def set_uvs(context: bpy_types.Context) -> bool:
     object_properties = get_object_mcproperties(context)
     objprops = [
         o for o in object_properties.values()
-        if o.thisobj.type == 'MESH'
+        if o.type() == 'MESH'
     ]
 
     uv_dict: tp.Dict[str, UvMcCube] = get_uv_mc_cubes(
@@ -168,15 +168,12 @@ def set_uvs(context: bpy_types.Context) -> bool:
 
     if remove_old_mappings:
         for objprop in objprops:
-            while len(objprop.thisobj.data.uv_layers) > 0:
-                objprop.thisobj.data.uv_layers.remove(
-                    objprop.thisobj.data.uv_layers[0]
-                )
+            objprop.clear_uv_layers()
 
     for objprop in objprops:
-        if objprop.thisobj.name in uv_dict:
-            curr_uv = uv_dict[objprop.thisobj.name]
-            objprop.thisobj['mc_uv'] = (curr_uv.uv[0], curr_uv.uv[1])
+        if objprop.name() in uv_dict:
+            curr_uv = uv_dict[objprop.name()]
+            objprop.set_mc_uv((curr_uv.uv[0], curr_uv.uv[1]))
 
     if height is None:
         new_height = max([i.uv[1] + i.size[1] for i in uv_dict.values()])
@@ -220,9 +217,9 @@ def set_uvs(context: bpy_types.Context) -> bool:
 
     if move_blender_uvs:
         for objprop in objprops:
-            if objprop.thisobj.name in uv_dict:
-                curr_uv = uv_dict[objprop.thisobj.name]
-                objprop.thisobj.data.uv_layers.new()
+            if objprop.name() in uv_dict:
+                curr_uv = uv_dict[objprop.name()]
+                objprop.data_uv_layers_new()
                 set_cube_uv(
                     objprop, (curr_uv.uv[0], curr_uv.uv[1]),
                     curr_uv.width, curr_uv.depth, curr_uv.height,
