@@ -15,7 +15,8 @@ from .common import (
 def get_mcanimation_json(
     name: str, length: float, loop_animation: bool, anim_time_update: str,
     bone_data: tp.Dict[ObjectId, tp.Dict[str, tp.List[tp.Dict]]],
-    object_properties: tp.Dict[ObjectId, ObjectMcProperties]
+    object_properties: tp.Dict[ObjectId, ObjectMcProperties],
+    extend_json: tp.Optional[tp.Dict] = None
 ) -> tp.Dict:
     '''
     - name - name of the animation
@@ -24,6 +25,12 @@ def get_mcanimation_json(
     - anim_time_update - Adds anim_time_update property to the animation.
     - bone_data - Dictionary filled with dictionaries that describe postition,
       rotation and scale for each frame (uses bone ObjectId as a key).
+    - object_properties - a dictionary with relations between object created by
+    get_object_mcproperties() funciton.
+    - extend_json - optional argument with a dictionary with content of old
+    file with animation. If this parameter is None a new dictionary is created.
+    WARNING: This function doesn't check the structure of a dictionary passed
+    through extend_json parameter.
 
     Returns a dictionary with animation for minecraft entity. The animation is
     optimised. Unnecessary keyframes from bone_data are not used in the result
@@ -71,15 +78,18 @@ def get_mcanimation_json(
                 object_properties[boneid].name()]['scale'][prop['time']
             ] = prop['value']
     # Returning result
-    result: tp.Dict = {
-        "format_version": "1.8.0",
-        "animations": {
-            f"animation.{name}": {
-                "animation_length": length,
-                "bones": bones
+    if extend_json is not None:
+        result = extend_json
+    else:
+        result = {
+            "format_version": "1.8.0",
+            "animations": {
+                f"animation.{name}": {
+                    "animation_length": length,
+                    "bones": bones
+                }
             }
         }
-    }
     data = result["animations"][f"animation.{name}"]
     if loop_animation:
         data['loop'] = True

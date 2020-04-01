@@ -9,34 +9,11 @@ import pathlib
 
 
 class OBJECT_NusiqMcblendExporterProperties(bpy.types.PropertyGroup):
-    path: StringProperty(  # type: ignore
-        name="",
-        description="Path to the file for exporting the model.",
-        default=(
-            f"{pathlib.Path.home()}/AppData/Local/Packages/"
-            "Microsoft.MinecraftUWP_8wekyb3d8bbwe/LocalState/games/"
-            "com.mojang/minecraftWorlds/"
-        ),
-        maxlen=1024,
-        subtype='FILE_PATH',
-    )
     model_name: StringProperty(  # type: ignore
         name="",
         description="Name of the model",
         default="b_model",
         maxlen=1024
-    )
-
-    path_animation: StringProperty(  # type: ignore
-        name="",
-        description="Path to the file for exporting the animation.",
-        default=(
-            f"{pathlib.Path.home()}/AppData/Local/Packages/"
-            "Microsoft.MinecraftUWP_8wekyb3d8bbwe/LocalState/games/"
-            "com.mojang/minecraftWorlds/"
-        ),
-        maxlen=1024,
-        subtype='FILE_PATH',
     )
     loop_animation: BoolProperty(  # type: ignore
         name="",

@@ -4,9 +4,10 @@ import json
 import numpy as np
 
 from bpy.props import StringProperty, FloatProperty
+from bpy_extras.io_utils import ExportHelper
 
 from .operator_func import *
-from .operator_func.json_tools import CompactEncoder
+from .operator_func.json_tools import CompactEncoder, has_json_path
 
 # Additional imports for mypy
 import bpy_types
@@ -14,45 +15,20 @@ import typing as tp
 
 
 # Export model
-class OBJECT_OT_NusiqMcblendExportOperator(bpy.types.Operator):
+class OBJECT_OT_NusiqMcblendExportOperator(
+    bpy.types.Operator, ExportHelper
+):
     '''Operator used for exporting minecraft models from blender'''
     bl_idname = "object.nusiq_mcblend_export_operator"
-    bl_label = "Export Bedrock model."
+    bl_label = "Export model"
     bl_description = "Exports selected objects from scene to bedrock model."
 
-    @classmethod
-    def poll(cls, context: bpy_types.Context):
-        if context.mode != 'OBJECT':
-            return False
-        if len(context.selected_objects) < 1:
-            return False
-        return True
+    filename_ext = '.geo.json'
 
-    def execute(self, context):
-        output = context.scene.nusiq_mcblend.path
-        result, error = export_model(context)
-        if error != '':
-            self.report({'WARNING'}, error)
-            return {'FINISHED'}
-
-        with open(output, 'w') as f:
-            json.dump(result, f, cls=CompactEncoder)
-
-        self.report(
-                {'INFO'} ,
-                f'Model saved in {output}.'
-        )
-        return {'FINISHED'}
-
-
-# Export animation
-class OBJECT_OT_NusiqMcblendExportAnimationOperator(bpy.types.Operator):
-    '''Operator used for exporting minecraft animations from blender'''
-    bl_idname = "object.nusiq_mcblend_export_animation_operator"
-    bl_label = "Export animation for bedrock model."
-    bl_description = (
-        "Exports animation of selected objects to bedrock entity animation "
-        "format."
+    filter_glob: StringProperty(  # type: ignore
+        default='*.json',
+        options={'HIDDEN'},
+        maxlen=1000
     )
 
     @classmethod
@@ -64,20 +40,79 @@ class OBJECT_OT_NusiqMcblendExportAnimationOperator(bpy.types.Operator):
         return True
 
     def execute(self, context):
-        output = context.scene.nusiq_mcblend.path_animation
+        result, error = export_model(context)
+        if error != '':
+            self.report({'WARNING'}, error)
+            return {'FINISHED'}
+
+        with open(self.filepath, 'w') as f:
+            json.dump(result, f, cls=CompactEncoder)
+
+        self.report(
+                {'INFO'} ,
+                f'Model saved in {self.filepath}.'
+        )
+        return {'FINISHED'}
+
+# Helper function Export animation (in the menu)
+def menu_func_nusiq_mcblend_export(self, context):
+    self.layout.operator(
+        OBJECT_OT_NusiqMcblendExportOperator.bl_idname,
+        text="Mcblend: Export model"
+    )
+
+
+# Export animation
+class OBJECT_OT_NusiqMcblendExportAnimationOperator(
+    bpy.types.Operator, ExportHelper
+):
+    '''Operator used for exporting minecraft animations from blender'''
+    bl_idname = "object.nusiq_mcblend_export_animation_operator"
+    bl_label = "Export animation"
+    bl_description = (
+        "Exports animation of selected objects to bedrock entity animation "
+        "format."
+    )
+
+
+    filename_ext = '.animation.json'
+
+    filter_glob: StringProperty(  # type: ignore
+        default='*.json',
+        options={'HIDDEN'},
+        maxlen=1000
+    )
+
+    @classmethod
+    def poll(cls, context: bpy_types.Context):
+        if context.mode != 'OBJECT':
+            return False
+        if len(context.selected_objects) < 1:
+            return False
+        return True
+
+    def execute(self, context):
         animation_dict, error = export_animation(context)
         if error != '':
             self.report({'WARNING'}, error)
             return {'FINISHED'}
 
         # Save file and finish
-        with open(output, 'w') as f:
+        with open(self.filepath, 'w') as f:
             json.dump(animation_dict, f, cls=CompactEncoder)
         self.report(
                 {'INFO'} ,
-                f'Animation saved in {output}.'
+                f'Animation saved in {self.filepath}.'
         )
         return {'FINISHED'}
+
+# Helper function Export animation (in the menu)
+def menu_func_nusiq_mcblend_export_animation(self, context):
+    self.layout.operator(
+        OBJECT_OT_NusiqMcblendExportAnimationOperator.bl_idname,
+        text="Mcblend: Export anmiation"
+    )
+
 
 
 # Uv map

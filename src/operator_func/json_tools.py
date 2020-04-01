@@ -1,5 +1,6 @@
 '''Source https://github.com/Nusiq/json_encoders'''
 import json
+import typing as tp
 
 class CompactEncoder(json.JSONEncoder):
     '''
@@ -90,3 +91,18 @@ class CompactEncoder(json.JSONEncoder):
         else:
             raise TypeError('Object of type set is not JSON serializable')
         self.indent -= 1
+
+def has_json_path(
+    json_object: tp.Union[dict, list, tuple],
+    path: tp.List[tp.Union[str, int]]
+):
+    '''
+    Goes through a JSONable object and checks its structure. Returns True if
+    path is accessible in the object.
+
+    - json_object - a json serializable object.
+    - path - a path you want to access.
+    '''
+    for key in path:
+        json_object = json_object[key]  # type: ignore
+    return json_object
