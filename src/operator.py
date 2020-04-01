@@ -6,7 +6,7 @@ import numpy as np
 from bpy.props import StringProperty, FloatProperty
 
 from .operator_func import *
-from .operator_func.json_encoders import CompactEncoder
+from .operator_func.json_tools import CompactEncoder
 
 # Additional imports for mypy
 import bpy_types
