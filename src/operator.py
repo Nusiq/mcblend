@@ -6,6 +6,7 @@ import numpy as np
 from bpy.props import StringProperty, FloatProperty
 
 from .operator_func import *
+from .operator_func.json_encoders import CompactEncoder
 
 # Additional imports for mypy
 import bpy_types
@@ -35,7 +36,7 @@ class OBJECT_OT_NusiqMcblendExportOperator(bpy.types.Operator):
             return {'FINISHED'}
 
         with open(output, 'w') as f:
-            json.dump(result, f, indent='\t')
+            json.dump(result, f, cls=CompactEncoder)
 
         self.report(
                 {'INFO'} ,
@@ -71,7 +72,7 @@ class OBJECT_OT_NusiqMcblendExportAnimationOperator(bpy.types.Operator):
 
         # Save file and finish
         with open(output, 'w') as f:
-            json.dump(animation_dict, f, indent='\t')
+            json.dump(animation_dict, f, cls=CompactEncoder)
         self.report(
                 {'INFO'} ,
                 f'Animation saved in {output}.'
