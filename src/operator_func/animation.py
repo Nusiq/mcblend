@@ -14,7 +14,8 @@ from .common import (
 # ANIMATIONS
 def get_mcanimation_json(
     name: str, length: float, loop_animation: bool, anim_time_update: str,
-    bone_data: tp.Dict[ObjectId, tp.Dict[str, tp.List[tp.Dict]]]
+    bone_data: tp.Dict[ObjectId, tp.Dict[str, tp.List[tp.Dict]]],
+    object_properties: tp.Dict[ObjectId, ObjectMcProperties]
 ) -> tp.Dict:
     '''
     - name - name of the animation
@@ -52,17 +53,23 @@ def get_mcanimation_json(
     # Extract bones data
     bones: tp.Dict = {}
     for boneid, bone in bone_data.items():
-        bones[boneid.name] = {
+        bones[object_properties[boneid].name()] = {
             'position': {},
             'rotation': {},
             'scale': {}
         }
         for prop in reduce_property(bone['position']):
-            bones[boneid.name]['position'][prop['time']] = prop['value']
+            bones[
+                object_properties[boneid].name()]['position'][prop['time']
+            ] = prop['value']
         for prop in reduce_property(bone['rotation']):
-            bones[boneid.name]['rotation'][prop['time']] = prop['value']
+            bones[
+                object_properties[boneid].name()]['rotation'][prop['time']
+            ] = prop['value']
         for prop in reduce_property(bone['scale']):
-            bones[boneid.name]['scale'][prop['time']] = prop['value']
+            bones[
+                object_properties[boneid].name()]['scale'][prop['time']
+            ] = prop['value']
     # Returning result
     result: tp.Dict = {
         "format_version": "1.8.0",

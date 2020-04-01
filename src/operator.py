@@ -29,7 +29,10 @@ class OBJECT_OT_NusiqMcblendExportOperator(bpy.types.Operator):
 
     def execute(self, context):
         output = context.scene.nusiq_mcblend.path
-        result = export_model(context)
+        result, error = export_model(context)
+        if error != '':
+            self.report({'WARNING'}, error)
+            return {'FINISHED'}
 
         with open(output, 'w') as f:
             json.dump(result, f, indent='\t')
@@ -61,7 +64,10 @@ class OBJECT_OT_NusiqMcblendExportAnimationOperator(bpy.types.Operator):
 
     def execute(self, context):
         output = context.scene.nusiq_mcblend.path_animation
-        animation_dict = export_animation(context)
+        animation_dict, error = export_animation(context)
+        if error != '':
+            self.report({'WARNING'}, error)
+            return {'FINISHED'}
 
         # Save file and finish
         with open(output, 'w') as f:

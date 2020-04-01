@@ -29,15 +29,25 @@ from .common import (
     get_vect_json,
     pick_closest_rotation,
     ObjectId, ObjectMcProperties,
+    get_name_conflicts
 )
 
 
-def export_model(context: bpy_types.Context) -> tp.Dict:
+def export_model(context: bpy_types.Context) -> tp.Tuple[tp.Dict, str]:
     '''
     Uses context.selected_objects to create and return dictionary with
     minecraft model.
+
+    Additionally returns a string with error message or an empty string when
+    there are no errors.
     '''
     object_properties = get_object_mcproperties(context)
+    name_conflict = get_name_conflicts(object_properties)
+    if name_conflict != '':
+        return (
+            {}, f'Name conflict "{name_conflict}". Please rename theobject."'
+        )
+
     texture_width = context.scene.nusiq_mcblend.texture_width
     texture_height = context.scene.nusiq_mcblend.texture_height
     model_name = context.scene.nusiq_mcblend.model_name
@@ -68,15 +78,20 @@ def export_model(context: bpy_types.Context) -> tp.Dict:
     result = get_mcmodel_json(
         model_name, mc_bones, texture_width, texture_height
     )
-    return result
+    return result, ''
 
 
-def export_animation(context: bpy_types.Context) -> tp.Dict:
+def export_animation(context: bpy_types.Context) -> tp.Tuple[tp.Dict, str]:
     '''
     Uses context.selected_objects to create and return dictionary with
     minecraft animation.
     '''
     object_properties = get_object_mcproperties(context)
+    name_conflict = get_name_conflicts(object_properties)
+    if name_conflict != '':
+        return (
+            {}, f'Name conflict "{name_conflict}". Please rename theobject."'
+        )
     start_frame = context.scene.frame_current
 
     bone_data: tp.Dict[ObjectId, tp.Dict[str, tp.List[tp.Dict]]] = (
@@ -136,10 +151,10 @@ def export_animation(context: bpy_types.Context) -> tp.Dict:
         length=(context.scene.frame_end-1)/context.scene.render.fps,
         loop_animation=context.scene.nusiq_mcblend.loop_animation,
         anim_time_update=context.scene.nusiq_mcblend.anim_time_update,
-        bone_data=bone_data
+        bone_data=bone_data, object_properties=object_properties
     )
 
-    return animation_dict
+    return animation_dict, ''
 
 def set_uvs(context: bpy_types.Context) -> bool:
     width = context.scene.nusiq_mcblend.texture_width

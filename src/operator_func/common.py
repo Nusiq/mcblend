@@ -33,14 +33,14 @@ class ObjectId(tp.NamedTuple):
     '''
     Unique ID of a mesh, empty or a bone.
     
-    For meshes and empties it's armature_name is just an empty string and the
+    For meshes and empties it's bone_name is just an empty string and the
     name is the name of the object.
 
-    For bones the ID uses both the name (name of the bone) and armature name
-    which is the name of the armature containing the bone.
+    For bones the ID uses both the name (armature name) and bone name
+    which is the name of the bone contained in the bone.
     '''
     name: str
-    armature_name: str
+    bone_name: str
 
 
 class ObjectMcProperties(object):
@@ -50,45 +50,46 @@ class ObjectMcProperties(object):
     and bones from the armature to provide for them similar functionallity.
     '''
     def __init__(
-        self, thisobj: bpy_types.Object, mcparent: tp.Optional[ObjectId],
-        mcchildren: tp.Tuple[ObjectId], mctype: MCObjType
+        self, thisobj_id: ObjectId, thisobj: bpy_types.Object,
+        mcparent: tp.Optional[ObjectId], mcchildren: tp.List[ObjectId],
+        mctype: MCObjType
     ):
+        self.thisobj_id = thisobj_id
         self.thisobj: bpy_types.Object = thisobj
         self.mcparent: tp.Optional[ObjectId] = mcparent
-        self.mcchildren: tp.Tuple[ObjectId] = mcchildren
+        self.mcchildren: tp.List[ObjectId] = mcchildren
         self.mctype: MCObjType = mctype
 
     def clear_uv_layers(self):
-        '''Clears the uv layers from the object'''
-        # TODO - do nothing when the object is bone
+        '''
+        Clears the uv layers from the object. Rises exception when the object
+        is armature
+        '''
+        if self.thisobj.type == 'ARMATURE':
+            raise Exception('Invalid method for ARMATURE.')
         while len(self.thisobj.data.uv_layers) > 0:
             self.thisobj.data.uv_layers.remove(
                 self.thisobj.data.uv_layers[0]
             )
 
     def set_mc_uv(self, uv: tp.Tuple[int, int]):
-        '''Sets the mc_uv property of the cube'''
-        # TODO - raise exception when the object is not CUBE or BOTH
+        '''Sets the mc_uv property of the cube.'''
         self.thisobj['mc_uv'] = uv
 
     def get_mc_uv(self) -> tp.Tuple[int, int]:
-        '''Returns the mc_uv property of the object'''
-        # TODO - return none if the object is not CUBE or BOTH
+        '''Returns the mc_uv property of the object.'''
         return tuple(self.thisobj['mc_uv'])  # type: ignore
 
     def has_uv(self):
-        '''Returns true if the object has mc_uv property'''
-        # TODO - return false when object is not a CUBE or BOTH
+        '''Returns true if the object has mc_uv property.'''
         return 'mc_uv' in self.thisobj
 
     def has_mc_inflate(self) -> bool:
         '''Returns true if the object has the mc_inflate property'''
-        # TODO - return false when object is not a CUBE or BOTH
         return 'mc_inflate' in self.thisobj
 
     def get_mc_inflate(self) -> float:
         '''Returns the value of mc_inflate property of the object'''
-        # TODO - raise exception when the object is not a CUBE or BOTH
         return self.thisobj['mc_inflate']
 
     def has_mc_mirror(self) -> bool:
@@ -97,53 +98,56 @@ class ObjectMcProperties(object):
 
     def get_mc_mirror(self) -> int:
         '''Returns the value of mc_mirror property of the object'''
-        # TODO - this shouldnt be used. has_mc_mirror is enough
         return self.thisobj['mc_mirror']
 
     def has_mc_uv_group(self) -> bool:
-        # TODO - raise exception when the object is not a CUBE or BOTH
         return 'mc_uv_group' in self.thisobj
 
     def get_mc_uv_group(self) -> str:
         '''Returns the value of mc_uv_group property of the object'''
-        # TODO - raise exception when the object is not a CUBE or BOTH
         return self.thisobj['mc_uv_group']
 
     def data_polygons(self) -> tp.Any:
         '''Returns the polygons (faces) of the object'''
-        # TODO - raise exception when the object is not a CUBE or BOTH
         return self.thisobj.data.polygons
 
     def data_vertices(self) -> tp.Any:
         '''Returns the vertices of the object'''
-        # TODO - raise exception when the object is not a CUBE or BOTH
         return self.thisobj.data.vertices
 
     def data_uv_layers_active_data(self) -> tp.Any:
         '''Return the data of active uv-layers of the object'''
-        # TODO - raise exception when the object is not CUBE or BOTH
         return self.thisobj.data.uv_layers.active.data
 
     def data_uv_layers_new(self):
         '''Adds UV-layer to an object.'''
-        # TODO - raise exception when the object is not CUBE or BOTH
         self.thisobj.data.uv_layers.new()
 
     def name(self) -> str:
         '''Returns the name of the object'''
         # TODO - resolve name conflicts when the object is bone
+        if self.thisobj.type == 'ARMATURE':
+            return self.thisobj.pose.bones[
+                self.thisobj_id.bone_name
+            ].name
         return self.thisobj.name
 
     def type(self) -> str:
-        '''Returns the type of the object.'''
-        # TODO - return BONE when the object is bone
+        '''Returns the type of the object (ARMATURE, MESH or EMPTY).'''
         return self.thisobj.type
 
-    def bound_box(self) -> tp.Any:  # Undefined type?
+    def bound_box(self) -> tp.Any:
+        '''Returns the bound box of the object'''
         return self.thisobj.bound_box
 
     def matrix_world(self) -> mathutils.Matrix:
-        return self.thisobj.matrix_world.copy()
+        # TODO - return bone matrix world if the object is a bone
+        if self.thisobj.type == 'ARMATURE':
+            return self.thisobj.matrix_world.copy() @ self.thisobj.pose.bones[
+                self.thisobj_id.bone_name
+            ].matrix.copy()
+        else:
+            return self.thisobj.matrix_world.copy()
 
 
 
@@ -246,9 +250,6 @@ def get_mccube_position(
     Returns cube position based on the bounding box of an object.
     The returned value is moved by the translation matrix from "translation"
     '''
-    # TODO - is this unused code important?
-    # bound_box = obj.bound_box
-    # bound_box = [translation @ mathutils.Vector(i) for i in bound_box]
     return np.array(objprop.bound_box()[0])[[0, 2, 1]]
 
 
@@ -284,6 +285,61 @@ def get_mcpivot(
     return np.array(_get_mcpivot(objprop).xzy)
 
 
+def loop_objects(objects: tp.List) -> tp.Iterable[tp.Tuple[ObjectId, tp.Any]]:
+    '''
+    Loops over the empties, meshes and armature objects and yields them and
+    their ids.
+    If object is an armatre than it loops over every bone and yields the
+    armature and the id of the bone.
+    '''
+    for obj in objects:
+        if obj.type in ['MESH', 'EMPTY']:
+            yield ObjectId(obj.name, ''), obj
+        elif obj.type == 'ARMATURE':
+            for bone in obj.data.bones:
+                yield ObjectId(obj.name, bone.name), obj
+
+def get_parent_mc_bone(obj: bpy_types.Object) -> tp.Optional[ObjectId]:
+    '''
+    Goes up through the ancesstors of the bpy_types.Object which
+    will be changed into mccube during model exporting and tries to find the
+    mcbone that contains this mccube.
+
+    Returns the ObjectId of the ancesstor.
+    '''
+    objId = None
+    while obj.parent is not None:
+        if obj.parent_type == 'BONE':
+            return ObjectId(obj.parent.name, obj.parent_bone)
+        elif obj.parent_type == 'OBJECT':
+            obj = obj.parent
+            objId = ObjectId(obj.name, '')
+            if obj.type == 'EMPTY':
+                return objId
+        else:
+            raise Exception(f'Unsuported parent type {obj.parent_type}')
+    return objId
+
+
+def get_name_conflicts(
+    object_properties: tp.Dict[ObjectId, ObjectMcProperties]
+) -> str:
+    '''
+    Looks through the object_properties dictionary and tries to find name
+    conflicts. Returns empty string (when there are no conflicts) or a name
+    which is used by multiple object.
+    '''
+    names: tp.List[str] = []
+    for objprop in object_properties.values():
+        if objprop.mctype not in [MCObjType.BONE, MCObjType.BOTH]:
+            continue  # Only bone names conflicts count
+        if objprop.name() in names:
+            return objprop.name()
+        else:
+            names.append(objprop.name())
+    return ''
+
+
 def get_object_mcproperties(
     context: bpy_types.Context
 ) -> tp.Dict[ObjectId, ObjectMcProperties]:
@@ -292,48 +348,38 @@ def get_object_mcproperties(
     properties of mcobjects. Returned dictionary uses the ObjectId of the
     objects as keys and the custom properties as values.
     '''
-    tmp_properties: tp.DefaultDict = defaultdict(
-        lambda: {"mc_children": [], "mc_obj_type": ""}
-    )
-
-    # Objects other than EMPTY and MESH are ignored.
-    for obj in context.selected_objects:
-        if obj.type == 'EMPTY' or obj.type == 'MESH':
-            if "mc_parent" in obj:
-                tmp_properties[
-                    obj["mc_parent"].name
-                ]["mc_children"].append(obj)
 
     properties: tp.Dict[ObjectId, ObjectMcProperties] = {}
-    for obj in context.selected_objects:
-        if obj.type == "":  # Invalid object (like Camera)
-            continue
-        tmp_prop = tmp_properties[obj.name]
+    for obj_id, obj in loop_objects(bpy.context.selected_objects):
+        currObjMcType: MCObjType
+        currObjMcParent: tp.Optional[ObjectId] = None
         if obj.type == 'EMPTY':
-            if "mc_is_bone" in obj:
-                tmp_prop['mc_obj_type'] = MCObjType.BONE
-            elif "mc_parent" not in obj:
-                tmp_prop['mc_obj_type'] = MCObjType.BONE
-            elif len(tmp_properties[obj.name]["mc_children"]) > 0:
-                tmp_prop['mc_obj_type'] = MCObjType.BONE
-            else:
-                tmp_prop['mc_obj_type'] = MCObjType.LOCATOR
+            currObjMcType = MCObjType.BONE
+            if obj.parent is not None and len(obj.children) == 0:
+                currObjMcType = MCObjType.LOCATOR
+                currObjMcParent = get_parent_mc_bone(obj)
         elif obj.type == 'MESH':
-            if len(tmp_properties[obj.name]["mc_children"]) > 0:
-                tmp_prop['mc_obj_type'] = MCObjType.BOTH
-            elif "mc_is_bone" in obj:
-                tmp_prop["mc_obj_type"] = MCObjType.BOTH
-            elif "mc_parent" in obj:
-                tmp_prop["mc_obj_type"] = MCObjType.CUBE
-            else:  # Not connected to anything
-                tmp_prop["mc_obj_type"] = MCObjType.BOTH
-
-        properties[ObjectId(obj.name, '')] = ObjectMcProperties(
-            thisobj = obj,
-            mcparent = ObjectId(obj['mc_parent'].name, '') if 'mc_parent' in obj else None,
-            mcchildren = tuple(ObjectId(i.name, '') for i in tmp_prop['mc_children']),  # type: ignore
-            mctype = tmp_prop['mc_obj_type']
+            if obj.parent is None:
+                currObjMcType = MCObjType.BOTH
+            else:
+                currObjMcParent = get_parent_mc_bone(obj)
+                currObjMcType = MCObjType.CUBE
+        elif obj.type == 'ARMATURE':
+            currObjMcType = MCObjType.BONE
+            p = obj.data.bones[obj_id.bone_name].parent
+            if p is not None:
+                currObjMcParent = ObjectId(obj.name, p.name)
+        else:  # Handle only empty, meshes and armatures
+            continue
+        properties[obj_id] = ObjectMcProperties(
+            obj_id, obj, currObjMcParent,
+            [], currObjMcType
         )
+    # Fill the children property. Must be in separate loop to reverse the
+    # effect of get_parent_mc_bone() function.
+    for objid, objprop in properties.items():
+        if objprop.mcparent is not None and objprop.mcparent in properties:
+            properties[objprop.mcparent].mcchildren.append(objid)
 
     return properties
 
