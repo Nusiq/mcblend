@@ -125,7 +125,6 @@ class ObjectMcProperties(object):
 
     def name(self) -> str:
         '''Returns the name of the object'''
-        # TODO - resolve name conflicts when the object is bone
         if self.thisobj.type == 'ARMATURE':
             return self.thisobj.pose.bones[
                 self.thisobj_id.bone_name
@@ -141,7 +140,6 @@ class ObjectMcProperties(object):
         return self.thisobj.bound_box
 
     def matrix_world(self) -> mathutils.Matrix:
-        # TODO - return bone matrix world if the object is a bone
         if self.thisobj.type == 'ARMATURE':
             return self.thisobj.matrix_world.copy() @ self.thisobj.pose.bones[
                 self.thisobj_id.bone_name
@@ -394,6 +392,10 @@ def pick_closest_rotation(
     values of 'modify' vector to get different representations
     of the same rotation. Picks the vector which is the
     closest to 'close_to' vector (euclidean distance).
+
+    original_rotation is added specificly to fix some issues with bones
+    which were rotated before the animation. Issue #25 describes the problem
+    in detail.
     '''
     if original_rotation is None:
         original_rotation = np.array([0.0, 0.0, 0.0])
