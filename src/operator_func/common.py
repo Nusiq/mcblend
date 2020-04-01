@@ -312,7 +312,7 @@ def get_parent_mc_bone(obj: bpy_types.Object) -> tp.Optional[ObjectId]:
         elif obj.parent_type == 'OBJECT':
             obj = obj.parent
             objId = ObjectId(obj.name, '')
-            if obj.type == 'EMPTY':
+            if obj.type == 'EMPTY' or 'mc_is_bone' in obj:
                 return objId
         else:
             raise Exception(f'Unsuported parent type {obj.parent_type}')
@@ -353,20 +353,25 @@ def get_object_mcproperties(
         currObjMcParent: tp.Optional[ObjectId] = None
         if obj.type == 'EMPTY':
             currObjMcType = MCObjType.BONE
-            if obj.parent is not None and len(obj.children) == 0:
+            if (
+                obj.parent is not None and len(obj.children) == 0 and
+                'mc_is_bone' not in obj
+            ):
                 currObjMcType = MCObjType.LOCATOR
                 currObjMcParent = get_parent_mc_bone(obj)
         elif obj.type == 'MESH':
-            if obj.parent is None:
+            if obj.parent is None or 'mc_is_bone' in obj:
                 currObjMcType = MCObjType.BOTH
             else:
                 currObjMcParent = get_parent_mc_bone(obj)
                 currObjMcType = MCObjType.CUBE
         elif obj.type == 'ARMATURE':
+            bone = obj.data.bones[obj_id.bone_name]
+            if bone.parent is None and len(bone.children) == 0:
+                continue  # Skip empty bones
             currObjMcType = MCObjType.BONE
-            p = obj.data.bones[obj_id.bone_name].parent
-            if p is not None:
-                currObjMcParent = ObjectId(obj.name, p.name)
+            if bone.parent is not None:
+                currObjMcParent = ObjectId(obj.name, bone.parent.name)
         else:  # Handle only empty, meshes and armatures
             continue
         properties[obj_id] = ObjectMcProperties(
