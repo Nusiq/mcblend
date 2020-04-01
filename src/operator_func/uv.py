@@ -96,7 +96,7 @@ def set_cube_uv(
     patter as minecraft UV mapping.
     '''
     uv = (uv[0], texture_height-uv[1]-depth-height)
-    if objprop.has_mc_mirror() and objprop.get_mc_mirror() == 1:
+    if objprop.has_mc_mirror():
         set_uv(
             objprop, get_uv_face(objprop, 'left'), 
             (uv[0]/texture_width, uv[1]/texture_height),

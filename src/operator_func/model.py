@@ -133,8 +133,7 @@ def get_mcbone_json(
             cube_dict['inflate'] = cubeprop.get_mc_inflate()
 
         if cubeprop.has_mc_mirror():
-            if cubeprop.get_mc_mirror() == 1:
-                cube_dict['mirror'] = True
+            cube_dict['mirror'] = True
 
         mcbone['cubes'].append(cube_dict)
 

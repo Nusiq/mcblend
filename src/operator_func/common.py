@@ -96,9 +96,9 @@ class ObjectMcProperties(object):
         '''Returns true if the object has mc_mirror object'''
         return 'mc_mirror' in self.thisobj
 
-    def get_mc_mirror(self) -> int:
-        '''Returns the value of mc_mirror property of the object'''
-        return self.thisobj['mc_mirror']
+    def has_mc_is_bone(self) -> bool:
+        '''Returns true if the object has mc_is_bone property'''
+        return 'mc_is_bone' in self.thisobj
 
     def has_mc_uv_group(self) -> bool:
         return 'mc_uv_group' in self.thisobj
