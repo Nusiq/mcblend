@@ -11,7 +11,7 @@ from .common import (
     MCObjType, get_local_matrix, get_mcrotation, ObjectId
 )
 
-# ANIMATIONS
+
 def get_mcanimation_json(
     name: str, length: float, loop_animation: bool, anim_time_update: str,
     bone_data: tp.Dict[ObjectId, tp.Dict[str, tp.List[tp.Dict]]],
@@ -28,9 +28,8 @@ def get_mcanimation_json(
     - object_properties - a dictionary with relations between object created by
     get_object_mcproperties() funciton.
     - extend_json - optional argument with a dictionary with content of old
-    file with animation. If this parameter is None a new dictionary is created.
-    WARNING: This function doesn't check the structure of a dictionary passed
-    through extend_json parameter.
+    file with animation. If this parameter is None or has invalid structure
+    a new dictionary is created.
 
     Returns a dictionary with animation for minecraft entity. The animation is
     optimised. Unnecessary keyframes from bone_data are not used in the result
@@ -57,6 +56,19 @@ def get_mcanimation_json(
             reduced_property.append(ls[-1])
         return reduced_property
 
+    def validate_extend_json(extend_json: tp.Optional[tp.Dict]):
+        '''
+        Reads content of dictionary and validates if it can be used by
+        export_animation(). Returns ture if the anim_dict is valid or false if it's
+        not.
+        '''
+        if type(extend_json) is not dict:
+            return False
+        try:
+            return type(extend_json['animations']) is dict  # type: ignore
+        except:
+            return False
+
     # Extract bones data
     bones: tp.Dict = {}
     for boneid, bone in bone_data.items():
@@ -77,19 +89,19 @@ def get_mcanimation_json(
             bones[
                 object_properties[boneid].name()]['scale'][prop['time']
             ] = prop['value']
+
     # Returning result
-    if extend_json is not None:
+    if extend_json is not None and validate_extend_json(extend_json):
         result = extend_json
     else:
         result = {
             "format_version": "1.8.0",
-            "animations": {
-                f"animation.{name}": {
-                    "animation_length": length,
-                    "bones": bones
-                }
-            }
+            "animations": {}
         }
+    result["animations"][f"animation.{name}"] = {
+        "animation_length": length,
+        "bones": bones
+    }
     data = result["animations"][f"animation.{name}"]
     if loop_animation:
         data['loop'] = True
@@ -191,4 +203,6 @@ def get_next_keyframe(context: bpy_types.Context) -> tp.Optional[int]:
                                 next_keyframe = time
                             else:
                                 next_keyframe = min(time, next_keyframe)
+    if next_keyframe > context.scene.frame_end:
+        return None
     return next_keyframe

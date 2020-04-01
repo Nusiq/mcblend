@@ -92,7 +92,15 @@ class OBJECT_OT_NusiqMcblendExportAnimationOperator(
         return True
 
     def execute(self, context):
-        animation_dict, error = export_animation(context)
+        # Read and validate old animation file
+        old_dict: tp.Optional[tp.Dict] = None
+        try:
+            with open(self.filepath, 'r') as f:
+                old_dict = json.load(f)
+        except:
+            pass
+        animation_dict, error = export_animation(context, old_dict)
+
         if error != '':
             self.report({'WARNING'}, error)
             return {'FINISHED'}

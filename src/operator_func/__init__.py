@@ -81,10 +81,15 @@ def export_model(context: bpy_types.Context) -> tp.Tuple[tp.Dict, str]:
     return result, ''
 
 
-def export_animation(context: bpy_types.Context) -> tp.Tuple[tp.Dict, str]:
+def export_animation(
+    context: bpy_types.Context, old_dict: tp.Optional[tp.Dict]
+) -> tp.Tuple[tp.Dict, str]:
     '''
     Uses context.selected_objects to create and return dictionary with
     minecraft animation.
+    old_dict is an optional value with dictionary that contains the content of
+    animation file. This function validates the dictionary and tries to use it
+    while exporting the animation.
     '''
     object_properties = get_object_mcproperties(context)
     name_conflict = get_name_conflicts(object_properties)
@@ -151,7 +156,8 @@ def export_animation(context: bpy_types.Context) -> tp.Tuple[tp.Dict, str]:
         length=(context.scene.frame_end-1)/context.scene.render.fps,
         loop_animation=context.scene.nusiq_mcblend.loop_animation,
         anim_time_update=context.scene.nusiq_mcblend.anim_time_update,
-        bone_data=bone_data, object_properties=object_properties
+        bone_data=bone_data, object_properties=object_properties,
+        extend_json=old_dict
     )
 
     return animation_dict, ''
