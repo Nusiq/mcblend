@@ -385,7 +385,8 @@ def get_object_mcproperties(
 
 
 def pick_closest_rotation(
-    modify: np.ndarray, close_to: np.ndarray
+    modify: np.ndarray, close_to: np.ndarray,
+    original_rotation: tp.Optional[np.ndarray]=None
 ) -> np.ndarray:
     '''
     Takes two numpy.arrays that represent rotation in
@@ -394,6 +395,9 @@ def pick_closest_rotation(
     of the same rotation. Picks the vector which is the
     closest to 'close_to' vector (euclidean distance).
     '''
+    if original_rotation is None:
+        original_rotation = np.array([0.0, 0.0, 0.0])
+
     def _pick_closet_location(
         modify: np.ndarray, close_to: np.ndarray
     ) -> tp.Tuple[float, np.ndarray]:
@@ -421,7 +425,11 @@ def pick_closest_rotation(
 
     distance1, choice1 = _pick_closet_location(modify, close_to)
     distance2, choice2 = _pick_closet_location(  # Counterintuitive but works
-        (modify + np.array([180, 180, 180])) * np.array([1, -1, 1]),
+        (
+            modify +
+            np.array([180, 180 + original_rotation[1] * 2, 180])) *
+            np.array([1, -1, 1]
+        ),
         close_to
     )
     if distance2 < distance1:

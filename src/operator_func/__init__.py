@@ -130,7 +130,7 @@ def export_animation(context: bpy_types.Context) -> tp.Tuple[tp.Dict, str]:
                 'value': get_vect_json(loc)
             })
             rot = pick_closest_rotation(
-                rot, prev_rotation[d_key]
+                rot, prev_rotation[d_key], d_val.rotation
             )
             bone_data[d_key]['rotation'].append({
                 'time': time,
@@ -155,6 +155,7 @@ def export_animation(context: bpy_types.Context) -> tp.Tuple[tp.Dict, str]:
     )
 
     return animation_dict, ''
+
 
 def set_uvs(context: bpy_types.Context) -> bool:
     width = context.scene.nusiq_mcblend.texture_width
@@ -241,6 +242,7 @@ def set_uvs(context: bpy_types.Context) -> bool:
                     width, new_height
                 )
     return True
+
 
 def set_inflate(context: bpy_types.Context, inflate: float) -> int:
     '''
