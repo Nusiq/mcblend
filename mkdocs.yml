@@ -1,21 +1,17 @@
 site_name: Mcblend
 
 nav:
-    - Home:
-      - About: index.md
-      - Installation: installation/index.md
+    - Home: index.md
 
     - User manual:
       - Basics: user_manual/basics/index.md
       - Conversion rules: user_manual/conversion_rules/index.md
-      - Custom properties - panel: user_manual/custom_properties/index.md
-      - Export bedrock model - panel: user_manual/export_model/index.md
-      - Export bedrock animation - panel: user_manual/export_animation/index.md
-      - Set bedrock UVs - panel: user_manual/set_uvs/index.md
-      - Parenting mcbones: user_manual/parenting/index.md
-      - Glossary: user_manual/glossary/index.md
+      - Panels: user_manual/panels/index.md
+
+theme:
+    name: mkdocs
+    nav_style: dark
 
 
-theme: 
-    name: readthedocs
-    titles_only: true
+markdown_extensions:
+    - admonition

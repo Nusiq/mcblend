@@ -7,14 +7,15 @@ User guides and installation instructions can be found on the project site:
 https://nusiq.github.io/mcblend/
 
 
-### Features
-- Exporting models into json files for minecraft bedrock edition.
-- Exporting animations into json files for minecraft bedrock edition.
-- UV Mapping/Texturing
-- Exporting minecraft models that use "inflate" option.
-- Creating UV-mapping template textures.
-- Adding locators
-### Planned features
-Some planned features can be found in the
+## Features
+- Exporting models for Minecraft bedrock edition. Custom Minecraft model
+  properties like `mirror`, `inflate` or `locator` are supported.
+- Exporting animations for Minecraft bedrock edition. Support for Minecraft
+  property `anim_time_update`.
+- Generating the UV maps and the template textures.
+- Easy way to create animations that would be really tedious to do thanks to
+  physics simulation and rigging.
+## Planned features
+- Planned features can be found in the
 ["Issues"](https://github.com/Nusiq/Blender-Export-MC-Bedrock-Model/issues])
 tab of this project on Github.

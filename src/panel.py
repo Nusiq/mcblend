@@ -57,7 +57,7 @@ class OBJECT_NusiqMcblendExporterProperties(bpy.types.PropertyGroup):
             "Decides if the UV mapping in blender should be moved to fit the"
             " minecraft UV mapping."
         ),
-        default=False
+        default=True
     )
 
     move_existing_mappings: BoolProperty(  # type: ignore
@@ -66,7 +66,7 @@ class OBJECT_NusiqMcblendExporterProperties(bpy.types.PropertyGroup):
             "Decides if the minecraft UV mappings that already exist should be"
             " moved during planning the minecraft UV map."
         ),
-        default=False
+        default=True
     )
     remove_old_mappings: BoolProperty(  # type: ignore
         name="Remove old UV-maps",

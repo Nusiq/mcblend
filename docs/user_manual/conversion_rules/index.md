@@ -1,27 +1,24 @@
 # Conversion rules
-Mcblend takes two types of object while creating the models - meshes and
-empties. Addon decides what should become an mcbone, mccube or locator
-by following the certain set of rules. The rules are cheked in the same order
-as the list below.
+There are no directly equivalent objects in blender models to Minecraft bedrock
+edition models. Mcblend uses set of rules to decide which parts of the model
+shoud be converted into bones, locators or cubes in Minecraft model.
 
-## Conversion rules for empties:
-1. Empty with `mc_is_bone` property becomes an mcbone.
-2. Empty without parents becomes an mcbone.
-3. Empty with children (`mc_parent` property in another object pointing at the
-empty) becomes mcbone.
-4. Empty in every other case (empty with no `mc_is_bone` propety, with parent and
-without children) becomes a locator.
+1. An empty or mesh with custom `is_mc_bone` property always creates a
+  a bone or a bone with cube respectivly.
+2. A bone is converted into a bone unless it has no children and no
+  parents. In this case it isn't converted at all. This behavior is to prevent
+  the conversions of inverse kinematics bones.
+3. An empty becomes a bone unless it has a parent but no children. In this case
+  it creates a locator.
+4. Mesh without parent becomes a bone with a cube inside it. Mesh with a parent
+  becomes a cube.
 
-## Conversion rules for meshes:
-1. If the mesh has a child defined by custom property (`mc_parent` in another
-object) it creates mcbone with one mccube in it.
-2. If the mesh has custom property `mc_is_bone` than the object becomes a
-mcbone with one mccube in it.
-3. Mesh with parent and without children becomes a mccube and is added to a
-list of mccubes of parent mcbone.
-4. In every other case (mesh without parent and without children) becomes a
-mcbone with single mccube in it.
+### The same set of rules as a table
 
-Remember that mccubes can't be animated. If you wan't to animate a mesh that
-doesn't have custom children and has custom parent make sure to add
-`mc_is_bone` property to it.
+||`is_mc_bone` property|no parent, no children| parent, no children|no parent,children|parent and children|
+|---|---|---|---|---|---|
+|__Bone__ |N/A*|NONE|bone|bone|bone|
+|__Empty__|bone|bone|locator|bone|bone|
+|__Mesh__ |bone & cube|bone & cube|cube| bone & cube|cube|
+
+*_bones can't have `has_mc_bone` property_
