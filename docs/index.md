@@ -11,7 +11,7 @@ Blender addon for working with Minecraft models.
   physics simulation and rigging.
 ## Planned features
 - Planned features can be found in the
-["Issues"](https://github.com/Nusiq/Blender-Export-MC-Bedrock-Model/issues])
+["Issues"](https://github.com/Nusiq/mcblend/issues)
 tab of this project on Github.
 
 # Instalation
