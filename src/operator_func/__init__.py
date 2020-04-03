@@ -271,22 +271,20 @@ def set_inflate(context: bpy_types.Context, inflate: float) -> int:
                 if inflate != 0:
                     obj['mc_inflate'] = inflate
             # Clear parent from children for a moment
-            children = obj.children
-            matrix_world_dict = {}
-            for c in children:
-                matrix_world_dict[c] = c.matrix_world.copy()
+            for c in obj.children:
+                old_matrix = c.matrix_world.copy()
                 c.parent = None
+                c.matrix_world = old_matrix
 
             # Set new dimensions
             obj.dimensions = (
                 np.array(obj.dimensions) +
                 2*delta_inflate/bpy.context.scene.unit_settings.scale_length
             )
+            context.view_layer.update()
 
             # Add children back and set their previous transformations
-            for c in children:
-                c.matrix_world = matrix_world_dict[c]
-                context.view_layer.update()
+            for c in obj.children:
                 c.parent = obj
                 c.matrix_parent_inverse = obj.matrix_world.inverted()
 
