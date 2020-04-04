@@ -250,26 +250,32 @@ def set_uvs(context: bpy_types.Context) -> bool:
     return True
 
 
-def set_inflate(context: bpy_types.Context, inflate: float) -> int:
+def set_inflate(context: bpy_types.Context, inflate: float, mode: str) -> int:
     '''
     Adds mc_inflate property to objects and changes their dimensions. Returns
     the number of edited objects.
     Returns the number of edited objects.
     '''
+    if mode == 'RELATIVE':
+        relative = True
+    elif mode == 'ABSOLUTE':
+        relative = False
+    else:
+        raise ValueError(f'Unknown mode for set_inflate operator: {mode}')
+
     counter = 0
     for obj in context.selected_objects:
-        if obj.type == 'MESH':  # Only mc_cubes can be inflated
+        if obj.type == 'MESH':
             if 'mc_inflate' in obj:
-                old_inflate = obj['mc_inflate']
-                delta_inflate = inflate - old_inflate
-                if inflate != 0:
-                    obj['mc_inflate'] = inflate
+                if relative:
+                    effective_inflate = obj['mc_inflate'] + inflate
                 else:
-                    del obj['mc_inflate']
+                    effective_inflate = inflate
+                delta_inflate = effective_inflate - obj['mc_inflate']
+                obj['mc_inflate'] = effective_inflate
             else:
                 delta_inflate = inflate
-                if inflate != 0:
-                    obj['mc_inflate'] = inflate
+                obj['mc_inflate'] = inflate
             # Clear parent from children for a moment
             for c in obj.children:
                 old_matrix = c.matrix_world.copy()
@@ -287,6 +293,10 @@ def set_inflate(context: bpy_types.Context, inflate: float) -> int:
             for c in obj.children:
                 c.parent = obj
                 c.matrix_parent_inverse = obj.matrix_world.inverted()
+
+            # Remove the property if it's equal to 0
+            if obj['mc_inflate'] == 0:
+                del obj['mc_inflate']
 
             counter += 1
     return counter

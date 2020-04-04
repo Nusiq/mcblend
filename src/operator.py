@@ -3,7 +3,7 @@ import math
 import json
 import numpy as np
 
-from bpy.props import StringProperty, FloatProperty
+from bpy.props import StringProperty, FloatProperty, EnumProperty
 from bpy_extras.io_utils import ExportHelper
 
 from .operator_func import *
@@ -299,12 +299,21 @@ class OBJECT_OT_NusiqMcblendSetInflateOperator(bpy.types.Operator):
     '''
     bl_idname = "object.nusiq_mcblend_set_inflate_operator"
     bl_label = "Set the mc_inflate vale for selected objects and resise them."
+    bl_options = {'REGISTER', 'UNDO', 'BLOCKING', 'GRAB_CURSOR'}
     bl_description = (
         "Set the mc_inflate vale for selected objects and change their "
         "dimensions to fit the inflate values."
     )
 
+
     inflate_value: FloatProperty(default=0)  # type: ignore
+    mode: EnumProperty(  # type: ignore
+        items=(
+            ('RELATIVE', 'Relative', 'Add or remove to current inflate value'),
+            ('ABSOLUTE', 'Absolute', 'Set the inflate value'),
+        ),
+        name = 'Mode'
+    )
 
     @classmethod
     def poll(cls, context: bpy_types.Context):
@@ -313,15 +322,17 @@ class OBJECT_OT_NusiqMcblendSetInflateOperator(bpy.types.Operator):
         if len(context.selected_objects) < 1:
             return False
         return True
-
+    
     def invoke(self, context, event):
-        wm = context.window_manager
-        return wm.invoke_props_dialog(self)
+        self.inflate_value = 0
+        self.mode = 'RELATIVE'
+        return self.execute(context)
 
     def execute(self, context):
-        n_objects = set_inflate(context, self.inflate_value)
-        self.inflate_value = 0
-        self.report(
-            {'INFO'} , f'Changed the inflate value of {n_objects} objects.'
+        n_objects = set_inflate(
+            context, self.inflate_value, self.mode
         )
+        # self.report(
+        #     {'INFO'} , f'Changed the inflate value of {n_objects} objects.'
+        # )
         return {'FINISHED'}

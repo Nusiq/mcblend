@@ -10,7 +10,7 @@ from .operator import (
     OBJECT_OT_NusiqMcblendToggleMcIsBoneOperator,
     OBJECT_OT_NusiqMcblendToggleMcMirrorOperator,
     OBJECT_OT_NusiqMcblendSetInflateOperator,
-    menu_func_nusiq_mcblend_export, menu_func_nusiq_mcblend_export_animation
+    menu_func_nusiq_mcblend_export, menu_func_nusiq_mcblend_export_animation,
 )
 from .panel import (
     OBJECT_PT_NusiqMcblendExportPanel,
