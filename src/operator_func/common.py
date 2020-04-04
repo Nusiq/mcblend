@@ -129,7 +129,7 @@ class ObjectMcProperties(object):
             return self.thisobj.pose.bones[
                 self.thisobj_id.bone_name
             ].name
-        return self.thisobj.name
+        return self.thisobj.name.split('.')[0]
 
     def type(self) -> str:
         '''Returns the type of the object (ARMATURE, MESH or EMPTY).'''

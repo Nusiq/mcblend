@@ -48,6 +48,12 @@ def export_model(context: bpy_types.Context) -> tp.Tuple[tp.Dict, str]:
             {}, f'Name conflict "{name_conflict}". Please rename theobject."'
         )
 
+    # Save starting frame
+    start_frame = context.scene.frame_current
+    # Stop animation if running & jump to the frame 0
+    bpy.ops.screen.animation_cancel()
+    context.scene.frame_set(0)
+
     texture_width = context.scene.nusiq_mcblend.texture_width
     texture_height = context.scene.nusiq_mcblend.texture_height
     model_name = context.scene.nusiq_mcblend.model_name
@@ -75,6 +81,8 @@ def export_model(context: bpy_types.Context) -> tp.Tuple[tp.Dict, str]:
             )
             mc_bones.append(mcbone)
 
+    # Return to first frame and create the result
+    context.scene.frame_set(start_frame)
     result = get_mcmodel_json(
         model_name, mc_bones, texture_width, texture_height
     )
@@ -91,30 +99,33 @@ def export_animation(
     animation file. This function validates the dictionary and tries to use it
     while exporting the animation.
     '''
+    # Check and create object properties
     object_properties = get_object_mcproperties(context)
     name_conflict = get_name_conflicts(object_properties)
     if name_conflict != '':
         return (
             {}, f'Name conflict "{name_conflict}". Please rename theobject."'
         )
-    start_frame = context.scene.frame_current
 
+    # Save starting frame
+    start_frame = context.scene.frame_current
+    # Stop animation if running & jump to the frame 0
+    bpy.ops.screen.animation_cancel()
+    context.scene.frame_set(0)
+
+    # Dictionary that stores bone data
     bone_data: tp.Dict[ObjectId, tp.Dict[str, tp.List[tp.Dict]]] = (
         defaultdict(lambda: {
             'scale': [], 'rotation': [], 'position': []
         })
     )
 
-    # Stop animation if running & jump to the first frame
-    bpy.ops.screen.animation_cancel()
-    context.scene.frame_set(0)
+    # Read data from frames
     default_translation = get_transformations(object_properties)
     prev_rotation = {
         name:np.zeros(3) for name in default_translation.keys()
     }
-
     next_keyframe = get_next_keyframe(context)
-
     while next_keyframe is not None:
         context.scene.frame_set(math.ceil(next_keyframe))
         current_translations = get_transformations(object_properties)
@@ -150,6 +161,7 @@ def export_animation(
 
         next_keyframe = get_next_keyframe(context)
 
+    # Return to first frame and create the result
     context.scene.frame_set(start_frame)
     animation_dict = get_mcanimation_json(
         name=context.scene.nusiq_mcblend.animation_name,
@@ -170,6 +182,12 @@ def set_uvs(context: bpy_types.Context) -> bool:
     move_existing_mappings = context.scene.nusiq_mcblend.move_existing_mappings
     remove_old_mappings = context.scene.nusiq_mcblend.remove_old_mappings
     resolution = context.scene.nusiq_mcblend.texture_template_resolution
+
+    # Save starting frame
+    start_frame = context.scene.frame_current
+    # Stop animation if running & jump to the frame 0
+    bpy.ops.screen.animation_cancel()
+    context.scene.frame_set(0)
 
     object_properties = get_object_mcproperties(context)
     objprops = [
@@ -247,6 +265,10 @@ def set_uvs(context: bpy_types.Context) -> bool:
                     curr_uv.width, curr_uv.depth, curr_uv.height,
                     width, new_height
                 )
+
+    # Return to first frame
+    context.scene.frame_set(start_frame)
+
     return True
 
 
