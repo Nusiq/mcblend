@@ -1,10 +1,10 @@
 # Conversion rules
 There are no directly equivalent objects in blender models to Minecraft bedrock
-edition models. Mcblend uses set of rules to decide which parts of the model
-shoud be converted into bones, locators or cubes in Minecraft model.
+edition models. Mcblend uses a set of rules to decide which parts of the model
+should be converted into bones, locators or cubes in the Minecraft model.
 
 1. An empty or mesh with custom `is_mc_bone` property always creates a
-  a bone or a bone with cube respectivly.
+  a bone or a bone with cube respectively.
 2. A bone is converted into a bone unless it has no children and no
   parents. In this case it isn't converted at all. This behavior is to prevent
   the conversions of inverse kinematics bones.

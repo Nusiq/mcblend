@@ -7,11 +7,10 @@ nav:
       - Basics: user_manual/basics/index.md
       - Conversion rules: user_manual/conversion_rules/index.md
       - Panels: user_manual/panels/index.md
-
+      - Tips and tricks: user_manual/tips/index.md
 theme:
     name: mkdocs
     nav_style: dark
-
 
 markdown_extensions:
     - admonition

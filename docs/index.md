@@ -7,7 +7,7 @@ Blender addon for working with Minecraft models.
 - Exporting animations for Minecraft bedrock edition. Support for Minecraft
   property `anim_time_update`.
 - Generating the UV maps and the template textures.
-- Easy way to create animations that would be really tedious to do thanks to
+- Easy way to create animations that would be tedious to do thanks to
   physics simulation and rigging.
 ## Planned features
 - Planned features can be found in the

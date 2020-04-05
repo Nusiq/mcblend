@@ -298,7 +298,7 @@ class OBJECT_OT_NusiqMcblendSetInflateOperator(bpy.types.Operator):
     mc_inflate.
     '''
     bl_idname = "object.nusiq_mcblend_set_inflate_operator"
-    bl_label = "Set the mc_inflate vale for selected objects and resise them."
+    bl_label = "Set mc_inflate"
     bl_options = {'REGISTER', 'UNDO', 'BLOCKING', 'GRAB_CURSOR'}
     bl_description = (
         "Set the mc_inflate vale for selected objects and change their "
