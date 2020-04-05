@@ -29,7 +29,8 @@ from .common import (
     get_vect_json,
     pick_closest_rotation,
     ObjectId, ObjectMcProperties,
-    get_name_conflicts
+    get_name_conflicts,
+    MINECRAFT_SCALE_FACTOR
 )
 
 
@@ -299,26 +300,74 @@ def set_inflate(context: bpy_types.Context, inflate: float, mode: str) -> int:
                 delta_inflate = inflate
                 obj['mc_inflate'] = inflate
             # Clear parent from children for a moment
-            for c in obj.children:
+            children = obj.children
+            for c in children:
                 old_matrix = c.matrix_world.copy()
                 c.parent = None
                 c.matrix_world = old_matrix
 
+            dimensions = np.array(obj.dimensions)
+
             # Set new dimensions
-            obj.dimensions = (
-                np.array(obj.dimensions) +
-                2*delta_inflate/bpy.context.scene.unit_settings.scale_length
+            dimensions = (
+                dimensions +
+                (2*delta_inflate/MINECRAFT_SCALE_FACTOR)
             )
+
+            obj.dimensions = dimensions
             context.view_layer.update()
 
             # Add children back and set their previous transformations
-            for c in obj.children:
+            for c in children:
                 c.parent = obj
                 c.matrix_parent_inverse = obj.matrix_world.inverted()
 
             # Remove the property if it's equal to 0
             if obj['mc_inflate'] == 0:
                 del obj['mc_inflate']
+
+            counter += 1
+    return counter
+
+
+def round_dimensions(context: bpy_types.Context) -> int:
+    '''
+    Rounds dimensions of selected objects. Returns the number of edited
+    objects.
+    '''
+
+    counter = 0
+    for obj in context.selected_objects:
+        if obj.type == 'MESH':
+            # Clear parent from children for a moment
+            children = obj.children
+            for c in children:
+                old_matrix = c.matrix_world.copy()
+                c.parent = None
+                c.matrix_world = old_matrix
+
+            # Set new dimensions
+            dimensions = np.array(obj.dimensions)
+            if 'mc_inflate' in obj:
+                dimensions -= (
+                    obj['mc_inflate'] * 2 /
+                    MINECRAFT_SCALE_FACTOR
+                )
+            dimensions = np.array(
+                dimensions * MINECRAFT_SCALE_FACTOR
+            ).round() / MINECRAFT_SCALE_FACTOR
+            if 'mc_inflate' in obj:
+                dimensions += (
+                    obj['mc_inflate'] * 2 /
+                    MINECRAFT_SCALE_FACTOR
+                )
+            obj.dimensions = dimensions
+            context.view_layer.update()
+
+            # Add children back and set their previous transformations
+            for c in children:
+                c.parent = obj
+                c.matrix_parent_inverse = obj.matrix_world.inverted()
 
             counter += 1
     return counter

@@ -22,6 +22,8 @@ __Usage__
 
 ![](../../img/set_mc_inflate_redo_panel.png)
 
+- **Round dimensions** - Rounds the dimensions of the object to integers.
+  This operator is useful for aviding problems with UV-mapping.
 
 ## Set bedrock UVs panel
 

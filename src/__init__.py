@@ -11,6 +11,7 @@ from .operator import (
     OBJECT_OT_NusiqMcblendToggleMcMirrorOperator,
     OBJECT_OT_NusiqMcblendSetInflateOperator,
     menu_func_nusiq_mcblend_export, menu_func_nusiq_mcblend_export_animation,
+    OBJECT_OT_NusiqMcblendRoundDimensionsOperator,
 )
 from .panel import (
     OBJECT_PT_NusiqMcblendExportPanel,
@@ -26,7 +27,7 @@ bl_info = {
     "author": "Artur",
     "description": "",
     "blender": (2, 80, 0),
-    "version": (3, 0, 0),  # COMPATIBILITY BREAKING CHANGE, NEW FEATURE, BUGFIX
+    "version": (3, 1, 1),  # COMPATIBILITY BREAKING CHANGE, NEW FEATURE, BUGFIX
     "location": "",
     "warning": "",
     "category": "Generic"
@@ -46,6 +47,7 @@ classes = (
     OBJECT_OT_NusiqMcblendToggleMcMirrorOperator,
     OBJECT_PT_NusiqMcblendCustomPropertiesPanel,
     OBJECT_OT_NusiqMcblendSetInflateOperator,
+    OBJECT_OT_NusiqMcblendRoundDimensionsOperator,
 )
 
 

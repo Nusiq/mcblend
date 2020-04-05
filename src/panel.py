@@ -194,3 +194,7 @@ class OBJECT_PT_NusiqMcblendCustomPropertiesPanel(bpy.types.Panel):
             "object.nusiq_mcblend_set_inflate_operator",
             text="Set mc_inflate"
         )
+        self.layout.row().operator(
+            "object.nusiq_mcblend_round_dimensions_operator",
+            text="Round dimensions"
+        )

@@ -21,6 +21,7 @@ class OBJECT_OT_NusiqMcblendExportOperator(
     '''Operator used for exporting minecraft models from blender'''
     bl_idname = "object.nusiq_mcblend_export_operator"
     bl_label = "Export model"
+    bl_options = {'REGISTER'}
     bl_description = "Exports selected objects from scene to bedrock model."
 
     filename_ext = '.geo.json'
@@ -69,6 +70,7 @@ class OBJECT_OT_NusiqMcblendExportAnimationOperator(
     '''Operator used for exporting minecraft animations from blender'''
     bl_idname = "object.nusiq_mcblend_export_animation_operator"
     bl_label = "Export animation"
+    bl_options = {'REGISTER'}
     bl_description = (
         "Exports animation of selected objects to bedrock entity animation "
         "format."
@@ -128,6 +130,7 @@ class OBJECT_OT_NusiqMcblendMapUvOperator(bpy.types.Operator):
     '''Operator used for creating UV-mapping for minecraft model.'''
     bl_idname = "object.nusiq_mcblend_map_uv_operator"
     bl_label = "Map uv for bedrock model."
+    bl_options = {'REGISTER', 'UNDO'}
     bl_description = (
         "Set UV-mapping for minecraft objects."
     )
@@ -161,6 +164,7 @@ class OBJECT_OT_NusiqMcblendUvGroupOperator(bpy.types.Operator):
     '''
     bl_idname = "object.nusiq_mcblend_uv_group_operator"
     bl_label = "Set mc_uv_group for bedrock model."
+    bl_options = {'REGISTER', 'UNDO'}
     bl_description = (
         "Set mc_uv_group for bedrock model. Objects that have the same width, "
         "depth and height and are in the same mc_uv_group are mapped to the "
@@ -207,6 +211,7 @@ class OBJECT_OT_NusiqMcblendToggleMcMirrorOperator(bpy.types.Operator):
     '''
     bl_idname = "object.nusiq_mcblend_toggle_mc_mirror_operator"
     bl_label = "Toggle mc_mirror for selected objects."
+    bl_options = {'REGISTER', 'UNDO'}
     bl_description = (
         "Toggle mc_mirror for selected objects. Adds or removes mirror "
         "property from a cube in minecraft model"
@@ -251,6 +256,7 @@ class OBJECT_OT_NusiqMcblendToggleMcIsBoneOperator(bpy.types.Operator):
     '''
     bl_idname = "object.nusiq_mcblend_toggle_mc_is_bone_operator"
     bl_label = "Toggle mc_is_bone for selected objects."
+    bl_options = {'REGISTER', 'UNDO'}
     bl_description = (
         "Toggles mc_is_bone for selected objects. Setting mc_is_bone property "
         "to 1 ensures that the object will be converted to a bone in minecraft"
@@ -326,13 +332,37 @@ class OBJECT_OT_NusiqMcblendSetInflateOperator(bpy.types.Operator):
     def invoke(self, context, event):
         self.inflate_value = 0
         self.mode = 'RELATIVE'
-        return self.execute(context)
+        return {'FINISHED'}
 
     def execute(self, context):
         n_objects = set_inflate(
             context, self.inflate_value, self.mode
         )
-        # self.report(
-        #     {'INFO'} , f'Changed the inflate value of {n_objects} objects.'
-        # )
+        return {'FINISHED'}
+
+
+# Round dimensions
+class OBJECT_OT_NusiqMcblendRoundDimensionsOperator(bpy.types.Operator):
+    '''
+    Operator used for rounding the values of dimensions.
+    '''
+    bl_idname = "object.nusiq_mcblend_round_dimensions_operator"
+    bl_label = "Round dimensions"
+    bl_options = {'REGISTER', 'UNDO'}
+    bl_description = (
+        "Round the dimensions of selected object to integers."
+    )
+
+    @classmethod
+    def poll(cls, context: bpy_types.Context):
+        if context.mode != 'OBJECT':
+            return False
+        if len(context.selected_objects) < 1:
+            return False
+        return True
+
+    def execute(self, context):
+        n_objects = round_dimensions(
+            context
+        )
         return {'FINISHED'}
