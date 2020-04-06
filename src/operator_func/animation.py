@@ -203,6 +203,6 @@ def get_next_keyframe(context: bpy_types.Context) -> tp.Optional[int]:
                                 next_keyframe = time
                             else:
                                 next_keyframe = min(time, next_keyframe)
-    if next_keyframe > context.scene.frame_end:
+    if next_keyframe is not None and next_keyframe > context.scene.frame_end:
         return None
     return next_keyframe
