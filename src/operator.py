@@ -270,7 +270,7 @@ class OBJECT_OT_NusiqMcblendToggleMcIsBoneOperator(bpy.types.Operator):
         if len(context.selected_objects) < 1:
             return False
         for obj in context.selected_objects:
-            if obj.type == "MESH":
+            if obj.type == "MESH" or obj.type == "EMPTY":
                 return True
         return False
 
@@ -283,13 +283,13 @@ class OBJECT_OT_NusiqMcblendToggleMcIsBoneOperator(bpy.types.Operator):
                     break
         if is_clearing:
             for obj in context.selected_objects:
-                if obj.type == "MESH":
+                if obj.type == "MESH" or obj.type == "EMPTY":
                     if 'mc_is_bone' in obj:
                         del obj['mc_is_bone']
             self.report({'INFO'} , f'Cleared mc_is_bone.')
         else:
             for obj in context.selected_objects:
-                if obj.type == "MESH":
+                if obj.type == "MESH" or obj.type == "EMPTY":
                     obj['mc_is_bone'] = {}
             self.report({'INFO'} , f'Marked slected objects as mcbones.')
 

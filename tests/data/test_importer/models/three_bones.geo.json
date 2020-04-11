@@ -12,9 +12,23 @@
 			},
 			"bones": [
 				{
-					"name": "Empty",
+					"name": "mid",
 					"cubes": [],
-					"pivot": [0.0, 0.0, 0.0],
+					"parent": "bottom",
+					"pivot": [0.0, 128.0, 0.0],
+					"rotation": [0.0, 0.0, 0.0]
+				},
+				{
+					"name": "bottom",
+					"cubes": [],
+					"pivot": [0.0, 48.0, 0.0],
+					"rotation": [0.0, 0.0, 0.0]
+				},
+				{
+					"name": "top",
+					"cubes": [],
+					"parent": "mid",
+					"pivot": [0.0, 240.0, 0.0],
 					"rotation": [0.0, 0.0, 0.0]
 				}
 			]

@@ -35,16 +35,26 @@ def _get_models_to_compare(
         tmp_path, os.path.split(source_path)[1]
     ).replace('\\', '/')
 
+    # Remove file target file if exists
+    try:
+        os.remove(target_path)
+    except OSError:
+        pass
+
     # Create tmp_path if not exists
     Path(tmp_path).mkdir(parents=True, exist_ok=True)
 
     # Run blender actions
     subprocess.call([
-        blender_exe, '-b', '--python-expr',
+        blender_exe, '-b', '--log-level', '0', '--python-expr',
         # Python commands separated with semicolons
-        f'import bpy;'
+        "import bpy;"
+        "bpy.ops.object.select_all(action='SELECT');"
+        "bpy.ops.object.delete(use_global=False);"
+
         f'bpy.ops.object.nusiq_mcblend_import_operator('
         f'filepath="{source_path}");'
+        "bpy.ops.object.select_all(action='SELECT');"
         f'bpy.ops.object.nusiq_mcblend_export_operator('
         f'filepath="{target_path}")'
     ])
@@ -52,7 +62,7 @@ def _get_models_to_compare(
     # Validate results
     with open(source_path, 'r') as f:
         source_dict = json.load(f)
-    with open(target_path) as f:
+    with open(target_path, 'r') as f:
         target_dict = json.load(f)
 
     return (
@@ -63,12 +73,17 @@ def _get_models_to_compare(
 
 # THE TESTS
 def test_importer():
-    source_dict, target_dict, target_path = _get_models_to_compare(
-        BLENDER_EXEC_PATH,
-        "./tests/data/test_importer/models/single_bone.geo.json",
-        "./.tmp/test_importer"
-    )
-    assert (
-        source_dict["minecraft:geometry"][0]['bones'] ==
-        target_dict["minecraft:geometry"][0]['bones']
-    )
+    models_path = "./tests/data/test_importer/models/"
+    for dir_ in os.listdir(models_path):
+        fp = os.path.join(models_path, dir_)
+        if not os.path.isfile(fp):
+            continue
+        source_dict, target_dict, target_path = _get_models_to_compare(
+            BLENDER_EXEC_PATH,
+            fp, "./.tmp/test_importer"
+        )
+        print(dir_)
+        assert (
+            source_dict["minecraft:geometry"][0]['bones'] ==
+            target_dict["minecraft:geometry"][0]['bones']
+        )

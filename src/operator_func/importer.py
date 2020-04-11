@@ -16,7 +16,7 @@ class ImportLocator(object):
         self.name = name
         self.position = position
 
-        self.blend_empty: tp.Optional[bpy_types.Empty] = None
+        self.blend_empty: tp.Optional[bpy_types.Object] = None
 
 
 class ImportCube(object):
@@ -55,7 +55,7 @@ class ImportBone(object):
         self.pivot = pivot
         self.rotation = rotation
 
-        self.blend_empty: tp.Optional[bpy_types.Empty] = None
+        self.blend_empty: tp.Optional[bpy_types.Object] = None
 
 
 class ImportGeometry(object):
@@ -340,93 +340,127 @@ def load_model(data: tp.Dict, geometry_name: str="") -> ImportGeometry:
 
 def build_geometry(geometry: ImportGeometry, context: bpy_types.Context):
     '''Builds the geometry in Blenders 3D space'''
-
-    # Create objects
+    # context.view_layer.update()
+    # Create objects - and set their pivots
     for bone in geometry.bones.values():
         # 1. Spawn bone (empty)
         bpy.ops.object.empty_add(type='SPHERE', location=(0, 0, 0))
-        obj = bone.blend_empty = context.object
-        # 2. Apply translation
-        _mc_pivot(obj, bone.pivot)
-        # 3. Apply rotation
-        _mc_rotate(obj, bone.rotation)
+        bone_obj: bpy_types.Object
+        bone_obj = bone.blend_empty = context.object
+        _mc_pivot(bone_obj, bone.pivot)  # 2. Apply translation
+        bone_obj.name = bone.name  # 3. Apply custom properties
+        bone_obj['mc_is_bone'] = {}
+        for cube in bone.cubes:
+            cube_obj: bpy_types.Object
+            # 1. Spawn cube
+            bpy.ops.mesh.primitive_cube_add(
+                size=1, enter_editmode=False, location=(0, 0, 0)
+            )
+            cube_obj = cube.blend_cube = context.object
+
+            _mc_set_size(cube_obj, cube.size)  # 3. Set size
+            _mc_pivot(cube_obj, cube.pivot)  # 4. Move pivot
+            # 2. Apply translation
+            _mc_translate(cube_obj, cube.origin, cube.size, cube.pivot)
+            # 5. Apply custom properties
+            cube_obj['mc_uv'] = list(cube.uv)
+            if cube.mirror:
+                cube_obj['mc_mirror'] = {}
+        for locator in bone.locators:
+            # 1. Spawn locator (empty)
+            locator_obj: bpy_types.Object
+            bpy.ops.object.empty_add(type='SPHERE', location=(0, 0, 0))
+            locator_obj = locator.blend_empty = context.object
+            _mc_pivot(locator_obj, locator.position)  # 2. Apply translation
+            # 3. Apply custom properties
+            locator_obj.name = locator.name
+
+    # Parent objects (keep offset)
+    for bone in geometry.bones.values():
+        bone_obj = bone.blend_empty
+        # 1. Parent bone keep transform
+        if bone.parent is not None and bone.parent in geometry.bones:
+            parent_obj: bpy_types.Object = geometry.bones[
+                bone.parent
+            ].blend_empty
+            context.view_layer.update()
+            bone_obj.parent = parent_obj
+            bone_obj.matrix_parent_inverse = (
+                parent_obj.matrix_world.inverted()
+            )
+        # 2. Parent cubes keep transform
+        for cube in bone.cubes:
+            cube_obj = cube.blend_cube
+            context.view_layer.update()
+            cube_obj.parent = bone_obj
+            cube_obj.matrix_parent_inverse = (
+                bone_obj.matrix_world.inverted()
+            )
+        # 3. Parent locators keep transform
+        for locator in bone.locators:
+            locator_obj = locator.blend_empty
+            context.view_layer.update()
+            locator_obj.parent = bone_obj
+            locator_obj.matrix_parent_inverse = (
+                bone_obj.matrix_world.inverted()
+            )
+
+    # Rotate objects
+    for bone in geometry.bones.values():
+        bone_obj = bone.blend_empty
         context.view_layer.update()
-    #     # 4. Apply custom properties
-    #     obj.name = bone.name
-    #     # 5. Spawn cubes
-    #     for cube in bone.cubes:
-    #         # 1. Spawn cube
-    #         bpy.ops.mesh.primitive_cube_add(size=1, enter_editmode=False, location=(0, 0, 0))
-    #         obj = cube.blend_cube = context.object
-
-    #         # 2. Apply translation
-    #         _mc_translate(obj, cube.origin, cube.pivot)
-    #         # 3. Apply scale
-    #         _mc_scale(obj, cube.size)
-    #         # 4. Move pivot
-    #         _mc_pivot(obj, cube.pivot)
-    #         # 5. Rotate around the pivot
-    #         _mc_rotate(obj, cube.rotation)
-    #         context.view_layer.update()
-    #         # 6. Apply custom properties
-    #         obj['mc_uv'] = list(cube.uv)
-    #         if cube.mirror:
-    #             obj['mc_mirror'] = {}
-
-    #     for locator in bone.locators:
-    #         # 1. Spawn locator (empty)
-    #         bpy.ops.object.empty_add(type='SPHERE', location=(0, 0, 0))
-    #         obj = locator.blend_empty = context.object
-    #         # 2. Apply translation
-    #         _mc_pivot(obj, locator.position)
-
-    # # Add parenting (and apply parent transformations)
-    # for bone in geometry.bones.values():
-    #     # If there is parent set it (don't keep transform)
-    #     if bone.parent is not None and bone.parent in geometry.bones:
-    #         bone.blend_empty.parent = geometry.bones[  # type: ignore
-    #             bone.parent
-    #         ].blend_empty
-    #     for cube in bone.cubes:
-    #         # Set bone as parent (keep transform)
-    #         cube.blend_cube.parent = bone.blend_empty  # type: ignore
-    #     for locator in bone.locators:
-    #         # Set the bone as parent
-    #         locator.blend_empty.parent = bone.blend_empty  # type: ignore
+        _mc_rotate(bone_obj, bone.rotation)
+        for cube in bone.cubes:
+            cube_obj = cube.blend_cube
+            _mc_rotate(cube_obj, cube.rotation)
 
 
 def _mc_translate(
     obj: bpy_types.Object, mctranslation: tp.Tuple[float, float, float],
+    mcsize: tp.Tuple[float, float, float],
     mcpivot: tp.Tuple[float, float, float]
 ):
     '''
     Translates a blender object using a translation vector written in minecraft
     coordinates system.
     '''
-    # translation = mathutils.Vector(
-        
-    #     (
-    #         np.array(mctranslation)[[0, 2, 1]] * np.array([1, 1, 1])
-    #     ) /
-    #     MINECRAFT_SCALE_FACTOR
-    # )
-    # for vertex in obj.data.vertices:
-    #     vertex.co -= translation
+    pivot_offset = mathutils.Vector(
+        np.array(mcpivot)[[0, 2, 1]] / MINECRAFT_SCALE_FACTOR
+    )
+    size_offset = mathutils.Vector(
+        (np.array(mcsize)[[0, 2, 1]] / 2) / MINECRAFT_SCALE_FACTOR
+    )
+    translation = mathutils.Vector(
+        np.array(mctranslation)[[0, 2, 1]] / MINECRAFT_SCALE_FACTOR
+    )
+    print(f'pivot_offset {pivot_offset}')
+    print(f'size_offset {size_offset}')
+    print(f'translation {translation}')
+    for vertex in obj.data.vertices:
+        vertex.co += (translation - pivot_offset + size_offset)
 
 
-def _mc_scale(
-    obj: bpy_types.Object, mcscale: tp.Tuple[float, float, float]
+def _mc_set_size(
+    obj: bpy_types.Object, mcsize: tp.Tuple[float, float, float]
 ):
     '''
     Scales a blender object using scale vector written in minecraft coordinates
     system.
     '''
-    obj.scale = mathutils.Vector(
-        (
-            (np.array(mcscale)[[0, 2, 1]] * np.array([1, -1, 1])) *
-            np.array(obj.scale) / MINECRAFT_SCALE_FACTOR
-        )
+    pos_delta = (
+        (np.array(mcsize)[[0, 2, 1]] / 2) / MINECRAFT_SCALE_FACTOR
     )
+    data = obj.data
+    # 0. ---; 1. --+; 2. -+-; 3. -++; 4. +--; 5. +-+; 6. ++- 7. +++
+    data.vertices[0].co = mathutils.Vector(pos_delta * np.array([-1, -1,-1]))
+    data.vertices[1].co = mathutils.Vector(pos_delta * np.array([-1, -1, 1]))
+    data.vertices[2].co = mathutils.Vector(pos_delta * np.array([-1, 1, -1]))
+    data.vertices[3].co = mathutils.Vector(pos_delta * np.array([-1, 1, 1]))
+    data.vertices[4].co = mathutils.Vector(pos_delta * np.array([1, -1, -1]))
+    data.vertices[5].co = mathutils.Vector(pos_delta * np.array([1, -1, 1]))
+    data.vertices[6].co = mathutils.Vector(pos_delta * np.array([1, 1, -1]))
+    data.vertices[7].co = mathutils.Vector(pos_delta * np.array([1, 1, 1]))
+
 
 
 def _mc_pivot(
@@ -437,8 +471,7 @@ def _mc_pivot(
     coordinates system.
     '''
     translation = mathutils.Vector(
-        np.array(mcpivot)[[0, 2, 1]] * np.array([1, 1, 1]) /
-        MINECRAFT_SCALE_FACTOR
+        np.array(mcpivot)[[0, 2, 1]] / MINECRAFT_SCALE_FACTOR
     )
     obj.location += translation
 
@@ -451,7 +484,7 @@ def _mc_rotate(
     vector.
     '''
     rotation = mathutils.Euler(
-        (np.array(mcrotation)[[0, 2, 1]] * np.array([1, -1, 1])) * math.pi/180,
-        'XYZ'
+        (np.array(mcrotation)[[0, 2, 1]] * np.array([1, 1, -1])) * math.pi/180,
+        'XZY'
     )
     obj.rotation_euler.rotate(rotation)

@@ -358,6 +358,8 @@ def get_object_mcproperties(
                 'mc_is_bone' not in obj
             ):
                 currObjMcType = MCObjType.LOCATOR
+
+            if obj.parent is not None:
                 currObjMcParent = get_parent_mc_bone(obj)
         elif obj.type == 'MESH':
             if obj.parent is None or 'mc_is_bone' in obj:
