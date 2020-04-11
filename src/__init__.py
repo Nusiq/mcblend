@@ -12,6 +12,7 @@ from .operator import (
     OBJECT_OT_NusiqMcblendSetInflateOperator,
     menu_func_nusiq_mcblend_export, menu_func_nusiq_mcblend_export_animation,
     OBJECT_OT_NusiqMcblendRoundDimensionsOperator,
+    OBJECT_OT_NusiqMcblendImport, menu_func_nusiq_mcblend_import,
 )
 from .panel import (
     OBJECT_PT_NusiqMcblendExportPanel,
@@ -48,6 +49,7 @@ classes = (
     OBJECT_PT_NusiqMcblendCustomPropertiesPanel,
     OBJECT_OT_NusiqMcblendSetInflateOperator,
     OBJECT_OT_NusiqMcblendRoundDimensionsOperator,
+    OBJECT_OT_NusiqMcblendImport,
 )
 
 
@@ -61,6 +63,9 @@ def register():
     bpy.types.TOPBAR_MT_file_export.append(
         menu_func_nusiq_mcblend_export_animation
     )
+    bpy.types.TOPBAR_MT_file_import.append(
+        menu_func_nusiq_mcblend_import
+    )
 
 
 def unregister():
@@ -71,3 +76,7 @@ def unregister():
     bpy.types.TOPBAR_MT_file_export.remove(
         menu_func_nusiq_mcblend_export_animation
     )
+    bpy.types.TOPBAR_MT_file_import.remove(
+        menu_func_nusiq_mcblend_import
+    )
+

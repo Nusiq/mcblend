@@ -4,10 +4,10 @@ import json
 import numpy as np
 
 from bpy.props import StringProperty, FloatProperty, EnumProperty
-from bpy_extras.io_utils import ExportHelper
+from bpy_extras.io_utils import ExportHelper, ImportHelper
 
 from .operator_func import *
-from .operator_func.json_tools import CompactEncoder, has_json_path
+from .operator_func.json_tools import CompactEncoder
 
 # Additional imports for mypy
 import bpy_types
@@ -199,7 +199,7 @@ class OBJECT_OT_NusiqMcblendUvGroupOperator(bpy.types.Operator):
                     obj['mc_uv_group'] = self.group_name
             self.report({'INFO'} , f'Set mc_uv_group to {self.group_name}.')
         self.group_name = ""
-        
+
         return {'FINISHED'}
 
 
@@ -328,7 +328,7 @@ class OBJECT_OT_NusiqMcblendSetInflateOperator(bpy.types.Operator):
         if len(context.selected_objects) < 1:
             return False
         return True
-    
+
     def invoke(self, context, event):
         self.inflate_value = 0
         self.mode = 'RELATIVE'
@@ -366,3 +366,33 @@ class OBJECT_OT_NusiqMcblendRoundDimensionsOperator(bpy.types.Operator):
             context
         )
         return {'FINISHED'}
+
+
+class OBJECT_OT_NusiqMcblendImport(bpy.types.Operator, ImportHelper):
+    '''Operator used for importiong minecraft models to blender'''
+    bl_idname = "object.nusiq_mcblend_import_operator"
+    bl_label = "Import model"
+    bl_options = {'REGISTER'}
+    bl_description = "Import model from json file."
+    # ImportHelper mixin class uses this
+    filename_ext = ".json"
+    filter_glob: StringProperty(  # type: ignore
+        default="*.json",
+
+        options={'HIDDEN'},
+
+        maxlen=1000,
+
+    )
+    def execute(self, context):
+        # Save file and finish
+        with open(self.filepath, 'r') as f:
+            data = json.load(f)
+        import_model(data, context)
+        return {'FINISHED'}
+
+# Helper function - add operator to the import men
+def menu_func_nusiq_mcblend_import(self, context):
+    self.layout.operator(
+        OBJECT_OT_NusiqMcblendImport.bl_idname, text="Mcblend: Import model"
+    )

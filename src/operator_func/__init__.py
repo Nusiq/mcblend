@@ -32,7 +32,9 @@ from .common import (
     get_name_conflicts,
     MINECRAFT_SCALE_FACTOR
 )
-
+from .importer import (
+    load_model, build_geometry
+)
 
 def export_model(context: bpy_types.Context) -> tp.Tuple[tp.Dict, str]:
     '''
@@ -371,3 +373,11 @@ def round_dimensions(context: bpy_types.Context) -> int:
 
             counter += 1
     return counter
+
+def import_model(data: tp.Dict, context: bpy_types.Context) -> bool:
+    '''
+    Import and build model from JSON file. Returns success result value (bool).
+    '''
+    geometry = load_model(data, geometry_name='')
+    build_geometry(geometry, context)
+    return True

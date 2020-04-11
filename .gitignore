@@ -3,3 +3,9 @@
 **/.mypy_cache/**
 *.zip
 site/**
+*~
+*.swp
+*.swo
+tests/test_config.json
+.tmp/**
+.tox/**
