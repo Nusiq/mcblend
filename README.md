@@ -1,4 +1,4 @@
-# MCblend
+# Mcblend
 Blender addon for working with Minecraft models.
 
 ### User guides
