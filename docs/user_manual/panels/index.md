@@ -88,3 +88,21 @@ __Usage__
   insert its value to a proper text field. You can leave it blank if you don't
   want to use it.
 6. Press the "Export animation" button.
+
+
+## Import bedrock model panel
+
+This panel is used for importing bedrock models from JSON files.
+
+![](../../img/import_model_panel.png)
+
+__Usage__
+
+Press the button and use file explorer to find the model you want to import.
+There is additional property in the file explorer which allows you to specify
+the name of the geometry you want to import. Only geometries with `.geometry`
+prefix in the name are supported. You don't have to write the prefix (it's
+added automatically to the name). If you leave this field empty only the
+first model from the list of geometries will be imported.
+
+![](../../img/import_model_file_explorer.png)

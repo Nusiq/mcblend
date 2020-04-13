@@ -9,7 +9,8 @@ the sidebar in Blender is N). Opening this tab reveals panels that are used
 to access most of the functionality of the addon. Every panel is described
 further in the user manual in [panels](../panels/) section.
 
-Additionally, you can find some new options in the `File -> Export` menu.
+Additionally, you can find some new options in the `File -> Export` and
+`File -> Import` menus.
 
 ## Limitations
 
