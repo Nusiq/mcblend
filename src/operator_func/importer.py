@@ -11,6 +11,102 @@ import numpy as np
 import math
 
 
+def _assert(expr: bool, msg: str='') -> None:
+    '''
+    Same functionality as normal assert statement but works even
+    if __debug__ is False.
+    '''
+    if not expr:
+        raise AssertionError(msg)
+
+
+def assert_is_vector(vect: tp. Any, length: int, types: tp.Tuple) -> None:
+    '''
+    Asserts that the "vect" is "length" long vector and all of the items
+    in the vector are instances of types from types list.
+    '''
+    _assert(type(vect) is list)
+    _assert(len(vect) == length)
+    _assert(all([isinstance(i, types) for i in vect]))
+
+
+def assert_is_model(a: tp.Any) -> None:
+    '''
+    Asserts that the input dictionary is a valid model file.
+    '''
+    _assert(type(a) is dict)
+    _assert(set(a.keys()) == {'format_version', 'minecraft:geometry'})
+
+    _assert(a['format_version'] == "1.12.0")
+
+    geometries = a['minecraft:geometry']
+    _assert(type(geometries) is list)
+    _assert(len(geometries) > 0)
+    
+    # minecraft:geometry
+    for geometry in geometries:
+        _assert(type(geometry) is dict)
+        _assert(set(geometry.keys()) == {'description', 'bones'})
+        desc = geometry['description']
+        bones = geometry['bones']
+
+        # minecraft:geometry -> description
+        _assert(type(desc) is dict)
+        _assert(set(desc.keys()) == {'identifier', 'texture_width',
+            'texture_height', 'visible_bounds_width', 'visible_bounds_height',
+            'visible_bounds_offset'
+        
+        })
+        _assert(type(desc['identifier']) is str)
+        _assert(type(desc['texture_width']) is int)
+        _assert(type(desc['texture_height']) is int)
+        _assert(isinstance(desc['visible_bounds_width'], (float, int)))
+        _assert(isinstance(desc['visible_bounds_height'], (float, int)))
+        assert_is_vector(desc['visible_bounds_offset'], 3, (int, float))
+
+        # minecraft:geometry -> bones
+        _assert(type(bones) is list)
+        for bone in bones:
+            _assert(type(bone) is dict)
+
+            _assert(set(bone.keys()) <= {  # acceptable keys
+                'name', 'cubes', 'pivot', 'rotation', 'parent', 'locators'
+            })
+            _assert(set(bone.keys()) >= {  # obligatory keys
+                'name', 'cubes', 'pivot', 'rotation'
+            })
+            _assert(type(bone['name']) is str)
+
+            assert_is_vector(bone['pivot'], 3, (int, float))
+            assert_is_vector(bone['rotation'], 3, (int, float))
+            if 'parent' in bone:
+                _assert(type(bone['parent']) is str)
+            # minecraft:geometry -> bones -> locators
+            if 'locators' in bone:
+                _assert(type(bone['locators']) is dict)
+                for locator_name, locator in bone['locators'].items():
+                    _assert(type(locator_name) is str)
+                    assert_is_vector(locator, 3, (int, float))
+            # minecraft:geometry -> bones -> cubes
+            _assert(type(bone['cubes']) is list)
+            for cube in bone['cubes']:
+                _assert(type(cube) is dict)
+                _assert(set(cube.keys()) <= {  # acceptable keys
+                    'uv', 'size', 'origin', 'pivot', 'rotation',
+                    'mirror'
+                })
+                _assert(set(cube.keys()) >= {  # obligatory keys
+                    'uv', 'size', 'origin', 'pivot', 'rotation'
+                })
+                assert_is_vector(cube['uv'], 2, (int, float))
+                assert_is_vector(cube['size'], 3, (int, float))
+                assert_is_vector(cube['origin'], 3, (int, float))
+                assert_is_vector(cube['pivot'], 3, (int, float))
+                assert_is_vector(cube['rotation'], 3, (int, float))
+                if 'mirror' in cube:
+                    _assert(type(cube['mirror']) is bool)
+
+
 class ImportLocator(object):
     def __init__(self, name: str, position: tp.Tuple[float, float, float]):
         self.name = name

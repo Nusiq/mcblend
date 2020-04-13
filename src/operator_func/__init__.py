@@ -10,31 +10,18 @@ from collections import defaultdict
 import bpy_types
 import typing as tp
 
-from .uv import (
-    get_uv_mc_cubes, UvMcCube, plan_uv, set_cube_uv
-)
+from .uv import get_uv_mc_cubes, UvMcCube, plan_uv, set_cube_uv
 from .animation import (
-    get_mcanimation_json, 
-    get_mctranslations,
-    get_next_keyframe,
+    get_mcanimation_json, get_mctranslations, get_next_keyframe,
     get_transformations
 )
-from .model import (
-    get_mcbone_json,
-    get_mcmodel_json
-)
+from .model import get_mcbone_json, get_mcmodel_json
 from .common import (
-    MCObjType,
-    get_object_mcproperties,
-    get_vect_json,
-    pick_closest_rotation,
-    ObjectId, ObjectMcProperties,
-    get_name_conflicts,
-    MINECRAFT_SCALE_FACTOR
+    MCObjType, get_object_mcproperties, get_vect_json, pick_closest_rotation,
+    ObjectId, ObjectMcProperties, get_name_conflicts, MINECRAFT_SCALE_FACTOR
 )
-from .importer import (
-    load_model, build_geometry
-)
+from .importer import load_model, build_geometry, assert_is_model
+
 
 def export_model(context: bpy_types.Context) -> tp.Tuple[tp.Dict, str]:
     '''
@@ -378,6 +365,7 @@ def import_model(data: tp.Dict, context: bpy_types.Context) -> bool:
     '''
     Import and build model from JSON file. Returns success result value (bool).
     '''
+    assert_is_model(data)
     geometry = load_model(data, geometry_name='')
     build_geometry(geometry, context)
     context.scene.nusiq_mcblend.texture_width = geometry.texture_width

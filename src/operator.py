@@ -124,7 +124,6 @@ def menu_func_nusiq_mcblend_export_animation(self, context):
     )
 
 
-
 # Uv map
 class OBJECT_OT_NusiqMcblendMapUvOperator(bpy.types.Operator):
     '''Operator used for creating UV-mapping for minecraft model.'''
@@ -378,17 +377,20 @@ class OBJECT_OT_NusiqMcblendImport(bpy.types.Operator, ImportHelper):
     filename_ext = ".json"
     filter_glob: StringProperty(  # type: ignore
         default="*.json",
-
         options={'HIDDEN'},
-
         maxlen=1000,
-
     )
+
     def execute(self, context):
         # Save file and finish
         with open(self.filepath, 'r') as f:
             data = json.load(f)
-        import_model(data, context)
+        try:
+            import_model(data, context)
+        except AssertionError as e:
+            self.report(
+                {'INFO'} , f'Invalid model: {e}'
+            )
         return {'FINISHED'}
 
 # Helper function - add operator to the import men

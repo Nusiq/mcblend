@@ -169,8 +169,8 @@ class OBJECT_PT_NusiqMcblendSetUvsPanel(bpy.types.Panel):
         )
 
 
-class OBJECT_PT_NusiqMcblendCustomPropertiesPanel(bpy.types.Panel):
-    bl_label = "Custom properties"
+class OBJECT_PT_NusiqMcblendOperatorsPanel(bpy.types.Panel):
+    bl_label = "Operators"
     bl_category = "Mcblend"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"

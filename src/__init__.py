@@ -19,7 +19,7 @@ from .panel import (
     OBJECT_NusiqMcblendExporterProperties,
     OBJECT_PT_NusiqMcblendExportAnimationPanel,
     OBJECT_PT_NusiqMcblendSetUvsPanel,
-    OBJECT_PT_NusiqMcblendCustomPropertiesPanel,
+    OBJECT_PT_NusiqMcblendOperatorsPanel,
 )
 
 
@@ -46,7 +46,7 @@ classes = (
     OBJECT_OT_NusiqMcblendUvGroupOperator,
     OBJECT_OT_NusiqMcblendToggleMcIsBoneOperator,
     OBJECT_OT_NusiqMcblendToggleMcMirrorOperator,
-    OBJECT_PT_NusiqMcblendCustomPropertiesPanel,
+    OBJECT_PT_NusiqMcblendOperatorsPanel,
     OBJECT_OT_NusiqMcblendSetInflateOperator,
     OBJECT_OT_NusiqMcblendRoundDimensionsOperator,
     OBJECT_OT_NusiqMcblendImport,
