@@ -121,12 +121,13 @@ def get_mcbone_json(
             c_origin = c_origin + cubeprop.get_mc_inflate()
 
         cube_dict: tp.Dict = {
-            'uv': uv,
+            'uv': get_vect_json(uv),
             # TODO - add rounding option in the menu
             'size': [round(i) for i in get_vect_json(c_size)],
             'origin': get_vect_json(c_origin),
             'pivot': get_vect_json(c_pivot),
-            'rotation': get_vect_json(c_rot)
+            # Change -180 in rotations to 180
+            'rotation': [i if i != -180 else 180 for i in get_vect_json(c_rot)]
         }
 
         if cubeprop.has_mc_inflate():

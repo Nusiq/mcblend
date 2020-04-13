@@ -380,4 +380,10 @@ def import_model(data: tp.Dict, context: bpy_types.Context) -> bool:
     '''
     geometry = load_model(data, geometry_name='')
     build_geometry(geometry, context)
+    context.scene.nusiq_mcblend.texture_width = geometry.texture_width
+    context.scene.nusiq_mcblend.texture_height = geometry.texture_height
+    if geometry.identifier.startswith('geometry.'):
+        context.scene.nusiq_mcblend.model_name = geometry.identifier[9:]
+    else:
+        context.scene.nusiq_mcblend.model_name = geometry.identifier
     return True

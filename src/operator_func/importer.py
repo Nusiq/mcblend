@@ -433,9 +433,6 @@ def _mc_translate(
     translation = mathutils.Vector(
         np.array(mctranslation)[[0, 2, 1]] / MINECRAFT_SCALE_FACTOR
     )
-    print(f'pivot_offset {pivot_offset}')
-    print(f'size_offset {size_offset}')
-    print(f'translation {translation}')
     for vertex in obj.data.vertices:
         vertex.co += (translation - pivot_offset + size_offset)
 
