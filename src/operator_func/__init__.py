@@ -361,17 +361,20 @@ def round_dimensions(context: bpy_types.Context) -> int:
             counter += 1
     return counter
 
-def import_model(data: tp.Dict, context: bpy_types.Context) -> bool:
+def import_model(
+    data: tp.Dict, geometry_name: str, context: bpy_types.Context
+):
     '''
     Import and build model from JSON file. Returns success result value (bool).
     '''
     assert_is_model(data)
-    geometry = load_model(data, geometry_name='')
+    geometry = load_model(data, geometry_name)
     build_geometry(geometry, context)
+
     context.scene.nusiq_mcblend.texture_width = geometry.texture_width
     context.scene.nusiq_mcblend.texture_height = geometry.texture_height
+
     if geometry.identifier.startswith('geometry.'):
         context.scene.nusiq_mcblend.model_name = geometry.identifier[9:]
     else:
         context.scene.nusiq_mcblend.model_name = geometry.identifier
-    return True

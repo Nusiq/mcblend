@@ -20,6 +20,7 @@ from .panel import (
     OBJECT_PT_NusiqMcblendExportAnimationPanel,
     OBJECT_PT_NusiqMcblendSetUvsPanel,
     OBJECT_PT_NusiqMcblendOperatorsPanel,
+    OBJECT_PT_NusiqMcblendImportPanel,
 )
 
 
@@ -50,6 +51,7 @@ classes = (
     OBJECT_OT_NusiqMcblendSetInflateOperator,
     OBJECT_OT_NusiqMcblendRoundDimensionsOperator,
     OBJECT_OT_NusiqMcblendImport,
+    OBJECT_PT_NusiqMcblendImportPanel,
 )
 
 

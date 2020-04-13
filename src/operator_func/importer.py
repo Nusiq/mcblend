@@ -20,89 +20,186 @@ def _assert(expr: bool, msg: str='') -> None:
         raise AssertionError(msg)
 
 
-def assert_is_vector(vect: tp. Any, length: int, types: tp.Tuple) -> None:
+def assert_is_vector(
+    vect: tp. Any, length: int, types: tp.Tuple, msg: str=''
+) -> None:
     '''
     Asserts that the "vect" is "length" long vector and all of the items
     in the vector are instances of types from types list.
     '''
-    _assert(type(vect) is list)
-    _assert(len(vect) == length)
-    _assert(all([isinstance(i, types) for i in vect]))
+    _assert(type(vect) is list, msg)
+    _assert(len(vect) == length, msg)
+    _assert(all([isinstance(i, types) for i in vect]), msg)
 
 
 def assert_is_model(a: tp.Any) -> None:
     '''
     Asserts that the input dictionary is a valid model file.
     '''
-    _assert(type(a) is dict)
-    _assert(set(a.keys()) == {'format_version', 'minecraft:geometry'})
+    _assert(type(a) is dict, 'Model file must be an object')
+    _assert(
+        set(a.keys()) == {'format_version', 'minecraft:geometry'},
+        'Model file must have format_version and minecraft:geometry properties'
+    )
 
-    _assert(a['format_version'] == "1.12.0")
+    _assert(a['format_version'] == "1.12.0", 'Unsuported format version')
 
     geometries = a['minecraft:geometry']
-    _assert(type(geometries) is list)
-    _assert(len(geometries) > 0)
-    
+    _assert(
+        type(geometries) is list,
+        'minecraft:geometry property must be a list'
+    )
+    _assert(
+        len(geometries) > 0, 'minecraft:geometry must have at least one item'
+    )
+
     # minecraft:geometry
     for geometry in geometries:
-        _assert(type(geometry) is dict)
-        _assert(set(geometry.keys()) == {'description', 'bones'})
+        _assert(
+            type(geometry) is dict,
+            'Every item from minecraft:geometry list must be an object'
+        )
+        _assert(
+            set(geometry.keys()) == {'description', 'bones'},
+            'Every item from minecraft:geometry list must have description '
+            'and bones properties'
+        )
         desc = geometry['description']
         bones = geometry['bones']
 
         # minecraft:geometry -> description
-        _assert(type(desc) is dict)
-        _assert(set(desc.keys()) == {'identifier', 'texture_width',
-            'texture_height', 'visible_bounds_width', 'visible_bounds_height',
-            'visible_bounds_offset'
-        
-        })
-        _assert(type(desc['identifier']) is str)
-        _assert(type(desc['texture_width']) is int)
-        _assert(type(desc['texture_height']) is int)
-        _assert(isinstance(desc['visible_bounds_width'], (float, int)))
-        _assert(isinstance(desc['visible_bounds_height'], (float, int)))
-        assert_is_vector(desc['visible_bounds_offset'], 3, (int, float))
+        _assert(type(desc) is dict, 'Geometry description must be an object')
+        _assert(
+            set(desc.keys()) == {
+                'identifier', 'texture_width',
+                'texture_height', 'visible_bounds_width',
+                'visible_bounds_height', 'visible_bounds_offset'
+            },
+            'Geometry description must have following properties: '
+            'identifier, texture_width, texture_height, visible_bounds_width, '
+            'visible_bounds_height, visible_bounds_offset'
+        )
+        _assert(
+            type(desc['identifier']) is str,
+            'Geometry identifier must be a string'
+        )
+        _assert(
+            type(desc['texture_width']) is int,
+            'texture_width must be an integer'
+        )
+        _assert(
+            type(desc['texture_height']) is int,
+            'texture_height must be an integer'
+        )
+        _assert(
+            desc['texture_width'] >= 0,
+            'texture_width must be greater than 0'
+        )
+        _assert(
+            desc['texture_height'] >= 0,
+            'texture_height must be greater than 0'
+        )
+
+        _assert(
+            isinstance(desc['visible_bounds_width'], (float, int)),
+            'visible_bounds_width must be a number'
+        )
+        _assert(
+            isinstance(desc['visible_bounds_height'], (float, int)),
+            'visible_bounds_height must be a number'
+        )
+        assert_is_vector(
+            desc['visible_bounds_offset'], 3, (int, float),
+            'visible_bounds_offset must be a vector of 3 numbers'
+        )
 
         # minecraft:geometry -> bones
         _assert(type(bones) is list)
         for bone in bones:
-            _assert(type(bone) is dict)
+            _assert(type(bone) is dict, 'Every bone must be an object')
 
-            _assert(set(bone.keys()) <= {  # acceptable keys
-                'name', 'cubes', 'pivot', 'rotation', 'parent', 'locators'
-            })
-            _assert(set(bone.keys()) >= {  # obligatory keys
-                'name', 'cubes', 'pivot', 'rotation'
-            })
-            _assert(type(bone['name']) is str)
+            _assert(
+                set(bone.keys()) <= {  # acceptable keys
+                    'name', 'cubes', 'pivot', 'rotation', 'parent', 'locators'
+                },
+                'Only properties from this list are allowed for bones: '
+                'name, cubes, pivot, rotation, parent, locators'
+            )
+            _assert(  # obligatory keys
+                set(bone.keys()) >= {'name', 'cubes', 'pivot', 'rotation'},
+                'Every bone must have following properties: name, cubes, '
+                'pivot, rotation'
+            )
+            _assert(type(bone['name']) is str, 'Bone name must be a string')
 
-            assert_is_vector(bone['pivot'], 3, (int, float))
-            assert_is_vector(bone['rotation'], 3, (int, float))
+            assert_is_vector(
+                bone['pivot'], 3, (int, float),
+                'pivot property of a bone must be a vector of 3 numbers'
+            )
+            assert_is_vector(
+                bone['rotation'], 3, (int, float),
+                'rotation property of a bone must be a vector of 3 numbers'
+            )
             if 'parent' in bone:
-                _assert(type(bone['parent']) is str)
+                _assert(type(bone['parent']) is str,
+                'parent property of a bone must be a string'
+            )
             # minecraft:geometry -> bones -> locators
             if 'locators' in bone:
-                _assert(type(bone['locators']) is dict)
+                _assert(
+                    type(bone['locators']) is dict,
+                    'locators property of a bone must be an object'
+                )
                 for locator_name, locator in bone['locators'].items():
-                    _assert(type(locator_name) is str)
-                    assert_is_vector(locator, 3, (int, float))
+                    _assert(
+                        type(locator_name) is str,
+                        'Locator name property must be a string'
+                    )
+                    assert_is_vector(
+                        locator, 3, (int, float),
+                        'Locator value must be a vector of 3 numbers'
+                    )
             # minecraft:geometry -> bones -> cubes
-            _assert(type(bone['cubes']) is list)
+            _assert(
+                type(bone['cubes']) is list,
+                'cubes property of a bone must be a list'
+            )
             for cube in bone['cubes']:
-                _assert(type(cube) is dict)
-                _assert(set(cube.keys()) <= {  # acceptable keys
-                    'uv', 'size', 'origin', 'pivot', 'rotation',
-                    'mirror'
-                })
-                _assert(set(cube.keys()) >= {  # obligatory keys
-                    'uv', 'size', 'origin', 'pivot', 'rotation'
-                })
-                assert_is_vector(cube['uv'], 2, (int, float))
-                assert_is_vector(cube['size'], 3, (int, float))
-                assert_is_vector(cube['origin'], 3, (int, float))
-                assert_is_vector(cube['pivot'], 3, (int, float))
-                assert_is_vector(cube['rotation'], 3, (int, float))
+                _assert(type(cube) is dict, 'Every cube must be an object')
+                _assert(
+                    set(cube.keys()) <= {  # acceptable keys
+                        'uv', 'size', 'origin', 'pivot', 'rotation', 'mirror'
+                    },
+                    'Only properties from this list are allowed for cubes: '
+                    'uv, size, origin, pivot, rotation, mirror'
+                )
+                _assert(
+                    set(cube.keys()) >= {  # obligatory keys
+                        'uv', 'size', 'origin', 'pivot', 'rotation'
+                    },
+                    'Every cube must have following properties: '
+                    'uv, size, origin, pivot, rotation'
+                )
+                assert_is_vector(
+                    cube['uv'], 2, (int, float),
+                    'size property of a cube must be a vector of 2 numbers'
+                )
+                assert_is_vector(
+                    cube['size'], 3, (int, float),
+                    'size property of a cube must be a vector of 3 numbers'
+                )
+                assert_is_vector(
+                    cube['origin'], 3, (int, float),
+                    'origin property of a cube must be a vector of 3 numbers'
+                )
+                assert_is_vector(
+                    cube['pivot'], 3, (int, float),
+                    'pivot property of a cube must be a vector of 3 numbers'
+                )
+                assert_is_vector(
+                    cube['rotation'], 3, (int, float),
+                    'rotation property of a cube must be a vector of 3 numbers'
+                )
                 if 'mirror' in cube:
                     _assert(type(cube['mirror']) is bool)
 
@@ -170,74 +267,29 @@ def _load_cube(data: tp.Dict) -> ImportCube:
     Returns ImportCube object created from a dictinary (part of the JSON)
     file in the model.
     '''
-    if type(data) is not dict:
-        raise ValueError('invalid cube structure')
     # uv
-    if 'uv' not in data:
-        uv: tp.Tuple[int, int] = (0, 0)
-    elif (
-        type(data['uv']) is not list or
-        len(data['uv']) != 2 or
-        not all([isinstance(i, (int, float)) for i in data['uv']])
-    ):
-        raise ValueError('uv must be a list of two numbers')
-    else:
-        uv = data['uv']
+    uv: tp.Tuple[int, int] = data['uv']
     # mirror
     if 'mirror' not in data:
         mirror: bool = False
-    elif type(data['mirror']) is not bool:
-        raise ValueError('mirror property must be boolean')
     else:
         mirror = data['mirror']
 
     # size
-    if 'size' not in data:
-        size: tp.Tuple[float, float, float] = (0, 0, 0)
-    elif (
-        type(data['size']) is not list or
-        len(data['size']) != 3 or
-        not all([isinstance(i, (float, int)) for i in data['size']])
-    ):
-        raise ValueError('size must be a list of 3 floats')
-    else:
-        size = tuple(data['size'])  # type: ignore
+    size: tp.Tuple[float, float, float] = tuple(data['size'])  # type: ignore
 
     # origin
-    if 'origin' not in data:
-        origin: tp.Tuple[float, float, float] = (0, 0, 0)
-    elif (
-        type(data['origin']) is not list or
-        len(data['origin']) != 3 or
-        not all([isinstance(i, (float, int)) for i in data['origin']])
-    ):
-        raise ValueError('origin must be a list of 3 floats')
-    else:
-        origin = tuple(data['origin'])  # type: ignore
+    origin: tp.Tuple[float, float, float] = tuple(  # type: ignore
+        data['origin']
+    )
 
     # rotation
-    if 'rotation' not in data:
-        rotation: tp.Tuple[float, float, float] = (0, 0, 0)
-    elif (
-        type(data['rotation']) is not list or
-        len(data['rotation']) != 3 or
-        not all([isinstance(i, (float, int)) for i in data['rotation']])
-    ):
-        raise ValueError('rotation must be a list of 3 floats')
-    else:
-        rotation = tuple(data['rotation'])  # type: ignore
+    rotation: tp.Tuple[float, float, float] = tuple(  # type: ignore
+        data['rotation']
+    )
 
     # pivot
-    if 'pivot' not in data:
-        pivot: tp.Tuple[float, float, float] = (0, 0, 0)
-    elif (
-        type(data['pivot']) is not list or
-        len(data['pivot']) != 3 or
-        not all([isinstance(i, (float, int)) for i in data['pivot']])
-    ):
-        raise ValueError('pivot must be a list of 3 floats')
-    else:
-        pivot = tuple(data['pivot'])  # type: ignore
+    pivot: tp.Tuple[float, float, float] = tuple(data['pivot'])  # type: ignore
     return ImportCube(uv, mirror, origin, pivot, size, rotation)
 
 
@@ -246,46 +298,18 @@ def _load_bone(data: tp.Dict) -> ImportBone:
     Returns ImportBone object created from a dictinary (part of the JSON)
     file in the model.
     '''
-    if type(data) is not dict:
-        raise ValueError('Invalid bone structure')
 
-    # Name
-    if 'name' not in data:
-        raise ValueError('Missing bone name')
-    elif type(data['name']) is not str:
-        raise ValueError('Bone name must be a string')
-    else:
-        name: str = data['name']
+    name: str = data['name']
     # Pivot
-    if 'pivot' not in data:
-        pivot: tp.Tuple[float, float, float] = (0, 0, 0)
-    elif type(data['pivot']) is not list:
-        raise ValueError('Invalid pivot property structure')
-    elif (
-        len(data['pivot']) != 3 or
-        not all([isinstance(i, (float, int)) for i in data['pivot']])
-    ):
-        raise ValueError('pivot property must be a list of 3 numbers')
-    else:
-        pivot = tuple(data['pivot'])  # type: ignore
+    pivot: tp.Tuple[float, float, float] = tuple(data['pivot'])  # type: ignore
 
     # Roatation
-    if 'rotation' not in data:
-        rotation: tp.Tuple[float, float, float] = (0, 0, 0)
-    elif type(data['rotation']) is not list:
-        raise ValueError('Invalid rotation property structure')
-    elif (
-        len(data['rotation']) != 3 or
-        not all([isinstance(i, (float, int)) for i in data['rotation']])
-    ):
-        raise ValueError('rotation property must be a list of 3 numbers')
-    else:
-        rotation = tuple(data['rotation'])  # type: ignore
+    rotation: tp.Tuple[float, float, float] = tuple(  # type: ignore
+        data['rotation']
+    )
     # Parent
     if 'parent' not in data:
         parent = None
-    elif type(data['parent']) is not str:
-        raise ValueError('parent value must be a string')
     else:
         parent = data['parent']
 
@@ -294,41 +318,16 @@ def _load_bone(data: tp.Dict) -> ImportBone:
     locators: tp.List[ImportLocator] = []
     if 'locators' not in data:
         pass
-    elif type(data['locators']) is not dict:
-        raise ValueError('Invalid locators property structure')
     else:
         for k, v in data['locators'].items():
-            if type(k) is not str:
-                raise ValueError('Locator name must be a string')
-            elif (
-                type(v) is not list or
-                len(v) != 3 or
-                not all([isinstance(i, (float, int)) for i in v])
-            ):
-                raise ValueError(
-                    'Locator coordinates must be a list of 3 numbers'
-                )
-            else:
-                locators.append(ImportLocator(
-                    k,
-                    tuple(v))  # type: ignore
-                )
+            locators.append(ImportLocator(
+                k,
+                tuple(v))  # type: ignore
+            )
     # Cubes
     import_cubes: tp.List[ImportCube] = []
-    if 'cubes' not in data:
-        pass
-    elif type(data['cubes']) is not list:
-        raise ValueError('Invalid cubes property structure')
-    else:
-        for i, c in enumerate(data['cubes']):
-            if type(c) is not dict:
-                raise ValueError(f'Cube "{i}" of is invalid')
-            try:
-                import_cubes.append(_load_cube(c))
-            except ValueError as e:
-                raise ValueError(
-                    f'cube {i} - {e}'
-                )
+    for i, c in enumerate(data['cubes']):
+        import_cubes.append(_load_cube(c))
 
     return ImportBone(
         name, parent, pivot, rotation, import_cubes, locators
@@ -339,31 +338,13 @@ def load_model(data: tp.Dict, geometry_name: str="") -> ImportGeometry:
     '''
     Returns ImportGeometry object with all of the data loaded from data dict.
     The data dict is a dictionary representaiton of the JSON file with
-    Minecraft model. Raises ValueError if data is invalid.
+    Minecraft model. Doesn't validates the input. Use assert_is_model for that.
 
     geometry_name is a name of the geometry to load. This argument is optional
     if not specified or epmty string only the first model is imported.
     '''
-    # Format version
-    if type(data) is not dict:
-        raise ValueError(f'Invalid model structure')
-
-    if 'format_version' not in data:
-        raise ValueError(f'Missing format_version')
-    elif data['format_version'] != "1.12.0":
-        raise ValueError(f'Unsuported version {data["format_version"]}')
-    else:
-        format_version: str = data['format_version']
-
-    # Geometry
-    if 'minecraft:geometry' not in data:
-        raise ValueError('Missing minecraft:geometry property')
-    elif type(data['minecraft:geometry']) is not list:
-        raise ValueError('Property minecraft:geometry must be a list')
-    elif len(data['minecraft:geometry']) == 0:
-        raise ValueError('minecraft:geometry is empty')
-    else:
-        geometries: tp.List = data['minecraft:geometry']
+    format_version: str = data['format_version']
+    geometries: tp.List = data['minecraft:geometry']
 
     # Find geometry
     geometry: tp.Optional[tp.Dict] = None
@@ -372,7 +353,7 @@ def load_model(data: tp.Dict, geometry_name: str="") -> ImportGeometry:
         if not success:
             continue
         # Found THE geometry
-        if geometry_name == "" or geometry_name == identifier:
+        if geometry_name == "" or f'geometry.{geometry_name}' == identifier:
             identifier = tp.cast(str, identifier)  # mypy cast
             geometry_name = identifier
             geometry = g
@@ -383,53 +364,35 @@ def load_model(data: tp.Dict, geometry_name: str="") -> ImportGeometry:
         if geometry_name == "":
             raise ValueError('Unable to find valid geometry')
         else:
-            raise ValueError(f'Unable to find geometry called {geometry_name}')
+            raise ValueError(
+                f'Unable to find geometry called geometry.{geometry_name}'
+            )
 
     # Load texture_width
     texture_width, success = get_path(
         geometry, ['description', 'texture_width']
     )
-    if not success:
-        texture_width = 0
-    elif type(texture_width) is not int or texture_width < 0:  # type: ignore
-        raise ValueError('texture_width property must be an positive integer')
+    texture_width = tp.cast(int, texture_width)
+
     # Load texture_height
     texture_height, success = get_path(
         geometry, ['description', 'texture_height']
     )
-    if not success:
-        texture_height = 0
-    elif (
-        type(texture_height) is not int or texture_height < 0  # type: ignore
-    ):
-        raise ValueError('texture_height property must be an positive integer')
+    texture_height = tp.cast(int, texture_height)
 
     # Load bones from geometry
-    if 'bones' not in geometry:
-        bones: tp.List = []
-    elif type(geometry['bones']) is not list:
-        raise ValueError('The bones property of the geometry must be a list')
-    else:
-        bones: tp.List = geometry['bones']  # type: ignore
+    bones: tp.List = geometry['bones']
 
     # Read bones
     import_bones: tp.Dict[str, ImportBone] = {}
     for i, b in enumerate(bones):
-        if type(b) is not dict:
-            raise ValueError(
-                f'Bone "{i}" of geometry "{identifier}" is invalid'
-            )
-        try:
-            import_bone = _load_bone(b)
-            import_bones[import_bone.name] = import_bone
-        except ValueError as e:
-            raise ValueError(
-                f'Error in bone {i} of geometry {identifier}: {e}'
-            )
+        import_bone = _load_bone(b)
+        import_bones[import_bone.name] = import_bone
+
     return ImportGeometry(
         geometry_name,
-        texture_width,  # type: ignore
-        texture_height,  # type: ignore
+        texture_width,
+        texture_height,
         import_bones
     )
 

@@ -4,7 +4,6 @@ from bpy.props import (
     StringProperty, PointerProperty, IntProperty, BoolProperty
 )
 from bpy.types import Operator, AddonPreferences
-
 import pathlib
 
 
@@ -106,6 +105,20 @@ class OBJECT_PT_NusiqMcblendExportPanel(bpy.types.Panel):
         )
         self.layout.row().operator(
             "object.nusiq_mcblend_export_operator", text="Export model"
+        )
+
+
+class OBJECT_PT_NusiqMcblendImportPanel(bpy.types.Panel):
+    bl_label = "Import bedrock model"
+    bl_category = "Mcblend"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+
+    def draw(self, context):
+        col = self.layout.column(align=True)
+        col.prop(context.scene.nusiq_mcblend, "path", text="")
+        self.layout.row().operator(
+            "object.nusiq_mcblend_import_operator", text="Import model"
         )
 
 
