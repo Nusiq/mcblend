@@ -15,7 +15,7 @@ Blender addon for working with Minecraft models.
 ["Issues"](https://github.com/Nusiq/mcblend/issues)
 tab of this project on Github.
 
-# Instalation
+# Installation
 1. Download and install [Blender](https://www.blender.org/download/).
 2. Download the lastest release (zip file) from projects github releases
 page: [https://github.com/Nusiq/mcblend/releases](https://github.com/Nusiq/mcblend/releases)
