@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can
+    # access it
+    - uses: actions/checkout@v2
+
+    # Python 3.7 for mypy testing
+    - name: Set up Python 3.7
+      uses: actions/setup-python@v1
+      with:
+        python-version: '3.7'
+
+
+    - name: Install dependencies
+      run: |
+        sudo snap install blender --classic
+        pip install mypy pytest
+    - name: Build and install the addon
+      run: |
+        cd $GITHUB_WORKSPACE
+        python --version
+        zip_name=$(python build.py | grep 'mcblend_[0-9.]*.zip' -o)
+        blender -b --python ./blender_scripts/install.py -- "$GITHUB_WORKSPACE/$zip_name"
+    - name: Test syntax with mypy
+      run: |
+        cd $GITHUB_WORKSPACE
+        python -m mypy ./src
+    - name: PyTest tests
+      run: |
+        cd $GITHUB_WORKSPACE
+        python -m pytest
