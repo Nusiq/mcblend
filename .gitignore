@@ -6,6 +6,6 @@ site/**
 *~
 *.swp
 *.swo
-tests/test_config.py
+tests/config.py
 .tmp/**
 .tox/**

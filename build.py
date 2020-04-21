@@ -53,4 +53,6 @@ if __name__ == "__main__":
     ) as zf:
         for k, v in file_mapping.items():
             zf.write(k, v)
+
+    # This output is caputured while tesing
     print(f'Project build in {output_path}')
