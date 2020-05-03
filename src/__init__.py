@@ -1,6 +1,5 @@
 import bpy
 from bpy.props import PointerProperty, BoolProperty, FloatVectorProperty
-import bmesh
 import mathutils
 
 
