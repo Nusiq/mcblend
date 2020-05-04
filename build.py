@@ -6,12 +6,14 @@ Release file name follows the naming convension pattern:
 import zipfile
 import os
 import re
-import json
+
+SRC_PATH = 'mcblend'
 
 
-if __name__ == "__main__":
+def main():
+    '''Main function'''
     # Get version number
-    init_path = 'src/__init__.py'
+    init_path = 'mcblend/__init__.py'
 
     version = None
     with open(init_path) as f:
@@ -26,18 +28,13 @@ if __name__ == "__main__":
     if version is None:
         raise Exception("Unable to read project version.")
 
-    file_name_patterns = ['\w+\.py']
-    SRC_PATH = 'src'
-
     # Create mapping SOURCE:TARGET (in zip file)
     file_mapping = {'LICENSE': 'LICENSE'}
-    for dir_name, subdirs, files in os.walk(SRC_PATH):
+    for dir_name, _, files in os.walk(SRC_PATH):
         for file_name in files:
             match = False
-            for pattern in file_name_patterns:
-                if re.fullmatch(r'\w+\.py', file_name):
-                    match = True
-                    break
+            if re.fullmatch(r'\w+\.py', file_name):
+                match = True
             if match:
                 file_mapping[os.path.join(dir_name, file_name)] = (
                     os.path.join(
@@ -48,11 +45,12 @@ if __name__ == "__main__":
 
     # Create the zip file
     output_path = f'mcblend_{version}.zip'
-    with zipfile.ZipFile(
-        output_path, 'w', zipfile.ZIP_DEFLATED
-    ) as zf:
+    with zipfile.ZipFile(output_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
         for k, v in file_mapping.items():
-            zf.write(k, v)
+            zipf.write(k, v)
 
     # This output is caputured while tesing
     print(f'Project build in {output_path}')
+
+if __name__ == "__main__":
+    main()

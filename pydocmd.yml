@@ -2,23 +2,23 @@ site_name: Mcblend
 
 generate:
     - operator_func/index.md:
-        - src.operator_func+
+        - mcblend.operator_func+
     - operator_func/animation/index.md:
-        - src.operator_func.animation+
+        - mcblend.operator_func.animation+
     - operator_func/common/index.md:
-        - src.operator_func.common+
+        - mcblend.operator_func.common+
     - operator_func/importer/index.md:
-        - src.operator_func.importer+
+        - mcblend.operator_func.importer+
     - operator_func/json_tools/index.md:
-        - src.operator_func.json_tools+
+        - mcblend.operator_func.json_tools+
     - operator_func/model/index.md:
-        - src.operator_func.model+
+        - mcblend.operator_func.model+
     - operator_func/uv/index.md:
-        - src.operator_func.uv+
+        - mcblend.operator_func.uv+
     - operator/index.md:
-        - src.operator+
+        - mcblend.operator+
     - panel/index.md:
-        - src.panel+
+        - mcblend.panel+
 
 gens_dir: docs/code_documentation
 headers: markdown

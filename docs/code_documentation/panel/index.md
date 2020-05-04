@@ -1,5 +1,5 @@
 
-# src.panel
+# mcblend.panel
 
 This module contains all of the panels for mcblend GUI.
 

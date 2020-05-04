@@ -1,5 +1,5 @@
 
-# src.operator
+# mcblend.operator
 
 This module contains all of the operators.
 

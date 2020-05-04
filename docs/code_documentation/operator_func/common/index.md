@@ -1,5 +1,5 @@
 
-# src.operator_func.common
+# mcblend.operator_func.common
 
 Functions and objects shared between other modules of Mcblend.
 
@@ -35,8 +35,8 @@ which is the name of the bone contained in the bone.
 ```python
 ObjectMcProperties(
   self, thisobj_id: ObjectId, thisobj: Object,
-  mcparent: typing.Union[src.operator_func.common.ObjectId, NoneType],
-  mcchildren: typing.List[src.operator_func.common.ObjectId],
+  mcparent: typing.Union[mcblend.operator_func.common.ObjectId, NoneType],
+  mcchildren: typing.List[mcblend.operator_func.common.ObjectId],
   mctype: MCObjType)
 ```
 
@@ -126,7 +126,7 @@ Returns cube position based on the bounding box of an object.
 ```python
 get_mcpivot(
     objprop: ObjectMcProperties, object_properties:
-    typing.Dict[src.operator_func.common.ObjectId, src.operator_func.common.ObjectMcProperties]
+    typing.Dict[mcblend.operator_func.common.ObjectId, mcblend.operator_func.common.ObjectMcProperties]
 )
 ```
 
@@ -163,7 +163,7 @@ Returns the ObjectId of the ancesstor.
 ```python
 get_name_conflicts(
     object_properties:
-    typing.Dict[src.operator_func.common.ObjectId, src.operator_func.common.ObjectMcProperties]
+    typing.Dict[mcblend.operator_func.common.ObjectId, mcblend.operator_func.common.ObjectMcProperties]
 )
 ```
 

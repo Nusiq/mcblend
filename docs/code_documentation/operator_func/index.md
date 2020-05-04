@@ -1,5 +1,5 @@
 
-# src.operator_func
+# mcblend.operator_func
 
 Functions used directly by the blender operators.
 

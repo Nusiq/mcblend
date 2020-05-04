@@ -39,7 +39,7 @@ jobs:
     - name: Test syntax with mypy
       run: |
         cd $GITHUB_WORKSPACE
-        python -m mypy ./src
+        python -m mypy ./mcblend
     - name: PyTest tests
       run: |
         cd $GITHUB_WORKSPACE

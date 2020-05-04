@@ -1,5 +1,5 @@
 
-# src.operator_func.uv
+# mcblend.operator_func.uv
 
 Functions related to creating UV map.
 
@@ -97,7 +97,7 @@ UV mapping of single cube in minecraft model.
 
 ## plan_uv
 ```python
-plan_uv(boxes: typing.List[src.operator_func.uv.UvMcCube],
+plan_uv(boxes: typing.List[mcblend.operator_func.uv.UvMcCube],
         width: int,
         height: int = None)
 ```
@@ -111,7 +111,7 @@ Returns success result.
 ## get_uv_mc_cubes
 ```python
 get_uv_mc_cubes(
-  objprops: typing.List[src.operator_func.common.ObjectMcProperties],
+  objprops: typing.List[mcblend.operator_func.common.ObjectMcProperties],
   read_existing_uvs)
 ```
 

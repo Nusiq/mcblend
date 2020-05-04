@@ -1,5 +1,5 @@
 
-# src.operator_func.model
+# mcblend.operator_func.model
 
 Functions related to exporting models.
 
@@ -17,10 +17,10 @@ Returns the dictionary that represents JSON file for exporting the model
 ```python
 get_mcbone_json(
     boneprop: ObjectMcProperties,
-    cubeprops: typing.List[src.operator_func.common.ObjectMcProperties],
-    locatorprops: typing.List[src.operator_func.common.ObjectMcProperties],
+    cubeprops: typing.List[mcblend.operator_func.common.ObjectMcProperties],
+    locatorprops: typing.List[mcblend.operator_func.common.ObjectMcProperties],
     object_properties:
-    typing.Dict[src.operator_func.common.ObjectId, src.operator_func.common.ObjectMcProperties]
+    typing.Dict[mcblend.operator_func.common.ObjectId, mcblend.operator_func.common.ObjectMcProperties]
 )
 ```
 

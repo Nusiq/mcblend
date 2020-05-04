@@ -1,5 +1,5 @@
 
-# src.operator_func.animation
+# mcblend.operator_func.animation
 
 Functions related to exporting animations.
 
@@ -22,9 +22,9 @@ Data class that represents configuration of animation
 get_mcanimation_json(
   animation_properties: AnimationProperties,
   bone_data:
-    typing.Dict[src.operator_func.common.ObjectId, typing.Dict[str, typing.List[typing.Dict]]],
+    typing.Dict[mcblend.operator_func.common.ObjectId, typing.Dict[str, typing.List[typing.Dict]]],
   object_properties:
-    typing.Dict[src.operator_func.common.ObjectId, src.operator_func.common.ObjectMcProperties],
+    typing.Dict[mcblend.operator_func.common.ObjectId, mcblend.operator_func.common.ObjectMcProperties],
   extend_json: typing.Union[typing.Dict, NoneType] = None)
 ```
 
@@ -46,7 +46,7 @@ dictionary.
 ```python
 get_transformations(
     object_properties:
-    typing.Dict[src.operator_func.common.ObjectId, src.operator_func.common.ObjectMcProperties]
+    typing.Dict[mcblend.operator_func.common.ObjectId, mcblend.operator_func.common.ObjectMcProperties]
 )
 ```
 

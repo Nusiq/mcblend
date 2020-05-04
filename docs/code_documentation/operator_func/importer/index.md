@@ -1,5 +1,5 @@
 
-# src.operator_func.importer
+# mcblend.operator_func.importer
 
 Object representation of Minecraft model JSON files and data validation
 
@@ -59,8 +59,8 @@ ImportBone(
   self, name: str, parent: typing.Union[str, NoneType],
   pivot: typing.Tuple[float, float, float],
   rotation: typing.Tuple[float, float, float],
-  cubes: typing.List[src.operator_func.importer.ImportCube],
-  locators: typing.List[src.operator_func.importer.ImportLocator])
+  cubes: typing.List[mcblend.operator_func.importer.ImportCube],
+  locators: typing.List[mcblend.operator_func.importer.ImportLocator])
 ```
 Represents minecraft bone during import operation.
 
@@ -68,7 +68,7 @@ Represents minecraft bone during import operation.
 ```python
 ImportGeometry(
   self, identifier: str, texture_width: int, texture_height: int,
-  bones: typing.Dict[str, src.operator_func.importer.ImportBone])
+  bones: typing.Dict[str, mcblend.operator_func.importer.ImportBone])
 ```
 Represents whole minecraft geometry during import operation.
 

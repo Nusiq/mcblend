@@ -1,5 +1,5 @@
 
-# src.operator_func.json_tools
+# mcblend.operator_func.json_tools
 Source https://github.com/Nusiq/json_encoders
 
 ## CompactEncoder
