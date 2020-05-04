@@ -1,24 +1,27 @@
-import bpy
-import math
+'''
+This module contains all of the operators.
+'''
 import json
-import numpy as np
+import typing as tp
 
+import bpy_types
+import bpy
 from bpy.props import StringProperty, FloatProperty, EnumProperty
 from bpy_extras.io_utils import ExportHelper, ImportHelper
 
-from .operator_func import *
+from .operator_func import (
+    export_model, export_animation, set_uvs, set_inflate,
+    round_dimensions, import_model
+)
 from .operator_func.json_tools import CompactEncoder
 
-# Additional imports for mypy
-import bpy_types
-import typing as tp
+
 
 
 # Export model
-class OBJECT_OT_NusiqMcblendExportOperator(
-    bpy.types.Operator, ExportHelper
-):
+class OBJECT_OT_NusiqMcblendExportOperator(bpy.types.Operator, ExportHelper):
     '''Operator used for exporting minecraft models from blender'''
+    # pylint: disable=C0116, W0613
     bl_idname = "object.nusiq_mcblend_export_operator"
     bl_label = "Export model"
     bl_options = {'REGISTER'}
@@ -49,14 +52,13 @@ class OBJECT_OT_NusiqMcblendExportOperator(
         with open(self.filepath, 'w') as f:
             json.dump(result, f, cls=CompactEncoder)
 
-        self.report(
-                {'INFO'} ,
-                f'Model saved in {self.filepath}.'
-        )
+        self.report({'INFO'}, f'Model saved in {self.filepath}.')
         return {'FINISHED'}
 
-# Helper function Export animation (in the menu)
+
 def menu_func_nusiq_mcblend_export(self, context):
+    # pylint: disable=W0613
+    ''''Helper function adds export model operator to the menu.'''
     self.layout.operator(
         OBJECT_OT_NusiqMcblendExportOperator.bl_idname,
         text="Mcblend: Export model"
@@ -65,9 +67,9 @@ def menu_func_nusiq_mcblend_export(self, context):
 
 # Export animation
 class OBJECT_OT_NusiqMcblendExportAnimationOperator(
-    bpy.types.Operator, ExportHelper
-):
+        bpy.types.Operator, ExportHelper):
     '''Operator used for exporting minecraft animations from blender'''
+    # pylint: disable=C0116, W0613
     bl_idname = "object.nusiq_mcblend_export_animation_operator"
     bl_label = "Export animation"
     bl_options = {'REGISTER'}
@@ -99,7 +101,7 @@ class OBJECT_OT_NusiqMcblendExportAnimationOperator(
         try:
             with open(self.filepath, 'r') as f:
                 old_dict = json.load(f)
-        except:
+        except (json.JSONDecodeError, OSError):
             pass
         animation_dict, error = export_animation(context, old_dict)
 
@@ -110,14 +112,13 @@ class OBJECT_OT_NusiqMcblendExportAnimationOperator(
         # Save file and finish
         with open(self.filepath, 'w') as f:
             json.dump(animation_dict, f, cls=CompactEncoder)
-        self.report(
-                {'INFO'} ,
-                f'Animation saved in {self.filepath}.'
-        )
+        self.report({'INFO'}, f'Animation saved in {self.filepath}.')
         return {'FINISHED'}
 
-# Helper function Export animation (in the menu)
+
 def menu_func_nusiq_mcblend_export_animation(self, context):
+    # pylint: disable=W0613
+    ''''Helper function adds export animation operator to the menu.'''
     self.layout.operator(
         OBJECT_OT_NusiqMcblendExportAnimationOperator.bl_idname,
         text="Mcblend: Export anmiation"
@@ -127,6 +128,7 @@ def menu_func_nusiq_mcblend_export_animation(self, context):
 # Uv map
 class OBJECT_OT_NusiqMcblendMapUvOperator(bpy.types.Operator):
     '''Operator used for creating UV-mapping for minecraft model.'''
+    # pylint: disable=C0116, W0613
     bl_idname = "object.nusiq_mcblend_map_uv_operator"
     bl_label = "Map uv for bedrock model."
     bl_options = {'REGISTER', 'UNDO'}
@@ -147,7 +149,7 @@ class OBJECT_OT_NusiqMcblendMapUvOperator(bpy.types.Operator):
             width = context.scene.nusiq_mcblend.texture_width
             height = context.scene.nusiq_mcblend.texture_height
             self.report(
-                {'INFO'} ,
+                {'INFO'},
                 f'UV map created successfuly for {width}x{height} texture.'
             )
         else:
@@ -161,6 +163,7 @@ class OBJECT_OT_NusiqMcblendUvGroupOperator(bpy.types.Operator):
     Operator used for setting custom property called mc_uv_group for selected
     objects.
     '''
+    # pylint: disable=C0116, W0613
     bl_idname = "object.nusiq_mcblend_uv_group_operator"
     bl_label = "Set mc_uv_group for bedrock model."
     bl_options = {'REGISTER', 'UNDO'}
@@ -181,8 +184,7 @@ class OBJECT_OT_NusiqMcblendUvGroupOperator(bpy.types.Operator):
         return True
 
     def invoke(self, context, event):
-        wm = context.window_manager
-        return wm.invoke_props_dialog(self)
+        return context.window_manager.invoke_props_dialog(self)
 
     def execute(self, context):
         if self.group_name == "":
@@ -191,12 +193,12 @@ class OBJECT_OT_NusiqMcblendUvGroupOperator(bpy.types.Operator):
                     # Empty string clears the UV group
                     if 'mc_uv_group' in obj:
                         del obj['mc_uv_group']
-            self.report({'INFO'} , f'Cleared mc_uv_groups.')
+            self.report({'INFO'}, 'Cleared mc_uv_groups.')
         else:
             for obj in context.selected_objects:
                 if obj.type == "MESH" or obj.type == "EMPTY":
                     obj['mc_uv_group'] = self.group_name
-            self.report({'INFO'} , f'Set mc_uv_group to {self.group_name}.')
+            self.report({'INFO'}, f'Set mc_uv_group to {self.group_name}.')
         self.group_name = ""
 
         return {'FINISHED'}
@@ -208,6 +210,7 @@ class OBJECT_OT_NusiqMcblendToggleMcMirrorOperator(bpy.types.Operator):
     Operator used for toggling custom property called mc_mirror for selected
     objects
     '''
+    # pylint: disable=C0116, W0613
     bl_idname = "object.nusiq_mcblend_toggle_mc_mirror_operator"
     bl_label = "Toggle mc_mirror for selected objects."
     bl_options = {'REGISTER', 'UNDO'}
@@ -229,7 +232,6 @@ class OBJECT_OT_NusiqMcblendToggleMcMirrorOperator(bpy.types.Operator):
         for obj in context.selected_objects:
             if obj.type == "MESH":
                 if 'mc_mirror' in obj:
-                    obj['mc_mirror'] == 1
                     is_clearing = True
                     break
         if is_clearing:
@@ -237,12 +239,12 @@ class OBJECT_OT_NusiqMcblendToggleMcMirrorOperator(bpy.types.Operator):
                 if obj.type == "MESH":
                     if 'mc_mirror' in obj:
                         del obj['mc_mirror']
-            self.report({'INFO'} , f'Cleared mc_mirror.')
+            self.report({'INFO'}, 'Cleared mc_mirror.')
         else:
             for obj in context.selected_objects:
                 if obj.type == "MESH":
                     obj['mc_mirror'] = {}
-            self.report({'INFO'} , f'Set mc_mirror to property 1.')
+            self.report({'INFO'}, 'Set mc_mirror to property 1.')
 
         return {'FINISHED'}
 
@@ -253,6 +255,7 @@ class OBJECT_OT_NusiqMcblendToggleMcIsBoneOperator(bpy.types.Operator):
     Operator used for toggling custom property called mc_is_bone for selected
     objects.
     '''
+    # pylint: disable=C0116, W0613
     bl_idname = "object.nusiq_mcblend_toggle_mc_is_bone_operator"
     bl_label = "Toggle mc_is_bone for selected objects."
     bl_options = {'REGISTER', 'UNDO'}
@@ -285,12 +288,12 @@ class OBJECT_OT_NusiqMcblendToggleMcIsBoneOperator(bpy.types.Operator):
                 if obj.type == "MESH" or obj.type == "EMPTY":
                     if 'mc_is_bone' in obj:
                         del obj['mc_is_bone']
-            self.report({'INFO'} , f'Cleared mc_is_bone.')
+            self.report({'INFO'}, 'Cleared mc_is_bone.')
         else:
             for obj in context.selected_objects:
                 if obj.type == "MESH" or obj.type == "EMPTY":
                     obj['mc_is_bone'] = {}
-            self.report({'INFO'} , f'Marked slected objects as mcbones.')
+            self.report({'INFO'}, 'Marked slected objects as mcbones.')
 
         return {'FINISHED'}
 
@@ -302,6 +305,7 @@ class OBJECT_OT_NusiqMcblendSetInflateOperator(bpy.types.Operator):
     the dimensions of selected object and adds custom property called
     mc_inflate.
     '''
+    # pylint: disable=C0116, W0613
     bl_idname = "object.nusiq_mcblend_set_inflate_operator"
     bl_label = "Set mc_inflate"
     bl_options = {'REGISTER', 'UNDO', 'BLOCKING', 'GRAB_CURSOR'}
@@ -317,7 +321,7 @@ class OBJECT_OT_NusiqMcblendSetInflateOperator(bpy.types.Operator):
             ('RELATIVE', 'Relative', 'Add or remove to current inflate value'),
             ('ABSOLUTE', 'Absolute', 'Set the inflate value'),
         ),
-        name = 'Mode'
+        name='Mode'
     )
 
     @classmethod
@@ -334,7 +338,7 @@ class OBJECT_OT_NusiqMcblendSetInflateOperator(bpy.types.Operator):
         return {'FINISHED'}
 
     def execute(self, context):
-        n_objects = set_inflate(
+        set_inflate(  # Returns number of inflated objects
             context, self.inflate_value, self.mode
         )
         return {'FINISHED'}
@@ -345,6 +349,7 @@ class OBJECT_OT_NusiqMcblendRoundDimensionsOperator(bpy.types.Operator):
     '''
     Operator used for rounding the values of dimensions.
     '''
+    # pylint: disable=C0116, W0613, R0201
     bl_idname = "object.nusiq_mcblend_round_dimensions_operator"
     bl_label = "Round dimensions"
     bl_options = {'REGISTER', 'UNDO'}
@@ -361,7 +366,7 @@ class OBJECT_OT_NusiqMcblendRoundDimensionsOperator(bpy.types.Operator):
         return True
 
     def execute(self, context):
-        n_objects = round_dimensions(
+        round_dimensions(  # Returns number of edited objects
             context
         )
         return {'FINISHED'}
@@ -369,6 +374,7 @@ class OBJECT_OT_NusiqMcblendRoundDimensionsOperator(bpy.types.Operator):
 
 class OBJECT_OT_NusiqMcblendImport(bpy.types.Operator, ImportHelper):
     '''Operator used for importiong minecraft models to blender'''
+    # pylint: disable=C0116, W0613
     bl_idname = "object.nusiq_mcblend_import_operator"
     bl_label = "Import model"
     bl_options = {'REGISTER'}
@@ -394,7 +400,7 @@ class OBJECT_OT_NusiqMcblendImport(bpy.types.Operator, ImportHelper):
             import_model(data, self.geometry_name, context)
         except AssertionError as e:
             self.report(
-                {'ERROR'} , f'Invalid model: {e}'
+                {'ERROR'}, f'Invalid model: {e}'
             )
         except ValueError as e:
             self.report(
@@ -404,6 +410,8 @@ class OBJECT_OT_NusiqMcblendImport(bpy.types.Operator, ImportHelper):
 
 # Helper function - add operator to the import men
 def menu_func_nusiq_mcblend_import(self, context):
+    # pylint: disable=W0613
+    ''''Helper function adds import model operator to the menu.'''
     self.layout.operator(
         OBJECT_OT_NusiqMcblendImport.bl_idname, text="Mcblend: Import model"
     )

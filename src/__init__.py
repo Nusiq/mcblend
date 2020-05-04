@@ -1,3 +1,6 @@
+'''
+This module is used by Blender to install the plugin.
+'''
 import bpy
 from bpy.props import PointerProperty, BoolProperty, FloatVectorProperty
 import mathutils
@@ -55,6 +58,7 @@ classes = (
 
 
 def register():
+    '''Register the plugin'''
     for _class in classes:
         bpy.utils.register_class(_class)
     bpy.types.Scene.nusiq_mcblend = PointerProperty(
@@ -70,6 +74,7 @@ def register():
 
 
 def unregister():
+    '''Unregister the plugin'''
     for _class in reversed(classes):
         bpy.utils.unregister_class(_class)
     del bpy.types.Scene.nusiq_mcblend
@@ -80,4 +85,3 @@ def unregister():
     bpy.types.TOPBAR_MT_file_import.remove(
         menu_func_nusiq_mcblend_import
     )
-

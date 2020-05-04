@@ -49,10 +49,10 @@ def assert_is_model(a: tp.Dict):
 
         # minecraft:geometry -> description
         assert type(desc) is dict
-        assert set(desc.keys()) == {'identifier', 'texture_width',
+        assert set(desc.keys()) == {
+            'identifier', 'texture_width',
             'texture_height', 'visible_bounds_width', 'visible_bounds_height',
             'visible_bounds_offset'
-        
         }
         assert type(desc['identifier']) is str
         assert type(desc['texture_width']) is int

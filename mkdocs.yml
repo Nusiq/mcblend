@@ -8,9 +8,20 @@ nav:
       - Conversion rules: user_manual/conversion_rules/index.md
       - Panels: user_manual/panels/index.md
       - Tips and tricks: user_manual/tips/index.md
+    - Code documentation:
+      - "Operators (operator)": code_documentation/operator/index.md
+      - "Panels (panel)": code_documentation/panel/index.md
+      - "Operators Logic (operator_func)": code_documentation/operator_func/index.md
+      - "Working with Models (operator_func.model)": code_documentation/operator_func/model/index.md
+      - "Working with Animations (operator_func.animation)": code_documentation/operator_func/animation/index.md
+      - "UV mapping (operator_func.uv)": code_documentation/operator_func/uv/index.md
+      - "Utility Functions (operator_func.common)": code_documentation/operator_func/common/index.md
+      - "Importing Models (operator_func.importer)": code_documentation/operator_func/importer/index.md
+      - "JSON Formating (operator_func.json_tools)": code_documentation/operator_func/json_tools/index.md
 theme:
-    name: mkdocs
-    nav_style: dark
+    name: material
+    favicon: img/favicon.ico
+
 
 markdown_extensions:
     - admonition

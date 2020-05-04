@@ -1,4 +1,6 @@
-class AddObjectHelper(object): pass
-class BoolProperty(object): pass
-class EnumProperty(object): pass
-class FloatVectorProperty(object): pass
+from unittest.mock import Mock
+
+class AddObjectHelper(Mock): pass
+class BoolProperty(Mock): pass
+class EnumProperty(Mock): pass
+class FloatVectorProperty(Mock): pass

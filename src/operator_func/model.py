@@ -1,21 +1,19 @@
-import bpy
+'''
+Functions related to exporting models.
+'''
+import typing as tp
 import numpy as np
 
-# Additional imports for mypy
-import bpy_types
-import typing as tp
-
 from .common import (
-    MINECRAFT_SCALE_FACTOR, get_mcrotation, get_mcpivot, get_local_matrix,
-    get_mcube_size, get_vect_json, get_mccube_position,
-    get_object_mcproperties, MCObjType, ObjectId, ObjectMcProperties
+    MINECRAFT_SCALE_FACTOR, get_mcrotation, get_mcpivot,
+    get_mcube_size, get_vect_json, get_mccube_position, ObjectId,
+    ObjectMcProperties
 )
 
 
 def get_mcmodel_json(
-    model_name: str, mc_bones: tp.List[tp.Dict],
-    texture_width: int, texture_height: int
-) -> tp.Dict:
+        model_name: str, mc_bones: tp.List[tp.Dict],
+        texture_width: int, texture_height: int) -> tp.Dict:
     '''
     Returns the dictionary that represents JSON file for exporting the model
     '''
@@ -38,10 +36,9 @@ def get_mcmodel_json(
 
 
 def get_mcbone_json(
-    boneprop: ObjectMcProperties, cubeprops: tp.List[ObjectMcProperties],
-    locatorprops: tp.List[ObjectMcProperties],
-    object_properties: tp.Dict[ObjectId, ObjectMcProperties]
-) -> tp.Dict:
+        boneprop: ObjectMcProperties, cubeprops: tp.List[ObjectMcProperties],
+        locatorprops: tp.List[ObjectMcProperties],
+        object_properties: tp.Dict[ObjectId, ObjectMcProperties]) -> tp.Dict:
     '''
     - boneprop - the main object that represents the bone.
     - cubeprops - the list of objects that represent the cubes that belong to
@@ -78,24 +75,18 @@ def get_mcbone_json(
     if len(locatorprops) > 0:
         mcbone['locators'] = {}
     for locatorprop in locatorprops:
-        translation = get_local_matrix(
-            boneprop.matrix_world(), locatorprop.matrix_world()
-        )
         _l_scale = _scale(locatorprop)
         l_pivot = get_mcpivot(
             locatorprop, object_properties
         ) * MINECRAFT_SCALE_FACTOR
         l_origin = l_pivot + (
-            get_mccube_position(locatorprop, translation) *
+            get_mccube_position(locatorprop) *
             _l_scale * MINECRAFT_SCALE_FACTOR
         )
         mcbone['locators'][locatorprop.name()] = get_vect_json(l_origin)
 
     # Set cubes
     for cubeprop in cubeprops:
-        translation = get_local_matrix(
-            boneprop.matrix_world(), cubeprop.matrix_world()
-        )
         _c_scale = _scale(cubeprop)
         c_size = get_mcube_size(
             cubeprop
@@ -104,7 +95,7 @@ def get_mcbone_json(
             cubeprop, object_properties
         ) * MINECRAFT_SCALE_FACTOR
         c_origin = c_pivot + (
-            get_mccube_position(cubeprop, translation) * _c_scale *
+            get_mccube_position(cubeprop) * _c_scale *
             MINECRAFT_SCALE_FACTOR
         )
         c_rot = get_mcrotation(

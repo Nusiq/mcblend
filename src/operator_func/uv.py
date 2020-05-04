@@ -1,22 +1,21 @@
-import bpy
-import numpy as np
+'''
+Functions related to creating UV map.
+'''
+import typing as tp
 from enum import Enum
-from collections import defaultdict, deque
+from collections import defaultdict
 from dataclasses import dataclass, field
 
-# Additional imports for mypy
-import bpy_types
-import typing as tp
-
+import numpy as np
 
 from .common import (
-    MINECRAFT_SCALE_FACTOR, get_mcube_size, ObjectId, ObjectMcProperties
+    MINECRAFT_SCALE_FACTOR, get_mcube_size, ObjectMcProperties
 )
 
 
 def get_uv_face(
-    objprop: ObjectMcProperties, face_name: str
-) -> tp.Dict[str, int]:
+        objprop: ObjectMcProperties, face_name: str
+    ) -> tp.Dict[str, int]:
     '''
     - objprop - the properties of the object
     - face_name - decides which face should be returned
@@ -30,17 +29,17 @@ def get_uv_face(
     }
     # list with bound box vertex indices in order LD, RD, RU, LU
     f = bound_box_faces[face_name]
-    bb = objprop.bound_box()
+    bound_box = objprop.bound_box()
     bb_verts = {
-        'LD': np.array(bb[f[0]]), 'RD': np.array(bb[f[1]]),
-        'RU': np.array(bb[f[2]]), 'LU': np.array(bb[f[3]]),
+        'LD': np.array(bound_box[f[0]]), 'RD': np.array(bound_box[f[1]]),
+        'RU': np.array(bound_box[f[2]]), 'LU': np.array(bound_box[f[3]]),
     }
 
     for face in objprop.data_polygons():
         confirmed_vertices = {'LD': None, 'RD': None, 'RU': None, 'LU': None}
         for vertex_id, loop_id in zip(face.vertices, face.loop_indices):
             vertex = np.array(objprop.data_vertices()[vertex_id].co)
-            for bbv_key , bbv_value in bb_verts.items():
+            for bbv_key, bbv_value in bb_verts.items():
                 if np.allclose(vertex, bbv_value):
                     confirmed_vertices[bbv_key] = loop_id
         if all([i is not None for i in confirmed_vertices.values()]):
@@ -49,10 +48,10 @@ def get_uv_face(
 
 
 def set_uv(
-    objprop: ObjectMcProperties, uv_face: tp.Dict[str, int],
-    crds: tp.Tuple[float, float], size: tp.Tuple[float, float],
-    mirror_y: bool, mirror_x: bool
-):
+        objprop: ObjectMcProperties, uv_face: tp.Dict[str, int],
+        crds: tp.Tuple[float, float], size: tp.Tuple[float, float],
+        mirror_y: bool, mirror_x: bool
+    ):
     '''
     - objprop - the data of the object
     - uv_face - the dictionary with loop indices used to define which loops
@@ -77,9 +76,9 @@ def set_uv(
 
 
 def set_cube_uv(
-    objprop: ObjectMcProperties, uv: tp.Tuple[float, float], width: float,
-    depth: float, height: float, texture_width: int, texture_height: int
-):
+        objprop: ObjectMcProperties, uv: tp.Tuple[float, float], width: float,
+        depth: float, height: float, texture_width: int, texture_height: int
+    ):
     '''
     - objprop - properties of the object
     - uv - value from 0 to 1 the position of the bottom left loop on blender
@@ -98,7 +97,7 @@ def set_cube_uv(
     uv = (uv[0], texture_height-uv[1]-depth-height)
     if objprop.has_mc_mirror():
         set_uv(
-            objprop, get_uv_face(objprop, 'left'), 
+            objprop, get_uv_face(objprop, 'left'),
             (uv[0]/texture_width, uv[1]/texture_height),
             (depth/texture_width, height/texture_height), False, True
         )
@@ -117,7 +116,7 @@ def set_cube_uv(
             ((uv[0] + 2*depth + width)/texture_width, uv[1]/texture_height),
             (width/texture_width, height/texture_height), True, False
         )
-        
+
         set_uv(
             objprop, get_uv_face(objprop, 'top'),
             ((uv[0] + depth)/texture_width, (uv[1] + height)/texture_height),
@@ -130,7 +129,7 @@ def set_cube_uv(
         )
     else:
         set_uv(
-            objprop, get_uv_face(objprop, 'right'), 
+            objprop, get_uv_face(objprop, 'right'),
             (uv[0]/texture_width, uv[1]/texture_height),
             (depth/texture_width, height/texture_height), False, False
         )
@@ -149,7 +148,7 @@ def set_cube_uv(
             ((uv[0] + 2*depth + width)/texture_width, uv[1]/texture_height),
             (width/texture_width, height/texture_height), False, False
         )
-        
+
         set_uv(
             objprop, get_uv_face(objprop, 'top'),
             ((uv[0] + depth)/texture_width, (uv[1] + height)/texture_height),
@@ -163,17 +162,33 @@ def set_cube_uv(
 
 # (U, V) - 0, 0 = top left
 class UvCorner(Enum):
+    '''
+    During UV-mapping UVBox objects use this enum combined with coordinates
+    to suggest possible positions to check for other UvBoxes (to find free
+    space on the texture).
+
+    For example a pair ((1, 2), UvCorner.TOP_RIGHT) represents a suggestion
+    that UvBoxes that look for free space should try a position in which
+    their TOP_RIGHT corner is at the (1, 2) pixel.
+
+    Members:
+    - TOP_RIGHT
+    - TOP_LEFT
+    - BOTTOM_RIGHT
+    - BOTTOM_LEFT
+    '''
     TOP_RIGHT = 'TOP_RIGHT'
     TOP_LEFT = 'TOP_LEFT'
     BOTTOM_RIGHT = 'BOTTOM_RIGHT'
     BOTTOM_LEFT = 'BOTTOM_LEFT'
 
 
-class UvBox(object):
+class UvBox:
+    '''Rectangular space that is mapped or needs mapping on the texture.'''
     def __init__(
-        self, size: tp.Tuple[int, int],
-        uv: tp.Tuple[int, int] = None
-    ):
+            self, size: tp.Tuple[int, int],
+            uv: tp.Tuple[int, int] = None
+        ):
         if uv is None:
             uv = (0, 0)
             self.is_mapped = False
@@ -185,6 +200,7 @@ class UvBox(object):
 
     @property
     def uv(self):
+        '''The uv coordinates (bottom left corner) of the UvBox.'''
         return self._uv
 
     @uv.setter
@@ -209,8 +225,8 @@ class UvBox(object):
         )
 
     def suggest_positions(
-        self
-    ) -> tp.List[tp.Tuple[tp.Tuple[int, int], UvCorner]]:
+            self
+        ) -> tp.List[tp.Tuple[tp.Tuple[int, int], UvCorner]]:
         '''
         Returns list of positions touching this UvBox for other UvBox without
         overlappnig.
@@ -219,47 +235,55 @@ class UvBox(object):
         0. (top left) 1. (top right) 2. (right top) 3. (right bottom)
         4. (bottom right) 5. (bottom left) 6. (left bottom) 7. (left top)
         '''
-        ss = (self.size[0]-1, self.size[1]-1)
+        size = (self.size[0]-1, self.size[1]-1)
         uv = self.uv
         # (near which wall?, which side of the wall?)
         return [
             # U, V-1 BOTTOM_LEFT (top left)
             ((uv[0], uv[1] - 1), UvCorner.BOTTOM_LEFT),
             # U+S, V-1 BOTTOM_RIGHT (top right)
-            ((uv[0] + ss[0], uv[1] - 1), UvCorner.BOTTOM_RIGHT),
+            ((uv[0] + size[0], uv[1] - 1), UvCorner.BOTTOM_RIGHT),
             # U+S+1, V TOP_LEFT (right top)
-            ((uv[0] + ss[0] + 1,  uv[1]), UvCorner.TOP_LEFT),
+            ((uv[0] + size[0] + 1, uv[1]), UvCorner.TOP_LEFT),
             # U+S+1, V+S BOTTOM_LEFT (right bottom)
-            ((uv[0] + ss[0] + 1, uv[1] + ss[1]), UvCorner.BOTTOM_LEFT),
+            ((uv[0] + size[0] + 1, uv[1] + size[1]), UvCorner.BOTTOM_LEFT),
             # U+S, V+S+1 TOP_RIGHT (bottom right)
-            ((uv[0] + ss[0], uv[1] + ss[1] + 1), UvCorner.TOP_RIGHT),
+            ((uv[0] + size[0], uv[1] + size[1] + 1), UvCorner.TOP_RIGHT),
             # U, V+S+1 TOP_LEFT (bottom left)
-            ((uv[0], uv[1] + ss[1] + 1), UvCorner.TOP_LEFT),
+            ((uv[0], uv[1] + size[1] + 1), UvCorner.TOP_LEFT),
             # U-1, V+S BOTTOM_RIGHT (left bottom)
-            ((uv[0] - 1, uv[1] + ss[1]), UvCorner.BOTTOM_RIGHT),
+            ((uv[0] - 1, uv[1] + size[1]), UvCorner.BOTTOM_RIGHT),
             # U-1,V TOP_RIGHT (left top)
             ((uv[0] - 1, uv[1]), UvCorner.TOP_RIGHT),
         ]
 
     def apply_suggestion(
-        self, suggestion: tp.Tuple[tp.Tuple[int, int], UvCorner]
-    ):
-        ss = (self.size[0]-1, self.size[1]-1)
+            self, suggestion: tp.Tuple[tp.Tuple[int, int], UvCorner]
+        ):
+        '''
+        Uses a pair of UV coordinates and UvCorner to set the UV value for this
+        UvBox.
+        '''
+        size = (self.size[0]-1, self.size[1]-1)
         if suggestion[1] == UvCorner.TOP_LEFT:
             self.uv = suggestion[0]
         elif suggestion[1] == UvCorner.TOP_RIGHT:
-            self.uv = (suggestion[0][0] - ss[0], suggestion[0][1])
+            self.uv = (suggestion[0][0] - size[0], suggestion[0][1])
         elif suggestion[1] == UvCorner.BOTTOM_LEFT:
-            self.uv = (suggestion[0][0], suggestion[0][1] - ss[1])
+            self.uv = (suggestion[0][0], suggestion[0][1] - size[1])
         elif suggestion[1] == UvCorner.BOTTOM_RIGHT:
-            self.uv = (suggestion[0][0] - ss[0], suggestion[0][1] -ss[1])
+            self.uv = (suggestion[0][0] - size[0], suggestion[0][1] -size[1])
 
 
 class UvMcCube(UvBox):
+    '''
+    Six UvBoxes grouped together to represent space on the texture need for
+    UV mapping of single cube in minecraft model.
+    '''
     def __init__(
-        self, width: int, depth: int, height: int,
-        uv: tp.Tuple[int, int] = None
-    ):
+            self, width: int, depth: int, height: int,
+            uv: tp.Tuple[int, int] = None
+        ):
         size = (
             2*depth + 2*width,
             height + depth
@@ -271,7 +295,7 @@ class UvMcCube(UvBox):
         self.right = UvBox((depth, height), (0, depth))
         self.front = UvBox((width, height), (depth, depth))
         self.left = UvBox((depth, height), (depth + width, depth))
-        self.back = UvBox((width, height),(2*depth + width, depth))
+        self.back = UvBox((width, height), (2*depth + width, depth))
         self.top = UvBox((width, depth), (depth, 0))
         self.bottom = UvBox((width, depth), (depth + width, 0))
         super().__init__(size, uv)
@@ -292,17 +316,18 @@ class UvMcCube(UvBox):
         Returns True if this UvBox is colliding with another. Otherwise returns
         False.
         '''
-        
+
         for i in [
-            self.right, self.front, self.left, self.back, self.top, self.bottom
-        ]:
+                self.right, self.front, self.left, self.back, self.top,
+                self.bottom
+            ]:
             if i.collides(other):
                 return True
         return False
 
     def suggest_positions(
-        self
-    ) -> tp.List[tp.Tuple[tp.Tuple[int, int], UvCorner]]:
+            self
+        ) -> tp.List[tp.Tuple[tp.Tuple[int, int], UvCorner]]:
         '''
         Returns list of positions touching this UvBox for other UvBox without
         overlappnig.
@@ -329,7 +354,7 @@ class UvMcCube(UvBox):
         return result
 
 
-def plan_uv(boxes: tp.List[UvMcCube], width: int, height: int=None) -> bool:
+def plan_uv(boxes: tp.List[UvMcCube], width: int, height: int = None) -> bool:
     '''
     Plans UVs for all of the boxes on the list. The size of the texture is
     limited by width and optionally by height.
@@ -396,9 +421,9 @@ class _UvGroup:
     '''
     Stores information about one UvGroup in get_uv_mc_cubes() function.
 
-    This class has one value `items` - a dictionary that uses 
+    This class has one value `items` - a dictionary that uses
     (width, depth, height) tuple as a key and has a UvMcCube as a valule.
-    
+
     Its used to make sure that the cubes with same mc_uv_groups and size use
     the same UvMcCube mapping.
     '''
@@ -408,9 +433,9 @@ class _UvGroup:
 
 
 def get_uv_mc_cubes(
-    objprops: tp.List[ObjectMcProperties],
-    read_existing_uvs
-) -> tp.Dict[str, UvMcCube]:
+        objprops: tp.List[ObjectMcProperties],
+        read_existing_uvs
+    ) -> tp.Dict[str, UvMcCube]:
     '''
     Returns name-uv_mc_cube dictionary with uv_mc_cubes of selected objects.
 
@@ -423,7 +448,8 @@ def get_uv_mc_cubes(
         _, _, scale = objprop.matrix_world().decompose()
         return np.array(scale.xzy)
 
-    uv_groups: tp.Dict[str, _UvGroup] = defaultdict(lambda: _UvGroup())
+    # defaultdict(lambda: _UvGroup())
+    uv_groups: tp.Dict[str, _UvGroup] = defaultdict(_UvGroup)
     result = {}
 
     for objprop in objprops:
@@ -436,26 +462,26 @@ def get_uv_mc_cubes(
             scale = scale - objprop.get_mc_inflate()*2
 
         # width, height, depth
-        # TODO - should this really be rounded?
-        w, h, d = tuple([round(i) for i in scale])
+        width, height, depth = tuple([round(i) for i in scale])
 
         if read_existing_uvs and objprop.has_uv():
             result[objprop.name()] = UvMcCube(
-                w, d, h,
+                width, depth, height,
                 objprop.get_mc_uv()
             )
         else:
             if (
-                objprop.has_mc_uv_group() and
-                (w, d, h) in uv_groups[objprop.get_mc_uv_group()].items
-            ):
+                    objprop.has_mc_uv_group() and
+                    (width, depth, height) in
+                    uv_groups[objprop.get_mc_uv_group()].items
+                ):
                 result[objprop.name()] = uv_groups[
                     objprop.get_mc_uv_group()
-                ].items[(w, d, h)]
+                ].items[(width, depth, height)]
             else:
-                result[objprop.name()] = UvMcCube(w, d, h)
+                result[objprop.name()] = UvMcCube(width, depth, height)
                 if objprop.has_mc_uv_group():
                     uv_groups[
                         objprop.get_mc_uv_group()
-                    ].items[(w, d, h)] = result[objprop.name()]
+                    ].items[(width, depth, height)] = result[objprop.name()]
     return result

@@ -13,10 +13,12 @@ class CompactEncoder(json.JSONEncoder):
         self.indent = -1
         self.respect_indent = True
 
-    def _is_primitive(self, obj):
+    @staticmethod
+    def _is_primitive(obj):
         return isinstance(obj, (int, bool, str, float))
 
     def encode(self, obj):
+        # pylint: disable=W0221
         '''
         Return a JSON string representation of a Python data structure.
 
@@ -24,9 +26,10 @@ class CompactEncoder(json.JSONEncoder):
             >>> CompactEncoder().encode({"foo": ["bar", "baz"]})
             '{\\n\\t"foo": ["bar", "baz"]\\n}'
         '''
-        return ''.join([i for i in self.iterencode(obj)])
+        return ''.join(self.iterencode(obj))
 
     def iterencode(self, obj):
+        # pylint: disable=W0221, R0912:
         '''
         Encode the given object and yield each string representation line by
         line.
@@ -68,13 +71,13 @@ class CompactEncoder(json.JSONEncoder):
                 body = []
                 self.respect_indent = False
                 for i in obj:
-                    body.extend([j for j in self.iterencode(i)])
+                    body.extend(self.iterencode(i))
                 self.respect_indent = True
                 yield f'{ind}[{", ".join(body)}]'
             else:
                 body = []
                 for i in obj:
-                    body.extend([j for j in self.iterencode(i)])
+                    body.extend(self.iterencode(i))
                 body_str = ",\n".join(body)
                 yield (
                     f'{ind}[\n'
@@ -92,21 +95,3 @@ class CompactEncoder(json.JSONEncoder):
             raise TypeError('Object of type set is not JSON serializable')
         self.indent -= 1
 
-
-def get_path(
-    json: tp.Dict,
-    path: tp.List[tp.Union[str, int]]
-) -> tp.Tuple[tp.Optional[tp.Any], bool]:
-    '''
-    Goes through a dictionary and checks its structure. Returns an object
-    from given path and success result.
-    If path is invalid returns None and False. For valid paths returns
-    object the object and True.
-    '''
-    curr_obj = json
-    for p in path:
-        try:
-            curr_obj = curr_obj[p]
-        except:
-            return None, False
-    return curr_obj, True

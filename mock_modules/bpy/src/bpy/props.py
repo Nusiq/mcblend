@@ -1,28 +1,11 @@
-class PointerProperty(object):
-    def __init__(self, *args, **kwargs):
-        pass
+from unittest.mock import Mock
 
-class BoolProperty(object):
-    def __init__(self, *args, **kwargs):
-        pass
+class PointerProperty(Mock): pass
+class BoolProperty(Mock): pass
+class IntProperty(Mock): pass
+class FloatProperty(Mock): pass
+class StringProperty(Mock): pass
+class EnumProperty(Mock): pass
+class FloatVectorProperty(Mock): pass
 
-class IntProperty(object):
-    def __init__(self, *args, **kwargs):
-        pass
-
-class FloatProperty(object):
-    def __init__(self, *args, **kwargs):
-        pass
-
-class StringProperty(object):
-    def __init__(self, *args, **kwargs):
-        pass
-
-class EnumProperty(object):
-    def __init__(self, *args, **kwargs):
-        pass
-
-class FloatVectorProperty(object):
-    def __init__(self, *args, **kwargs):
-        pass
 

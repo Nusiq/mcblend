@@ -1,13 +1,14 @@
+'''
+This module contains all of the panels for mcblend GUI.
+'''
 import bpy
-
 from bpy.props import (
-    StringProperty, PointerProperty, IntProperty, BoolProperty
+    StringProperty, IntProperty, BoolProperty
 )
-from bpy.types import Operator, AddonPreferences
-import pathlib
 
 
 class OBJECT_NusiqMcblendExporterProperties(bpy.types.PropertyGroup):
+    '''Global (in the scene scope) properties used by Mcblend'''
     model_name: StringProperty(  # type: ignore
         name="",
         description="Name of the model",
@@ -38,7 +39,6 @@ class OBJECT_NusiqMcblendExporterProperties(bpy.types.PropertyGroup):
         default=512,
         min=1
     )
-
     texture_height: IntProperty(  # type: ignore
         name="",
         description=(
@@ -48,8 +48,6 @@ class OBJECT_NusiqMcblendExporterProperties(bpy.types.PropertyGroup):
         default=0,
         min=0
     )
-
-
     move_blender_uvs: BoolProperty(  # type: ignore
         name="Move blender UVs",
         description=(
@@ -58,7 +56,6 @@ class OBJECT_NusiqMcblendExporterProperties(bpy.types.PropertyGroup):
         ),
         default=True
     )
-
     move_existing_mappings: BoolProperty(  # type: ignore
         name="Move existing mappings",
         description=(
@@ -92,6 +89,8 @@ class OBJECT_NusiqMcblendExporterProperties(bpy.types.PropertyGroup):
 
 
 class OBJECT_PT_NusiqMcblendExportPanel(bpy.types.Panel):
+    '''Panel used for configuration of exporting models'''
+    # pylint: disable=C0116, W0613
     bl_label = "Export bedrock model"
     bl_category = "Mcblend"
     bl_space_type = "VIEW_3D"
@@ -109,6 +108,8 @@ class OBJECT_PT_NusiqMcblendExportPanel(bpy.types.Panel):
 
 
 class OBJECT_PT_NusiqMcblendImportPanel(bpy.types.Panel):
+    '''Panel used for configuration of importing models.'''
+    # pylint: disable=C0116, W0613
     bl_label = "Import bedrock model"
     bl_category = "Mcblend"
     bl_space_type = "VIEW_3D"
@@ -123,6 +124,8 @@ class OBJECT_PT_NusiqMcblendImportPanel(bpy.types.Panel):
 
 
 class OBJECT_PT_NusiqMcblendExportAnimationPanel(bpy.types.Panel):
+    '''Panel used for configuration of exporting animations.'''
+    # pylint: disable=C0116, W0613
     bl_label = "Export bedrock animation"
     bl_category = "Mcblend"
     bl_space_type = "VIEW_3D"
@@ -147,6 +150,8 @@ class OBJECT_PT_NusiqMcblendExportAnimationPanel(bpy.types.Panel):
 
 
 class OBJECT_PT_NusiqMcblendSetUvsPanel(bpy.types.Panel):
+    '''Panel  used for Minecraft UV maping and its configuration.'''
+    # pylint: disable=C0116, W0613
     bl_label = "Set bedrock UVs"
     bl_category = "Mcblend"
     bl_space_type = "VIEW_3D"
@@ -183,6 +188,8 @@ class OBJECT_PT_NusiqMcblendSetUvsPanel(bpy.types.Panel):
 
 
 class OBJECT_PT_NusiqMcblendOperatorsPanel(bpy.types.Panel):
+    '''Panel that gives the user access to various operators used by Mcblend'''
+    # pylint: disable=C0116, W0613
     bl_label = "Operators"
     bl_category = "Mcblend"
     bl_space_type = "VIEW_3D"
@@ -190,7 +197,6 @@ class OBJECT_PT_NusiqMcblendOperatorsPanel(bpy.types.Panel):
 
 
     def draw(self, context):
-        col = self.layout.column(align=True)
         self.layout.row().operator(
             "object.nusiq_mcblend_toggle_mc_mirror_operator",
             text="Toggle mc_mirror"

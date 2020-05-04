@@ -1,19 +1,21 @@
-import bpy
-import mathutils
+'''
+Functions used directly by the blender operators.
+'''
+from collections import defaultdict
+import typing as tp
 import math
-import numpy as np
 from enum import Enum
 
-from collections import defaultdict
+import numpy as np
 
-# Additional imports for mypy
+import bpy
+import mathutils
 import bpy_types
-import typing as tp
 
 from .uv import get_uv_mc_cubes, UvMcCube, plan_uv, set_cube_uv
 from .animation import (
     get_mcanimation_json, get_mctranslations, get_next_keyframe,
-    get_transformations
+    get_transformations, AnimationProperties
 )
 from .model import get_mcbone_json, get_mcmodel_json
 from .common import (
@@ -49,7 +51,7 @@ def export_model(context: bpy_types.Context) -> tp.Tuple[tp.Dict, str]:
     model_name = context.scene.nusiq_mcblend.model_name
     mc_bones: tp.List[tp.Dict] = []
 
-    for objid, objprop in object_properties.items():
+    for _, objprop in object_properties.items():
         if (objprop.mctype in [MCObjType.BONE, MCObjType.BOTH]):
             # Create cubes and locators list
             cubes: tp.List[ObjectMcProperties] = []
@@ -61,9 +63,8 @@ def export_model(context: bpy_types.Context) -> tp.Tuple[tp.Dict, str]:
                 if child_id in object_properties:
                     if object_properties[child_id].mctype == MCObjType.CUBE:
                         cubes.append(object_properties[child_id])
-                    elif (
-                        object_properties[child_id].mctype == MCObjType.LOCATOR
-                    ):
+                    elif (object_properties[child_id].mctype ==
+                          MCObjType.LOCATOR):
                         locators.append(object_properties[child_id])
 
             mcbone = get_mcbone_json(
@@ -80,8 +81,8 @@ def export_model(context: bpy_types.Context) -> tp.Tuple[tp.Dict, str]:
 
 
 def export_animation(
-    context: bpy_types.Context, old_dict: tp.Optional[tp.Dict]
-) -> tp.Tuple[tp.Dict, str]:
+        context: bpy_types.Context, old_dict: tp.Optional[tp.Dict]
+    ) -> tp.Tuple[tp.Dict, str]:
     '''
     Uses context.selected_objects to create and return dictionary with
     minecraft animation.
@@ -113,7 +114,7 @@ def export_animation(
     # Read data from frames
     default_translation = get_transformations(object_properties)
     prev_rotation = {
-        name:np.zeros(3) for name in default_translation.keys()
+        name:np.zeros(3) for name in default_translation
     }
     next_keyframe = get_next_keyframe(context)
     while next_keyframe is not None:
@@ -130,7 +131,6 @@ def export_animation(
                 (context.scene.frame_current-1) / context.scene.render.fps,
                 4
             ))
-            
             bone_data[d_key]['position'].append({
                 'time': time,
                 'value': get_vect_json(loc)
@@ -153,11 +153,14 @@ def export_animation(
 
     # Return to first frame and create the result
     context.scene.frame_set(start_frame)
-    animation_dict = get_mcanimation_json(
+    animation_properties = AnimationProperties(
         name=context.scene.nusiq_mcblend.animation_name,
         length=(context.scene.frame_end-1)/context.scene.render.fps,
         loop_animation=context.scene.nusiq_mcblend.loop_animation,
         anim_time_update=context.scene.nusiq_mcblend.anim_time_update,
+    )
+    animation_dict = get_mcanimation_json(
+        animation_properties=animation_properties,
         bone_data=bone_data, object_properties=object_properties,
         extend_json=old_dict
     )
@@ -166,6 +169,15 @@ def export_animation(
 
 
 def set_uvs(context: bpy_types.Context) -> bool:
+    '''
+    Used by the operator that sets UV. Calculates the UV-map for selected
+    objects.
+
+    Depending on operator configuration this function can:
+    - add/edit mc_uv property to the objects.
+    - add new Blender UV (to match it to mc_uvs).
+    - removes old Blender UV
+    '''
     width = context.scene.nusiq_mcblend.texture_width
     height = context.scene.nusiq_mcblend.texture_height
     move_blender_uvs = context.scene.nusiq_mcblend.move_blender_uvs
@@ -188,7 +200,7 @@ def set_uvs(context: bpy_types.Context) -> bool:
     uv_dict: tp.Dict[str, UvMcCube] = get_uv_mc_cubes(
         objprops, read_existing_uvs=not move_existing_mappings
     )
-    uv_mc_cubes = [i for i in uv_dict.values()]
+    uv_mc_cubes = list(uv_dict.values())
     if height <= 0:
         height = None
 
@@ -209,7 +221,7 @@ def set_uvs(context: bpy_types.Context) -> bool:
         new_height = max([i.uv[1] + i.size[1] for i in uv_dict.values()])
     else:
         new_height = height
-    context.scene.nusiq_mcblend.texture_height=new_height
+    context.scene.nusiq_mcblend.texture_height = new_height
 
     if resolution >= 1:
         image = bpy.data.images.new(
@@ -226,11 +238,11 @@ def set_uvs(context: bpy_types.Context) -> bool:
             min2 = min2 * resolution
             max1 = max1 * resolution
             max2 = max2 * resolution
-            a = arr[min1:max1, min2:max2]
-            a[...,0] = color[0]
-            a[...,1] = color[1]
-            a[...,2] = color[2]
-            a[...,3] = color[3]
+            paint_bounds = arr[min1:max1, min2:max2]
+            paint_bounds[..., 0] = color[0]
+            paint_bounds[..., 1] = color[1]
+            paint_bounds[..., 2] = color[2]
+            paint_bounds[..., 3] = color[3]
 
         # This array represents new texture
         # DIM0:up axis DIM1:right axis DIM2:rgba axis
@@ -290,10 +302,10 @@ def set_inflate(context: bpy_types.Context, inflate: float, mode: str) -> int:
                 obj['mc_inflate'] = inflate
             # Clear parent from children for a moment
             children = obj.children
-            for c in children:
-                old_matrix = c.matrix_world.copy()
-                c.parent = None
-                c.matrix_world = old_matrix
+            for child in children:
+                old_matrix = child.matrix_world.copy()
+                child.parent = None
+                child.matrix_world = old_matrix
 
             dimensions = np.array(obj.dimensions)
 
@@ -307,9 +319,9 @@ def set_inflate(context: bpy_types.Context, inflate: float, mode: str) -> int:
             context.view_layer.update()
 
             # Add children back and set their previous transformations
-            for c in children:
-                c.parent = obj
-                c.matrix_parent_inverse = obj.matrix_world.inverted()
+            for child in children:
+                child.parent = obj
+                child.matrix_parent_inverse = obj.matrix_world.inverted()
 
             # Remove the property if it's equal to 0
             if obj['mc_inflate'] == 0:
@@ -324,16 +336,15 @@ def round_dimensions(context: bpy_types.Context) -> int:
     Rounds dimensions of selected objects. Returns the number of edited
     objects.
     '''
-
     counter = 0
     for obj in context.selected_objects:
         if obj.type == 'MESH':
             # Clear parent from children for a moment
             children = obj.children
-            for c in children:
-                old_matrix = c.matrix_world.copy()
-                c.parent = None
-                c.matrix_world = old_matrix
+            for child in children:
+                old_matrix = child.matrix_world.copy()
+                child.parent = None
+                child.matrix_world = old_matrix
 
             # Set new dimensions
             dimensions = np.array(obj.dimensions)
@@ -354,16 +365,17 @@ def round_dimensions(context: bpy_types.Context) -> int:
             context.view_layer.update()
 
             # Add children back and set their previous transformations
-            for c in children:
-                c.parent = obj
-                c.matrix_parent_inverse = obj.matrix_world.inverted()
+            for child in children:
+                child.parent = obj
+                child.matrix_parent_inverse = obj.matrix_world.inverted()
 
             counter += 1
     return counter
 
+
 def import_model(
-    data: tp.Dict, geometry_name: str, context: bpy_types.Context
-):
+        data: tp.Dict, geometry_name: str, context: bpy_types.Context
+    ):
     '''
     Import and build model from JSON file. Returns success result value (bool).
     '''

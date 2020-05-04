@@ -1,17 +1,35 @@
 '''
 Object representation of Minecraft model JSON files and data validation
 '''
+import math
 import typing as tp
-from .json_tools import get_path
-from .common import MINECRAFT_SCALE_FACTOR
+import numpy as np
+
 import bpy_types
 import mathutils
 import bpy
-import numpy as np
-import math
+
+from .common import MINECRAFT_SCALE_FACTOR
 
 
-def _assert(expr: bool, msg: str='') -> None:
+def get_path(
+        jsonable: tp.Dict, path: tp.List[tp.Union[str, int]]
+    ) -> tp.Tuple[tp.Optional[tp.Any], bool]:
+    '''
+    Goes through a dictionary and checks its structure. Returns an object
+    from given path and success result.
+    If path is invalid returns None and False. For valid paths returns
+    object the object and True.
+    '''
+    curr_obj = jsonable
+    for path_item in path:
+        try:
+            curr_obj = curr_obj[path_item]
+        except (LookupError, TypeError):
+            return None, False
+    return curr_obj, True
+
+def _assert(expr: bool, msg: str = '') -> None:
     '''
     Same functionality as normal assert statement but works even
     if __debug__ is False.
@@ -21,32 +39,32 @@ def _assert(expr: bool, msg: str='') -> None:
 
 
 def assert_is_vector(
-    vect: tp. Any, length: int, types: tp.Tuple, msg: str=''
-) -> None:
+        vect: tp. Any, length: int, types: tp.Tuple, msg: str = ''
+    ) -> None:
     '''
     Asserts that the "vect" is "length" long vector and all of the items
     in the vector are instances of types from types list.
     '''
-    _assert(type(vect) is list, msg)
+    _assert(isinstance(vect, list), msg)
     _assert(len(vect) == length, msg)
     _assert(all([isinstance(i, types) for i in vect]), msg)
 
 
-def assert_is_model(a: tp.Any) -> None:
+def assert_is_model(model: tp.Any) -> None:
     '''
     Asserts that the input dictionary is a valid model file.
     '''
-    _assert(type(a) is dict, 'Model file must be an object')
+    _assert(isinstance(model, dict), 'Model file must be an object')
     _assert(
-        set(a.keys()) == {'format_version', 'minecraft:geometry'},
+        set(model.keys()) == {'format_version', 'minecraft:geometry'},
         'Model file must have format_version and minecraft:geometry properties'
     )
 
-    _assert(a['format_version'] == "1.12.0", 'Unsuported format version')
+    _assert(model['format_version'] == "1.12.0", 'Unsuported format version')
 
-    geometries = a['minecraft:geometry']
+    geometries = model['minecraft:geometry']
     _assert(
-        type(geometries) is list,
+        isinstance(geometries, list),
         'minecraft:geometry property must be a list'
     )
     _assert(
@@ -56,7 +74,7 @@ def assert_is_model(a: tp.Any) -> None:
     # minecraft:geometry
     for geometry in geometries:
         _assert(
-            type(geometry) is dict,
+            isinstance(geometry, dict),
             'Every item from minecraft:geometry list must be an object'
         )
         _assert(
@@ -68,7 +86,7 @@ def assert_is_model(a: tp.Any) -> None:
         bones = geometry['bones']
 
         # minecraft:geometry -> description
-        _assert(type(desc) is dict, 'Geometry description must be an object')
+        _assert(isinstance(desc, dict), 'Geometry description must be an object')
         _assert(
             set(desc.keys()) == {
                 'identifier', 'texture_width',
@@ -80,15 +98,15 @@ def assert_is_model(a: tp.Any) -> None:
             'visible_bounds_height, visible_bounds_offset'
         )
         _assert(
-            type(desc['identifier']) is str,
+            isinstance(desc['identifier'], str),
             'Geometry identifier must be a string'
         )
         _assert(
-            type(desc['texture_width']) is int,
+            isinstance(desc['texture_width'], int),
             'texture_width must be an integer'
         )
         _assert(
-            type(desc['texture_height']) is int,
+            isinstance(desc['texture_height'], int),
             'texture_height must be an integer'
         )
         _assert(
@@ -114,9 +132,9 @@ def assert_is_model(a: tp.Any) -> None:
         )
 
         # minecraft:geometry -> bones
-        _assert(type(bones) is list)
+        _assert(isinstance(bones, list))
         for bone in bones:
-            _assert(type(bone) is dict, 'Every bone must be an object')
+            _assert(isinstance(bone, dict), 'Every bone must be an object')
 
             _assert(
                 set(bone.keys()) <= {  # acceptable keys
@@ -130,7 +148,7 @@ def assert_is_model(a: tp.Any) -> None:
                 'Every bone must have following properties: name, cubes, '
                 'pivot, rotation'
             )
-            _assert(type(bone['name']) is str, 'Bone name must be a string')
+            _assert(isinstance(bone['name'], str), 'Bone name must be a string')
 
             assert_is_vector(
                 bone['pivot'], 3, (int, float),
@@ -141,18 +159,19 @@ def assert_is_model(a: tp.Any) -> None:
                 'rotation property of a bone must be a vector of 3 numbers'
             )
             if 'parent' in bone:
-                _assert(type(bone['parent']) is str,
-                'parent property of a bone must be a string'
-            )
+                _assert(
+                    isinstance(bone['parent'], str),
+                    'parent property of a bone must be a string'
+                )
             # minecraft:geometry -> bones -> locators
             if 'locators' in bone:
                 _assert(
-                    type(bone['locators']) is dict,
+                    isinstance(bone['locators'], dict),
                     'locators property of a bone must be an object'
                 )
                 for locator_name, locator in bone['locators'].items():
                     _assert(
-                        type(locator_name) is str,
+                        isinstance(locator_name, str),
                         'Locator name property must be a string'
                     )
                     assert_is_vector(
@@ -161,11 +180,11 @@ def assert_is_model(a: tp.Any) -> None:
                     )
             # minecraft:geometry -> bones -> cubes
             _assert(
-                type(bone['cubes']) is list,
+                isinstance(bone['cubes'], list),
                 'cubes property of a bone must be a list'
             )
             for cube in bone['cubes']:
-                _assert(type(cube) is dict, 'Every cube must be an object')
+                _assert(isinstance(cube, dict), 'Every cube must be an object')
                 _assert(
                     set(cube.keys()) <= {  # acceptable keys
                         'uv', 'size', 'origin', 'pivot', 'rotation', 'mirror'
@@ -201,10 +220,11 @@ def assert_is_model(a: tp.Any) -> None:
                     'rotation property of a cube must be a vector of 3 numbers'
                 )
                 if 'mirror' in cube:
-                    _assert(type(cube['mirror']) is bool)
+                    _assert(isinstance(cube['mirror'], bool))
 
 
-class ImportLocator(object):
+class ImportLocator:
+    '''Represents minecraft locator during import operation.'''
     def __init__(self, name: str, position: tp.Tuple[float, float, float]):
         self.name = name
         self.position = position
@@ -212,16 +232,16 @@ class ImportLocator(object):
         self.blend_empty: tp.Optional[bpy_types.Object] = None
 
 
-class ImportCube(object):
+class ImportCube:
+    '''Represents minecraft cube during import operation.'''
     def __init__(
-        self,
-        uv: tp.Tuple[int, int],
-        mirror: bool,
-        origin: tp.Tuple[float, float, float],
-        pivot: tp.Tuple[float, float, float],
-        size: tp.Tuple[float, float, float],
-        rotation: tp.Tuple[float, float, float]
-    ):
+            self,
+            uv: tp.Tuple[int, int],
+            mirror: bool,
+            origin: tp.Tuple[float, float, float],
+            pivot: tp.Tuple[float, float, float],
+            size: tp.Tuple[float, float, float],
+            rotation: tp.Tuple[float, float, float]):
         self.uv = uv
         self.mirror = mirror
         self.origin = origin
@@ -233,13 +253,13 @@ class ImportCube(object):
         self.blend_cube: tp.Optional[bpy_types.Object] = None
 
 
-class ImportBone(object):
+class ImportBone:
+    '''Represents minecraft bone during import operation.'''
     def __init__(
-        self, name: str, parent: tp.Optional[str],
-        pivot: tp.Tuple[float, float, float],
-        rotation: tp.Tuple[float, float, float], cubes: tp.List[ImportCube],
-        locators: tp.List[ImportLocator]
-    ):
+            self, name: str, parent: tp.Optional[str],
+            pivot: tp.Tuple[float, float, float],
+            rotation: tp.Tuple[float, float, float],
+            cubes: tp.List[ImportCube], locators: tp.List[ImportLocator]):
         self.name = name
         self.parent = parent
         self.cubes = cubes
@@ -251,11 +271,11 @@ class ImportBone(object):
         self.blend_empty: tp.Optional[bpy_types.Object] = None
 
 
-class ImportGeometry(object):
+class ImportGeometry:
+    '''Represents whole minecraft geometry during import operation.'''
     def __init__(
-        self, identifier: str, texture_width: int, texture_height: int,
-        bones: tp.Dict[str, ImportBone]
-    ):
+            self, identifier: str, texture_width: int, texture_height: int,
+            bones: tp.Dict[str, ImportBone]):
         self.identifier = identifier
         self.texture_width = texture_width
         self.texture_height = texture_height
@@ -322,19 +342,19 @@ def _load_bone(data: tp.Dict) -> ImportBone:
         for k, v in data['locators'].items():
             locators.append(ImportLocator(
                 k,
-                tuple(v))  # type: ignore
-            )
+                tuple(v)  # type: ignore
+            ))
     # Cubes
     import_cubes: tp.List[ImportCube] = []
-    for i, c in enumerate(data['cubes']):
-        import_cubes.append(_load_cube(c))
+    for cube in data['cubes']:
+        import_cubes.append(_load_cube(cube))
 
     return ImportBone(
         name, parent, pivot, rotation, import_cubes, locators
     )
 
 
-def load_model(data: tp.Dict, geometry_name: str="") -> ImportGeometry:
+def load_model(data: tp.Dict, geometry_name: str = "") -> ImportGeometry:
     '''
     Returns ImportGeometry object with all of the data loaded from data dict.
     The data dict is a dictionary representaiton of the JSON file with
@@ -343,30 +363,29 @@ def load_model(data: tp.Dict, geometry_name: str="") -> ImportGeometry:
     geometry_name is a name of the geometry to load. This argument is optional
     if not specified or epmty string only the first model is imported.
     '''
-    format_version: str = data['format_version']
+    # format_version: str = data['format_version']
     geometries: tp.List = data['minecraft:geometry']
 
     # Find geometry
     geometry: tp.Optional[tp.Dict] = None
-    for g in geometries:
-        identifier, success = get_path(g, ['description', 'identifier'])
+    for curr_geometry in geometries:
+        identifier, success = get_path(curr_geometry, ['description', 'identifier'])
         if not success:
             continue
         # Found THE geometry
         if geometry_name == "" or f'geometry.{geometry_name}' == identifier:
             identifier = tp.cast(str, identifier)  # mypy cast
             geometry_name = identifier
-            geometry = g
+            geometry = curr_geometry
             break
 
     # Geometry not found
     if geometry is None:
         if geometry_name == "":
             raise ValueError('Unable to find valid geometry')
-        else:
-            raise ValueError(
-                f'Unable to find geometry called geometry.{geometry_name}'
-            )
+        raise ValueError(
+            f'Unable to find geometry called geometry.{geometry_name}'
+        )
 
     # Load texture_width
     texture_width, success = get_path(
@@ -385,8 +404,8 @@ def load_model(data: tp.Dict, geometry_name: str="") -> ImportGeometry:
 
     # Read bones
     import_bones: tp.Dict[str, ImportBone] = {}
-    for i, b in enumerate(bones):
-        import_bone = _load_bone(b)
+    for bone in bones:
+        import_bone = _load_bone(bone)
         import_bones[import_bone.name] = import_bone
 
     return ImportGeometry(
@@ -475,10 +494,10 @@ def build_geometry(geometry: ImportGeometry, context: bpy_types.Context):
 
 
 def _mc_translate(
-    obj: bpy_types.Object, mctranslation: tp.Tuple[float, float, float],
-    mcsize: tp.Tuple[float, float, float],
-    mcpivot: tp.Tuple[float, float, float]
-):
+        obj: bpy_types.Object, mctranslation: tp.Tuple[float, float, float],
+        mcsize: tp.Tuple[float, float, float],
+        mcpivot: tp.Tuple[float, float, float]
+    ):
     '''
     Translates a blender object using a translation vector written in minecraft
     coordinates system.
@@ -496,9 +515,7 @@ def _mc_translate(
         vertex.co += (translation - pivot_offset + size_offset)
 
 
-def _mc_set_size(
-    obj: bpy_types.Object, mcsize: tp.Tuple[float, float, float]
-):
+def _mc_set_size(obj: bpy_types.Object, mcsize: tp.Tuple[float, float, float]):
     '''
     Scales a blender object using scale vector written in minecraft coordinates
     system.
@@ -508,7 +525,7 @@ def _mc_set_size(
     )
     data = obj.data
     # 0. ---; 1. --+; 2. -+-; 3. -++; 4. +--; 5. +-+; 6. ++- 7. +++
-    data.vertices[0].co = mathutils.Vector(pos_delta * np.array([-1, -1,-1]))
+    data.vertices[0].co = mathutils.Vector(pos_delta * np.array([-1, -1, -1]))
     data.vertices[1].co = mathutils.Vector(pos_delta * np.array([-1, -1, 1]))
     data.vertices[2].co = mathutils.Vector(pos_delta * np.array([-1, 1, -1]))
     data.vertices[3].co = mathutils.Vector(pos_delta * np.array([-1, 1, 1]))
@@ -519,9 +536,7 @@ def _mc_set_size(
 
 
 
-def _mc_pivot(
-    obj: bpy_types.Object, mcpivot: tp.Tuple[float, float, float]
-):
+def _mc_pivot(obj: bpy_types.Object, mcpivot: tp.Tuple[float, float, float]):
     '''
     Moves a pivot of an blender object using coordinates written in minecraft
     coordinates system.
@@ -533,8 +548,8 @@ def _mc_pivot(
 
 
 def _mc_rotate(
-    obj: bpy_types.Object, mcrotation: tp.Tuple[float, float, float]
-):
+        obj: bpy_types.Object, mcrotation: tp.Tuple[float, float, float]
+    ):
     '''
     Rotates a blender object using minecraft coordinates system for rotation
     vector.
