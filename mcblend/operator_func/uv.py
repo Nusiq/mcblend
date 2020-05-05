@@ -13,15 +13,24 @@ from .common import (
 )
 
 
+# TODO - change input values into dedicated Enum
+# TODO - change output dictionary into dedicated data class
 def get_uv_face(
         objprop: ObjectMcProperties, face_name: str
     ) -> tp.Dict[str, int]:
     '''
-    - objprop - the properties of the object
-    - face_name - decides which face should be returned
+    Returns a dictionary with information about indices of 4 loops of the uv
+    face. The keys of the dictionary are strings *LD*, *RD*, *RU* and *LU*
+    (left down, right down, right up, left up) and the values of the dictionary
+    are integer indices of the loops.
 
-    Returns a dictionary with list of integer indices of loops which are part
-    of a UV of a cube.
+    # Arguments:
+    - `objprop: ObjectMcProperties` - the properties of the Minecraft object
+    - `face_name: str` - decides which face should be returned. Accepts
+      *front*, *back*, *left*, *right*, *top*, *bottom*
+
+    # Returns:
+    `Dict[str, int]` - a UV-face represented by a dictionary.
     '''
     bound_box_faces = {
         'front': [0, 4, 5, 1], 'back': [7, 3, 2, 6], 'left': [4, 7, 6, 5],
@@ -53,13 +62,18 @@ def set_uv(
         mirror_y: bool, mirror_x: bool
     ):
     '''
-    - objprop - the data of the object
-    - uv_face - the dictionary with loop indices used to define which loops
-      of the uv should be moved.
-    - crds - value from 0 to 1 the position of the bottom left loop on blender
-      uv mapping coordinates system.
-    - size - value from 0 to 1 the size of the rectangle in blender uv mapping
-      coordinates system.
+    Moves the placement of the loops of given UV face of an object to match
+    given coordinates and size of the face.
+
+    # Arguments:
+    - `objprop: ObjectMcProperties` - the properties of the Minecraft object.
+    - `uv_face: tp.Dict[str, int]` - UV face dictionary.
+    - `crds: tp.Tuple[float, float]` - value from 0 to 1 the position of the
+      bottom left loop using Blender UV-mapping coordinates system.
+    - `size: tp.Tuple[float, float]` - value from 0 to 1 the size of the
+      rectangle using Blender UV-mapping coordinates system.
+    - `mirror_y: bool` - if True mirrors top and bottom sides of the face.
+    - `mirror_x: bool` - if True mirrors left and right sides of the face.
     '''
     uv_data = objprop.data_uv_layers_active_data()
     order = ['LD', 'RD', 'RU', 'LU']
@@ -75,24 +89,29 @@ def set_uv(
     uv_data[uv_face[order[3]]].uv = (crds[0], crds[1] + size[1])
 
 
+# TODO - width, depth, height accesible from objprop?
+# TODO - is width, depth, height really scaled to 0-1 vlaues? Or is the
+# documentation wrong?
 def set_cube_uv(
         objprop: ObjectMcProperties, uv: tp.Tuple[float, float], width: float,
         depth: float, height: float, texture_width: int, texture_height: int
     ):
     '''
-    - objprop - properties of the object
-    - uv - value from 0 to 1 the position of the bottom left loop on blender
-      uv mapping coordinates system.
-    - width - value from 0 to 1 the width of the cube converted into blender
-      uv mapping coordinates system.
-    - depth - value from 0 to 1 the depth of the cube converted into blender
-      uv mapping coordinates system.
-    - height - value from 0 to 1 the height of the cube converted into blender
-      uv mapping coordinates system.
-    - texture_width  - texture_width for scaling
-    - texture_height  - texture_height for scaling
-    Sets the UV faces of a mesh object that represents a mccube in the same
-    patter as minecraft UV mapping.
+    Moves the placement of all of loops of UV of an object (cuboid) in a same
+    way that Minecraft does.
+
+    # Arguments:
+    - `objprop: ObjectMcProperties` - properties of the object.
+    - `uv: tp.Tuple[float, float]` - value from 0 to 1 the position of the
+      bottom left loop using Blenders UV-mapping coordinates system.
+    - `width: float` - width of the object converted to value from 0 to 1 in
+      Blenders UV-mapping coordinates system.
+    - `depth: float` - depth of the object converted to value from 0 to 1 in
+      Blenders UV-mapping coordinates system.
+    - `height: float` - height of the object converted to value from 0 to 1 in
+      Blenders UV-mapping coordinates system.
+    - `texture_width: int` - texture width for scaling.
+    - `texture_height: int` - texture height for scaling.
     '''
     uv = (uv[0], texture_height-uv[1]-depth-height)
     if objprop.has_mc_mirror():
@@ -161,21 +180,15 @@ def set_cube_uv(
         )
 
 # (U, V) - 0, 0 = top left
+# TODO - suggestion object instead UvCorner + Coordinates
 class UvCorner(Enum):
     '''
     During UV-mapping UVBox objects use this enum combined with coordinates
-    to suggest possible positions to check for other UvBoxes (to find free
-    space on the texture).
+    to suggest possible free space positions on the texture.
 
     For example a pair ((1, 2), UvCorner.TOP_RIGHT) represents a suggestion
-    that UvBoxes that look for free space should try a position in which
-    their TOP_RIGHT corner is at the (1, 2) pixel.
-
-    Members:
-    - TOP_RIGHT
-    - TOP_LEFT
-    - BOTTOM_RIGHT
-    - BOTTOM_LEFT
+    that there might be some free space for UvBox at (1, 2) pixel and that
+    this the UvBox should touch this free space with its top right corner.
     '''
     TOP_RIGHT = 'TOP_RIGHT'
     TOP_LEFT = 'TOP_LEFT'
@@ -184,7 +197,7 @@ class UvCorner(Enum):
 
 
 class UvBox:
-    '''Rectangular space that is mapped or needs mapping on the texture.'''
+    '''Rectangular space on the texture.'''
     def __init__(
             self, size: tp.Tuple[int, int],
             uv: tp.Tuple[int, int] = None
@@ -200,7 +213,7 @@ class UvBox:
 
     @property
     def uv(self):
-        '''The uv coordinates (bottom left corner) of the UvBox.'''
+        '''The uv coordinates of the UvBox (bottom left corner).'''
         return self._uv
 
     @uv.setter
@@ -211,6 +224,9 @@ class UvBox:
         '''
         Returns True if this UvBox is colliding with another. Otherwise returns
         False.
+
+        # Arguments:
+        - `other: UvBox` - the other UvBox to test the collision.
         '''
         # min max
         self_x = (self.uv[0], self.uv[0] + self.size[0])
@@ -231,9 +247,9 @@ class UvBox:
         Returns list of positions touching this UvBox for other UvBox without
         overlappnig.
 
-        The order of returned points:
-        0. (top left) 1. (top right) 2. (right top) 3. (right bottom)
-        4. (bottom right) 5. (bottom left) 6. (left bottom) 7. (left top)
+        # Returns:
+        `List[Tuple[Tuple[int, int], UvCorner]]` - list of suggestions for
+        other UV-box to try while looking for empty space on the texture.
         '''
         size = (self.size[0]-1, self.size[1]-1)
         uv = self.uv
@@ -261,8 +277,11 @@ class UvBox:
             self, suggestion: tp.Tuple[tp.Tuple[int, int], UvCorner]
         ):
         '''
-        Uses a pair of UV coordinates and UvCorner to set the UV value for this
-        UvBox.
+        Uses a suggestion (pair of coordinates and UvCorner) to set the UV for
+        this UvBox.
+
+        # Arguments:
+        - `suggestion: Tuple[Tuple[int, int], UvCorner]` - the suggestion.
         '''
         size = (self.size[0]-1, self.size[1]-1)
         if suggestion[1] == UvCorner.TOP_LEFT:
@@ -277,8 +296,9 @@ class UvBox:
 
 class UvMcCube(UvBox):
     '''
-    Six UvBoxes grouped together to represent space on the texture need for
-    UV mapping of single cube in minecraft model.
+    Extends the UvBox by combining Six UvBoxes grouped together to represent
+    space on the texture needed for UV mapping of single cube in Minecraft
+    model.
     '''
     def __init__(
             self, width: int, depth: int, height: int,
@@ -315,8 +335,10 @@ class UvMcCube(UvBox):
         '''
         Returns True if this UvBox is colliding with another. Otherwise returns
         False.
-        '''
 
+        # Arguments:
+        - `other: UvBox` - the other UvBox to test the collision.
+        '''
         for i in [
                 self.right, self.front, self.left, self.back, self.top,
                 self.bottom
@@ -331,6 +353,10 @@ class UvMcCube(UvBox):
         '''
         Returns list of positions touching this UvBox for other UvBox without
         overlappnig.
+
+        # Returns:
+        `List[Tuple[Tuple[int, int], UvCorner]]` - list of suggestions for
+        other UV-box to try while looking for empty space on the texture.
         '''
         # 0. (top left) 1. (top right) 2. (right top) 3. (right bottom)
         # 4. (bottom right) 5. (bottom left) 6. (left bottom) 7. (left top)
@@ -357,9 +383,16 @@ class UvMcCube(UvBox):
 def plan_uv(boxes: tp.List[UvMcCube], width: int, height: int = None) -> bool:
     '''
     Plans UVs for all of the boxes on the list. The size of the texture is
-    limited by width and optionally by height.
+    limited by width and optionally by height. Returns success result.
 
-    Returns success result.
+    # Arguments:
+    - `boxes: List[UvMcCube]` - the list of the UvMcCubes.
+    - `width: int` - the width of the texture.
+    - `height: int` - the height of the texture (optional).
+
+    # Returns:
+    `bool` - True on succes. False when the texture width and height wasn't big
+    enough to map all of the boxes.
     '''
     boxes = list(set(boxes))
     boxes.sort(key=lambda box: box.size[0], reverse=True)
@@ -422,7 +455,7 @@ class _UvGroup:
     Stores information about one UvGroup in get_uv_mc_cubes() function.
 
     This class has one value `items` - a dictionary that uses
-    (width, depth, height) tuple as a key and has a UvMcCube as a valule.
+    (width, depth, height) tuple as a key and has a UvMcCube as a value.
 
     Its used to make sure that the cubes with same mc_uv_groups and size use
     the same UvMcCube mapping.
@@ -434,14 +467,20 @@ class _UvGroup:
 
 def get_uv_mc_cubes(
         objprops: tp.List[ObjectMcProperties],
-        read_existing_uvs
+        read_existing_uvs: bool
     ) -> tp.Dict[str, UvMcCube]:
     '''
-    Returns name-uv_mc_cube dictionary with uv_mc_cubes of selected objects.
+    Creates UvMcCube for every object from objprops and returns the dictionary
+    of that uses the names of the objects as keys and UvMcCubes as values.
 
-    - objprops - list of the properties of the objects
-    - read_existing_uvs - if set to True it will try to read the custom
-      properties of the `obj` to read its UV values.
+    # Properties:
+    - `objprops: List[ObjectMcProperties]` - list of the properties of the
+      objects.
+    - `read_existing_uvs: bool` - if set to True it sets the UV value in
+      UvMcCube to a value read from the mc_uv property of the object.
+
+    # Returns:
+    `Dict[str, UvMcCube]` - a dictionary with UvMcCube for every object.
     '''
     def _scale(objprop: ObjectMcProperties) -> np.ndarray:
         '''Scale of a bone'''

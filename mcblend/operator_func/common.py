@@ -16,12 +16,8 @@ MINECRAFT_SCALE_FACTOR = 16
 
 class MCObjType(Enum):
     '''
-    Used to mark what type of minecraft object should be created from a mesh in
-    blender.
-
-    - CUBE - is a cube which is a part of a bone.
-    - BONE - is just a bone without cubes in it.
-    - BOTH - is a bone with a cube inside.
+    Used to mark what type of Minecraft object should be created from an object
+    in blender.
     '''
     CUBE = 'CUBE'
     BONE = 'BONE'
@@ -31,13 +27,9 @@ class MCObjType(Enum):
 
 class ObjectId(tp.NamedTuple):
     '''
-    Unique ID of a mesh, empty or a bone.
-
-    For meshes and empties it's bone_name is just an empty string and the
-    name is the name of the object.
-
-    For bones the ID uses both the name (armature name) and bone name
-    which is the name of the bone contained in the bone.
+    Unique ID of a mesh, empty or a bone. For meshes and empties it's bone_name
+    is just an empty string and the name is the name of the object. For bones
+    the ID uses both the name (armature name) and bone name.
     '''
     name: str
     bone_name: str
@@ -45,9 +37,9 @@ class ObjectId(tp.NamedTuple):
 
 class ObjectMcProperties:
     '''
-    Wrapper class for the objects used by the addon to create some parts of
-    the minecraft model. This class can be used to containg bpy_types.Object
-    and bones from the armature to provide for them similar functionallity.
+    A class that wraps around Blender objects (meshes, empties and bones) and
+    gives access to some data necesary to export the model into Minecraft
+    format.
     '''
     def __init__(
             self, thisobj_id: ObjectId, thisobj: bpy_types.Object,
@@ -148,7 +140,6 @@ class ObjectMcProperties:
         return self.thisobj.matrix_world.copy()
 
 
-
 class ObjectMcTransformations(tp.NamedTuple):
     '''
     Temporary properties of transformations of an object (mesh or empty)
@@ -159,23 +150,16 @@ class ObjectMcTransformations(tp.NamedTuple):
     scale: np.array
     rotation: np.array
 
-
-class McConvertibleType(Enum):
-    '''
-    Type of an object in blender that can be converted into something in
-    minecraft model.
-    '''
-    BONE = 'BONE'
-    MESH = 'MESH'
-    EMPTY = 'EMPTY'
-
-
+# TODO - move casting to integer to CompactEncoder
 def get_vect_json(arr: tp.Iterable) -> tp.List[float]:
     '''
     Changes the iterable whith numbers into basic python list of floats.
     Values from the original iterable are rounded to the 3rd deimal
-    digit. If value is interer changes it to integer type to skip writing
+    digit. If value is integer than its type is changed to int to skip
     unnecesary zero decimal.
+
+    # Arguments:
+    - `arr: tp.Iterable` - an iterable with numbers.
     '''
     result = [round(i, 3) for i in arr]
     for i, _ in enumerate(result):
@@ -192,6 +176,12 @@ def get_local_matrix(
     '''
     Returns translation matrix of child in relation to parent.
     In space defined by parent translation matrix.
+
+    # Arguments:
+    - `parent_world_matrix: mathutils.Matrix` - matrix_world of parent object.
+    - `child_world_matrix: mathutils.Matrix` - matrix_world of child object.
+    # Returns:
+    `mathutils.Matrix` - translation matrix for child object in parent space.
     '''
     return (
         parent_world_matrix.inverted() @ child_world_matrix
@@ -203,9 +193,15 @@ def get_mcrotation(
         parent_matrix: tp.Optional[mathutils.Matrix] = None) -> np.ndarray:
     '''
     Returns the rotation of mcbone.
-    - child_matrix - the matrix_world of the object that represents the mcbone
-    - parent_matrix - optional. the matrix_world of the object that is a
-      mcparent (custom parenting) of the object that represents the mcbone.
+
+    # Arguments:
+    - `child_matrix: mathutils.Matrix` - the matrix_world of the object that
+      represents Minecraft bone.
+    - `parent_matrix: Optional[mathutils.Matrix]` - the matrix_world of the
+      parent bone object (optional).
+
+    # Returns:
+    `np.ndarray` - numpy array with the rotation in Minecraft format.
     '''
     def local_rotation(
             child_matrix: mathutils.Matrix, parent_matrix: mathutils.Matrix
@@ -234,7 +230,12 @@ def get_mcrotation(
 def get_mcube_size(objprop: ObjectMcProperties) -> np.ndarray:
     '''
     Returns cube size based on the bounding box of an object.
-    The returned value is moved by the translation matrix from "translation"
+
+    # Arguments:
+    - `objprop: ObjectMcProperties` - the properties of the object
+
+    # Returns:
+    `np.ndarray` - the size of the object in Minecraft format.
     '''
     # 0. ---; 1. --+; 2. -++; 3. -+-; 4. +--; 5. +-+; 6. +++; 7. ++-
     bound_box = objprop.bound_box()
@@ -242,7 +243,15 @@ def get_mcube_size(objprop: ObjectMcProperties) -> np.ndarray:
 
 
 def get_mccube_position(objprop: ObjectMcProperties) -> np.ndarray:
-    '''Returns cube position based on the bounding box of an object.'''
+    '''
+    Returns cube position based on the bounding box of an object.
+
+    # Arguments:
+    - `objprop: ObjectMcProperties` - the properties of the object
+
+    # Returns:
+    `np.ndarray` - the position of the object in Minecraft format.
+    '''
     return np.array(objprop.bound_box()[0])[[0, 2, 1]]
 
 
@@ -251,10 +260,15 @@ def get_mcpivot(
         object_properties: tp.Dict[ObjectId, ObjectMcProperties]
     ) -> np.ndarray:
     '''
-    Returns the pivot point of a mcbone (or mccube).
-    - objprop - the properties of this mcbone/mccube
-    - object_properties - the properties of all of the mccubes and mcbones in
-      minecraft model
+    Returns the pivot point of Minecraft object.
+
+    # Arguments:
+    - `objprop: ObjectMcProperties` - the properties of Minecraft object.
+    - `object_properties: Dict[ObjectId, ObjectMcProperties]` - the
+      other objects.
+
+    # Returns:
+    `np.ndarray` - the pivot point of Minecraft object.
     '''
     def local_crds(
             parent_matrix: mathutils.Matrix, child_matrix: mathutils.Matrix
@@ -281,9 +295,15 @@ def get_mcpivot(
 def loop_objects(objects: tp.List) -> tp.Iterable[tp.Tuple[ObjectId, tp.Any]]:
     '''
     Loops over the empties, meshes and armature objects and yields them and
-    their ids.
-    If object is an armatre than it loops over every bone and yields the
-    armature and the id of the bone.
+    their ids. If object is an armatre than it loops over every bone and
+    yields the armature and the id of the bone.
+
+    # Arguments:
+    - `objects: List` - the list of blender objects
+
+    # Returns:
+    `Iterable[tp.Tuple[ObjectId, Any]]` - iterable that goes throug objects and
+    bones.
     '''
     for obj in objects:
         if obj.type in ['MESH', 'EMPTY']:
@@ -294,11 +314,15 @@ def loop_objects(objects: tp.List) -> tp.Iterable[tp.Tuple[ObjectId, tp.Any]]:
 
 def get_parent_mc_bone(obj: bpy_types.Object) -> tp.Optional[ObjectId]:
     '''
-    Goes up through the ancesstors of the bpy_types.Object which
-    will be changed into mccube during model exporting and tries to find the
-    mcbone that contains this mccube.
+    Goes up through the ancesstors of an bpy_types.Object and tries to find
+    the object that represents its parent bone in Minecraft model.
 
-    Returns the ObjectId of the ancesstor.
+    # Arguments:
+    - `obj: bpy_types.Object` - a Blender object which will be truned into
+    Minecraft bone
+
+    # Returns:
+    `tp.Optional[ObjectId]` - parent Minecraft bone of the object or None.
     '''
     obj_id = None
     while obj.parent is not None:
@@ -321,7 +345,14 @@ def get_name_conflicts(
     '''
     Looks through the object_properties dictionary and tries to find name
     conflicts. Returns empty string (when there are no conflicts) or a name
-    which is used by multiple object.
+    of an object that causes the conflict.
+
+    # Arguments:
+    - `object_properties: Dict[ObjectId, ObjectMcProperties]` - the properties
+    of all objects.
+
+    # Returns:
+    `str` - name of conflictiong objects or empty string.
     '''
     names: tp.List[str] = []
     for objprop in object_properties.values():
@@ -333,6 +364,8 @@ def get_name_conflicts(
     return ''
 
 
+# TODO - create a dedicated type for result of this function (its used
+# everywhere).
 def get_object_mcproperties(
         context: bpy_types.Context
         ) -> tp.Dict[ObjectId, ObjectMcProperties]:
@@ -340,6 +373,12 @@ def get_object_mcproperties(
     Loops through context.selected_objects and returns a dictionary with custom
     properties of mcobjects. Returned dictionary uses the ObjectId of the
     objects as keys and the custom properties as values.
+
+    # Arguments:
+    - `context: bpy_types.Context` - the context of running the operator.
+
+    # Returns:
+    `Dict[ObjectId, ObjectMcProperties]` - the properties of all objects.
     '''
     # pylint: disable=R0912
     properties: tp.Dict[ObjectId, ObjectMcProperties] = {}
@@ -387,15 +426,26 @@ def pick_closest_rotation(
         original_rotation: tp.Optional[np.ndarray] = None
     ) -> np.ndarray:
     '''
-    Takes two numpy.arrays that represent rotation in
-    euler rotation mode (using degrees). Modifies the
-    values of 'modify' vector to get different representations
+    Takes two numpy.arrays that represent euler rotation in (using degrees).
+    Modifies the values of 'modify' vector to get different representations
     of the same rotation. Picks the vector which is the
-    closest to 'close_to' vector (euclidean distance).
+    closest to 'close_to' vector (using euclidean distance).
 
-    original_rotation is added specificly to fix some issues with bones
-    which were rotated before the animation. Issue #25 describes the problem
-    in detail.
+    *Original_rotation is added specificly to fix some issues with bones
+    which were rotated before the animation. Issue #25 on Github describes
+    the problem in detail.
+
+    # Arguments:
+    - `modify: np.ndarray` - a vector that represents rotation. The function
+      looks for equivalents of this rotation.
+    - `close_to: np.ndarray` - a vector that represents other rotation. The
+      function tries to pick rotation as close as possible to this one.
+    - `original_rotation: tp.Optional[np.ndarray]` - the original rotation of
+      the object (befor any animation starts).
+
+    # Returns:
+    `np.ndarray` - rotation vector (a different representation of the modify
+    vector)
     '''
     if original_rotation is None:
         original_rotation = np.array([0.0, 0.0, 0.0])

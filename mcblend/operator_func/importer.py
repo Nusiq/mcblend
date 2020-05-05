@@ -1,5 +1,5 @@
 '''
-Object representation of Minecraft model JSON files and data validation
+Functions and objects related to importing Minecraft models to Blender.
 '''
 import math
 import typing as tp
@@ -12,14 +12,20 @@ import bpy
 from .common import MINECRAFT_SCALE_FACTOR
 
 
+# TODO - exception instead of success value
 def get_path(
         jsonable: tp.Dict, path: tp.List[tp.Union[str, int]]
     ) -> tp.Tuple[tp.Optional[tp.Any], bool]:
     '''
-    Goes through a dictionary and checks its structure. Returns an object
-    from given path and success result.
-    If path is invalid returns None and False. For valid paths returns
-    object the object and True.
+    Goes through a dictionary and checks its structure. Returns the object
+    from given JSON path and success value.
+
+    # Arguments:
+    - `jsonable: Dict` - a dictionary
+    - `path: List[Union[str, int]]` - a path to target object
+
+    # Returns:
+    Tuple[Optional[Any], bool] - the target object and the success value.
     '''
     curr_obj = jsonable
     for path_item in path:
@@ -29,21 +35,31 @@ def get_path(
             return None, False
     return curr_obj, True
 
-def _assert(expr: bool, msg: str = '') -> None:
+def _assert(expr: bool, msg: str = ''):
     '''
     Same functionality as normal assert statement but works even
     if __debug__ is False.
+
+    # Arguments:
+    `expr: bool` - boolean expression
+    `msg: str` - error message for assertion error if expression is false.
     '''
     if not expr:
         raise AssertionError(msg)
 
 
 def assert_is_vector(
-        vect: tp. Any, length: int, types: tp.Tuple, msg: str = ''
+        vect: tp.Any, length: int, types: tp.Tuple, msg: str = ''
     ) -> None:
     '''
     Asserts that the "vect" is "length" long vector and all of the items
     in the vector are instances of types from types list.
+
+    # Arguments:
+    - `vect: Any` - input iterable
+    - `length: int` - expected length of the iterable
+    - `types: Tuple` - expected types of the items of iterable
+    - `msg: str` - error message for AssertionError if assertion fails.
     '''
     _assert(isinstance(vect, list), msg)
     _assert(len(vect) == length, msg)
@@ -53,6 +69,9 @@ def assert_is_vector(
 def assert_is_model(model: tp.Any) -> None:
     '''
     Asserts that the input dictionary is a valid model file.
+
+    # Arguments:
+    - `model: tp.Any` - a dictionary
     '''
     _assert(isinstance(model, dict), 'Model file must be an object')
     _assert(
@@ -224,7 +243,7 @@ def assert_is_model(model: tp.Any) -> None:
 
 
 class ImportLocator:
-    '''Represents minecraft locator during import operation.'''
+    '''Represents Minecraft locator during import operation.'''
     def __init__(self, name: str, position: tp.Tuple[float, float, float]):
         self.name = name
         self.position = position
@@ -286,6 +305,13 @@ def _load_cube(data: tp.Dict) -> ImportCube:
     '''
     Returns ImportCube object created from a dictinary (part of the JSON)
     file in the model.
+
+    # Arguments:
+    - `data: Dict` - the part of the Minecraft model JSON file that represents
+    the cube.
+
+    # Returns:
+    `ImportCube` - object used for importing Minecraft cubes.
     '''
     # uv
     uv: tp.Tuple[int, int] = data['uv']
@@ -317,6 +343,13 @@ def _load_bone(data: tp.Dict) -> ImportBone:
     '''
     Returns ImportBone object created from a dictinary (part of the JSON)
     file in the model.
+
+    # Arguments:
+    - `data: Dict` - the part of the Minecraft model JSON file that represents
+    the bone.
+
+    # Returns:
+    `ImportBone` - object used for importing Minecraft bones.
     '''
 
     name: str = data['name']
@@ -358,10 +391,19 @@ def load_model(data: tp.Dict, geometry_name: str = "") -> ImportGeometry:
     '''
     Returns ImportGeometry object with all of the data loaded from data dict.
     The data dict is a dictionary representaiton of the JSON file with
-    Minecraft model. Doesn't validates the input. Use assert_is_model for that.
+    Minecraft model. This doesn't validates the input use assert_is_model for
+    that.
 
     geometry_name is a name of the geometry to load. This argument is optional
     if not specified or epmty string only the first model is imported.
+
+    # Arguments:
+    - `data: Dict` - a dictionary with a valid Minecraft model file (can have
+      multiple geometries).
+    - `geometry_name: str` - a name of the geometry to import.
+
+    # Returns:
+    `ImportGeometry` - object used for importing Minecraft geometries.
     '''
     # format_version: str = data['format_version']
     geometries: tp.List = data['minecraft:geometry']
@@ -417,7 +459,13 @@ def load_model(data: tp.Dict, geometry_name: str = "") -> ImportGeometry:
 
 
 def build_geometry(geometry: ImportGeometry, context: bpy_types.Context):
-    '''Builds the geometry in Blenders 3D space'''
+    '''
+    Builds the geometry in Blender based on ImportGeometry object.
+
+    # Arguments:
+    `geometry: ImportGeometry` - the geometry to build.
+    `context: bpy_types.Context` - the context of running the operator.
+    '''
     # context.view_layer.update()
     # Create objects - and set their pivots
     for bone in geometry.bones.values():
@@ -499,8 +547,14 @@ def _mc_translate(
         mcpivot: tp.Tuple[float, float, float]
     ):
     '''
-    Translates a blender object using a translation vector written in minecraft
+    Translates a blender object using a translation vector written in Minecraft
     coordinates system.
+
+    # Arguments:
+    - `obj: bpy_types.Object` - blender object to transform..
+    - `mctranslation: Tuple[float, float, float]` - minecraft translation.
+    - `mcsize: Tuple[float, float, float]` - minecraft size.
+    - `mcpivot: Tuple[float, float, float]` - minecraft pivot.
     '''
     pivot_offset = mathutils.Vector(
         np.array(mcpivot)[[0, 2, 1]] / MINECRAFT_SCALE_FACTOR
@@ -519,6 +573,10 @@ def _mc_set_size(obj: bpy_types.Object, mcsize: tp.Tuple[float, float, float]):
     '''
     Scales a blender object using scale vector written in minecraft coordinates
     system.
+
+    # Arguments:
+    - `obj: bpy_types.Object` - Blender object
+    - `mcsize: tp.Tuple[float, float, float]` - Minecraft object size.
     '''
     pos_delta = (
         (np.array(mcsize)[[0, 2, 1]] / 2) / MINECRAFT_SCALE_FACTOR
@@ -540,6 +598,10 @@ def _mc_pivot(obj: bpy_types.Object, mcpivot: tp.Tuple[float, float, float]):
     '''
     Moves a pivot of an blender object using coordinates written in minecraft
     coordinates system.
+
+    # Arguments:
+    - `obj: bpy_types.Object` - Blender object
+    - `mcpivot: tp.Tuple[float, float, float]` - Minecraft object pivot point.
     '''
     translation = mathutils.Vector(
         np.array(mcpivot)[[0, 2, 1]] / MINECRAFT_SCALE_FACTOR
@@ -553,6 +615,10 @@ def _mc_rotate(
     '''
     Rotates a blender object using minecraft coordinates system for rotation
     vector.
+
+    # Arguments:
+    - `obj: bpy_types.Object` - Blender object
+    - `mcrotation: tp.Tuple[float, float, float]` - Minecraft object rotation.
     '''
     rotation = mathutils.Euler(
         (np.array(mcrotation)[[0, 2, 1]] * np.array([1, 1, -1])) * math.pi/180,

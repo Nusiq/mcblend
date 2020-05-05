@@ -17,10 +17,13 @@ from .common import (
 class AnimationProperties(tp.NamedTuple):
     '''
     Data class that represents configuration of animation
-    - name - name of the animation
-    - length - the length of animation (seconds)
-    - loop_animation - Loops the animation
-    - anim_time_update - Adds anim_time_update property to the animation.
+
+    # Properties:
+    - `name: str` - name of the animation.
+    - `length: float` - the length of animation in seconds.
+    - `loop_animation: bool` - value of loop property of Minecraft animation.
+    - `anim_time_update: str` - value of anim_time_update property of Minecraft
+      animation.
     '''
     name: str
     length: float
@@ -28,24 +31,29 @@ class AnimationProperties(tp.NamedTuple):
     anim_time_update: str
 
 
+# TODO - rewrite this function
 def get_mcanimation_json(
         animation_properties: AnimationProperties,
-        bone_data: tp.Dict[ObjectId, tp.Dict[str, tp.List[tp.Dict]]],
+        bone_data: tp.Dict[ObjectId, tp.Dict[str, tp.List[tp.Dict]]],  # TODO - change to data class
         object_properties: tp.Dict[ObjectId, ObjectMcProperties],
         extend_json: tp.Optional[tp.Dict] = None) -> tp.Dict:
     '''
-    - animation_properties - basic properties of the animation
-    - bone_data - Dictionary filled with dictionaries that describe postition,
-      rotation and scale for each frame (uses bone ObjectId as a key).
-    - object_properties - a dictionary with relations between object created by
-    get_object_mcproperties() funciton.
-    - extend_json - optional argument with a dictionary with content of old
-    file with animation. If this parameter is None or has invalid structure
-    a new dictionary is created.
+    Returns a dictionary with animation or edits the `extend_json` dictionary.
+    Additionaly removes the unnecessary keyframes to optimise the animation.
 
-    Returns a dictionary with animation for minecraft entity. The animation is
-    optimised. Unnecessary keyframes from bone_data are not used in the result
-    dictionary.
+    # Arguments:
+    - `animation_properties: AnimationProperties` - the properties of the
+      animation represented by AnimationProperties object.
+    - `bone_data: Dict[ObjectId, Dict[str, List[Dict]]]` - position rotation
+      and scale of every bone for every frame.
+    - `object_properties: Dict[ObjectId, ObjectMcProperties]` - the properties
+      of all of the Minecraft cubes and bones.
+    - `extend_json: Optional[Dict]` - A dictionary with with old animation JSON
+      file to overwrite. If this parameter is None or has invalid structure a new
+      dictionary is created.
+
+    # Returns:
+    `Dict` - a dictionary with JSON file with animation.
     '''
     def reduce_property(keyframes: tp.List[tp.Dict]) -> tp.List[tp.Dict]:
         '''
@@ -121,7 +129,7 @@ def get_mcanimation_json(
         data['anim_time_update'] = animation_properties.anim_time_update
     return result
 
-
+# TODO - keep transformations in object_properties? Dataclss for output?
 def get_transformations(
         object_properties: tp.Dict[ObjectId, ObjectMcProperties]
         ) -> tp.Dict[ObjectId, ObjectMcTransformations]:
@@ -129,8 +137,13 @@ def get_transformations(
     Loops over object_properties and returns the dictionary with
     information about transformations of every bone.
 
-    Returns a dicionary with name of the object as keys and transformation
-    properties as values.
+    # Arguments:
+    - `object_properties: Dict[ObjectId, ObjectMcProperties]` - the properties
+      of all of the Minecraft cubes and bones.
+
+    # Returns:
+    `Dict[ObjectId, ObjectMcTransformations]` - a dictionary with
+    transformations for every object.
     '''
     transformations: tp.Dict[ObjectId, ObjectMcTransformations] = {}
     for objid, objprop in object_properties.items():
@@ -163,16 +176,28 @@ def get_transformations(
     return transformations
 
 
+# TODO - remove this funciton
 def get_mctranslations(
         parent_rot: np.ndarray, child_rot: np.ndarray,
         parent_scale: np.ndarray, child_scale: np.ndarray,
         parent_loc: np.ndarray, child_loc: np.ndarray
         ) -> tp.Tuple[np.ndarray, np.ndarray, np.ndarray]:
     '''
-    Compares original transformations with new transformations of an object
-    to return location, rotation and scale values (in this order) that can be
-    used by the dictionary used for exporting the animation data to minecraft
-    format.
+    Compares original transformation of an object to compare them with the new
+    ones to get transformation values for animation.
+
+    # Arguments:
+    - `parent_rot: ndarray` - original rotation vector
+    - `child_rot: ndarray` - new rotation vector
+    - `parent_scale: ndarray` - original scale vector
+    - `child_scale: ndarray` - new scale vector
+    - `parent_loc: ndarray` - original location vector
+    - `child_loc: ndarray` - new location vector
+
+    # Returns:
+    `Tuple[ndarray, ndarray, ndarray]` - a tuple with location, rotation and
+    scale difference between old and new values. The scale difference is
+    calculated by proportion.
     '''
     # Scale
     scale = child_scale / parent_scale
@@ -190,6 +215,12 @@ def get_next_keyframe(context: bpy_types.Context) -> tp.Optional[int]:
     '''
     Returns the index of next keyframe from all of selected objects.
     Returns None if there is no more keyframes to chose.
+
+    # Arguments:
+    - `context: bpy_types.Context` - the context of running the operator.
+
+    # Returns:
+    `Optional[int]` - index of the next keyframe or None
     '''
     curr = context.scene.frame_current
     next_keyframe = None

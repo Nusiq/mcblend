@@ -25,13 +25,16 @@ from .common import (
 from .importer import load_model, build_geometry, assert_is_model
 
 
+# TODO - raise an exception instead of returning the error in string
 def export_model(context: bpy_types.Context) -> tp.Tuple[tp.Dict, str]:
     '''
-    Uses context.selected_objects to create and return dictionary with
-    minecraft model.
+    Creates a Minecraft model (dictionary) from selected objects.
 
-    Additionally returns a string with error message or an empty string when
-    there are no errors.
+    # Arguments:
+    - `context: bpy_types.Context` - the context of running the operator.
+
+    # Returns:
+    `Tuple[tp.Dict, str]` - a dictionary with the model and error message.
     '''
     object_properties = get_object_mcproperties(context)
     name_conflict = get_name_conflicts(object_properties)
@@ -84,11 +87,15 @@ def export_animation(
         context: bpy_types.Context, old_dict: tp.Optional[tp.Dict]
     ) -> tp.Tuple[tp.Dict, str]:
     '''
-    Uses context.selected_objects to create and return dictionary with
-    minecraft animation.
-    old_dict is an optional value with dictionary that contains the content of
-    animation file. This function validates the dictionary and tries to use it
-    while exporting the animation.
+    Creates a Minecraft animation (dictionary) from selected objects.
+
+    # Arguments:
+    - `context: bpy_types.Context` - the context of running the operator.
+    - `old_dict: Optional[Dict]` - optional argument dictionary that represents
+      the JSON file with animations.
+
+    # Returns:
+    `Tuple[tp.Dict, str]` - a dictionary with the animation and error message.
     '''
     # Check and create object properties
     object_properties = get_object_mcproperties(context)
@@ -173,10 +180,14 @@ def set_uvs(context: bpy_types.Context) -> bool:
     Used by the operator that sets UV. Calculates the UV-map for selected
     objects.
 
-    Depending on operator configuration this function can:
-    - add/edit mc_uv property to the objects.
-    - add new Blender UV (to match it to mc_uvs).
-    - removes old Blender UV
+    Depending on operator configuration this function can: add mc_uv
+    property to the objects, add new Blender UV, remove old Blender UV.
+
+    # Arguments:
+    - `context: bpy_types.Context` - the context of running the operator.
+
+    # Returns:
+    `bool` - the success value of the function.
     '''
     width = context.scene.nusiq_mcblend.texture_width
     height = context.scene.nusiq_mcblend.texture_height
@@ -279,6 +290,17 @@ def set_inflate(context: bpy_types.Context, inflate: float, mode: str) -> int:
     Adds mc_inflate property to objects and changes their dimensions. Returns
     the number of edited objects.
     Returns the number of edited objects.
+
+    # Arguments:
+    - `context: bpy_types.Context` - the context of running the operator.
+    - `inflate: float` - the inflation value.
+    - `mode: str` - Can be either "RELATIVE" or "ABSOLUTE". If "RELATIVE" than
+      the value before appying the operator is taken as a base (0 means that
+      no changes should be applied). If "ABSOLUTE" than the inflate value passed
+      by the user is passed directly to the inflate value in Minecraft model.
+
+    # Returns:
+    `bool` - the success value of the function.
     '''
     if mode == 'RELATIVE':
         relative = True
@@ -333,8 +355,14 @@ def set_inflate(context: bpy_types.Context, inflate: float, mode: str) -> int:
 
 def round_dimensions(context: bpy_types.Context) -> int:
     '''
-    Rounds dimensions of selected objects. Returns the number of edited
-    objects.
+    Rounds dimensions of selected objects so they are the whole numbers in
+    Minecraft model. Returns the number of edited objects.
+
+    # Arguments:
+    - `context: bpy_types.Context` - the context of running the operator.
+
+    # Returns:
+    `int` - the number of edited objects.
     '''
     counter = 0
     for obj in context.selected_objects:
@@ -377,7 +405,13 @@ def import_model(
         data: tp.Dict, geometry_name: str, context: bpy_types.Context
     ):
     '''
-    Import and build model from JSON file. Returns success result value (bool).
+    Import and build model from JSON file.
+
+    # Arguments:
+    - `data: Dict` - a dictionary with data loaded from JSON file.
+    - `geometry_name: str` - the name of the geometry that should be loaded
+       into Blender.
+    - `context: bpy_types.Context` - the context of running the operator.
     '''
     assert_is_model(data)
     geometry = load_model(data, geometry_name)

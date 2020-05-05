@@ -8,7 +8,7 @@ from bpy.props import (
 
 
 class OBJECT_NusiqMcblendExporterProperties(bpy.types.PropertyGroup):
-    '''Global (in the scene scope) properties used by Mcblend'''
+    '''Global properties used by Mcblend for user settings configuration.'''
     model_name: StringProperty(  # type: ignore
         name="",
         description="Name of the model",
@@ -188,7 +188,9 @@ class OBJECT_PT_NusiqMcblendSetUvsPanel(bpy.types.Panel):
 
 
 class OBJECT_PT_NusiqMcblendOperatorsPanel(bpy.types.Panel):
-    '''Panel that gives the user access to various operators used by Mcblend'''
+    '''
+    Panel that gives the user access to various operators used by Mcblend.
+    '''
     # pylint: disable=C0116, W0613
     bl_label = "Operators"
     bl_category = "Mcblend"

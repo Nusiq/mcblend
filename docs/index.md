@@ -24,3 +24,8 @@ page: [https://github.com/Nusiq/mcblend/releases](https://github.com/Nusiq/mcble
 4. Select the zip file in the file explorer.
 5. Serch for "Mcblend" in Add-ons. Check the box to enable the add-on
 ![](./img/blender_addons_checkbox.png)
+
+# More
+You can learn about the features of the project from the
+[user manual](./user_manual/basics) if you want to expand this project
+read the [code documentation](./code_documentation).

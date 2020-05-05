@@ -3,6 +3,11 @@ There are no directly equivalent objects in blender models to Minecraft bedrock
 edition models. Mcblend uses a set of rules to decide which parts of the model
 should be converted into bones, locators or cubes in the Minecraft model.
 
+!!! note
+    The best way to learn what kinds of object are converted to bones, cubes
+    and locators is trial and error. Use this if you notice something
+    unexpected.
+
 1. An empty or mesh with custom `is_mc_bone` property always creates a
   a bone or a bone with cube respectively.
 2. A bone is converted into a bone unless it has no children and no

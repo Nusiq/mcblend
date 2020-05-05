@@ -1,5 +1,5 @@
 '''
-This module is used by Blender to install the plugin.
+This module is used by Blender to register/unregister the plugin.
 '''
 import bpy
 from bpy.props import PointerProperty, BoolProperty, FloatVectorProperty

@@ -58,7 +58,7 @@ class OBJECT_OT_NusiqMcblendExportOperator(bpy.types.Operator, ExportHelper):
 
 def menu_func_nusiq_mcblend_export(self, context):
     # pylint: disable=W0613
-    ''''Helper function adds export model operator to the menu.'''
+    '''Function that adds export model operator to the menu.'''
     self.layout.operator(
         OBJECT_OT_NusiqMcblendExportOperator.bl_idname,
         text="Mcblend: Export model"
@@ -118,7 +118,7 @@ class OBJECT_OT_NusiqMcblendExportAnimationOperator(
 
 def menu_func_nusiq_mcblend_export_animation(self, context):
     # pylint: disable=W0613
-    ''''Helper function adds export animation operator to the menu.'''
+    '''Function that adds export animation operator to the menu.'''
     self.layout.operator(
         OBJECT_OT_NusiqMcblendExportAnimationOperator.bl_idname,
         text="Mcblend: Export anmiation"
@@ -411,7 +411,7 @@ class OBJECT_OT_NusiqMcblendImport(bpy.types.Operator, ImportHelper):
 # Helper function - add operator to the import men
 def menu_func_nusiq_mcblend_import(self, context):
     # pylint: disable=W0613
-    ''''Helper function adds import model operator to the menu.'''
+    '''Function that adds import model operator to the menu.'''
     self.layout.operator(
         OBJECT_OT_NusiqMcblendImport.bl_idname, text="Mcblend: Import model"
     )

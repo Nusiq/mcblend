@@ -15,7 +15,17 @@ def get_mcmodel_json(
         model_name: str, mc_bones: tp.List[tp.Dict],
         texture_width: int, texture_height: int) -> tp.Dict:
     '''
-    Returns the dictionary that represents JSON file for exporting the model
+    Creates a dictionary that represents the Minecraft model JSON file. Based
+    on the given input.
+
+    # Arguments:
+    - `model_name: str` - the name of the model.
+    - `mc_bones: List[Dict]` - the bones of the model.
+    - `texture_width: int` - texutre width.
+    - `texture_height: int` - texture height.
+
+    # Returns:
+    `Dict` - Minecraft model.
     '''
     return {
         "format_version": "1.12.0",
@@ -40,17 +50,24 @@ def get_mcbone_json(
         locatorprops: tp.List[ObjectMcProperties],
         object_properties: tp.Dict[ObjectId, ObjectMcProperties]) -> tp.Dict:
     '''
-    - boneprop - the main object that represents the bone.
-    - cubeprops - the list of objects that represent the cubes that belong to
-      the bone. If the "boneprop" is one of the cubes it should be included on
-      the list.
-    - locatorprops - the list of objects that represent the locators that
-      belong to the bone.
-    - object_properties - the properties of all of the mccubes and mcbones in
-      minecraft model.
-
     Returns the dictionary that represents a single mcbone in json file
     of model.
+
+    # Arguments:
+    - `boneprop: ObjectMcProperties` - the main object that represents the
+      bone.
+    - `cubeprops: List[ObjectMcProperties]` - the list of objects that
+      represent the cubes that belong to the bone. The boneprop can be one of
+      these objects because a mesh in Blender in some cases can be transformed
+      into a bone in the model and into a cube that is a part of this bone (at
+      the same time).
+    - `locatorprops: List[ObjectMcProperties]` - the list of objects that
+      represent the locators that belong to the bone.
+    - `object_properties: Dict[ObjectId, ObjectMcProperties]` - the properties
+      of all of the Minecraft cubes and bones.
+
+    # Returns:
+    `Dict` - the single bone from Minecraft model.
     '''
     def _scale(objprop: ObjectMcProperties) -> np.ndarray:
         '''Scale of a bone'''

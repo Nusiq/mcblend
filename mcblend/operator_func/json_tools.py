@@ -1,12 +1,17 @@
-'''Source https://github.com/Nusiq/json_encoders'''
+'''
+This module adds custom JSONEncoder for nicer code formating for
+JSON output.
+'''
 import json
-import typing as tp
+from collections import UserDict, UserList
+
 
 class CompactEncoder(json.JSONEncoder):
     '''
     JSONEncoder which tries to find a compromise between compact and multiline
     formatting from standard python json module. Creates relatively compact
-    file which is also easy to read.
+    file which is also easy to read. Additionaly it can encode UserDict and
+    UserList from collections.
     '''
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -29,7 +34,7 @@ class CompactEncoder(json.JSONEncoder):
         return ''.join(self.iterencode(obj))
 
     def iterencode(self, obj):
-        # pylint: disable=W0221, R0912:
+        # pylint: disable=W0221, R0912
         '''
         Encode the given object and yield each string representation line by
         line.
@@ -45,8 +50,8 @@ class CompactEncoder(json.JSONEncoder):
             ind = self.indent*'\t'
         else:
             ind = ''
-        if isinstance(obj, dict):
-            if len(obj) == 0:
+        if isinstance(obj, (dict, UserDict)):
+            if not obj:  # if empty
                 yield f"{ind}{{}}"
             else:
                 body = []
@@ -61,7 +66,7 @@ class CompactEncoder(json.JSONEncoder):
                     f'{body_str}\n'
                     f'{ind}}}'
                 )
-        elif isinstance(obj, (list, tuple)):
+        elif isinstance(obj, (list, tuple, UserList)):
             primitive_list = True
             for i in obj:
                 if not self._is_primitive(i):
@@ -94,4 +99,3 @@ class CompactEncoder(json.JSONEncoder):
         else:
             raise TypeError('Object of type set is not JSON serializable')
         self.indent -= 1
-
