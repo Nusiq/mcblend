@@ -9,3 +9,4 @@ site/**
 tests/config.py
 .tmp/**
 .tox/**
+local_files/**

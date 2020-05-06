@@ -1,6 +1,8 @@
 '''
 Functions related to exporting animations.
 '''
+from __future__ import annotations
+
 import typing as tp
 
 import bpy_types
@@ -31,10 +33,9 @@ class AnimationProperties(tp.NamedTuple):
     anim_time_update: str
 
 
-# TODO - rewrite this function
 def get_mcanimation_json(
         animation_properties: AnimationProperties,
-        bone_data: tp.Dict[ObjectId, tp.Dict[str, tp.List[tp.Dict]]],  # TODO - change to data class
+        bone_data: tp.Dict[ObjectId, tp.Dict[str, tp.List[tp.Dict]]],
         object_properties: tp.Dict[ObjectId, ObjectMcProperties],
         extend_json: tp.Optional[tp.Dict] = None) -> tp.Dict:
     '''
@@ -129,7 +130,6 @@ def get_mcanimation_json(
         data['anim_time_update'] = animation_properties.anim_time_update
     return result
 
-# TODO - keep transformations in object_properties? Dataclss for output?
 def get_transformations(
         object_properties: tp.Dict[ObjectId, ObjectMcProperties]
         ) -> tp.Dict[ObjectId, ObjectMcTransformations]:
@@ -176,7 +176,6 @@ def get_transformations(
     return transformations
 
 
-# TODO - remove this funciton
 def get_mctranslations(
         parent_rot: np.ndarray, child_rot: np.ndarray,
         parent_scale: np.ndarray, child_scale: np.ndarray,

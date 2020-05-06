@@ -1,6 +1,8 @@
 '''
 Functions and objects shared between other modules of Mcblend.
 '''
+from __future__ import annotations
+
 import math
 from enum import Enum
 import typing as tp
@@ -150,7 +152,6 @@ class ObjectMcTransformations(tp.NamedTuple):
     scale: np.array
     rotation: np.array
 
-# TODO - move casting to integer to CompactEncoder
 def get_vect_json(arr: tp.Iterable) -> tp.List[float]:
     '''
     Changes the iterable whith numbers into basic python list of floats.
@@ -364,8 +365,6 @@ def get_name_conflicts(
     return ''
 
 
-# TODO - create a dedicated type for result of this function (its used
-# everywhere).
 def get_object_mcproperties(
         context: bpy_types.Context
         ) -> tp.Dict[ObjectId, ObjectMcProperties]:

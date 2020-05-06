@@ -1,6 +1,8 @@
 '''
 Functions related to exporting models.
 '''
+from __future__ import annotations
+
 import typing as tp
 import numpy as np
 
@@ -130,7 +132,6 @@ def get_mcbone_json(
 
         cube_dict: tp.Dict = {
             'uv': get_vect_json(uv),
-            # TODO - add rounding option in the menu
             'size': [round(i) for i in get_vect_json(c_size)],
             'origin': get_vect_json(c_origin),
             'pivot': get_vect_json(c_pivot),

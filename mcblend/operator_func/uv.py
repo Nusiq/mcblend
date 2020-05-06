@@ -1,6 +1,8 @@
 '''
 Functions related to creating UV map.
 '''
+from __future__ import annotations
+
 import typing as tp
 from enum import Enum
 from collections import defaultdict
@@ -13,8 +15,6 @@ from .common import (
 )
 
 
-# TODO - change input values into dedicated Enum
-# TODO - change output dictionary into dedicated data class
 def get_uv_face(
         objprop: ObjectMcProperties, face_name: str
     ) -> tp.Dict[str, int]:
@@ -89,9 +89,6 @@ def set_uv(
     uv_data[uv_face[order[3]]].uv = (crds[0], crds[1] + size[1])
 
 
-# TODO - width, depth, height accesible from objprop?
-# TODO - is width, depth, height really scaled to 0-1 vlaues? Or is the
-# documentation wrong?
 def set_cube_uv(
         objprop: ObjectMcProperties, uv: tp.Tuple[float, float], width: float,
         depth: float, height: float, texture_width: int, texture_height: int
@@ -180,7 +177,6 @@ def set_cube_uv(
         )
 
 # (U, V) - 0, 0 = top left
-# TODO - suggestion object instead UvCorner + Coordinates
 class UvCorner(Enum):
     '''
     During UV-mapping UVBox objects use this enum combined with coordinates
@@ -220,7 +216,7 @@ class UvBox:
     def uv(self, uv):
         self._uv = uv
 
-    def collides(self, other: "UvBox"):
+    def collides(self, other: UvBox):
         '''
         Returns True if this UvBox is colliding with another. Otherwise returns
         False.
@@ -331,7 +327,7 @@ class UvMcCube(UvBox):
         self.top.uv = (uv[0] + self.depth, uv[1])
         self.bottom.uv = (uv[0] + self.depth + self.width, uv[1])
 
-    def collides(self, other: "UvBox"):
+    def collides(self, other: UvBox):
         '''
         Returns True if this UvBox is colliding with another. Otherwise returns
         False.

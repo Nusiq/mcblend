@@ -1,6 +1,7 @@
 '''
 This module contains all of the operators.
 '''
+# don't import future annotations Blender needs that
 import json
 import typing as tp
 
@@ -18,7 +19,6 @@ from .operator_func.json_tools import CompactEncoder
 
 
 
-# Export model
 class OBJECT_OT_NusiqMcblendExportOperator(bpy.types.Operator, ExportHelper):
     '''Operator used for exporting minecraft models from blender'''
     # pylint: disable=C0116, W0613

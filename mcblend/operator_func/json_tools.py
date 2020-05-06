@@ -2,6 +2,8 @@
 This module adds custom JSONEncoder for nicer code formating for
 JSON output.
 '''
+from __future__ import annotations
+
 import json
 from collections import UserDict, UserList
 

@@ -1,6 +1,8 @@
 '''
 Functions and objects related to importing Minecraft models to Blender.
 '''
+from __future__ import annotations
+
 import math
 import typing as tp
 import numpy as np
@@ -12,7 +14,6 @@ import bpy
 from .common import MINECRAFT_SCALE_FACTOR
 
 
-# TODO - exception instead of success value
 def get_path(
         jsonable: tp.Dict, path: tp.List[tp.Union[str, int]]
     ) -> tp.Tuple[tp.Optional[tp.Any], bool]:

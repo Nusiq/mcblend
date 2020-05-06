@@ -1,6 +1,7 @@
 '''
 This module contains all of the panels for mcblend GUI.
 '''
+# don't import future annotations Blender needs that
 import bpy
 from bpy.props import (
     StringProperty, IntProperty, BoolProperty

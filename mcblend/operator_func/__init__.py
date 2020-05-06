@@ -1,6 +1,8 @@
 '''
 Functions used directly by the blender operators.
 '''
+from __future__ import annotations
+
 from collections import defaultdict
 import typing as tp
 import math
@@ -25,7 +27,6 @@ from .common import (
 from .importer import load_model, build_geometry, assert_is_model
 
 
-# TODO - raise an exception instead of returning the error in string
 def export_model(context: bpy_types.Context) -> tp.Tuple[tp.Dict, str]:
     '''
     Creates a Minecraft model (dictionary) from selected objects.
