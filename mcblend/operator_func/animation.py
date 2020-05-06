@@ -176,40 +176,6 @@ def get_transformations(
     return transformations
 
 
-def get_mctranslations(
-        parent_rot: np.ndarray, child_rot: np.ndarray,
-        parent_scale: np.ndarray, child_scale: np.ndarray,
-        parent_loc: np.ndarray, child_loc: np.ndarray
-        ) -> tp.Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    '''
-    Compares original transformation of an object to compare them with the new
-    ones to get transformation values for animation.
-
-    # Arguments:
-    - `parent_rot: ndarray` - original rotation vector
-    - `child_rot: ndarray` - new rotation vector
-    - `parent_scale: ndarray` - original scale vector
-    - `child_scale: ndarray` - new scale vector
-    - `parent_loc: ndarray` - original location vector
-    - `child_loc: ndarray` - new location vector
-
-    # Returns:
-    `Tuple[ndarray, ndarray, ndarray]` - a tuple with location, rotation and
-    scale difference between old and new values. The scale difference is
-    calculated by proportion.
-    '''
-    # Scale
-    scale = child_scale / parent_scale
-
-    # Location
-    loc = child_loc - parent_loc
-
-    # Rotation
-    rot = child_rot - parent_rot
-
-    return loc, rot, scale
-
-
 def get_next_keyframe(context: bpy_types.Context) -> tp.Optional[int]:
     '''
     Returns the index of next keyframe from all of selected objects.

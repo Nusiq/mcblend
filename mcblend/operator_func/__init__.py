@@ -16,7 +16,7 @@ import bpy_types
 
 from .uv import get_uv_mc_cubes, UvMcCube, plan_uv, set_cube_uv
 from .animation import (
-    get_mcanimation_json, get_mctranslations, get_next_keyframe,
+    get_mcanimation_json, get_next_keyframe,
     get_transformations, AnimationProperties
 )
 from .model import get_mcbone_json, get_mcmodel_json
@@ -130,11 +130,10 @@ def export_animation(
         current_translations = get_transformations(object_properties)
         for d_key, d_val in default_translation.items():
             # Get the difference from original
-            loc, rot, scale = get_mctranslations(
-                d_val.rotation, current_translations[d_key].rotation,
-                d_val.scale, current_translations[d_key].scale,
-                d_val.location, current_translations[d_key].location
-            )
+            scale = current_translations[d_key].scale / d_val.scale
+            loc = current_translations[d_key].location - d_val.location
+            rot = current_translations[d_key].rotation - d_val.rotation
+
             time = str(round(
                 (context.scene.frame_current-1) / context.scene.render.fps,
                 4
