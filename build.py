@@ -11,7 +11,7 @@ SRC_PATH = 'mcblend'
 
 
 def main():
-    '''Main function'''
+    '''Main function.'''
     # Get version number
     init_path = 'mcblend/__init__.py'
 

@@ -9,7 +9,6 @@ on:
     branches: [ master ]
     paths:
     - '**.py'
-    - '.github/workflows/*.yml'
 
 
 jobs:
