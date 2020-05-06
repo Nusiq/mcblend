@@ -17,7 +17,17 @@ jobs:
     steps:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can
     # access it
+    - name: Checkout repository
     - uses: actions/checkout@v2
+
+    - name: Cache git lfs
+      uses: actions/cache@v1.1.0
+      with:
+        path: .git/lfs
+        key: .git/lfs
+
+    - name: Pull lfs data, if not cached
+      run: git lfs pull
 
     # Python 3.7 for mypy testing
     - name: Set up Python 3.7
