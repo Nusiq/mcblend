@@ -19,9 +19,22 @@ except:
     BLENDER_EXEC_PATH = 'blender'
 
 
-def blender_run_script(script, *args):
-    command = [BLENDER_EXEC_PATH, '-b', '--python', script, '--', *args]
+def blender_run_script(
+        script, *args, blend_file_path: tp.Optional[str] = None
+    ):
+    '''
+    Run blender script with *args arguments. You can pass optional argument
+    blend_file_path if the scrupt should be executed in certain file path.
+    '''
+    if not blend_file_path:
+        command = [BLENDER_EXEC_PATH, '-b', '--python', script, '--', *args]
+    else:
+        command = [
+            BLENDER_EXEC_PATH, blend_file_path, '-b', '--python', script, '--',
+            *args
+        ]
     subprocess.call(command)
+
 
 def assert_is_vector(vect: tp. Any, length: int, types: tp.Tuple):
     assert type(vect) is list

@@ -12,8 +12,8 @@ from .common import assert_is_model, blender_run_script
 
 
 def make_comparison_files(
-    source: str, tmp: str
-) -> tp.Tuple[tp.Dict, tp.Dict, str]:
+        source: str, tmp: str
+    ) -> tp.Tuple[tp.Dict, tp.Dict, str]:
     '''
     Loads model from source to blender using nusiq_mcblend_import_operator
     Exports this model to tmp (to a file with the same name as source file).
