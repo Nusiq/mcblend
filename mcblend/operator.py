@@ -19,7 +19,7 @@ from .operator_func.json_tools import CompactEncoder
 
 
 
-class OBJECT_OT_NusiqMcblendExportOperator(bpy.types.Operator, ExportHelper):
+class OBJECT_OT_NusiqMcblendExportModelOperator(bpy.types.Operator, ExportHelper):
     '''Operator used for exporting minecraft models from blender'''
     # pylint: disable=C0116, W0613
     bl_idname = "object.nusiq_mcblend_export_operator"
@@ -56,11 +56,11 @@ class OBJECT_OT_NusiqMcblendExportOperator(bpy.types.Operator, ExportHelper):
         return {'FINISHED'}
 
 
-def menu_func_nusiq_mcblend_export(self, context):
+def menu_func_nusiq_mcblend_export_model(self, context):
     # pylint: disable=W0613
     '''Function that adds export model operator to the menu.'''
     self.layout.operator(
-        OBJECT_OT_NusiqMcblendExportOperator.bl_idname,
+        OBJECT_OT_NusiqMcblendExportModelOperator.bl_idname,
         text="Mcblend: Export model"
     )
 

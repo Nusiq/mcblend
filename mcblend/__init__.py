@@ -8,12 +8,12 @@ import mathutils
 
 
 from .operator import (
-    OBJECT_OT_NusiqMcblendExportOperator, OBJECT_OT_NusiqMcblendExportAnimationOperator,
+    OBJECT_OT_NusiqMcblendExportModelOperator, OBJECT_OT_NusiqMcblendExportAnimationOperator,
     OBJECT_OT_NusiqMcblendMapUvOperator, OBJECT_OT_NusiqMcblendUvGroupOperator,
     OBJECT_OT_NusiqMcblendToggleMcIsBoneOperator,
     OBJECT_OT_NusiqMcblendToggleMcMirrorOperator,
     OBJECT_OT_NusiqMcblendSetInflateOperator,
-    menu_func_nusiq_mcblend_export, menu_func_nusiq_mcblend_export_animation,
+    menu_func_nusiq_mcblend_export_model, menu_func_nusiq_mcblend_export_animation,
     OBJECT_OT_NusiqMcblendRoundDimensionsOperator,
     OBJECT_OT_NusiqMcblendImport, menu_func_nusiq_mcblend_import,
 )
@@ -40,7 +40,7 @@ bl_info = {
 
 
 classes = (
-    OBJECT_OT_NusiqMcblendExportOperator,
+    OBJECT_OT_NusiqMcblendExportModelOperator,
     OBJECT_OT_NusiqMcblendExportAnimationOperator,
     OBJECT_PT_NusiqMcblendExportAnimationPanel,
     OBJECT_PT_NusiqMcblendExportPanel,
@@ -65,7 +65,9 @@ def register():
     bpy.types.Scene.nusiq_mcblend = PointerProperty(
         type=OBJECT_NusiqMcblendExporterProperties
     )
-    bpy.types.TOPBAR_MT_file_export.append(menu_func_nusiq_mcblend_export)
+    bpy.types.TOPBAR_MT_file_export.append(
+        menu_func_nusiq_mcblend_export_model
+    )
     bpy.types.TOPBAR_MT_file_export.append(
         menu_func_nusiq_mcblend_export_animation
     )
@@ -79,7 +81,9 @@ def unregister():
     for _class in reversed(classes):
         bpy.utils.unregister_class(_class)
     del bpy.types.Scene.nusiq_mcblend
-    bpy.types.TOPBAR_MT_file_export.remove(menu_func_nusiq_mcblend_export)
+    bpy.types.TOPBAR_MT_file_export.remove(
+        menu_func_nusiq_mcblend_export_model
+    )
     bpy.types.TOPBAR_MT_file_export.remove(
         menu_func_nusiq_mcblend_export_animation
     )
