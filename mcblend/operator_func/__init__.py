@@ -4,7 +4,7 @@ Functions used directly by the blender operators.
 from __future__ import annotations
 
 from collections import defaultdict
-import typing as tp
+from typing import Dict, List, Optional
 import math
 from enum import Enum
 
@@ -29,7 +29,7 @@ from .importer import load_model, build_geometry, assert_is_model
 from .exception import NameConflictException
 
 
-def export_model(context: bpy_types.Context) -> tp.Dict:
+def export_model(context: bpy_types.Context) -> Dict:
     '''
     Creates a Minecraft model (dictionary) from selected objects.
     Raises NameConflictException if name conflicts in some bones are detected.
@@ -38,7 +38,7 @@ def export_model(context: bpy_types.Context) -> tp.Dict:
     - `context: bpy_types.Context` - the context of running the operator.
 
     # Returns:
-    `tp.Dict` - a dictionary with the model..
+    `Dict` - a dictionary with the model..
     '''
     object_properties = get_object_mcproperties(context)
     name_conflict = get_name_conflicts(object_properties)
@@ -56,15 +56,15 @@ def export_model(context: bpy_types.Context) -> tp.Dict:
     texture_width = context.scene.nusiq_mcblend.texture_width
     texture_height = context.scene.nusiq_mcblend.texture_height
     model_name = context.scene.nusiq_mcblend.model_name
-    mc_bones: tp.List[tp.Dict] = []
+    mc_bones: List[Dict] = []
 
     for _, objprop in object_properties.items():
         if (objprop.mctype in [MCObjType.BONE, MCObjType.BOTH]):
             # Create cubes and locators list
-            cubes: tp.List[ObjectMcProperties] = []
+            cubes: List[ObjectMcProperties] = []
             if objprop.mctype == MCObjType.BOTH:  # Else MCObjType == BOTH
                 cubes = [objprop]
-            locators: tp.List[ObjectMcProperties] = []
+            locators: List[ObjectMcProperties] = []
             # Add children cubes if they are MCObjType.CUBE type
             for child_id in objprop.mcchildren:
                 if child_id in object_properties:
@@ -88,8 +88,8 @@ def export_model(context: bpy_types.Context) -> tp.Dict:
 
 
 def export_animation(
-        context: bpy_types.Context, old_dict: tp.Optional[tp.Dict]
-    ) -> tp.Dict:
+        context: bpy_types.Context, old_dict: Optional[Dict]
+    ) -> Dict:
     '''
     Creates a Minecraft animation (dictionary) from selected objects.
     Raises NameConflictException if name conflicts in some bones are detected.
@@ -100,7 +100,7 @@ def export_animation(
       the JSON file with animations.
 
     # Returns:
-    `tp.Dict` - a dictionary with the animation.
+    `Dict` - a dictionary with the animation.
     '''
     # Check and create object properties
     object_properties = get_object_mcproperties(context)
@@ -117,7 +117,7 @@ def export_animation(
     context.scene.frame_set(0)
 
     # Dictionary that stores bone data
-    bone_data: tp.Dict[ObjectId, tp.Dict[str, tp.List[tp.Dict]]] = (
+    bone_data: Dict[ObjectId, Dict[str, List[Dict]]] = (
         defaultdict(lambda: {
             'scale': [], 'rotation': [], 'position': []
         })
@@ -210,7 +210,7 @@ def set_uvs(context: bpy_types.Context):
         if o.type() == 'MESH'
     ]
 
-    uv_dict: tp.Dict[str, UvMcCube] = get_uv_mc_cubes(
+    uv_dict: Dict[str, UvMcCube] = get_uv_mc_cubes(
         objprops, read_existing_uvs=not move_existing_mappings
     )
     uv_mc_cubes = list(uv_dict.values())
@@ -400,7 +400,7 @@ def round_dimensions(context: bpy_types.Context) -> int:
 
 
 def import_model(
-        data: tp.Dict, geometry_name: str, context: bpy_types.Context
+        data: Dict, geometry_name: str, context: bpy_types.Context
     ):
     '''
     Import and build model from JSON file.

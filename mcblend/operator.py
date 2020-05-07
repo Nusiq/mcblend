@@ -3,7 +3,7 @@ This module contains all of the operators.
 '''
 # don't import future annotations Blender needs that
 import json
-import typing as tp
+from typing import Optional, Dict
 
 import bpy_types
 import bpy
@@ -100,7 +100,7 @@ class OBJECT_OT_NusiqMcblendExportAnimationOperator(
 
     def execute(self, context):
         # Read and validate old animation file
-        old_dict: tp.Optional[tp.Dict] = None
+        old_dict: Optional[Dict] = None
         try:
             with open(self.filepath, 'r') as f:
                 old_dict = json.load(f)

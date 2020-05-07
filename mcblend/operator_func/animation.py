@@ -3,7 +3,7 @@ Functions related to exporting animations.
 '''
 from __future__ import annotations
 
-import typing as tp
+from typing import NamedTuple, Dict, Optional, List, Tuple
 
 import bpy_types
 import mathutils
@@ -16,7 +16,7 @@ from .common import (
 )
 
 
-class AnimationProperties(tp.NamedTuple):
+class AnimationProperties(NamedTuple):
     '''
     Data class that represents configuration of animation
 
@@ -35,7 +35,7 @@ class AnimationProperties(tp.NamedTuple):
 
 def pick_closest_rotation(
         modify: np.ndarray, close_to: np.ndarray,
-        original_rotation: tp.Optional[np.ndarray] = None
+        original_rotation: Optional[np.ndarray] = None
     ) -> np.ndarray:
     '''
     Takes two numpy.arrays that represent euler rotation in (using degrees).
@@ -52,7 +52,7 @@ def pick_closest_rotation(
       looks for equivalents of this rotation.
     - `close_to: np.ndarray` - a vector that represents other rotation. The
       function tries to pick rotation as close as possible to this one.
-    - `original_rotation: tp.Optional[np.ndarray]` - the original rotation of
+    - `original_rotation: Optional[np.ndarray]` - the original rotation of
       the object (befor any animation starts).
 
     # Returns:
@@ -64,7 +64,7 @@ def pick_closest_rotation(
 
     def _pick_closet_location(
             modify: np.ndarray, close_to: np.ndarray
-        ) -> tp.Tuple[float, np.ndarray]:
+        ) -> Tuple[float, np.ndarray]:
         choice = modify
         distance = np.linalg.norm(choice - close_to)
 
@@ -102,9 +102,9 @@ def pick_closest_rotation(
 
 def get_mcanimation_json(
         animation_properties: AnimationProperties,
-        bone_data: tp.Dict[ObjectId, tp.Dict[str, tp.List[tp.Dict]]],
-        object_properties: tp.Dict[ObjectId, ObjectMcProperties],
-        extend_json: tp.Optional[tp.Dict] = None) -> tp.Dict:
+        bone_data: Dict[ObjectId, Dict[str, List[Dict]]],
+        object_properties: Dict[ObjectId, ObjectMcProperties],
+        extend_json: Optional[Dict] = None) -> Dict:
     '''
     Returns a dictionary with animation or edits the `extend_json` dictionary.
     Additionaly removes the unnecessary keyframes to optimise the animation.
@@ -123,7 +123,7 @@ def get_mcanimation_json(
     # Returns:
     `Dict` - a dictionary with JSON file with animation.
     '''
-    def reduce_property(keyframes: tp.List[tp.Dict]) -> tp.List[tp.Dict]:
+    def reduce_property(keyframes: List[Dict]) -> List[Dict]:
         '''
         Removes some of the keyframes from list of keyframes values of
         a property (rotation, location or scale)
@@ -144,7 +144,7 @@ def get_mcanimation_json(
             reduced_property.append(keyframes[-1])
         return reduced_property
 
-    def validate_extend_json(extend_json: tp.Optional[tp.Dict]):
+    def validate_extend_json(extend_json: Optional[Dict]):
         '''
         Reads content of dictionary and validates if it can be used by
         export_animation(). Returns ture if the anim_dict is valid or false if it's
@@ -158,7 +158,7 @@ def get_mcanimation_json(
             return False
 
     # Extract bones data
-    bones: tp.Dict = {}
+    bones: Dict = {}
     for boneid, bone in bone_data.items():
         bones[object_properties[boneid].name()] = {
             'position': {},
@@ -198,8 +198,8 @@ def get_mcanimation_json(
     return result
 
 def get_transformations(
-        object_properties: tp.Dict[ObjectId, ObjectMcProperties]
-        ) -> tp.Dict[ObjectId, ObjectMcTransformations]:
+        object_properties: Dict[ObjectId, ObjectMcProperties]
+        ) -> Dict[ObjectId, ObjectMcTransformations]:
     '''
     Loops over object_properties and returns the dictionary with
     information about transformations of every bone.
@@ -212,7 +212,7 @@ def get_transformations(
     `Dict[ObjectId, ObjectMcTransformations]` - a dictionary with
     transformations for every object.
     '''
-    transformations: tp.Dict[ObjectId, ObjectMcTransformations] = {}
+    transformations: Dict[ObjectId, ObjectMcTransformations] = {}
     for objid, objprop in object_properties.items():
         if objprop.mctype in [MCObjType.BONE, MCObjType.BOTH]:
             if objprop.mcparent is not None:
@@ -243,7 +243,7 @@ def get_transformations(
     return transformations
 
 
-def get_next_keyframe(context: bpy_types.Context) -> tp.Optional[int]:
+def get_next_keyframe(context: bpy_types.Context) -> Optional[int]:
     '''
     Returns the index of next keyframe from all of selected objects.
     Returns None if there is no more keyframes to chose.

@@ -3,7 +3,7 @@ Functions related to exporting models.
 '''
 from __future__ import annotations
 
-import typing as tp
+from typing import List, Dict
 import numpy as np
 
 from .common import (
@@ -13,9 +13,10 @@ from .common import (
 )
 
 
+
 def get_mcmodel_json(
-        model_name: str, mc_bones: tp.List[tp.Dict],
-        texture_width: int, texture_height: int) -> tp.Dict:
+        model_name: str, mc_bones: List[Dict],
+        texture_width: int, texture_height: int) -> Dict:
     '''
     Creates a dictionary that represents the Minecraft model JSON file. Based
     on the given input.
@@ -48,9 +49,9 @@ def get_mcmodel_json(
 
 
 def get_mcbone_json(
-        boneprop: ObjectMcProperties, cubeprops: tp.List[ObjectMcProperties],
-        locatorprops: tp.List[ObjectMcProperties],
-        object_properties: tp.Dict[ObjectId, ObjectMcProperties]) -> tp.Dict:
+        boneprop: ObjectMcProperties, cubeprops: List[ObjectMcProperties],
+        locatorprops: List[ObjectMcProperties],
+        object_properties: Dict[ObjectId, ObjectMcProperties]) -> Dict:
     '''
     Returns the dictionary that represents a single mcbone in json file
     of model.
@@ -77,7 +78,7 @@ def get_mcbone_json(
         return np.array(scale.xzy)
 
     # Set basic bone properties
-    mcbone: tp.Dict = {'name': boneprop.name(), 'cubes': []}
+    mcbone: Dict = {'name': boneprop.name(), 'cubes': []}
     if boneprop.mcparent is not None:
         mcbone['parent'] = object_properties[boneprop.mcparent].name()
         b_rot = get_mcrotation(
@@ -130,7 +131,7 @@ def get_mcbone_json(
             c_size = c_size - cubeprop.get_mc_inflate()*2
             c_origin = c_origin + cubeprop.get_mc_inflate()
 
-        cube_dict: tp.Dict = {
+        cube_dict: Dict = {
             'uv': get_vect_json(uv),
             'size': [round(i) for i in get_vect_json(c_size)],
             'origin': get_vect_json(c_origin),

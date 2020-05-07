@@ -4,7 +4,8 @@ Functions and objects related to importing Minecraft models to Blender.
 from __future__ import annotations
 
 import math
-import typing as tp
+from typing import cast, Dict, List, Union, Optional, Any, Tuple
+
 import numpy as np
 
 import bpy_types
@@ -16,8 +17,8 @@ from .exception import InvalidDictPathException
 
 
 def get_path(
-        jsonable: tp.Dict, path: tp.List[tp.Union[str, int]]
-    ) -> tp.Optional[tp.Any]:
+        jsonable: Dict, path: List[Union[str, int]]
+    ) -> Optional[Any]:
     '''
     Goes through a dictionary and checks its structure. Returns the object
     from given JSON path and success value. Raises InvalidDictPathException
@@ -52,7 +53,7 @@ def _assert(expr: bool, msg: str = ''):
 
 
 def assert_is_vector(
-        vect: tp.Any, length: int, types: tp.Tuple, msg: str = ''
+        vect: Any, length: int, types: Tuple, msg: str = ''
     ) -> None:
     '''
     Asserts that the "vect" is "length" long vector and all of the items
@@ -69,12 +70,12 @@ def assert_is_vector(
     _assert(all([isinstance(i, types) for i in vect]), msg)
 
 
-def assert_is_model(model: tp.Any) -> None:
+def assert_is_model(model: Any) -> None:
     '''
     Asserts that the input dictionary is a valid model file.
 
     # Arguments:
-    - `model: tp.Any` - a dictionary
+    - `model: Any` - a dictionary
     '''
     _assert(isinstance(model, dict), 'Model file must be an object')
     _assert(
@@ -247,23 +248,23 @@ def assert_is_model(model: tp.Any) -> None:
 
 class ImportLocator:
     '''Represents Minecraft locator during import operation.'''
-    def __init__(self, name: str, position: tp.Tuple[float, float, float]):
+    def __init__(self, name: str, position: Tuple[float, float, float]):
         self.name = name
         self.position = position
 
-        self.blend_empty: tp.Optional[bpy_types.Object] = None
+        self.blend_empty: Optional[bpy_types.Object] = None
 
 
 class ImportCube:
     '''Represents minecraft cube during import operation.'''
     def __init__(
             self,
-            uv: tp.Tuple[int, int],
+            uv: Tuple[int, int],
             mirror: bool,
-            origin: tp.Tuple[float, float, float],
-            pivot: tp.Tuple[float, float, float],
-            size: tp.Tuple[float, float, float],
-            rotation: tp.Tuple[float, float, float]):
+            origin: Tuple[float, float, float],
+            pivot: Tuple[float, float, float],
+            size: Tuple[float, float, float],
+            rotation: Tuple[float, float, float]):
         self.uv = uv
         self.mirror = mirror
         self.origin = origin
@@ -272,16 +273,16 @@ class ImportCube:
         self.pivot = pivot
         self.rotation = rotation
 
-        self.blend_cube: tp.Optional[bpy_types.Object] = None
+        self.blend_cube: Optional[bpy_types.Object] = None
 
 
 class ImportBone:
     '''Represents minecraft bone during import operation.'''
     def __init__(
-            self, name: str, parent: tp.Optional[str],
-            pivot: tp.Tuple[float, float, float],
-            rotation: tp.Tuple[float, float, float],
-            cubes: tp.List[ImportCube], locators: tp.List[ImportLocator]):
+            self, name: str, parent: Optional[str],
+            pivot: Tuple[float, float, float],
+            rotation: Tuple[float, float, float],
+            cubes: List[ImportCube], locators: List[ImportLocator]):
         self.name = name
         self.parent = parent
         self.cubes = cubes
@@ -290,23 +291,23 @@ class ImportBone:
         self.pivot = pivot
         self.rotation = rotation
 
-        self.blend_empty: tp.Optional[bpy_types.Object] = None
+        self.blend_empty: Optional[bpy_types.Object] = None
 
 
 class ImportGeometry:
     '''Represents whole minecraft geometry during import operation.'''
     def __init__(
             self, identifier: str,
-            texture_width: tp.Optional[int],
-            texture_height: tp.Optional[int],
-            bones: tp.Dict[str, ImportBone]):
+            texture_width: Optional[int],
+            texture_height: Optional[int],
+            bones: Dict[str, ImportBone]):
         self.identifier = identifier
         self.texture_width = texture_width
         self.texture_height = texture_height
         self.bones = bones
 
 
-def _load_cube(data: tp.Dict) -> ImportCube:
+def _load_cube(data: Dict) -> ImportCube:
     '''
     Returns ImportCube object created from a dictinary (part of the JSON)
     file in the model.
@@ -319,7 +320,7 @@ def _load_cube(data: tp.Dict) -> ImportCube:
     `ImportCube` - object used for importing Minecraft cubes.
     '''
     # uv
-    uv: tp.Tuple[int, int] = data['uv']
+    uv: Tuple[int, int] = data['uv']
     # mirror
     if 'mirror' not in data:
         mirror: bool = False
@@ -327,24 +328,24 @@ def _load_cube(data: tp.Dict) -> ImportCube:
         mirror = data['mirror']
 
     # size
-    size: tp.Tuple[float, float, float] = tuple(data['size'])  # type: ignore
+    size: Tuple[float, float, float] = tuple(data['size'])  # type: ignore
 
     # origin
-    origin: tp.Tuple[float, float, float] = tuple(  # type: ignore
+    origin: Tuple[float, float, float] = tuple(  # type: ignore
         data['origin']
     )
 
     # rotation
-    rotation: tp.Tuple[float, float, float] = tuple(  # type: ignore
+    rotation: Tuple[float, float, float] = tuple(  # type: ignore
         data['rotation']
     )
 
     # pivot
-    pivot: tp.Tuple[float, float, float] = tuple(data['pivot'])  # type: ignore
+    pivot: Tuple[float, float, float] = tuple(data['pivot'])  # type: ignore
     return ImportCube(uv, mirror, origin, pivot, size, rotation)
 
 
-def _load_bone(data: tp.Dict) -> ImportBone:
+def _load_bone(data: Dict) -> ImportBone:
     '''
     Returns ImportBone object created from a dictinary (part of the JSON)
     file in the model.
@@ -359,10 +360,10 @@ def _load_bone(data: tp.Dict) -> ImportBone:
 
     name: str = data['name']
     # Pivot
-    pivot: tp.Tuple[float, float, float] = tuple(data['pivot'])  # type: ignore
+    pivot: Tuple[float, float, float] = tuple(data['pivot'])  # type: ignore
 
     # Roatation
-    rotation: tp.Tuple[float, float, float] = tuple(  # type: ignore
+    rotation: Tuple[float, float, float] = tuple(  # type: ignore
         data['rotation']
     )
     # Parent
@@ -373,7 +374,7 @@ def _load_bone(data: tp.Dict) -> ImportBone:
 
 
     # Locators
-    locators: tp.List[ImportLocator] = []
+    locators: List[ImportLocator] = []
     if 'locators' not in data:
         pass
     else:
@@ -383,7 +384,7 @@ def _load_bone(data: tp.Dict) -> ImportBone:
                 tuple(v)  # type: ignore
             ))
     # Cubes
-    import_cubes: tp.List[ImportCube] = []
+    import_cubes: List[ImportCube] = []
     for cube in data['cubes']:
         import_cubes.append(_load_cube(cube))
 
@@ -392,7 +393,7 @@ def _load_bone(data: tp.Dict) -> ImportBone:
     )
 
 
-def load_model(data: tp.Dict, geometry_name: str = "") -> ImportGeometry:
+def load_model(data: Dict, geometry_name: str = "") -> ImportGeometry:
     '''
     Returns ImportGeometry object with all of the data loaded from data dict.
     The data dict is a dictionary representaiton of the JSON file with
@@ -411,10 +412,10 @@ def load_model(data: tp.Dict, geometry_name: str = "") -> ImportGeometry:
     `ImportGeometry` - object used for importing Minecraft geometries.
     '''
     # format_version: str = data['format_version']
-    geometries: tp.List = data['minecraft:geometry']
+    geometries: List = data['minecraft:geometry']
 
     # Find geometry
-    geometry: tp.Optional[tp.Dict] = None
+    geometry: Optional[Dict] = None
     for curr_geometry in geometries:
         try:
             identifier = get_path(curr_geometry, ['description', 'identifier'])
@@ -423,7 +424,7 @@ def load_model(data: tp.Dict, geometry_name: str = "") -> ImportGeometry:
 
         # Found THE geometry
         if geometry_name == "" or f'geometry.{geometry_name}' == identifier:
-            identifier = tp.cast(str, identifier)  # mypy cast
+            identifier = cast(str, identifier)  # mypy cast
             geometry_name = identifier
             geometry = curr_geometry
             break
@@ -438,7 +439,7 @@ def load_model(data: tp.Dict, geometry_name: str = "") -> ImportGeometry:
 
     # Load texture_width
     try:
-        texture_width: tp.Optional[int] = int(
+        texture_width: Optional[int] = int(
             get_path(  # type: ignore
                 geometry, ['description', 'texture_width']
             )
@@ -448,7 +449,7 @@ def load_model(data: tp.Dict, geometry_name: str = "") -> ImportGeometry:
 
     # Load texture_height
     try:
-        texture_height: tp.Optional[int] = int(
+        texture_height: Optional[int] = int(
             get_path(  # type: ignore
                 geometry, ['description', 'texture_height']
             )
@@ -457,10 +458,10 @@ def load_model(data: tp.Dict, geometry_name: str = "") -> ImportGeometry:
         texture_height = None
 
     # Load bones from geometry
-    bones: tp.List = geometry['bones']
+    bones: List = geometry['bones']
 
     # Read bones
-    import_bones: tp.Dict[str, ImportBone] = {}
+    import_bones: Dict[str, ImportBone] = {}
     for bone in bones:
         import_bone = _load_bone(bone)
         import_bones[import_bone.name] = import_bone
@@ -557,9 +558,9 @@ def build_geometry(geometry: ImportGeometry, context: bpy_types.Context):
 
 
 def _mc_translate(
-        obj: bpy_types.Object, mctranslation: tp.Tuple[float, float, float],
-        mcsize: tp.Tuple[float, float, float],
-        mcpivot: tp.Tuple[float, float, float]
+        obj: bpy_types.Object, mctranslation: Tuple[float, float, float],
+        mcsize: Tuple[float, float, float],
+        mcpivot: Tuple[float, float, float]
     ):
     '''
     Translates a blender object using a translation vector written in Minecraft
@@ -584,14 +585,14 @@ def _mc_translate(
         vertex.co += (translation - pivot_offset + size_offset)
 
 
-def _mc_set_size(obj: bpy_types.Object, mcsize: tp.Tuple[float, float, float]):
+def _mc_set_size(obj: bpy_types.Object, mcsize: Tuple[float, float, float]):
     '''
     Scales a blender object using scale vector written in minecraft coordinates
     system.
 
     # Arguments:
     - `obj: bpy_types.Object` - Blender object
-    - `mcsize: tp.Tuple[float, float, float]` - Minecraft object size.
+    - `mcsize: Tuple[float, float, float]` - Minecraft object size.
     '''
     pos_delta = (
         (np.array(mcsize)[[0, 2, 1]] / 2) / MINECRAFT_SCALE_FACTOR
@@ -609,14 +610,14 @@ def _mc_set_size(obj: bpy_types.Object, mcsize: tp.Tuple[float, float, float]):
 
 
 
-def _mc_pivot(obj: bpy_types.Object, mcpivot: tp.Tuple[float, float, float]):
+def _mc_pivot(obj: bpy_types.Object, mcpivot: Tuple[float, float, float]):
     '''
     Moves a pivot of an blender object using coordinates written in minecraft
     coordinates system.
 
     # Arguments:
     - `obj: bpy_types.Object` - Blender object
-    - `mcpivot: tp.Tuple[float, float, float]` - Minecraft object pivot point.
+    - `mcpivot: Tuple[float, float, float]` - Minecraft object pivot point.
     '''
     translation = mathutils.Vector(
         np.array(mcpivot)[[0, 2, 1]] / MINECRAFT_SCALE_FACTOR
@@ -625,7 +626,7 @@ def _mc_pivot(obj: bpy_types.Object, mcpivot: tp.Tuple[float, float, float]):
 
 
 def _mc_rotate(
-        obj: bpy_types.Object, mcrotation: tp.Tuple[float, float, float]
+        obj: bpy_types.Object, mcrotation: Tuple[float, float, float]
     ):
     '''
     Rotates a blender object using minecraft coordinates system for rotation
@@ -633,7 +634,7 @@ def _mc_rotate(
 
     # Arguments:
     - `obj: bpy_types.Object` - Blender object
-    - `mcrotation: tp.Tuple[float, float, float]` - Minecraft object rotation.
+    - `mcrotation: Tuple[float, float, float]` - Minecraft object rotation.
     '''
     rotation = mathutils.Euler(
         (np.array(mcrotation)[[0, 2, 1]] * np.array([1, 1, -1])) * math.pi/180,

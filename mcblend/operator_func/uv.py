@@ -3,7 +3,7 @@ Functions related to creating UV map.
 '''
 from __future__ import annotations
 
-import typing as tp
+from typing import Dict, Tuple, cast, List
 from enum import Enum
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -18,7 +18,7 @@ from .common import (
 
 def get_uv_face(
         objprop: ObjectMcProperties, face_name: str
-    ) -> tp.Dict[str, int]:
+    ) -> Dict[str, int]:
     '''
     Returns a dictionary with information about indices of 4 loops of the uv
     face. The keys of the dictionary are strings *LD*, *RD*, *RU* and *LU*
@@ -53,13 +53,13 @@ def get_uv_face(
                 if np.allclose(vertex, bbv_value):
                     confirmed_vertices[bbv_key] = loop_id
         if all([i is not None for i in confirmed_vertices.values()]):
-            return tp.cast(tp.Dict[str, int], confirmed_vertices)
+            return cast(Dict[str, int], confirmed_vertices)
     raise ValueError("Object is not a cube!")
 
 
 def set_uv(
-        objprop: ObjectMcProperties, uv_face: tp.Dict[str, int],
-        crds: tp.Tuple[float, float], size: tp.Tuple[float, float],
+        objprop: ObjectMcProperties, uv_face: Dict[str, int],
+        crds: Tuple[float, float], size: Tuple[float, float],
         mirror_y: bool, mirror_x: bool
     ):
     '''
@@ -68,10 +68,10 @@ def set_uv(
 
     # Arguments:
     - `objprop: ObjectMcProperties` - the properties of the Minecraft object.
-    - `uv_face: tp.Dict[str, int]` - UV face dictionary.
-    - `crds: tp.Tuple[float, float]` - value from 0 to 1 the position of the
+    - `uv_face: Dict[str, int]` - UV face dictionary.
+    - `crds: Tuple[float, float]` - value from 0 to 1 the position of the
       bottom left loop using Blender UV-mapping coordinates system.
-    - `size: tp.Tuple[float, float]` - value from 0 to 1 the size of the
+    - `size: Tuple[float, float]` - value from 0 to 1 the size of the
       rectangle using Blender UV-mapping coordinates system.
     - `mirror_y: bool` - if True mirrors top and bottom sides of the face.
     - `mirror_x: bool` - if True mirrors left and right sides of the face.
@@ -91,7 +91,7 @@ def set_uv(
 
 
 def set_cube_uv(
-        objprop: ObjectMcProperties, uv: tp.Tuple[float, float], width: float,
+        objprop: ObjectMcProperties, uv: Tuple[float, float], width: float,
         depth: float, height: float, texture_width: int, texture_height: int
     ):
     '''
@@ -100,7 +100,7 @@ def set_cube_uv(
 
     # Arguments:
     - `objprop: ObjectMcProperties` - properties of the object.
-    - `uv: tp.Tuple[float, float]` - value from 0 to 1 the position of the
+    - `uv: Tuple[float, float]` - value from 0 to 1 the position of the
       bottom left loop using Blenders UV-mapping coordinates system.
     - `width: float` - width of the object converted to value from 0 to 1 in
       Blenders UV-mapping coordinates system.
@@ -196,8 +196,8 @@ class UvCorner(Enum):
 class UvBox:
     '''Rectangular space on the texture.'''
     def __init__(
-            self, size: tp.Tuple[int, int],
-            uv: tp.Tuple[int, int] = None
+            self, size: Tuple[int, int],
+            uv: Tuple[int, int] = None
         ):
         if uv is None:
             uv = (0, 0)
@@ -205,8 +205,8 @@ class UvBox:
         else:
             self.is_mapped = True
 
-        self.size: tp.Tuple[int, int] = size
-        self.uv: tp.Tuple[int, int] = uv
+        self.size: Tuple[int, int] = size
+        self.uv: Tuple[int, int] = uv
 
     @property
     def uv(self):
@@ -239,7 +239,7 @@ class UvBox:
 
     def suggest_positions(
             self
-        ) -> tp.List[tp.Tuple[tp.Tuple[int, int], UvCorner]]:
+        ) -> List[Tuple[Tuple[int, int], UvCorner]]:
         '''
         Returns list of positions touching this UvBox for other UvBox without
         overlappnig.
@@ -271,7 +271,7 @@ class UvBox:
         ]
 
     def apply_suggestion(
-            self, suggestion: tp.Tuple[tp.Tuple[int, int], UvCorner]
+            self, suggestion: Tuple[Tuple[int, int], UvCorner]
         ):
         '''
         Uses a suggestion (pair of coordinates and UvCorner) to set the UV for
@@ -299,7 +299,7 @@ class UvMcCube(UvBox):
     '''
     def __init__(
             self, width: int, depth: int, height: int,
-            uv: tp.Tuple[int, int] = None
+            uv: Tuple[int, int] = None
         ):
         size = (
             2*depth + 2*width,
@@ -346,7 +346,7 @@ class UvMcCube(UvBox):
 
     def suggest_positions(
             self
-        ) -> tp.List[tp.Tuple[tp.Tuple[int, int], UvCorner]]:
+        ) -> List[Tuple[Tuple[int, int], UvCorner]]:
         '''
         Returns list of positions touching this UvBox for other UvBox without
         overlappnig.
@@ -377,7 +377,7 @@ class UvMcCube(UvBox):
         return result
 
 
-def plan_uv(boxes: tp.List[UvMcCube], width: int, height: int = None):
+def plan_uv(boxes: List[UvMcCube], width: int, height: int = None):
     '''
     Plans UVs for all of the boxes on the list. The size of the texture is
     limited by width and optionally by height. Returns success result.
@@ -392,11 +392,11 @@ def plan_uv(boxes: tp.List[UvMcCube], width: int, height: int = None):
     boxes = list(set(boxes))
     boxes.sort(key=lambda box: box.size[0], reverse=True)
 
-    suggestions: tp.List[
-        tp.Tuple[tp.Tuple[int, int], UvCorner]
+    suggestions: List[
+        Tuple[Tuple[int, int], UvCorner]
     ] = [((0, 0), UvCorner.TOP_LEFT)]
 
-    authors: tp.List[UvBox] = []  # authors of the suggestions
+    authors: List[UvBox] = []  # authors of the suggestions
     mapped_boxes = []
     unmapped_boxes = []
     for box in boxes:
@@ -454,15 +454,15 @@ class _UvGroup:
     Its used to make sure that the cubes with same mc_uv_groups and size use
     the same UvMcCube mapping.
     '''
-    items: tp.Dict[tp.Tuple[int, int, int], UvMcCube] = field(
+    items: Dict[Tuple[int, int, int], UvMcCube] = field(
         default_factory=lambda: {}
     )
 
 
 def get_uv_mc_cubes(
-        objprops: tp.List[ObjectMcProperties],
+        objprops: List[ObjectMcProperties],
         read_existing_uvs: bool
-    ) -> tp.Dict[str, UvMcCube]:
+    ) -> Dict[str, UvMcCube]:
     '''
     Creates UvMcCube for every object from objprops and returns the dictionary
     of that uses the names of the objects as keys and UvMcCubes as values.
@@ -482,7 +482,7 @@ def get_uv_mc_cubes(
         return np.array(scale.xzy)
 
     # defaultdict(lambda: _UvGroup())
-    uv_groups: tp.Dict[str, _UvGroup] = defaultdict(_UvGroup)
+    uv_groups: Dict[str, _UvGroup] = defaultdict(_UvGroup)
     result = {}
 
     for objprop in objprops:

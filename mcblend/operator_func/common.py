@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import math
 from enum import Enum
-import typing as tp
+from typing import Dict, NamedTuple, List, Optional, Tuple, Any, Iterable
 
 import numpy as np
 
@@ -27,7 +27,7 @@ class MCObjType(Enum):
     LOCATOR = 'LOCATOR'
 
 
-class ObjectId(tp.NamedTuple):
+class ObjectId(NamedTuple):
     '''
     Unique ID of a mesh, empty or a bone. For meshes and empties it's bone_name
     is just an empty string and the name is the name of the object. For bones
@@ -45,12 +45,12 @@ class ObjectMcProperties:
     '''
     def __init__(
             self, thisobj_id: ObjectId, thisobj: bpy_types.Object,
-            mcparent: tp.Optional[ObjectId], mcchildren: tp.List[ObjectId],
+            mcparent: Optional[ObjectId], mcchildren: List[ObjectId],
             mctype: MCObjType):
         self.thisobj_id = thisobj_id
         self.thisobj: bpy_types.Object = thisobj
-        self.mcparent: tp.Optional[ObjectId] = mcparent
-        self.mcchildren: tp.List[ObjectId] = mcchildren
+        self.mcparent: Optional[ObjectId] = mcparent
+        self.mcchildren: List[ObjectId] = mcchildren
         self.mctype: MCObjType = mctype
 
     def clear_uv_layers(self):
@@ -65,11 +65,11 @@ class ObjectMcProperties:
                 self.thisobj.data.uv_layers[0]
             )
 
-    def set_mc_uv(self, uv: tp.Tuple[int, int]):
+    def set_mc_uv(self, uv: Tuple[int, int]):
         '''Sets the mc_uv property of the cube.'''
         self.thisobj['mc_uv'] = uv
 
-    def get_mc_uv(self) -> tp.Tuple[int, int]:
+    def get_mc_uv(self) -> Tuple[int, int]:
         '''Returns the mc_uv property of the object.'''
         return tuple(self.thisobj['mc_uv'])  # type: ignore
 
@@ -101,15 +101,15 @@ class ObjectMcProperties:
         '''Returns the value of mc_uv_group property of the object'''
         return self.thisobj['mc_uv_group']
 
-    def data_polygons(self) -> tp.Any:
+    def data_polygons(self) -> Any:
         '''Returns the polygons (faces) of the object'''
         return self.thisobj.data.polygons
 
-    def data_vertices(self) -> tp.Any:
+    def data_vertices(self) -> Any:
         '''Returns the vertices of the object'''
         return self.thisobj.data.vertices
 
-    def data_uv_layers_active_data(self) -> tp.Any:
+    def data_uv_layers_active_data(self) -> Any:
         '''Return the data of active uv-layers of the object'''
         return self.thisobj.data.uv_layers.active.data
 
@@ -129,7 +129,7 @@ class ObjectMcProperties:
         '''Returns the type of the object (ARMATURE, MESH or EMPTY).'''
         return self.thisobj.type
 
-    def bound_box(self) -> tp.Any:
+    def bound_box(self) -> Any:
         '''Returns the bound box of the object'''
         return self.thisobj.bound_box
 
@@ -142,7 +142,7 @@ class ObjectMcProperties:
         return self.thisobj.matrix_world.copy()
 
 
-class ObjectMcTransformations(tp.NamedTuple):
+class ObjectMcTransformations(NamedTuple):
     '''
     Temporary properties of transformations of an object (mesh or empty)
     for the minecraft animation. Changes in these values over the frames of the
@@ -152,14 +152,14 @@ class ObjectMcTransformations(tp.NamedTuple):
     scale: np.array
     rotation: np.array
 
-def get_vect_json(arr: tp.Iterable) -> tp.List[float]:
+def get_vect_json(arr: Iterable) -> List[float]:
     '''
     Changes the iterable whith numbers into basic python list of floats.
     Values from the original iterable are rounded to the 3rd deimal
     digit.
 
     # Arguments:
-    - `arr: tp.Iterable` - an iterable with numbers.
+    - `arr: Iterable` - an iterable with numbers.
     '''
     result = [round(i, 3) for i in arr]
     for i, _ in enumerate(result):
@@ -188,7 +188,7 @@ def get_local_matrix(
 
 def get_mcrotation(
         child_matrix: mathutils.Matrix,
-        parent_matrix: tp.Optional[mathutils.Matrix] = None) -> np.ndarray:
+        parent_matrix: Optional[mathutils.Matrix] = None) -> np.ndarray:
     '''
     Returns the rotation of mcbone.
 
@@ -255,7 +255,7 @@ def get_mccube_position(objprop: ObjectMcProperties) -> np.ndarray:
 
 def get_mcpivot(
         objprop: ObjectMcProperties,
-        object_properties: tp.Dict[ObjectId, ObjectMcProperties]
+        object_properties: Dict[ObjectId, ObjectMcProperties]
     ) -> np.ndarray:
     '''
     Returns the pivot point of Minecraft object.
@@ -290,7 +290,7 @@ def get_mcpivot(
     return np.array(_get_mcpivot(objprop).xzy)
 
 
-def loop_objects(objects: tp.List) -> tp.Iterable[tp.Tuple[ObjectId, tp.Any]]:
+def loop_objects(objects: List) -> Iterable[Tuple[ObjectId, Any]]:
     '''
     Loops over the empties, meshes and armature objects and yields them and
     their ids. If object is an armatre than it loops over every bone and
@@ -300,7 +300,7 @@ def loop_objects(objects: tp.List) -> tp.Iterable[tp.Tuple[ObjectId, tp.Any]]:
     - `objects: List` - the list of blender objects
 
     # Returns:
-    `Iterable[tp.Tuple[ObjectId, Any]]` - iterable that goes throug objects and
+    `Iterable[Tuple[ObjectId, Any]]` - iterable that goes throug objects and
     bones.
     '''
     for obj in objects:
@@ -310,7 +310,7 @@ def loop_objects(objects: tp.List) -> tp.Iterable[tp.Tuple[ObjectId, tp.Any]]:
             for bone in obj.data.bones:
                 yield ObjectId(obj.name, bone.name), obj
 
-def get_parent_mc_bone(obj: bpy_types.Object) -> tp.Optional[ObjectId]:
+def get_parent_mc_bone(obj: bpy_types.Object) -> Optional[ObjectId]:
     '''
     Goes up through the ancesstors of an bpy_types.Object and tries to find
     the object that represents its parent bone in Minecraft model.
@@ -320,7 +320,7 @@ def get_parent_mc_bone(obj: bpy_types.Object) -> tp.Optional[ObjectId]:
     Minecraft bone
 
     # Returns:
-    `tp.Optional[ObjectId]` - parent Minecraft bone of the object or None.
+    `Optional[ObjectId]` - parent Minecraft bone of the object or None.
     '''
     obj_id = None
     while obj.parent is not None:
@@ -338,7 +338,7 @@ def get_parent_mc_bone(obj: bpy_types.Object) -> tp.Optional[ObjectId]:
 
 
 def get_name_conflicts(
-        object_properties: tp.Dict[ObjectId, ObjectMcProperties]
+        object_properties: Dict[ObjectId, ObjectMcProperties]
     ) -> str:
     '''
     Looks through the object_properties dictionary and tries to find name
@@ -352,7 +352,7 @@ def get_name_conflicts(
     # Returns:
     `str` - name of conflictiong objects or empty string.
     '''
-    names: tp.List[str] = []
+    names: List[str] = []
     for objprop in object_properties.values():
         if objprop.mctype not in [MCObjType.BONE, MCObjType.BOTH]:
             continue  # Only bone names conflicts count
@@ -364,7 +364,7 @@ def get_name_conflicts(
 
 def get_object_mcproperties(
         context: bpy_types.Context
-        ) -> tp.Dict[ObjectId, ObjectMcProperties]:
+        ) -> Dict[ObjectId, ObjectMcProperties]:
     '''
     Loops through context.selected_objects and returns a dictionary with custom
     properties of mcobjects. Returned dictionary uses the ObjectId of the
@@ -377,10 +377,10 @@ def get_object_mcproperties(
     `Dict[ObjectId, ObjectMcProperties]` - the properties of all objects.
     '''
     # pylint: disable=R0912
-    properties: tp.Dict[ObjectId, ObjectMcProperties] = {}
+    properties: Dict[ObjectId, ObjectMcProperties] = {}
     for obj_id, obj in loop_objects(context.selected_objects):
         curr_obj_mc_type: MCObjType
-        curr_obj_mc_parent: tp.Optional[ObjectId] = None
+        curr_obj_mc_parent: Optional[ObjectId] = None
         if obj.type == 'EMPTY':
             curr_obj_mc_type = MCObjType.BONE
             if (obj.parent is not None and len(obj.children) == 0 and
