@@ -10,3 +10,4 @@ tests/config.py
 .tmp/**
 .tox/**
 local_files/**
+**.blend1
