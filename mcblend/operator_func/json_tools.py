@@ -94,6 +94,8 @@ class CompactEncoder(json.JSONEncoder):
         elif self._is_primitive(obj):
             if isinstance(obj, str):
                 yield f'{ind}"{str(obj)}"'
+            elif isinstance(obj, float) and obj.is_integer():
+                yield f'{ind}{str(int(obj))}'
             else:
                 yield f'{ind}{str(obj).lower()}'
         elif obj is None:

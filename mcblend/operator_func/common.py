@@ -156,8 +156,7 @@ def get_vect_json(arr: tp.Iterable) -> tp.List[float]:
     '''
     Changes the iterable whith numbers into basic python list of floats.
     Values from the original iterable are rounded to the 3rd deimal
-    digit. If value is integer than its type is changed to int to skip
-    unnecesary zero decimal.
+    digit.
 
     # Arguments:
     - `arr: tp.Iterable` - an iterable with numbers.
@@ -166,8 +165,6 @@ def get_vect_json(arr: tp.Iterable) -> tp.List[float]:
     for i, _ in enumerate(result):
         if result[i] == -0.0:
             result[i] = 0.0
-        if float(result[i]).is_integer():
-            result[i] = int(result[i])
     return result
 
 
