@@ -17,31 +17,34 @@ import bpy_types
 from .uv import get_uv_mc_cubes, UvMcCube, plan_uv, set_cube_uv
 from .animation import (
     get_mcanimation_json, get_next_keyframe,
-    get_transformations, AnimationProperties
+    get_transformations, AnimationProperties,
+    pick_closest_rotation
 )
 from .model import get_mcbone_json, get_mcmodel_json
 from .common import (
-    MCObjType, get_object_mcproperties, get_vect_json, pick_closest_rotation,
+    MCObjType, get_object_mcproperties, get_vect_json,
     ObjectId, ObjectMcProperties, get_name_conflicts, MINECRAFT_SCALE_FACTOR
 )
 from .importer import load_model, build_geometry, assert_is_model
+from .exception import NameConflictException
 
 
-def export_model(context: bpy_types.Context) -> tp.Tuple[tp.Dict, str]:
+def export_model(context: bpy_types.Context) -> tp.Dict:
     '''
     Creates a Minecraft model (dictionary) from selected objects.
+    Raises NameConflictException if name conflicts in some bones are detected.
 
     # Arguments:
     - `context: bpy_types.Context` - the context of running the operator.
 
     # Returns:
-    `Tuple[tp.Dict, str]` - a dictionary with the model and error message.
+    `tp.Dict` - a dictionary with the model..
     '''
     object_properties = get_object_mcproperties(context)
     name_conflict = get_name_conflicts(object_properties)
-    if name_conflict != '':
-        return (
-            {}, f'Name conflict "{name_conflict}". Please rename theobject."'
+    if name_conflict:
+        raise NameConflictException(
+            f'Name conflict "{name_conflict}". Please rename theobject."'
         )
 
     # Save starting frame
@@ -81,14 +84,15 @@ def export_model(context: bpy_types.Context) -> tp.Tuple[tp.Dict, str]:
     result = get_mcmodel_json(
         model_name, mc_bones, texture_width, texture_height
     )
-    return result, ''
+    return result
 
 
 def export_animation(
         context: bpy_types.Context, old_dict: tp.Optional[tp.Dict]
-    ) -> tp.Tuple[tp.Dict, str]:
+    ) -> tp.Dict:
     '''
     Creates a Minecraft animation (dictionary) from selected objects.
+    Raises NameConflictException if name conflicts in some bones are detected.
 
     # Arguments:
     - `context: bpy_types.Context` - the context of running the operator.
@@ -96,14 +100,14 @@ def export_animation(
       the JSON file with animations.
 
     # Returns:
-    `Tuple[tp.Dict, str]` - a dictionary with the animation and error message.
+    `tp.Dict` - a dictionary with the animation.
     '''
     # Check and create object properties
     object_properties = get_object_mcproperties(context)
     name_conflict = get_name_conflicts(object_properties)
-    if name_conflict != '':
-        return (
-            {}, f'Name conflict "{name_conflict}". Please rename theobject."'
+    if name_conflict:
+        raise NameConflictException(
+            f'Name conflict "{name_conflict}". Please rename theobject."'
         )
 
     # Save starting frame
@@ -172,22 +176,20 @@ def export_animation(
         extend_json=old_dict
     )
 
-    return animation_dict, ''
+    return animation_dict
 
 
-def set_uvs(context: bpy_types.Context) -> bool:
+def set_uvs(context: bpy_types.Context):
     '''
     Used by the operator that sets UV. Calculates the UV-map for selected
-    objects.
+    objects. Raises NotEnoughTextureSpace when the texture width and height
+    wasn't big enough.
 
     Depending on operator configuration this function can: add mc_uv
     property to the objects, add new Blender UV, remove old Blender UV.
 
     # Arguments:
     - `context: bpy_types.Context` - the context of running the operator.
-
-    # Returns:
-    `bool` - the success value of the function.
     '''
     width = context.scene.nusiq_mcblend.texture_width
     height = context.scene.nusiq_mcblend.texture_height
@@ -215,9 +217,7 @@ def set_uvs(context: bpy_types.Context) -> bool:
     if height <= 0:
         height = None
 
-    map_result = plan_uv(uv_mc_cubes, width, height)
-    if map_result is False:
-        return False
+    plan_uv(uv_mc_cubes, width, height)
 
     if remove_old_mappings:
         for objprop in objprops:
@@ -281,8 +281,6 @@ def set_uvs(context: bpy_types.Context) -> bool:
 
     # Return to first frame
     context.scene.frame_set(start_frame)
-
-    return True
 
 
 def set_inflate(context: bpy_types.Context, inflate: float, mode: str) -> int:

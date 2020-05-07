@@ -12,29 +12,31 @@ import mathutils
 import bpy
 
 from .common import MINECRAFT_SCALE_FACTOR
+from .exception import InvalidDictPathException
 
 
 def get_path(
         jsonable: tp.Dict, path: tp.List[tp.Union[str, int]]
-    ) -> tp.Tuple[tp.Optional[tp.Any], bool]:
+    ) -> tp.Optional[tp.Any]:
     '''
     Goes through a dictionary and checks its structure. Returns the object
-    from given JSON path and success value.
+    from given JSON path and success value. Raises InvalidDictPathException
+    when path is invalid.
 
     # Arguments:
     - `jsonable: Dict` - a dictionary
     - `path: List[Union[str, int]]` - a path to target object
 
     # Returns:
-    Tuple[Optional[Any], bool] - the target object and the success value.
+    `Optional[Any]` - the target object.
     '''
     curr_obj = jsonable
     for path_item in path:
         try:
             curr_obj = curr_obj[path_item]
         except (LookupError, TypeError):
-            return None, False
-    return curr_obj, True
+            raise InvalidDictPathException()
+    return curr_obj
 
 def _assert(expr: bool, msg: str = ''):
     '''
@@ -294,7 +296,9 @@ class ImportBone:
 class ImportGeometry:
     '''Represents whole minecraft geometry during import operation.'''
     def __init__(
-            self, identifier: str, texture_width: int, texture_height: int,
+            self, identifier: str,
+            texture_width: tp.Optional[int],
+            texture_height: tp.Optional[int],
             bones: tp.Dict[str, ImportBone]):
         self.identifier = identifier
         self.texture_width = texture_width
@@ -412,9 +416,11 @@ def load_model(data: tp.Dict, geometry_name: str = "") -> ImportGeometry:
     # Find geometry
     geometry: tp.Optional[tp.Dict] = None
     for curr_geometry in geometries:
-        identifier, success = get_path(curr_geometry, ['description', 'identifier'])
-        if not success:
+        try:
+            identifier = get_path(curr_geometry, ['description', 'identifier'])
+        except InvalidDictPathException:
             continue
+
         # Found THE geometry
         if geometry_name == "" or f'geometry.{geometry_name}' == identifier:
             identifier = tp.cast(str, identifier)  # mypy cast
@@ -431,16 +437,24 @@ def load_model(data: tp.Dict, geometry_name: str = "") -> ImportGeometry:
         )
 
     # Load texture_width
-    texture_width, success = get_path(
-        geometry, ['description', 'texture_width']
-    )
-    texture_width = tp.cast(int, texture_width)
+    try:
+        texture_width: tp.Optional[int] = int(
+            get_path(  # type: ignore
+                geometry, ['description', 'texture_width']
+            )
+        )
+    except (InvalidDictPathException, ValueError):
+        texture_width = None
 
     # Load texture_height
-    texture_height, success = get_path(
-        geometry, ['description', 'texture_height']
-    )
-    texture_height = tp.cast(int, texture_height)
+    try:
+        texture_height: tp.Optional[int] = int(
+            get_path(  # type: ignore
+                geometry, ['description', 'texture_height']
+            )
+        )
+    except (InvalidDictPathException, ValueError):
+        texture_height = None
 
     # Load bones from geometry
     bones: tp.List = geometry['bones']

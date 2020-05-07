@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
+from .exception import NotEnoughTextureSpace
 from .common import (
     MINECRAFT_SCALE_FACTOR, get_mcube_size, ObjectMcProperties
 )
@@ -376,19 +377,17 @@ class UvMcCube(UvBox):
         return result
 
 
-def plan_uv(boxes: tp.List[UvMcCube], width: int, height: int = None) -> bool:
+def plan_uv(boxes: tp.List[UvMcCube], width: int, height: int = None):
     '''
     Plans UVs for all of the boxes on the list. The size of the texture is
     limited by width and optionally by height. Returns success result.
+    Raises NotEnoughTextureSpace when the texture width and height wasn't big
+    enough to map all of the boxes.
 
     # Arguments:
     - `boxes: List[UvMcCube]` - the list of the UvMcCubes.
     - `width: int` - the width of the texture.
     - `height: int` - the height of the texture (optional).
-
-    # Returns:
-    `bool` - True on succes. False when the texture width and height wasn't big
-    enough to map all of the boxes.
     '''
     boxes = list(set(boxes))
     boxes.sort(key=lambda box: box.size[0], reverse=True)
@@ -441,8 +440,7 @@ def plan_uv(boxes: tp.List[UvMcCube], width: int, height: int = None) -> bool:
                     break
         else:  # No good suggestion found for current box.
             box.uv = (0, 0)
-            return False
-    return True
+            raise NotEnoughTextureSpace()
 
 
 @dataclass

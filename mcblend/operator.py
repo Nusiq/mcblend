@@ -15,7 +15,9 @@ from .operator_func import (
     round_dimensions, import_model
 )
 from .operator_func.json_tools import CompactEncoder
-
+from .operator_func.exception import (
+    NameConflictException, NotEnoughTextureSpace,
+)
 
 
 
@@ -44,9 +46,10 @@ class OBJECT_OT_NusiqMcblendExportModelOperator(bpy.types.Operator, ExportHelper
         return True
 
     def execute(self, context):
-        result, error = export_model(context)
-        if error != '':
-            self.report({'WARNING'}, error)
+        try:
+            result = export_model(context)
+        except NameConflictException as e:
+            self.report({'WARNING'}, str(e))
             return {'FINISHED'}
 
         with open(self.filepath, 'w') as f:
@@ -103,10 +106,11 @@ class OBJECT_OT_NusiqMcblendExportAnimationOperator(
                 old_dict = json.load(f)
         except (json.JSONDecodeError, OSError):
             pass
-        animation_dict, error = export_animation(context, old_dict)
 
-        if error != '':
-            self.report({'WARNING'}, error)
+        try:
+            animation_dict = export_animation(context, old_dict)
+        except NameConflictException as e:
+            self.report({'WARNING'}, str(e))
             return {'FINISHED'}
 
         # Save file and finish
@@ -145,15 +149,18 @@ class OBJECT_OT_NusiqMcblendMapUvOperator(bpy.types.Operator):
         return True
 
     def execute(self, context):
-        if set_uvs(context):
-            width = context.scene.nusiq_mcblend.texture_width
-            height = context.scene.nusiq_mcblend.texture_height
-            self.report(
-                {'INFO'},
-                f'UV map created successfuly for {width}x{height} texture.'
-            )
-        else:
+        try:
+            set_uvs(context)
+        except NotEnoughTextureSpace:
             self.report({'ERROR'}, "Unable to create UV-mapping.")
+            return {'FINISHED'}
+        width = context.scene.nusiq_mcblend.texture_width
+        height = context.scene.nusiq_mcblend.texture_height
+        self.report(
+            {'INFO'},
+            f'UV map created successfuly for {width}x{height} texture.'
+        )
+
         return {'FINISHED'}
 
 
