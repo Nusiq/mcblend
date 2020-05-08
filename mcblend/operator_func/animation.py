@@ -4,36 +4,23 @@ Functions related to exporting animations.
 from __future__ import annotations
 
 from typing import NamedTuple, Dict, Optional, List, Tuple
+from dataclasses import dataclass, field
+from itertools import tee, islice
 
+import bpy
 import bpy_types
 import mathutils
 
 import numpy as np
 
 from .common import (
-    MINECRAFT_SCALE_FACTOR, ObjectMcProperties, ObjectMcTransformations,
-    MCObjType, get_local_matrix, get_mcrotation, ObjectId
+    MINECRAFT_SCALE_FACTOR, ObjectMcProperties,
+    MCObjType, get_local_matrix, get_mcrotation, ObjectId,
+    get_vect_json
 )
 
 
-class AnimationProperties(NamedTuple):
-    '''
-    Data class that represents configuration of animation
-
-    # Properties:
-    - `name: str` - name of the animation.
-    - `length: float` - the length of animation in seconds.
-    - `loop_animation: bool` - value of loop property of Minecraft animation.
-    - `anim_time_update: str` - value of anim_time_update property of Minecraft
-      animation.
-    '''
-    name: str
-    length: float
-    loop_animation: bool
-    anim_time_update: str
-
-
-def pick_closest_rotation(
+def _pick_closest_rotation(
         modify: np.ndarray, close_to: np.ndarray,
         original_rotation: Optional[np.ndarray] = None
     ) -> np.ndarray:
@@ -100,150 +87,7 @@ def pick_closest_rotation(
     return choice1
 
 
-def get_mcanimation_json(
-        animation_properties: AnimationProperties,
-        bone_data: Dict[ObjectId, Dict[str, List[Dict]]],
-        object_properties: Dict[ObjectId, ObjectMcProperties],
-        extend_json: Optional[Dict] = None) -> Dict:
-    '''
-    Returns a dictionary with animation or edits the `extend_json` dictionary.
-    Additionaly removes the unnecessary keyframes to optimise the animation.
-
-    # Arguments:
-    - `animation_properties: AnimationProperties` - the properties of the
-      animation represented by AnimationProperties object.
-    - `bone_data: Dict[ObjectId, Dict[str, List[Dict]]]` - position rotation
-      and scale of every bone for every frame.
-    - `object_properties: Dict[ObjectId, ObjectMcProperties]` - the properties
-      of all of the Minecraft cubes and bones.
-    - `extend_json: Optional[Dict]` - A dictionary with with old animation JSON
-      file to overwrite. If this parameter is None or has invalid structure a new
-      dictionary is created.
-
-    # Returns:
-    `Dict` - a dictionary with JSON file with animation.
-    '''
-    def reduce_property(keyframes: List[Dict]) -> List[Dict]:
-        '''
-        Removes some of the keyframes from list of keyframes values of
-        a property (rotation, location or scale)
-        '''
-        if len(keyframes) == 0:
-            return []
-        last_val = keyframes[0]['value']
-        reduced_property = [keyframes[0]]
-        for i in range(1, len(keyframes)-1):
-            curr_val = keyframes[i]['value']
-            next_val = keyframes[i+1]['value']
-            if curr_val != last_val or curr_val != next_val:
-                reduced_property.append(keyframes[i])
-                last_val = curr_val
-        # Add last element unless there is only one (in which case it's
-        # already added)
-        if len(keyframes) > 1:
-            reduced_property.append(keyframes[-1])
-        return reduced_property
-
-    def validate_extend_json(extend_json: Optional[Dict]):
-        '''
-        Reads content of dictionary and validates if it can be used by
-        export_animation(). Returns ture if the anim_dict is valid or false if it's
-        not.
-        '''
-        if not isinstance(extend_json, dict):
-            return False
-        try:
-            return isinstance(extend_json['animations'], dict) # type: ignore
-        except (TypeError, LookupError):
-            return False
-
-    # Extract bones data
-    bones: Dict = {}
-    for boneid, bone in bone_data.items():
-        bones[object_properties[boneid].name()] = {
-            'position': {},
-            'rotation': {},
-            'scale': {}
-        }
-        for prop in reduce_property(bone['position']):
-            bones[
-                object_properties[boneid].name()
-            ]['position'][prop['time']] = prop['value']
-        for prop in reduce_property(bone['rotation']):
-            bones[
-                object_properties[boneid].name()
-            ]['rotation'][prop['time']] = prop['value']
-        for prop in reduce_property(bone['scale']):
-            bones[
-                object_properties[boneid].name()
-            ]['scale'][prop['time']] = prop['value']
-
-    # Returning result
-    if extend_json is not None and validate_extend_json(extend_json):
-        result = extend_json
-    else:
-        result = {
-            "format_version": "1.8.0",
-            "animations": {}
-        }
-    result["animations"][f"animation.{animation_properties.name}"] = {
-        "animation_length": animation_properties.length,
-        "bones": bones
-    }
-    data = result["animations"][f"animation.{animation_properties.name}"]
-    if animation_properties.loop_animation:
-        data['loop'] = True
-    if animation_properties.anim_time_update != "":
-        data['anim_time_update'] = animation_properties.anim_time_update
-    return result
-
-def get_transformations(
-        object_properties: Dict[ObjectId, ObjectMcProperties]
-        ) -> Dict[ObjectId, ObjectMcTransformations]:
-    '''
-    Loops over object_properties and returns the dictionary with
-    information about transformations of every bone.
-
-    # Arguments:
-    - `object_properties: Dict[ObjectId, ObjectMcProperties]` - the properties
-      of all of the Minecraft cubes and bones.
-
-    # Returns:
-    `Dict[ObjectId, ObjectMcTransformations]` - a dictionary with
-    transformations for every object.
-    '''
-    transformations: Dict[ObjectId, ObjectMcTransformations] = {}
-    for objid, objprop in object_properties.items():
-        if objprop.mctype in [MCObjType.BONE, MCObjType.BOTH]:
-            if objprop.mcparent is not None:
-                parent_matrix = object_properties[
-                    objprop.mcparent
-                ].matrix_world()
-            else:
-                parent_matrix = mathutils.Matrix()
-            # Scale
-            scale = (
-                np.array(objprop.matrix_world().to_scale()) /
-                np.array(parent_matrix.to_scale())
-            )[[0, 2, 1]]
-            # Locatin
-            local_matrix = get_local_matrix(
-                parent_matrix.normalized(),
-                objprop.matrix_world().normalized()
-            )
-            location = np.array(local_matrix.to_translation())
-            location = location[[0, 2, 1]] * MINECRAFT_SCALE_FACTOR
-            # Rotation
-            rotation = get_mcrotation(
-                objprop.matrix_world(), parent_matrix
-            )
-            transformations[objid] = ObjectMcTransformations(
-                location=location, scale=scale, rotation=rotation
-            )
-    return transformations
-
-
-def get_next_keyframe(context: bpy_types.Context) -> Optional[int]:
+def _get_next_keyframe(context: bpy_types.Context) -> Optional[int]:
     '''
     Returns the index of next keyframe from all of selected objects.
     Returns None if there is no more keyframes to chose.
@@ -258,19 +102,254 @@ def get_next_keyframe(context: bpy_types.Context) -> Optional[int]:
     next_keyframe = None
     for obj in context.selected_objects:
         if (
-                obj.animation_data is not None and
-                obj.animation_data.action is not None and
-                obj.animation_data.action.fcurves is not None
+                obj.animation_data is None or
+                obj.animation_data.action is None or
+                obj.animation_data.action.fcurves is None
         ):
-            for fcurve in obj.animation_data.action.fcurves:
-                if fcurve.keyframe_points is not None:
-                    for kframe_point in fcurve.keyframe_points:
-                        time = kframe_point.co[0]
-                        if time > curr:
-                            if next_keyframe is None:
-                                next_keyframe = time
-                            else:
-                                next_keyframe = min(time, next_keyframe)
+            continue
+        for fcurve in obj.animation_data.action.fcurves:
+            if fcurve.keyframe_points is None:
+                continue
+            for kframe_point in fcurve.keyframe_points:
+                time = kframe_point.co[0]
+                if time <= curr:
+                    continue
+                if next_keyframe is None:
+                    next_keyframe = time
+                else:
+                    next_keyframe = min(time, next_keyframe)
     if next_keyframe is not None and next_keyframe > context.scene.frame_end:
         return None
     return next_keyframe
+
+
+class PoseBone(NamedTuple):
+    '''
+    Represents a pose of a single bone (its location, rotation, scale and the
+    name).
+    '''
+    name: str
+    location: np.array
+    rotation: np.array
+    scale: np.array
+
+    def relative(self, original: PoseBone) -> PoseBone:
+        '''
+        Returns pose bone object as translation from the original pose.
+        Relative to the original pose.
+
+        # Properties
+        - `original: PoseBone` - the original pose.
+        '''
+        return PoseBone(
+            name=self.name, scale=self.scale / original.scale,
+            location=self.location - original.location,
+            rotation=self.rotation - original.rotation,
+        )
+
+
+class Pose:
+    '''
+    Represents a single pose in a frame of animation.
+
+    # Properties
+    - `pose_bones: List[PoseBone]` - dict of bones in a pose that uses bone
+      names as keys.
+    '''
+
+    def __init__(self):
+        self.pose_bones: Dict[str, PoseBone] = {}
+
+    def load_poses(
+            self, object_properties: Dict[ObjectId, ObjectMcProperties]
+        ):
+        '''
+        Builds pose object from object properties.
+
+        # Arguments:
+        - `object_properties: Dict[ObjectId, ObjectMcProperties]` - the
+          properties of all of the Minecraft cubes and bones.
+        '''
+        for objprop in object_properties.values():
+            if objprop.mctype in [MCObjType.BONE, MCObjType.BOTH]:
+                if objprop.mcparent is not None:
+                    parent_matrix = object_properties[
+                        objprop.mcparent
+                    ].matrix_world()
+                else:
+                    parent_matrix = mathutils.Matrix()
+                # Scale
+                scale = (
+                    np.array(objprop.matrix_world().to_scale()) /
+                    np.array(parent_matrix.to_scale())
+                )[[0, 2, 1]]
+                # Locatin
+                local_matrix = get_local_matrix(
+                    parent_matrix.normalized(),
+                    objprop.matrix_world().normalized()
+                )
+                location = np.array(local_matrix.to_translation())
+                location = location[[0, 2, 1]] * MINECRAFT_SCALE_FACTOR
+                # Rotation
+                rotation = get_mcrotation(
+                    objprop.matrix_world(), parent_matrix
+                )
+                self.pose_bones[objprop.name()] = PoseBone(
+                    name=objprop.name(), location=location, scale=scale,
+                    rotation=rotation
+                )
+
+
+@dataclass
+class AnimationExport:
+    '''
+    Object that represents animation during export.
+
+    # Properties:
+    - `name: str` - name of the animation.
+    - `length: float` - the length of animation in seconds.
+    - `loop_animation: bool` - value of loop property of Minecraft animation.
+    - `anim_time_update: str` - value of anim_time_update property of Minecraft
+      animation.
+    - `poses: Dict[int, Pose]` - poses of the animation (keyframes). Key is
+      the frame number and value is the pose.
+    '''
+    name: str
+    length: float
+    loop_animation: bool
+    anim_time_update: str
+    fps: float
+    original_pose: Pose = field(default_factory=Pose)
+    poses: Dict[int, Pose] = field(default_factory=dict)
+
+    def load_poses(
+            self, object_properties: Dict[ObjectId, ObjectMcProperties],
+            context: bpy_types.Context
+        ):
+        '''
+        Populates the self.poses dictionary.
+
+        # Properties:
+        - `object_properties: Dict[ObjectId, ObjectMcProperties]` - the
+        properties of all of the Minecraft cubes and bones.
+        - `context: bpy_types.Context` - the context of running the operator.
+        '''
+        original_frame = context.scene.frame_current
+        bpy.ops.screen.animation_cancel()
+        try:
+            context.scene.frame_set(0)
+            self.original_pose.load_poses(
+                object_properties
+            )
+            next_keyframe = _get_next_keyframe(context)
+            while next_keyframe is not None:
+                context.scene.frame_set(next_keyframe)
+                curr_pose = Pose()
+                curr_pose.load_poses(object_properties)
+                self.poses[next_keyframe] = curr_pose
+                next_keyframe = _get_next_keyframe(context)
+        finally:
+            context.scene.frame_set(original_frame)
+
+    def json(self, old_json: Optional[Dict] = None) -> Dict:
+        '''
+        Returns the JSON representation of the animation (Minecraft format).
+        Tries to populate old_json if its a valid animation file.
+        Additionaly removes the unnecessary keyframes to optimise the
+        animation.
+
+        # Properties
+        - `old_json: Optional[Dict]` - the original animation file to write
+          into.
+
+        # Returns:
+        `Dict` - a dictionary with JSON file with animation.
+        '''
+        # Create result dict
+        result: Dict = {"format_version": "1.8.0", "animations": {}}
+        try:
+            if isinstance(old_json['animations'], dict):  # type: ignore
+                result: Dict = old_json  # type: ignore
+        except (TypeError, LookupError):
+            pass
+
+        bones: Dict = {}
+        for bone_name in self.original_pose.pose_bones:
+            bones[bone_name] = self._json_bone(bone_name)
+
+        result["animations"][f"animation.{self.name}"] = {
+            "animation_length": self.length,
+            "bones": bones
+        }
+        data = result["animations"][f"animation.{self.name}"]
+        if self.loop_animation:
+            data['loop'] = True
+        if self.anim_time_update != "":
+            data['anim_time_update'] = self.anim_time_update
+        return result
+
+    def _json_bone(
+                self, bone_name: str
+        ) -> Dict:
+        '''
+        Returns optimised JSON representation of an animation of single bone.
+
+        # Properties
+        `bone_name: str` - the name of the bone.
+
+        # Returns
+        `Dict` - the animation of a bone.
+        '''
+        # t, rot, loc, scale
+        poses: List[Dict] = []
+        prev_pose = self.original_pose.pose_bones[bone_name]
+        for key_frame in self.poses:
+            # Get relative PoseBone with minimised rotation
+            pose_bone = self.poses[key_frame].pose_bones[bone_name].relative(
+                self.original_pose.pose_bones[bone_name]
+            )
+            pose_bone = PoseBone(
+                name=pose_bone.name, scale=pose_bone.scale,
+                location=pose_bone.location, rotation=_pick_closest_rotation(
+                    pose_bone.rotation, prev_pose.rotation,
+                    self.original_pose.pose_bones[bone_name].rotation
+                )
+            )
+            timestamp = str(round((key_frame-1) / self.fps, 4))
+            poses.append({
+                't': timestamp,
+                'loc': get_vect_json(pose_bone.location),
+                'scl': get_vect_json(pose_bone.scale),
+                'rot': get_vect_json(pose_bone.rotation),
+            })
+            # Update prev pose
+            prev_pose = pose_bone
+
+        # Filter unnecessary frames and add them to bone
+        if not poses:  # If empty return empty animation
+            return {'position': {}, 'rotation': {}, 'scale': {}}
+        bone: Dict = {  # dictionary populated with 0 timestamp frame
+            'position': {poses[0]['t']: poses[0]['loc']},
+            'rotation': {poses[0]['t']: poses[0]['rot']},
+            'scale': {poses[0]['t']: poses[0]['scl']},
+        }
+        # iterate in threes (previous, current , next)
+        prev, curr, next_ = tee(poses, 3)
+        for prv, crr, nxt in zip(
+                prev, islice(curr, 1, None), islice(next_, 2, None)
+        ):
+            if prv['scl'] != crr['scl'] or crr['scl'] != nxt['scl']:
+                bone['scale'][crr['t']] = crr['scl']
+
+            if prv['loc'] != crr['loc'] or crr['loc'] != nxt['loc']:
+                bone['position'][crr['t']] = crr['loc']
+
+            if prv['rot'] != crr['rot'] or crr['rot'] != nxt['rot']:
+                bone['rotation'][crr['t']] = crr['rot']
+        # Add last element unless there is only one (in which case it's already
+        # added)
+        if len(poses) > 1:
+            bone['scale'][poses[-1]['t']] = poses[-1]['scl']
+            bone['position'][poses[-1]['t']] = poses[-1]['loc']
+            bone['rotation'][poses[-1]['t']] = poses[-1]['rot']
+        return bone

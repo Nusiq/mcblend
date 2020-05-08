@@ -15,11 +15,7 @@ import mathutils
 import bpy_types
 
 from .uv import get_uv_mc_cubes, UvMcCube, plan_uv, set_cube_uv
-from .animation import (
-    get_mcanimation_json, get_next_keyframe,
-    get_transformations, AnimationProperties,
-    pick_closest_rotation
-)
+from .animation import AnimationExport
 from .model import get_mcbone_json, get_mcmodel_json
 from .common import (
     MCObjType, get_object_mcproperties, get_vect_json,
@@ -110,73 +106,15 @@ def export_animation(
             f'Name conflict "{name_conflict}". Please rename theobject."'
         )
 
-    # Save starting frame
-    start_frame = context.scene.frame_current
-    # Stop animation if running & jump to the frame 0
-    bpy.ops.screen.animation_cancel()
-    context.scene.frame_set(0)
-
-    # Dictionary that stores bone data
-    bone_data: Dict[ObjectId, Dict[str, List[Dict]]] = (
-        defaultdict(lambda: {
-            'scale': [], 'rotation': [], 'position': []
-        })
-    )
-
-    # Read data from frames
-    default_translation = get_transformations(object_properties)
-    prev_rotation = {
-        name:np.zeros(3) for name in default_translation
-    }
-    next_keyframe = get_next_keyframe(context)
-    while next_keyframe is not None:
-        context.scene.frame_set(math.ceil(next_keyframe))
-        current_translations = get_transformations(object_properties)
-        for d_key, d_val in default_translation.items():
-            # Get the difference from original
-            scale = current_translations[d_key].scale / d_val.scale
-            loc = current_translations[d_key].location - d_val.location
-            rot = current_translations[d_key].rotation - d_val.rotation
-
-            time = str(round(
-                (context.scene.frame_current-1) / context.scene.render.fps,
-                4
-            ))
-            bone_data[d_key]['position'].append({
-                'time': time,
-                'value': get_vect_json(loc)
-            })
-            rot = pick_closest_rotation(
-                rot, prev_rotation[d_key], d_val.rotation
-            )
-            bone_data[d_key]['rotation'].append({
-                'time': time,
-                'value': get_vect_json(rot)
-            })
-            bone_data[d_key]['scale'].append({
-                'time': time,
-                'value': get_vect_json(scale)
-            })
-
-            prev_rotation[d_key] = rot  # Save previous rotation
-
-        next_keyframe = get_next_keyframe(context)
-
-    # Return to first frame and create the result
-    context.scene.frame_set(start_frame)
-    animation_properties = AnimationProperties(
+    animation = AnimationExport(
         name=context.scene.nusiq_mcblend.animation_name,
         length=(context.scene.frame_end-1)/context.scene.render.fps,
         loop_animation=context.scene.nusiq_mcblend.loop_animation,
         anim_time_update=context.scene.nusiq_mcblend.anim_time_update,
+        fps=context.scene.render.fps
     )
-    animation_dict = get_mcanimation_json(
-        animation_properties=animation_properties,
-        bone_data=bone_data, object_properties=object_properties,
-        extend_json=old_dict
-    )
-
-    return animation_dict
+    animation.load_poses(object_properties, context)
+    return animation.json(old_json=old_dict)
 
 
 def set_uvs(context: bpy_types.Context):

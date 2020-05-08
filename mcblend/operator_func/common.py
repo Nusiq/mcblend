@@ -142,16 +142,6 @@ class ObjectMcProperties:
         return self.thisobj.matrix_world.copy()
 
 
-class ObjectMcTransformations(NamedTuple):
-    '''
-    Temporary properties of transformations of an object (mesh or empty)
-    for the minecraft animation. Changes in these values over the frames of the
-    animation are used to calculate the values for minecraft animation json.
-    '''
-    location: np.array
-    scale: np.array
-    rotation: np.array
-
 def get_vect_json(arr: Iterable) -> List[float]:
     '''
     Changes the iterable whith numbers into basic python list of floats.
