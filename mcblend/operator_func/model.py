@@ -81,12 +81,9 @@ def get_mcbone_json(
     mcbone: Dict = {'name': boneprop.name(), 'cubes': []}
     if boneprop.mcparent is not None:
         mcbone['parent'] = object_properties[boneprop.mcparent].name()
-        b_rot = get_mcrotation(
-            boneprop.matrix_world(),
-            object_properties[boneprop.mcparent].matrix_world()
-        )
+        b_rot = get_mcrotation(boneprop, object_properties[boneprop.mcparent])
     else:
-        b_rot = get_mcrotation(boneprop.matrix_world())
+        b_rot = get_mcrotation(boneprop)
     b_pivot = get_mcpivot(boneprop, object_properties) * MINECRAFT_SCALE_FACTOR
     mcbone['pivot'] = get_vect_json(b_pivot)
     mcbone['rotation'] = get_vect_json(b_rot)
@@ -118,9 +115,7 @@ def get_mcbone_json(
             get_mccube_position(cubeprop) * _c_scale *
             MINECRAFT_SCALE_FACTOR
         )
-        c_rot = get_mcrotation(
-            cubeprop.matrix_world(), boneprop.matrix_world()
-        )
+        c_rot = get_mcrotation(cubeprop, boneprop)
 
         if cubeprop.has_uv():
             uv = cubeprop.get_mc_uv()

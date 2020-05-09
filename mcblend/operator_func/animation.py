@@ -173,27 +173,31 @@ class Pose:
         for objprop in object_properties.values():
             if objprop.mctype in [MCObjType.BONE, MCObjType.BOTH]:
                 if objprop.mcparent is not None:
-                    parent_matrix = object_properties[
-                        objprop.mcparent
-                    ].matrix_world()
+                    parent: Optional[ObjectMcProperties] = (
+                        object_properties[objprop.mcparent]
+                    )
                 else:
-                    parent_matrix = mathutils.Matrix()
+                    parent = None
                 # Scale
                 scale = (
                     np.array(objprop.matrix_world().to_scale()) /
-                    np.array(parent_matrix.to_scale())
+                    np.array(mathutils.Matrix().to_scale())
                 )[[0, 2, 1]]
                 # Locatin
-                local_matrix = get_local_matrix(
-                    parent_matrix.normalized(),
-                    objprop.matrix_world().normalized()
-                )
+                if parent is None:
+                    local_matrix = get_local_matrix(
+                        mathutils.Matrix(),
+                        objprop.matrix_world().normalized()
+                    )
+                else:
+                    local_matrix = get_local_matrix(
+                        parent.matrix_world().normalized(),
+                        objprop.matrix_world().normalized()
+                    )
                 location = np.array(local_matrix.to_translation())
                 location = location[[0, 2, 1]] * MINECRAFT_SCALE_FACTOR
                 # Rotation
-                rotation = get_mcrotation(
-                    objprop.matrix_world(), parent_matrix
-                )
+                rotation = get_mcrotation(objprop, parent)
                 self.pose_bones[objprop.name()] = PoseBone(
                     name=objprop.name(), location=location, scale=scale,
                     rotation=rotation

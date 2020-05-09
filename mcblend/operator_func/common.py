@@ -177,8 +177,8 @@ def get_local_matrix(
 
 
 def get_mcrotation(
-        child_matrix: mathutils.Matrix,
-        parent_matrix: Optional[mathutils.Matrix] = None) -> np.ndarray:
+        child: ObjectMcProperties, parent: ObjectMcProperties = None
+    ) -> np.ndarray:
     '''
     Returns the rotation of mcbone.
 
@@ -203,12 +203,12 @@ def get_mcrotation(
             parent_matrix.inverted() @ child_matrix
         ).to_quaternion().to_euler('XZY')
 
-    if parent_matrix is not None:
+    if parent is not None:
         result = local_rotation(
-            child_matrix, parent_matrix
+            child.matrix_world(), parent.matrix_world()
         )
     else:
-        result = child_matrix.to_euler('XZY')
+        result = child.matrix_world().to_euler('XZY')
     result = np.array(result)[[0, 2, 1]]
     result = result * np.array([1, -1, 1])
     result = result * 180/math.pi  # math.degrees() for array
