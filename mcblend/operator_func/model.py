@@ -7,9 +7,8 @@ from typing import List, Dict
 import numpy as np
 
 from .common import (
-    MINECRAFT_SCALE_FACTOR, get_mcrotation, get_mcpivot,
-    get_mcube_size, get_vect_json, get_mccube_position, ObjectId,
-    McblendObject
+    MINECRAFT_SCALE_FACTOR, get_mcrotation, get_mcpivot, get_mcube_size,
+    get_vect_json, get_mccube_position, McblendObject
 )
 
 
@@ -50,8 +49,8 @@ def get_mcmodel_json(
 
 def get_mcbone_json(
         boneprop: McblendObject, cubeprops: List[McblendObject],
-        locatorprops: List[McblendObject],
-        object_properties: Dict[ObjectId, McblendObject]) -> Dict:
+        locatorprops: List[McblendObject]
+    ) -> Dict:
     '''
     Returns the dictionary that represents a single mcbone in json file
     of model.
@@ -66,8 +65,6 @@ def get_mcbone_json(
       the same time).
     - `locatorprops: List[McblendObject]` - the list of objects that
       represent the locators that belong to the bone.
-    - `object_properties: Dict[ObjectId, McblendObject]` - the properties
-      of all of the Minecraft cubes and bones.
 
     # Returns:
     `Dict` - the single bone from Minecraft model.
@@ -79,12 +76,12 @@ def get_mcbone_json(
 
     # Set basic bone properties
     mcbone: Dict = {'name': boneprop.name(), 'cubes': []}
-    if boneprop.mcparent is not None:
-        mcbone['parent'] = object_properties[boneprop.mcparent].name()
-        b_rot = get_mcrotation(boneprop, object_properties[boneprop.mcparent])
+    if boneprop.parent is not None:
+        mcbone['parent'] = boneprop.parent.name()
+        b_rot = get_mcrotation(boneprop, boneprop.parent)
     else:
         b_rot = get_mcrotation(boneprop)
-    b_pivot = get_mcpivot(boneprop, object_properties) * MINECRAFT_SCALE_FACTOR
+    b_pivot = get_mcpivot(boneprop) * MINECRAFT_SCALE_FACTOR
     mcbone['pivot'] = get_vect_json(b_pivot)
     mcbone['rotation'] = get_vect_json(b_rot)
 
@@ -93,9 +90,7 @@ def get_mcbone_json(
         mcbone['locators'] = {}
     for locatorprop in locatorprops:
         _l_scale = _scale(locatorprop)
-        l_pivot = get_mcpivot(
-            locatorprop, object_properties
-        ) * MINECRAFT_SCALE_FACTOR
+        l_pivot = get_mcpivot(locatorprop) * MINECRAFT_SCALE_FACTOR
         l_origin = l_pivot + (
             get_mccube_position(locatorprop) *
             _l_scale * MINECRAFT_SCALE_FACTOR
@@ -108,9 +103,7 @@ def get_mcbone_json(
         c_size = get_mcube_size(
             cubeprop
         ) * _c_scale * MINECRAFT_SCALE_FACTOR
-        c_pivot = get_mcpivot(
-            cubeprop, object_properties
-        ) * MINECRAFT_SCALE_FACTOR
+        c_pivot = get_mcpivot(cubeprop) * MINECRAFT_SCALE_FACTOR
         c_origin = c_pivot + (
             get_mccube_position(cubeprop) * _c_scale *
             MINECRAFT_SCALE_FACTOR

@@ -14,9 +14,8 @@ import mathutils
 import numpy as np
 
 from .common import (
-    MINECRAFT_SCALE_FACTOR, McblendObject,
-    MCObjType, get_local_matrix, get_mcrotation, ObjectId,
-    get_vect_json
+    MINECRAFT_SCALE_FACTOR, MCObjType, get_local_matrix, get_mcrotation,
+    get_vect_json, McblendObjectGroup
 )
 
 
@@ -161,34 +160,28 @@ class Pose:
         self.pose_bones: Dict[str, PoseBone] = {}
 
     def load_poses(
-            self, object_properties: Dict[ObjectId, McblendObject]
+            self, object_properties: McblendObjectGroup
         ):
         '''
         Builds pose object from object properties.
 
         # Arguments:
-        - `object_properties: Dict[ObjectId, McblendObject]` - the
+        - `object_properties: McblendObjectGroup` - the
           properties of all of the Minecraft cubes and bones.
         '''
         for objprop in object_properties.values():
             if objprop.mctype in [MCObjType.BONE, MCObjType.BOTH]:
-                if objprop.mcparent is not None:
-                    parent: Optional[McblendObject] = (
-                        object_properties[objprop.mcparent]
-                    )
-                else:
-                    parent = None
                 # Scale
                 scale = (
                     np.array(objprop.matrix_world().to_scale()) /
                     np.array(mathutils.Matrix().to_scale())
                 )[[0, 2, 1]]
                 # Locatin
-                local_matrix = get_local_matrix(objprop, parent)
+                local_matrix = get_local_matrix(objprop, objprop.parent)
                 location = np.array(local_matrix.to_translation())
                 location = location[[0, 2, 1]] * MINECRAFT_SCALE_FACTOR
                 # Rotation
-                rotation = get_mcrotation(objprop, parent)
+                rotation = get_mcrotation(objprop, objprop.parent)
                 self.pose_bones[objprop.name()] = PoseBone(
                     name=objprop.name(), location=location, scale=scale,
                     rotation=rotation
@@ -218,14 +211,14 @@ class AnimationExport:
     poses: Dict[int, Pose] = field(default_factory=dict)
 
     def load_poses(
-            self, object_properties: Dict[ObjectId, McblendObject],
+            self, object_properties: McblendObjectGroup,
             context: bpy_types.Context
         ):
         '''
         Populates the self.poses dictionary.
 
         # Properties:
-        - `object_properties: Dict[ObjectId, McblendObject]` - the
+        - `object_properties: McblendObjectGroup` - the
         properties of all of the Minecraft cubes and bones.
         - `context: bpy_types.Context` - the context of running the operator.
         '''
@@ -233,9 +226,7 @@ class AnimationExport:
         bpy.ops.screen.animation_cancel()
         try:
             context.scene.frame_set(0)
-            self.original_pose.load_poses(
-                object_properties
-            )
+            self.original_pose.load_poses(object_properties)
             next_keyframe = _get_next_keyframe(context)
             while next_keyframe is not None:
                 context.scene.frame_set(next_keyframe)

@@ -45,13 +45,24 @@ class McblendObject:
     '''
     def __init__(
             self, thisobj_id: ObjectId, thisobj: bpy_types.Object,
-            mcparent: Optional[ObjectId], mcchildren: List[ObjectId],
-            mctype: MCObjType):
+            parentobj_id: Optional[ObjectId], mcchildren: List[ObjectId],
+            mctype: MCObjType, group: McblendObjectGroup):
         self.thisobj_id = thisobj_id
         self.thisobj: bpy_types.Object = thisobj
-        self.mcparent: Optional[ObjectId] = mcparent
+        self.parentobj_id: Optional[ObjectId] = parentobj_id
         self.mcchildren: List[ObjectId] = mcchildren
         self.mctype: MCObjType = mctype
+        self.group = group
+
+    @property
+    def parent(self) -> Optional[McblendObject]:
+        '''Return parent McBlendObject or None.'''
+        try:
+            if self.parentobj_id is None:
+                return None
+            return self.group[self.parentobj_id]
+        except KeyError:
+            return None
 
     def clear_uv_layers(self):
         '''
@@ -140,6 +151,89 @@ class McblendObject:
                 self.thisobj_id.bone_name
             ].matrix.copy()
         return self.thisobj.matrix_world.copy()
+
+
+class McblendObjectGroup:
+    '''
+    A group of McblendObjects often that supplies easy access to many utility
+    functions used by mcblend. McblendObjects can be accessed with ObjectId
+    with __getitem__ method.
+
+    # Properties:
+    - `data: Dict[ObjectId, McblendObject]` - the content of the group.
+    '''
+    def __init__(self, context: bpy_types.Context):
+        self.data: Dict[ObjectId, McblendObject] = {}
+        self._load_objects(context)
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, key: ObjectId) -> McblendObject:
+        return self.data[key]
+
+    def __contains__(self, item):
+        return item in self.data
+
+    def __iter__(self):
+        return self.data.__iter__()
+
+    def values(self):
+        '''Same as values in dict.'''
+        return self.data.values()
+
+    def keys(self):
+        '''Same as keys in dict.'''
+        return self.data.keys()
+
+    def items(self):
+        '''Same as items in dict.'''
+        return self.data.items()
+
+    def _load_objects(self, context: bpy_types.Context):
+        '''
+        Loops through context.selected_objects and and creates McblendObjects
+        for this group. Used by constructor.
+
+        # Arguments:
+        - `context: bpy_types.Context` - the context of running the operator.
+        '''
+        # pylint: disable=too-many-branches
+        for obj_id, obj in loop_objects(context.selected_objects):
+            curr_obj_mc_type: MCObjType
+            curr_obj_mc_parent: Optional[ObjectId] = None
+            if obj.type == 'EMPTY':
+                curr_obj_mc_type = MCObjType.BONE
+                if (obj.parent is not None and len(obj.children) == 0 and
+                        'mc_is_bone' not in obj):
+                    curr_obj_mc_type = MCObjType.LOCATOR
+
+                if obj.parent is not None:
+                    curr_obj_mc_parent = get_parent_mc_bone(obj)
+            elif obj.type == 'MESH':
+                if obj.parent is None or 'mc_is_bone' in obj:
+                    curr_obj_mc_type = MCObjType.BOTH
+                else:
+                    curr_obj_mc_parent = get_parent_mc_bone(obj)
+                    curr_obj_mc_type = MCObjType.CUBE
+            elif obj.type == 'ARMATURE':
+                bone = obj.data.bones[obj_id.bone_name]
+                if bone.parent is None and len(bone.children) == 0:
+                    continue  # Skip empty bones
+                curr_obj_mc_type = MCObjType.BONE
+                if bone.parent is not None:
+                    curr_obj_mc_parent = ObjectId(obj.name, bone.parent.name)
+            else:  # Handle only empty, meshes and armatures
+                continue
+            self.data[obj_id] = McblendObject(
+                obj_id, obj, curr_obj_mc_parent,
+                [], curr_obj_mc_type, self
+            )
+        # Fill the children property. Must be in separate loop to reverse the
+        # effect of get_parent_mc_bone() function.
+        for objid, objprop in self.data.items():
+            if objprop.parentobj_id is not None and objprop.parentobj_id in self.data:
+                self.data[objprop.parentobj_id].mcchildren.append(objid)
 
 
 def get_vect_json(arr: Iterable) -> List[float]:
@@ -248,17 +342,12 @@ def get_mccube_position(objprop: McblendObject) -> np.ndarray:
     return np.array(objprop.bound_box()[0])[[0, 2, 1]]
 
 
-def get_mcpivot(
-        objprop: McblendObject,
-        object_properties: Dict[ObjectId, McblendObject]
-    ) -> np.ndarray:
+def get_mcpivot(objprop: McblendObject) -> np.ndarray:
     '''
     Returns the pivot point of Minecraft object.
 
     # Arguments:
     - `objprop: McblendObject` - the properties of Minecraft object.
-    - `object_properties: Dict[ObjectId, McblendObject]` - the
-      other objects.
 
     # Returns:
     `np.ndarray` - the pivot point of Minecraft object.
@@ -275,9 +364,9 @@ def get_mcpivot(
         ).to_translation()
 
     def _get_mcpivot(objprop: McblendObject) -> mathutils.Vector:
-        if objprop.mcparent is not None:
-            result = local_crds(object_properties[objprop.mcparent], objprop)
-            result += _get_mcpivot(object_properties[objprop.mcparent])
+        if objprop.parent is not None:
+            result = local_crds(objprop.parent, objprop)
+            result += _get_mcpivot(objprop.parent)
         else:
             result = objprop.matrix_world().to_translation()
         return result
@@ -333,7 +422,7 @@ def get_parent_mc_bone(obj: bpy_types.Object) -> Optional[ObjectId]:
 
 
 def get_name_conflicts(
-        object_properties: Dict[ObjectId, McblendObject]
+        object_properties: McblendObjectGroup
     ) -> str:
     '''
     Looks through the object_properties dictionary and tries to find name
@@ -341,7 +430,7 @@ def get_name_conflicts(
     of an object that causes the conflict.
 
     # Arguments:
-    - `object_properties: Dict[ObjectId, McblendObject]` - the properties
+    - `object_properties: McblendObjectGroup` - the properties
     of all objects.
 
     # Returns:
@@ -355,58 +444,3 @@ def get_name_conflicts(
             return objprop.name()
         names.append(objprop.name())
     return ''
-
-
-def get_object_mcproperties(
-        context: bpy_types.Context
-        ) -> Dict[ObjectId, McblendObject]:
-    '''
-    Loops through context.selected_objects and returns a dictionary with custom
-    properties of mcobjects. Returned dictionary uses the ObjectId of the
-    objects as keys and the custom properties as values.
-
-    # Arguments:
-    - `context: bpy_types.Context` - the context of running the operator.
-
-    # Returns:
-    `Dict[ObjectId, McblendObject]` - the properties of all objects.
-    '''
-    # pylint: disable=R0912
-    properties: Dict[ObjectId, McblendObject] = {}
-    for obj_id, obj in loop_objects(context.selected_objects):
-        curr_obj_mc_type: MCObjType
-        curr_obj_mc_parent: Optional[ObjectId] = None
-        if obj.type == 'EMPTY':
-            curr_obj_mc_type = MCObjType.BONE
-            if (obj.parent is not None and len(obj.children) == 0 and
-                    'mc_is_bone' not in obj):
-                curr_obj_mc_type = MCObjType.LOCATOR
-
-            if obj.parent is not None:
-                curr_obj_mc_parent = get_parent_mc_bone(obj)
-        elif obj.type == 'MESH':
-            if obj.parent is None or 'mc_is_bone' in obj:
-                curr_obj_mc_type = MCObjType.BOTH
-            else:
-                curr_obj_mc_parent = get_parent_mc_bone(obj)
-                curr_obj_mc_type = MCObjType.CUBE
-        elif obj.type == 'ARMATURE':
-            bone = obj.data.bones[obj_id.bone_name]
-            if bone.parent is None and len(bone.children) == 0:
-                continue  # Skip empty bones
-            curr_obj_mc_type = MCObjType.BONE
-            if bone.parent is not None:
-                curr_obj_mc_parent = ObjectId(obj.name, bone.parent.name)
-        else:  # Handle only empty, meshes and armatures
-            continue
-        properties[obj_id] = McblendObject(
-            obj_id, obj, curr_obj_mc_parent,
-            [], curr_obj_mc_type
-        )
-    # Fill the children property. Must be in separate loop to reverse the
-    # effect of get_parent_mc_bone() function.
-    for objid, objprop in properties.items():
-        if objprop.mcparent is not None and objprop.mcparent in properties:
-            properties[objprop.mcparent].mcchildren.append(objid)
-
-    return properties

@@ -18,8 +18,8 @@ from .uv import get_uv_mc_cubes, UvMcCube, plan_uv, set_cube_uv
 from .animation import AnimationExport
 from .model import get_mcbone_json, get_mcmodel_json
 from .common import (
-    MCObjType, get_object_mcproperties, get_vect_json,
-    ObjectId, McblendObject, get_name_conflicts, MINECRAFT_SCALE_FACTOR
+    MCObjType, get_vect_json, ObjectId, McblendObject, get_name_conflicts,
+    MINECRAFT_SCALE_FACTOR, McblendObjectGroup
 )
 from .importer import load_model, build_geometry, assert_is_model
 from .exception import NameConflictException
@@ -36,7 +36,7 @@ def export_model(context: bpy_types.Context) -> Dict:
     # Returns:
     `Dict` - a dictionary with the model..
     '''
-    object_properties = get_object_mcproperties(context)
+    object_properties = McblendObjectGroup(context)
     name_conflict = get_name_conflicts(object_properties)
     if name_conflict:
         raise NameConflictException(
@@ -71,7 +71,7 @@ def export_model(context: bpy_types.Context) -> Dict:
                         locators.append(object_properties[child_id])
 
             mcbone = get_mcbone_json(
-                objprop, cubes, locators, object_properties
+                objprop, cubes, locators
             )
             mc_bones.append(mcbone)
 
@@ -99,7 +99,7 @@ def export_animation(
     `Dict` - a dictionary with the animation.
     '''
     # Check and create object properties
-    object_properties = get_object_mcproperties(context)
+    object_properties = McblendObjectGroup(context)
     name_conflict = get_name_conflicts(object_properties)
     if name_conflict:
         raise NameConflictException(
@@ -142,7 +142,7 @@ def set_uvs(context: bpy_types.Context):
     bpy.ops.screen.animation_cancel()
     context.scene.frame_set(0)
 
-    object_properties = get_object_mcproperties(context)
+    object_properties = McblendObjectGroup(context)
     objprops = [
         o for o in object_properties.values()
         if o.type() == 'MESH'
