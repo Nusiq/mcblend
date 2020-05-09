@@ -306,7 +306,10 @@ class AnimationExport:
         '''
         # t, rot, loc, scale
         poses: List[Dict] = []
-        prev_pose = self.original_pose.pose_bones[bone_name]
+        prev_pose_bone = PoseBone(
+            name=bone_name, scale=np.zeros(3), location=np.zeros(3),
+            rotation=np.zeros(3),
+        )
         for key_frame in self.poses:
             # Get relative PoseBone with minimised rotation
             pose_bone = self.poses[key_frame].pose_bones[bone_name].relative(
@@ -315,7 +318,7 @@ class AnimationExport:
             pose_bone = PoseBone(
                 name=pose_bone.name, scale=pose_bone.scale,
                 location=pose_bone.location, rotation=_pick_closest_rotation(
-                    pose_bone.rotation, prev_pose.rotation,
+                    pose_bone.rotation, prev_pose_bone.rotation,
                     self.original_pose.pose_bones[bone_name].rotation
                 )
             )
@@ -327,7 +330,7 @@ class AnimationExport:
                 'rot': get_vect_json(pose_bone.rotation),
             })
             # Update prev pose
-            prev_pose = pose_bone
+            prev_pose_bone = pose_bone
 
         # Filter unnecessary frames and add them to bone
         if not poses:  # If empty return empty animation
