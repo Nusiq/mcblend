@@ -159,8 +159,7 @@ def get_vect_json(arr: Iterable) -> List[float]:
 
 
 def get_local_matrix(
-        parent: Optional[ObjectMcProperties], child: ObjectMcProperties,
-        normalized: bool = False
+        parent: Optional[ObjectMcProperties], child: ObjectMcProperties
     ) -> mathutils.Matrix:
     '''
     Returns translation matrix of child in relation to parent.
@@ -179,9 +178,6 @@ def get_local_matrix(
     else:
         p_matrix = mathutils.Matrix()
     c_matrix = child.matrix_world()
-    if normalized:
-        p_matrix.normalize()
-        c_matrix.normalize()
     return p_matrix.inverted() @ c_matrix
 
 
@@ -271,9 +267,11 @@ def get_mcpivot(
             parent: ObjectMcProperties, child: ObjectMcProperties
         ) -> mathutils.Vector:
         '''Local coordinates of child matrix inside parent matrix'''
+        # Applying normalize() function to matrix world of parent and child
+        # suppose to fix some errors with scaling but tests doesn't show any
+        # difference.
         return get_local_matrix(
-            parent, child,
-            normalized=True  # Eliminate scale with matrix normalization
+            parent, child
         ).to_translation()
 
     def _get_mcpivot(objprop: ObjectMcProperties) -> mathutils.Vector:
