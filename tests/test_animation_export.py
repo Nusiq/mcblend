@@ -53,7 +53,7 @@ def make_comparison_files(
 
 # PYTEST FUNCTIONS
 SCENES = [
-    'ObjectAnimation', 'ArmatureAnimation'
+    'ObjectAnimation', 'ArmatureAnimation', 'BattleMech'
 ]
 
 
