@@ -12,12 +12,12 @@ import numpy as np
 
 from .exception import NotEnoughTextureSpace
 from .common import (
-    MINECRAFT_SCALE_FACTOR, get_mcube_size, ObjectMcProperties
+    MINECRAFT_SCALE_FACTOR, get_mcube_size, McblendObject
 )
 
 
 def get_uv_face(
-        objprop: ObjectMcProperties, face_name: str
+        objprop: McblendObject, face_name: str
     ) -> Dict[str, int]:
     '''
     Returns a dictionary with information about indices of 4 loops of the uv
@@ -26,7 +26,7 @@ def get_uv_face(
     are integer indices of the loops.
 
     # Arguments:
-    - `objprop: ObjectMcProperties` - the properties of the Minecraft object
+    - `objprop: McblendObject` - the properties of the Minecraft object
     - `face_name: str` - decides which face should be returned. Accepts
       *front*, *back*, *left*, *right*, *top*, *bottom*
 
@@ -58,7 +58,7 @@ def get_uv_face(
 
 
 def set_uv(
-        objprop: ObjectMcProperties, uv_face: Dict[str, int],
+        objprop: McblendObject, uv_face: Dict[str, int],
         crds: Tuple[float, float], size: Tuple[float, float],
         mirror_y: bool, mirror_x: bool
     ):
@@ -67,7 +67,7 @@ def set_uv(
     given coordinates and size of the face.
 
     # Arguments:
-    - `objprop: ObjectMcProperties` - the properties of the Minecraft object.
+    - `objprop: McblendObject` - the properties of the Minecraft object.
     - `uv_face: Dict[str, int]` - UV face dictionary.
     - `crds: Tuple[float, float]` - value from 0 to 1 the position of the
       bottom left loop using Blender UV-mapping coordinates system.
@@ -91,7 +91,7 @@ def set_uv(
 
 
 def set_cube_uv(
-        objprop: ObjectMcProperties, uv: Tuple[float, float], width: float,
+        objprop: McblendObject, uv: Tuple[float, float], width: float,
         depth: float, height: float, texture_width: int, texture_height: int
     ):
     '''
@@ -99,7 +99,7 @@ def set_cube_uv(
     way that Minecraft does.
 
     # Arguments:
-    - `objprop: ObjectMcProperties` - properties of the object.
+    - `objprop: McblendObject` - properties of the object.
     - `uv: Tuple[float, float]` - value from 0 to 1 the position of the
       bottom left loop using Blenders UV-mapping coordinates system.
     - `width: float` - width of the object converted to value from 0 to 1 in
@@ -460,7 +460,7 @@ class _UvGroup:
 
 
 def get_uv_mc_cubes(
-        objprops: List[ObjectMcProperties],
+        objprops: List[McblendObject],
         read_existing_uvs: bool
     ) -> Dict[str, UvMcCube]:
     '''
@@ -468,7 +468,7 @@ def get_uv_mc_cubes(
     of that uses the names of the objects as keys and UvMcCubes as values.
 
     # Properties:
-    - `objprops: List[ObjectMcProperties]` - list of the properties of the
+    - `objprops: List[McblendObject]` - list of the properties of the
       objects.
     - `read_existing_uvs: bool` - if set to True it sets the UV value in
       UvMcCube to a value read from the mc_uv property of the object.
@@ -476,7 +476,7 @@ def get_uv_mc_cubes(
     # Returns:
     `Dict[str, UvMcCube]` - a dictionary with UvMcCube for every object.
     '''
-    def _scale(objprop: ObjectMcProperties) -> np.ndarray:
+    def _scale(objprop: McblendObject) -> np.ndarray:
         '''Scale of a bone'''
         _, _, scale = objprop.matrix_world().decompose()
         return np.array(scale.xzy)

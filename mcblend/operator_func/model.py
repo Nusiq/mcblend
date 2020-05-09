@@ -9,7 +9,7 @@ import numpy as np
 from .common import (
     MINECRAFT_SCALE_FACTOR, get_mcrotation, get_mcpivot,
     get_mcube_size, get_vect_json, get_mccube_position, ObjectId,
-    ObjectMcProperties
+    McblendObject
 )
 
 
@@ -49,30 +49,30 @@ def get_mcmodel_json(
 
 
 def get_mcbone_json(
-        boneprop: ObjectMcProperties, cubeprops: List[ObjectMcProperties],
-        locatorprops: List[ObjectMcProperties],
-        object_properties: Dict[ObjectId, ObjectMcProperties]) -> Dict:
+        boneprop: McblendObject, cubeprops: List[McblendObject],
+        locatorprops: List[McblendObject],
+        object_properties: Dict[ObjectId, McblendObject]) -> Dict:
     '''
     Returns the dictionary that represents a single mcbone in json file
     of model.
 
     # Arguments:
-    - `boneprop: ObjectMcProperties` - the main object that represents the
+    - `boneprop: McblendObject` - the main object that represents the
       bone.
-    - `cubeprops: List[ObjectMcProperties]` - the list of objects that
+    - `cubeprops: List[McblendObject]` - the list of objects that
       represent the cubes that belong to the bone. The boneprop can be one of
       these objects because a mesh in Blender in some cases can be transformed
       into a bone in the model and into a cube that is a part of this bone (at
       the same time).
-    - `locatorprops: List[ObjectMcProperties]` - the list of objects that
+    - `locatorprops: List[McblendObject]` - the list of objects that
       represent the locators that belong to the bone.
-    - `object_properties: Dict[ObjectId, ObjectMcProperties]` - the properties
+    - `object_properties: Dict[ObjectId, McblendObject]` - the properties
       of all of the Minecraft cubes and bones.
 
     # Returns:
     `Dict` - the single bone from Minecraft model.
     '''
-    def _scale(objprop: ObjectMcProperties) -> np.ndarray:
+    def _scale(objprop: McblendObject) -> np.ndarray:
         '''Scale of a bone'''
         _, _, scale = objprop.matrix_world().decompose()
         return np.array(scale.xzy)

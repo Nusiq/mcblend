@@ -14,7 +14,7 @@ import mathutils
 import numpy as np
 
 from .common import (
-    MINECRAFT_SCALE_FACTOR, ObjectMcProperties,
+    MINECRAFT_SCALE_FACTOR, McblendObject,
     MCObjType, get_local_matrix, get_mcrotation, ObjectId,
     get_vect_json
 )
@@ -161,19 +161,19 @@ class Pose:
         self.pose_bones: Dict[str, PoseBone] = {}
 
     def load_poses(
-            self, object_properties: Dict[ObjectId, ObjectMcProperties]
+            self, object_properties: Dict[ObjectId, McblendObject]
         ):
         '''
         Builds pose object from object properties.
 
         # Arguments:
-        - `object_properties: Dict[ObjectId, ObjectMcProperties]` - the
+        - `object_properties: Dict[ObjectId, McblendObject]` - the
           properties of all of the Minecraft cubes and bones.
         '''
         for objprop in object_properties.values():
             if objprop.mctype in [MCObjType.BONE, MCObjType.BOTH]:
                 if objprop.mcparent is not None:
-                    parent: Optional[ObjectMcProperties] = (
+                    parent: Optional[McblendObject] = (
                         object_properties[objprop.mcparent]
                     )
                 else:
@@ -184,7 +184,7 @@ class Pose:
                     np.array(mathutils.Matrix().to_scale())
                 )[[0, 2, 1]]
                 # Locatin
-                local_matrix = get_local_matrix(parent, objprop)
+                local_matrix = get_local_matrix(objprop, parent)
                 location = np.array(local_matrix.to_translation())
                 location = location[[0, 2, 1]] * MINECRAFT_SCALE_FACTOR
                 # Rotation
@@ -218,14 +218,14 @@ class AnimationExport:
     poses: Dict[int, Pose] = field(default_factory=dict)
 
     def load_poses(
-            self, object_properties: Dict[ObjectId, ObjectMcProperties],
+            self, object_properties: Dict[ObjectId, McblendObject],
             context: bpy_types.Context
         ):
         '''
         Populates the self.poses dictionary.
 
         # Properties:
-        - `object_properties: Dict[ObjectId, ObjectMcProperties]` - the
+        - `object_properties: Dict[ObjectId, McblendObject]` - the
         properties of all of the Minecraft cubes and bones.
         - `context: bpy_types.Context` - the context of running the operator.
         '''

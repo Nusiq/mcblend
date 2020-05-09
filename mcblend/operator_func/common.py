@@ -37,7 +37,7 @@ class ObjectId(NamedTuple):
     bone_name: str
 
 
-class ObjectMcProperties:
+class McblendObject:
     '''
     A class that wraps around Blender objects (meshes, empties and bones) and
     gives access to some data necesary to export the model into Minecraft
@@ -159,15 +159,15 @@ def get_vect_json(arr: Iterable) -> List[float]:
 
 
 def get_local_matrix(
-        parent: Optional[ObjectMcProperties], child: ObjectMcProperties
+        child: McblendObject, parent: Optional[McblendObject] = None
     ) -> mathutils.Matrix:
     '''
     Returns translation matrix of child in relation to parent.
     In space defined by parent translation matrix.
 
     # Arguments:
-    - `parent: ObjectMcProperties` - parent object.
-    - `child: ObjectMcProperties` - child object.
+    - `parent: McblendObject` - parent object.
+    - `child: McblendObject` - child object.
     - `normalized: bool` - if True, normalizes the parent and child
       matrix_world before getting the result.
     # Returns:
@@ -182,15 +182,15 @@ def get_local_matrix(
 
 
 def get_mcrotation(
-        child: ObjectMcProperties, parent: Optional[ObjectMcProperties] = None
+        child: McblendObject, parent: Optional[McblendObject] = None
     ) -> np.ndarray:
     '''
     Returns the rotation of mcbone.
 
     # Arguments:
-    - `child: ObjectMcProperties` - the the object that represents
+    - `child: McblendObject` - the the object that represents
       Minecraft bone.
-    - `parent: Optional[ObjectMcProperties]` - the the parent bone
+    - `parent: Optional[McblendObject]` - the the parent bone
       object (optional).
 
     # Returns:
@@ -220,12 +220,12 @@ def get_mcrotation(
     return result
 
 
-def get_mcube_size(objprop: ObjectMcProperties) -> np.ndarray:
+def get_mcube_size(objprop: McblendObject) -> np.ndarray:
     '''
     Returns cube size based on the bounding box of an object.
 
     # Arguments:
-    - `objprop: ObjectMcProperties` - the properties of the object
+    - `objprop: McblendObject` - the properties of the object
 
     # Returns:
     `np.ndarray` - the size of the object in Minecraft format.
@@ -235,12 +235,12 @@ def get_mcube_size(objprop: ObjectMcProperties) -> np.ndarray:
     return (np.array(bound_box[6]) - np.array(bound_box[0]))[[0, 2, 1]]
 
 
-def get_mccube_position(objprop: ObjectMcProperties) -> np.ndarray:
+def get_mccube_position(objprop: McblendObject) -> np.ndarray:
     '''
     Returns cube position based on the bounding box of an object.
 
     # Arguments:
-    - `objprop: ObjectMcProperties` - the properties of the object
+    - `objprop: McblendObject` - the properties of the object
 
     # Returns:
     `np.ndarray` - the position of the object in Minecraft format.
@@ -249,32 +249,32 @@ def get_mccube_position(objprop: ObjectMcProperties) -> np.ndarray:
 
 
 def get_mcpivot(
-        objprop: ObjectMcProperties,
-        object_properties: Dict[ObjectId, ObjectMcProperties]
+        objprop: McblendObject,
+        object_properties: Dict[ObjectId, McblendObject]
     ) -> np.ndarray:
     '''
     Returns the pivot point of Minecraft object.
 
     # Arguments:
-    - `objprop: ObjectMcProperties` - the properties of Minecraft object.
-    - `object_properties: Dict[ObjectId, ObjectMcProperties]` - the
+    - `objprop: McblendObject` - the properties of Minecraft object.
+    - `object_properties: Dict[ObjectId, McblendObject]` - the
       other objects.
 
     # Returns:
     `np.ndarray` - the pivot point of Minecraft object.
     '''
     def local_crds(
-            parent: ObjectMcProperties, child: ObjectMcProperties
+            parent: McblendObject, child: McblendObject
         ) -> mathutils.Vector:
         '''Local coordinates of child matrix inside parent matrix'''
         # Applying normalize() function to matrix world of parent and child
         # suppose to fix some errors with scaling but tests doesn't show any
         # difference.
         return get_local_matrix(
-            parent, child
+            child, parent
         ).to_translation()
 
-    def _get_mcpivot(objprop: ObjectMcProperties) -> mathutils.Vector:
+    def _get_mcpivot(objprop: McblendObject) -> mathutils.Vector:
         if objprop.mcparent is not None:
             result = local_crds(object_properties[objprop.mcparent], objprop)
             result += _get_mcpivot(object_properties[objprop.mcparent])
@@ -333,7 +333,7 @@ def get_parent_mc_bone(obj: bpy_types.Object) -> Optional[ObjectId]:
 
 
 def get_name_conflicts(
-        object_properties: Dict[ObjectId, ObjectMcProperties]
+        object_properties: Dict[ObjectId, McblendObject]
     ) -> str:
     '''
     Looks through the object_properties dictionary and tries to find name
@@ -341,7 +341,7 @@ def get_name_conflicts(
     of an object that causes the conflict.
 
     # Arguments:
-    - `object_properties: Dict[ObjectId, ObjectMcProperties]` - the properties
+    - `object_properties: Dict[ObjectId, McblendObject]` - the properties
     of all objects.
 
     # Returns:
@@ -359,7 +359,7 @@ def get_name_conflicts(
 
 def get_object_mcproperties(
         context: bpy_types.Context
-        ) -> Dict[ObjectId, ObjectMcProperties]:
+        ) -> Dict[ObjectId, McblendObject]:
     '''
     Loops through context.selected_objects and returns a dictionary with custom
     properties of mcobjects. Returned dictionary uses the ObjectId of the
@@ -369,10 +369,10 @@ def get_object_mcproperties(
     - `context: bpy_types.Context` - the context of running the operator.
 
     # Returns:
-    `Dict[ObjectId, ObjectMcProperties]` - the properties of all objects.
+    `Dict[ObjectId, McblendObject]` - the properties of all objects.
     '''
     # pylint: disable=R0912
-    properties: Dict[ObjectId, ObjectMcProperties] = {}
+    properties: Dict[ObjectId, McblendObject] = {}
     for obj_id, obj in loop_objects(context.selected_objects):
         curr_obj_mc_type: MCObjType
         curr_obj_mc_parent: Optional[ObjectId] = None
@@ -399,7 +399,7 @@ def get_object_mcproperties(
                 curr_obj_mc_parent = ObjectId(obj.name, bone.parent.name)
         else:  # Handle only empty, meshes and armatures
             continue
-        properties[obj_id] = ObjectMcProperties(
+        properties[obj_id] = McblendObject(
             obj_id, obj, curr_obj_mc_parent,
             [], curr_obj_mc_type
         )

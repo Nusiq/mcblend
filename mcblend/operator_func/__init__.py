@@ -19,7 +19,7 @@ from .animation import AnimationExport
 from .model import get_mcbone_json, get_mcmodel_json
 from .common import (
     MCObjType, get_object_mcproperties, get_vect_json,
-    ObjectId, ObjectMcProperties, get_name_conflicts, MINECRAFT_SCALE_FACTOR
+    ObjectId, McblendObject, get_name_conflicts, MINECRAFT_SCALE_FACTOR
 )
 from .importer import load_model, build_geometry, assert_is_model
 from .exception import NameConflictException
@@ -57,10 +57,10 @@ def export_model(context: bpy_types.Context) -> Dict:
     for _, objprop in object_properties.items():
         if (objprop.mctype in [MCObjType.BONE, MCObjType.BOTH]):
             # Create cubes and locators list
-            cubes: List[ObjectMcProperties] = []
+            cubes: List[McblendObject] = []
             if objprop.mctype == MCObjType.BOTH:  # Else MCObjType == BOTH
                 cubes = [objprop]
-            locators: List[ObjectMcProperties] = []
+            locators: List[McblendObject] = []
             # Add children cubes if they are MCObjType.CUBE type
             for child_id in objprop.mcchildren:
                 if child_id in object_properties:
