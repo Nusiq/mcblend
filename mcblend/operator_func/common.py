@@ -159,34 +159,43 @@ def get_vect_json(arr: Iterable) -> List[float]:
 
 
 def get_local_matrix(
-        parent_world_matrix: mathutils.Matrix,
-        child_world_matrix: mathutils.Matrix) -> mathutils.Matrix:
+        parent: Optional[ObjectMcProperties], child: ObjectMcProperties,
+        normalized: bool = False
+    ) -> mathutils.Matrix:
     '''
     Returns translation matrix of child in relation to parent.
     In space defined by parent translation matrix.
 
     # Arguments:
-    - `parent_world_matrix: mathutils.Matrix` - matrix_world of parent object.
-    - `child_world_matrix: mathutils.Matrix` - matrix_world of child object.
+    - `parent: ObjectMcProperties` - parent object.
+    - `child: ObjectMcProperties` - child object.
+    - `normalized: bool` - if True, normalizes the parent and child
+      matrix_world before getting the result.
     # Returns:
     `mathutils.Matrix` - translation matrix for child object in parent space.
     '''
-    return (
-        parent_world_matrix.inverted() @ child_world_matrix
-    )
+    if parent is not None:
+        p_matrix = parent.matrix_world()
+    else:
+        p_matrix = mathutils.Matrix()
+    c_matrix = child.matrix_world()
+    if normalized:
+        p_matrix.normalize()
+        c_matrix.normalize()
+    return p_matrix.inverted() @ c_matrix
 
 
 def get_mcrotation(
-        child: ObjectMcProperties, parent: ObjectMcProperties = None
+        child: ObjectMcProperties, parent: Optional[ObjectMcProperties] = None
     ) -> np.ndarray:
     '''
     Returns the rotation of mcbone.
 
     # Arguments:
-    - `child_matrix: mathutils.Matrix` - the matrix_world of the object that
-      represents Minecraft bone.
-    - `parent_matrix: Optional[mathutils.Matrix]` - the matrix_world of the
-      parent bone object (optional).
+    - `child: ObjectMcProperties` - the the object that represents
+      Minecraft bone.
+    - `parent: Optional[ObjectMcProperties]` - the the parent bone
+      object (optional).
 
     # Returns:
     `np.ndarray` - numpy array with the rotation in Minecraft format.
@@ -259,19 +268,17 @@ def get_mcpivot(
     `np.ndarray` - the pivot point of Minecraft object.
     '''
     def local_crds(
-            parent_matrix: mathutils.Matrix, child_matrix: mathutils.Matrix
+            parent: ObjectMcProperties, child: ObjectMcProperties
         ) -> mathutils.Vector:
         '''Local coordinates of child matrix inside parent matrix'''
-        parent_matrix = parent_matrix.normalized()  # eliminate scale
-        child_matrix = child_matrix.normalized()  # eliminate scale
-        return get_local_matrix(parent_matrix, child_matrix).to_translation()
+        return get_local_matrix(
+            parent, child,
+            normalized=True  # Eliminate scale with matrix normalization
+        ).to_translation()
 
     def _get_mcpivot(objprop: ObjectMcProperties) -> mathutils.Vector:
         if objprop.mcparent is not None:
-            result = local_crds(
-                object_properties[objprop.mcparent].matrix_world(),
-                objprop.matrix_world()
-            )
+            result = local_crds(object_properties[objprop.mcparent], objprop)
             result += _get_mcpivot(object_properties[objprop.mcparent])
         else:
             result = objprop.matrix_world().to_translation()
