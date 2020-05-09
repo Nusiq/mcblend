@@ -184,16 +184,7 @@ class Pose:
                     np.array(mathutils.Matrix().to_scale())
                 )[[0, 2, 1]]
                 # Locatin
-                if parent is None:
-                    local_matrix = get_local_matrix(
-                        mathutils.Matrix(),
-                        objprop.matrix_world().normalized()
-                    )
-                else:
-                    local_matrix = get_local_matrix(
-                        parent.matrix_world().normalized(),
-                        objprop.matrix_world().normalized()
-                    )
+                local_matrix = get_local_matrix(parent, objprop)
                 location = np.array(local_matrix.to_translation())
                 location = location[[0, 2, 1]] * MINECRAFT_SCALE_FACTOR
                 # Rotation
