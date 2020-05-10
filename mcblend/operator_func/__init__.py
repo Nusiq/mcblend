@@ -136,7 +136,7 @@ def set_uvs(context: bpy_types.Context):
     object_properties = McblendObjectGroup(context)
     objprops = [
         o for o in object_properties.values()
-        if o.type() == 'MESH'
+        if o.obj_type == 'MESH'
     ]
 
     uv_dict: Dict[ObjectId, UvMcCube] = get_uv_mc_cubes(
@@ -201,7 +201,7 @@ def set_uvs(context: bpy_types.Context):
         for objprop in objprops:
             if objprop.thisobj_id in uv_dict:
                 curr_uv = uv_dict[objprop.thisobj_id]
-                objprop.data_uv_layers_new()
+                objprop.obj_data.uv_layers.new()
                 set_cube_uv(
                     objprop, (curr_uv.uv[0], curr_uv.uv[1]),
                     curr_uv.width, curr_uv.depth, curr_uv.height,

@@ -11,9 +11,7 @@ from dataclasses import dataclass, field
 import numpy as np
 
 from .exception import NotEnoughTextureSpace
-from .common import (
-    MINECRAFT_SCALE_FACTOR, get_mcube_size, McblendObject, ObjectId
-)
+from .common import MINECRAFT_SCALE_FACTOR, McblendObject, ObjectId
 
 
 def get_uv_face(
@@ -39,16 +37,16 @@ def get_uv_face(
     }
     # list with bound box vertex indices in order LD, RD, RU, LU
     f = bound_box_faces[face_name]
-    bound_box = objprop.bound_box()
+    bound_box = objprop.obj_bound_box
     bb_verts = {
         'LD': np.array(bound_box[f[0]]), 'RD': np.array(bound_box[f[1]]),
         'RU': np.array(bound_box[f[2]]), 'LU': np.array(bound_box[f[3]]),
     }
 
-    for face in objprop.data_polygons():
+    for face in objprop.obj_data.polygons:
         confirmed_vertices = {'LD': None, 'RD': None, 'RU': None, 'LU': None}
         for vertex_id, loop_id in zip(face.vertices, face.loop_indices):
-            vertex = np.array(objprop.data_vertices()[vertex_id].co)
+            vertex = np.array(objprop.obj_data.vertices[vertex_id].co)
             for bbv_key, bbv_value in bb_verts.items():
                 if np.allclose(vertex, bbv_value):
                     confirmed_vertices[bbv_key] = loop_id
@@ -76,7 +74,7 @@ def set_uv(
     - `mirror_y: bool` - if True mirrors top and bottom sides of the face.
     - `mirror_x: bool` - if True mirrors left and right sides of the face.
     '''
-    uv_data = objprop.data_uv_layers_active_data()
+    uv_data = objprop.obj_data.uv_layers.active.data
     order = ['LD', 'RD', 'RU', 'LU']
 
     if mirror_x:
@@ -478,7 +476,7 @@ def get_uv_mc_cubes(
     '''
     def _scale(objprop: McblendObject) -> np.ndarray:
         '''Scale of a bone'''
-        _, _, scale = objprop.matrix_world().decompose()
+        _, _, scale = objprop.obj_matrix_world.decompose()
         return np.array(scale.xzy)
 
     # defaultdict(lambda: _UvGroup())
@@ -487,7 +485,7 @@ def get_uv_mc_cubes(
 
     for objprop in objprops:
         scale = (
-            get_mcube_size(objprop) * _scale(objprop) *
+            objprop.mcube_size * _scale(objprop) *
             MINECRAFT_SCALE_FACTOR
         )
 

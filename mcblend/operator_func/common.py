@@ -65,18 +65,6 @@ class McblendObject:
         except KeyError:
             return None
 
-    def clear_uv_layers(self):
-        '''
-        Clears the uv layers from the object. Rises exception when the object
-        is armature
-        '''
-        if self.thisobj.type == 'ARMATURE':
-            raise Exception('Invalid method for ARMATURE.')
-        while len(self.thisobj.data.uv_layers) > 0:
-            self.thisobj.data.uv_layers.remove(
-                self.thisobj.data.uv_layers[0]
-            )
-
     @property
     def mc_uv(self) -> Optional[Tuple[int, int]]:
         '''Returns the mc_uv property of the object.'''
@@ -148,23 +136,13 @@ class McblendObject:
         elif 'mc_uv_group' in self.thisobj:
             del self.thisobj['mc_uv_group']
 
-    def data_polygons(self) -> Any:
-        '''Returns the polygons (faces) of the object'''
-        return self.thisobj.data.polygons
+    @property
+    def obj_data(self) -> Any:
+        '''Returns thisobj.data.'''
+        return self.thisobj.data
 
-    def data_vertices(self) -> Any:
-        '''Returns the vertices of the object'''
-        return self.thisobj.data.vertices
-
-    def data_uv_layers_active_data(self) -> Any:
-        '''Return the data of active uv-layers of the object'''
-        return self.thisobj.data.uv_layers.active.data
-
-    def data_uv_layers_new(self):
-        '''Adds UV-layer to an object.'''
-        self.thisobj.data.uv_layers.new()
-
-    def name(self) -> str:
+    @property
+    def obj_name(self) -> str:
         '''Returns the name of the object'''
         if self.thisobj.type == 'ARMATURE':
             return self.thisobj.pose.bones[
@@ -172,21 +150,136 @@ class McblendObject:
             ].name
         return self.thisobj.name.split('.')[0]
 
-    def type(self) -> str:
+    @property
+    def obj_type(self) -> str:
         '''Returns the type of the object (ARMATURE, MESH or EMPTY).'''
         return self.thisobj.type
 
-    def bound_box(self) -> Any:
+    @property
+    def obj_bound_box(self) -> Any:
         '''Returns the bound box of the object'''
         return self.thisobj.bound_box
 
-    def matrix_world(self) -> mathutils.Matrix:
-        '''Return the translation matrix (matrix_world) of the object.'''
+    @property
+    def obj_matrix_world(self) -> mathutils.Matrix:
+        '''
+        Return the copy of translation matrix (matrix_world) of the object.
+        '''
         if self.thisobj.type == 'ARMATURE':
             return self.thisobj.matrix_world.copy() @ self.thisobj.pose.bones[
                 self.thisobj_id.bone_name
             ].matrix.copy()
         return self.thisobj.matrix_world.copy()
+
+    @property
+    def mcube_size(self) -> np.ndarray:
+        '''
+        The cube size in Minecraft format based on the bounding box of an
+        object.
+        '''
+        # 0. ---; 1. --+; 2. -++; 3. -+-; 4. +--; 5. +-+; 6. +++; 7. ++-
+        bound_box = self.obj_bound_box
+        return (np.array(bound_box[6]) - np.array(bound_box[0]))[[0, 2, 1]]
+
+    @property
+    def mccube_position(self) -> np.ndarray:
+        '''
+        The cube position in Minecraft format based on the bounding box of
+        an object.
+        '''
+        return np.array(self.obj_bound_box[0])[[0, 2, 1]]
+
+    @property
+    def mcpivot(self) -> np.ndarray:
+        '''
+        The pivot point of Minecraft object.
+        '''
+        def local_crds(
+                parent: McblendObject, child: McblendObject
+            ) -> mathutils.Vector:
+            '''Local coordinates of child matrix inside parent matrix'''
+            # Applying normalize() function to matrix world of parent and child
+            # suppose to fix some errors with scaling but tests doesn't show any
+            # difference.
+            return child.get_local_matrix(parent).to_translation()
+
+        def _get_mcpivot(objprop: McblendObject) -> mathutils.Vector:
+            if objprop.parent is not None:
+                result = local_crds(objprop.parent, objprop)
+                result += _get_mcpivot(objprop.parent)
+            else:
+                result = objprop.obj_matrix_world.to_translation()
+            return result
+
+        return np.array(_get_mcpivot(self).xzy)
+
+    def clear_uv_layers(self):
+        '''
+        Clears the uv layers from the object. Rises exception when the object
+        is armature
+        '''
+        if self.thisobj.type == 'ARMATURE':
+            raise Exception('Invalid method for ARMATURE.')
+        while len(self.thisobj.data.uv_layers) > 0:
+            self.thisobj.data.uv_layers.remove(
+                self.thisobj.data.uv_layers[0]
+            )
+
+    def get_local_matrix(
+            self, other: Optional[McblendObject] = None
+        ) -> mathutils.Matrix:
+        '''
+        Returns translation matrix of this object in relation the other object.
+        In space defined by the other translation matrix.
+
+        # Arguments:
+        - `other: McblendObject` - the other object
+        # Returns:
+        `mathutils.Matrix` - translation matrix for child object in other
+        object space.
+        '''
+        if other is not None:
+            p_matrix = other.obj_matrix_world
+        else:
+            p_matrix = mathutils.Matrix()
+        c_matrix = self.obj_matrix_world
+        return p_matrix.inverted() @ c_matrix
+
+    def get_mcrotation(
+            self, other: Optional[McblendObject] = None
+        ) -> np.ndarray:
+        '''
+        Returns the rotation of this object in relation to the other object.
+
+        # Arguments:
+        - `other: Optional[McblendObject]` - the the other object
+        object (optional).
+
+        # Returns:
+        `np.ndarray` - numpy array with the rotation in Minecraft format.
+        '''
+        def local_rotation(
+                child_matrix: mathutils.Matrix, parent_matrix: mathutils.Matrix
+            ) -> mathutils.Euler:
+            '''
+            Reuturns Euler rotation of a child matrix in relation to parent matrix
+            '''
+            child_matrix = child_matrix.normalized()
+            parent_matrix = parent_matrix.normalized()
+            return (
+                parent_matrix.inverted() @ child_matrix
+            ).to_quaternion().to_euler('XZY')
+
+        if other is not None:
+            result = local_rotation(
+                self.obj_matrix_world, other.obj_matrix_world
+            )
+        else:
+            result = self.obj_matrix_world.to_euler('XZY')
+        result = np.array(result)[[0, 2, 1]]
+        result = result * np.array([1, -1, 1])
+        result = result * 180/math.pi  # math.degrees() for array
+        return result
 
 
 class McblendObjectGroup:
@@ -282,11 +375,11 @@ class McblendObjectGroup:
         for objprop in self.values():
             if objprop.mctype not in [MCObjType.BONE, MCObjType.BOTH]:
                 continue  # Only bone names conflicts count
-            if objprop.name() in names:
+            if objprop.obj_name in names:
                 raise NameConflictException(
-                    f'Name conflict "{objprop.name()}". Please rename theobject."'
+                    f'Name conflict "{objprop.obj_name}". Please rename theobject."'
                 )
-            names.append(objprop.name())
+            names.append(objprop.obj_name)
 
     @staticmethod
     def _loop_objects(objects: List) -> Iterable[Tuple[ObjectId, Any]]:
@@ -341,7 +434,6 @@ class McblendObjectGroup:
         return obj_id
 
 
-
 def get_vect_json(arr: Iterable) -> List[float]:
     '''
     Changes the iterable whith numbers into basic python list of floats.
@@ -356,125 +448,3 @@ def get_vect_json(arr: Iterable) -> List[float]:
         if result[i] == -0.0:
             result[i] = 0.0
     return result
-
-
-def get_local_matrix(
-        child: McblendObject, parent: Optional[McblendObject] = None
-    ) -> mathutils.Matrix:
-    '''
-    Returns translation matrix of child in relation to parent.
-    In space defined by parent translation matrix.
-
-    # Arguments:
-    - `parent: McblendObject` - parent object.
-    - `child: McblendObject` - child object.
-    - `normalized: bool` - if True, normalizes the parent and child
-      matrix_world before getting the result.
-    # Returns:
-    `mathutils.Matrix` - translation matrix for child object in parent space.
-    '''
-    if parent is not None:
-        p_matrix = parent.matrix_world()
-    else:
-        p_matrix = mathutils.Matrix()
-    c_matrix = child.matrix_world()
-    return p_matrix.inverted() @ c_matrix
-
-
-def get_mcrotation(
-        child: McblendObject, parent: Optional[McblendObject] = None
-    ) -> np.ndarray:
-    '''
-    Returns the rotation of mcbone.
-
-    # Arguments:
-    - `child: McblendObject` - the the object that represents
-      Minecraft bone.
-    - `parent: Optional[McblendObject]` - the the parent bone
-      object (optional).
-
-    # Returns:
-    `np.ndarray` - numpy array with the rotation in Minecraft format.
-    '''
-    def local_rotation(
-            child_matrix: mathutils.Matrix, parent_matrix: mathutils.Matrix
-        ) -> mathutils.Euler:
-        '''
-        Reuturns Euler rotation of a child matrix in relation to parent matrix
-        '''
-        child_matrix = child_matrix.normalized()
-        parent_matrix = parent_matrix.normalized()
-        return (
-            parent_matrix.inverted() @ child_matrix
-        ).to_quaternion().to_euler('XZY')
-
-    if parent is not None:
-        result = local_rotation(
-            child.matrix_world(), parent.matrix_world()
-        )
-    else:
-        result = child.matrix_world().to_euler('XZY')
-    result = np.array(result)[[0, 2, 1]]
-    result = result * np.array([1, -1, 1])
-    result = result * 180/math.pi  # math.degrees() for array
-    return result
-
-
-def get_mcube_size(objprop: McblendObject) -> np.ndarray:
-    '''
-    Returns cube size based on the bounding box of an object.
-
-    # Arguments:
-    - `objprop: McblendObject` - the properties of the object
-
-    # Returns:
-    `np.ndarray` - the size of the object in Minecraft format.
-    '''
-    # 0. ---; 1. --+; 2. -++; 3. -+-; 4. +--; 5. +-+; 6. +++; 7. ++-
-    bound_box = objprop.bound_box()
-    return (np.array(bound_box[6]) - np.array(bound_box[0]))[[0, 2, 1]]
-
-
-def get_mccube_position(objprop: McblendObject) -> np.ndarray:
-    '''
-    Returns cube position based on the bounding box of an object.
-
-    # Arguments:
-    - `objprop: McblendObject` - the properties of the object
-
-    # Returns:
-    `np.ndarray` - the position of the object in Minecraft format.
-    '''
-    return np.array(objprop.bound_box()[0])[[0, 2, 1]]
-
-
-def get_mcpivot(objprop: McblendObject) -> np.ndarray:
-    '''
-    Returns the pivot point of Minecraft object.
-
-    # Arguments:
-    - `objprop: McblendObject` - the properties of Minecraft object.
-
-    # Returns:
-    `np.ndarray` - the pivot point of Minecraft object.
-    '''
-    def local_crds(
-            parent: McblendObject, child: McblendObject
-        ) -> mathutils.Vector:
-        '''Local coordinates of child matrix inside parent matrix'''
-        # Applying normalize() function to matrix world of parent and child
-        # suppose to fix some errors with scaling but tests doesn't show any
-        # difference.
-        return get_local_matrix(
-            child, parent
-        ).to_translation()
-
-    def _get_mcpivot(objprop: McblendObject) -> mathutils.Vector:
-        if objprop.parent is not None:
-            result = local_crds(objprop.parent, objprop)
-            result += _get_mcpivot(objprop.parent)
-        else:
-            result = objprop.matrix_world().to_translation()
-        return result
-
-    return np.array(_get_mcpivot(objprop).xzy)

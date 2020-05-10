@@ -14,8 +14,7 @@ import mathutils
 import numpy as np
 
 from .common import (
-    MINECRAFT_SCALE_FACTOR, MCObjType, get_local_matrix, get_mcrotation,
-    get_vect_json, McblendObjectGroup
+    MINECRAFT_SCALE_FACTOR, MCObjType, get_vect_json, McblendObjectGroup
 )
 
 
@@ -173,17 +172,17 @@ class Pose:
             if objprop.mctype in [MCObjType.BONE, MCObjType.BOTH]:
                 # Scale
                 scale = (
-                    np.array(objprop.matrix_world().to_scale()) /
+                    np.array(objprop.obj_matrix_world.to_scale()) /
                     np.array(mathutils.Matrix().to_scale())
                 )[[0, 2, 1]]
                 # Locatin
-                local_matrix = get_local_matrix(objprop, objprop.parent)
+                local_matrix = objprop.get_local_matrix(objprop.parent)
                 location = np.array(local_matrix.to_translation())
                 location = location[[0, 2, 1]] * MINECRAFT_SCALE_FACTOR
                 # Rotation
-                rotation = get_mcrotation(objprop, objprop.parent)
-                self.pose_bones[objprop.name()] = PoseBone(
-                    name=objprop.name(), location=location, scale=scale,
+                rotation = objprop.get_mcrotation(objprop.parent)
+                self.pose_bones[objprop.obj_name] = PoseBone(
+                    name=objprop.obj_name, location=location, scale=scale,
                     rotation=rotation
                 )
 

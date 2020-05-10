@@ -6,11 +6,7 @@ from __future__ import annotations
 from typing import List, Dict
 import numpy as np
 
-from .common import (
-    MINECRAFT_SCALE_FACTOR, get_mcrotation, get_mcpivot, get_mcube_size,
-    get_vect_json, get_mccube_position, McblendObject
-)
-
+from .common import MINECRAFT_SCALE_FACTOR, get_vect_json, McblendObject
 
 
 def get_mcmodel_json(
@@ -71,17 +67,17 @@ def get_mcbone_json(
     '''
     def _scale(objprop: McblendObject) -> np.ndarray:
         '''Scale of a bone'''
-        _, _, scale = objprop.matrix_world().decompose()
+        _, _, scale = objprop.obj_matrix_world.decompose()
         return np.array(scale.xzy)
 
     # Set basic bone properties
-    mcbone: Dict = {'name': boneprop.name(), 'cubes': []}
+    mcbone: Dict = {'name': boneprop.obj_name, 'cubes': []}
     if boneprop.parent is not None:
-        mcbone['parent'] = boneprop.parent.name()
-        b_rot = get_mcrotation(boneprop, boneprop.parent)
+        mcbone['parent'] = boneprop.parent.obj_name
+        b_rot = boneprop.get_mcrotation(boneprop.parent)
     else:
-        b_rot = get_mcrotation(boneprop)
-    b_pivot = get_mcpivot(boneprop) * MINECRAFT_SCALE_FACTOR
+        b_rot = boneprop.get_mcrotation()
+    b_pivot = boneprop.mcpivot * MINECRAFT_SCALE_FACTOR
     mcbone['pivot'] = get_vect_json(b_pivot)
     mcbone['rotation'] = get_vect_json(b_rot)
 
@@ -90,25 +86,22 @@ def get_mcbone_json(
         mcbone['locators'] = {}
     for locatorprop in locatorprops:
         _l_scale = _scale(locatorprop)
-        l_pivot = get_mcpivot(locatorprop) * MINECRAFT_SCALE_FACTOR
+        l_pivot = locatorprop.mcpivot * MINECRAFT_SCALE_FACTOR
         l_origin = l_pivot + (
-            get_mccube_position(locatorprop) *
+            locatorprop.mccube_position *
             _l_scale * MINECRAFT_SCALE_FACTOR
         )
-        mcbone['locators'][locatorprop.name()] = get_vect_json(l_origin)
+        mcbone['locators'][locatorprop.obj_name] = get_vect_json(l_origin)
 
     # Set cubes
     for cubeprop in cubeprops:
         _c_scale = _scale(cubeprop)
-        c_size = get_mcube_size(
-            cubeprop
-        ) * _c_scale * MINECRAFT_SCALE_FACTOR
-        c_pivot = get_mcpivot(cubeprop) * MINECRAFT_SCALE_FACTOR
+        c_size = cubeprop.mcube_size * _c_scale * MINECRAFT_SCALE_FACTOR
+        c_pivot = cubeprop.mcpivot * MINECRAFT_SCALE_FACTOR
         c_origin = c_pivot + (
-            get_mccube_position(cubeprop) * _c_scale *
-            MINECRAFT_SCALE_FACTOR
+            cubeprop.mccube_position * _c_scale * MINECRAFT_SCALE_FACTOR
         )
-        c_rot = get_mcrotation(cubeprop, boneprop)
+        c_rot = cubeprop.get_mcrotation(boneprop)
 
 
         if cubeprop.mc_uv is not None:
