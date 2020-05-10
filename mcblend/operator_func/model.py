@@ -6,8 +6,8 @@ from __future__ import annotations
 from typing import List, Dict
 import numpy as np
 
-from .common import MINECRAFT_SCALE_FACTOR, get_vect_json, McblendObject
-
+from .common import MINECRAFT_SCALE_FACTOR, McblendObject
+from .json_tools import get_vect_json
 
 def get_mcmodel_json(
         model_name: str, mc_bones: List[Dict],

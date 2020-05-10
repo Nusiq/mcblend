@@ -1,11 +1,52 @@
 '''
-This module adds custom JSONEncoder for nicer code formating for
-JSON output.
+Utility functions for working with JSON and dictionaries.
 '''
 from __future__ import annotations
 
 import json
+from typing import Iterable, List, Optional, Union, Dict, Any
 from collections import UserDict, UserList
+
+from .exception import InvalidDictPathException
+
+def get_vect_json(arr: Iterable) -> List[float]:
+    '''
+    Changes the iterable whith numbers into basic python list of floats.
+    Values from the original iterable are rounded to the 3rd deimal
+    digit.
+
+    # Arguments:
+    - `arr: Iterable` - an iterable with numbers.
+    '''
+    result = [round(i, 3) for i in arr]
+    for i, _ in enumerate(result):
+        if result[i] == -0.0:
+            result[i] = 0.0
+    return result
+
+
+def get_path(
+        jsonable: Dict, path: List[Union[str, int]]
+    ) -> Optional[Any]:
+    '''
+    Goes through a dictionary and checks its structure. Returns the object
+    from given JSON path and success value. Raises InvalidDictPathException
+    when path is invalid.
+
+    # Arguments:
+    - `jsonable: Dict` - a dictionary
+    - `path: List[Union[str, int]]` - a path to target object
+
+    # Returns:
+    `Optional[Any]` - the target object.
+    '''
+    curr_obj = jsonable
+    for path_item in path:
+        try:
+            curr_obj = curr_obj[path_item]
+        except (LookupError, TypeError):
+            raise InvalidDictPathException()
+    return curr_obj
 
 
 class CompactEncoder(json.JSONEncoder):

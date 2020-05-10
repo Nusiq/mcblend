@@ -17,8 +17,9 @@ import bpy_types
 from .uv import get_uv_mc_cubes, UvMcCube, plan_uv, set_cube_uv
 from .animation import AnimationExport
 from .model import get_mcbone_json, get_mcmodel_json
+from .json_tools import get_vect_json
 from .common import (
-    MCObjType, get_vect_json, ObjectId, McblendObject, MINECRAFT_SCALE_FACTOR,
+    MCObjType, ObjectId, McblendObject, MINECRAFT_SCALE_FACTOR,
     McblendObjectGroup
 )
 from .importer import load_model, build_geometry, assert_is_model

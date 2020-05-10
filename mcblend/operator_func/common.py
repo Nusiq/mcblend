@@ -433,18 +433,3 @@ class McblendObjectGroup:
                 raise Exception(f'Unsuported parent type {obj.parent_type}')
         return obj_id
 
-
-def get_vect_json(arr: Iterable) -> List[float]:
-    '''
-    Changes the iterable whith numbers into basic python list of floats.
-    Values from the original iterable are rounded to the 3rd deimal
-    digit.
-
-    # Arguments:
-    - `arr: Iterable` - an iterable with numbers.
-    '''
-    result = [round(i, 3) for i in arr]
-    for i, _ in enumerate(result):
-        if result[i] == -0.0:
-            result[i] = 0.0
-    return result

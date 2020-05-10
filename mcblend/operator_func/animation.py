@@ -12,9 +12,9 @@ import bpy_types
 import mathutils
 
 import numpy as np
-
+from .json_tools import get_vect_json
 from .common import (
-    MINECRAFT_SCALE_FACTOR, MCObjType, get_vect_json, McblendObjectGroup
+    MINECRAFT_SCALE_FACTOR, MCObjType, McblendObjectGroup
 )
 
 

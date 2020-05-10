@@ -4,7 +4,7 @@ Functions and objects related to importing Minecraft models to Blender.
 from __future__ import annotations
 
 import math
-from typing import cast, Dict, List, Union, Optional, Any, Tuple
+from typing import cast, Dict, List, Optional, Any, Tuple
 
 import numpy as np
 
@@ -14,30 +14,7 @@ import bpy
 
 from .common import MINECRAFT_SCALE_FACTOR
 from .exception import InvalidDictPathException
-
-
-def get_path(
-        jsonable: Dict, path: List[Union[str, int]]
-    ) -> Optional[Any]:
-    '''
-    Goes through a dictionary and checks its structure. Returns the object
-    from given JSON path and success value. Raises InvalidDictPathException
-    when path is invalid.
-
-    # Arguments:
-    - `jsonable: Dict` - a dictionary
-    - `path: List[Union[str, int]]` - a path to target object
-
-    # Returns:
-    `Optional[Any]` - the target object.
-    '''
-    curr_obj = jsonable
-    for path_item in path:
-        try:
-            curr_obj = curr_obj[path_item]
-        except (LookupError, TypeError):
-            raise InvalidDictPathException()
-    return curr_obj
+from .json_tools import get_path
 
 def _assert(expr: bool, msg: str = ''):
     '''
