@@ -18,8 +18,8 @@ from .uv import get_uv_mc_cubes, UvMcCube, plan_uv, set_cube_uv
 from .animation import AnimationExport
 from .model import get_mcbone_json, get_mcmodel_json
 from .common import (
-    MCObjType, get_vect_json, ObjectId, McblendObject, get_name_conflicts,
-    MINECRAFT_SCALE_FACTOR, McblendObjectGroup
+    MCObjType, get_vect_json, ObjectId, McblendObject, MINECRAFT_SCALE_FACTOR,
+    McblendObjectGroup
 )
 from .importer import load_model, build_geometry, assert_is_model
 from .exception import NameConflictException
@@ -37,11 +37,6 @@ def export_model(context: bpy_types.Context) -> Dict:
     `Dict` - a dictionary with the model..
     '''
     object_properties = McblendObjectGroup(context)
-    name_conflict = get_name_conflicts(object_properties)
-    if name_conflict:
-        raise NameConflictException(
-            f'Name conflict "{name_conflict}". Please rename theobject."'
-        )
 
     # Save starting frame
     start_frame = context.scene.frame_current
@@ -100,11 +95,6 @@ def export_animation(
     '''
     # Check and create object properties
     object_properties = McblendObjectGroup(context)
-    name_conflict = get_name_conflicts(object_properties)
-    if name_conflict:
-        raise NameConflictException(
-            f'Name conflict "{name_conflict}". Please rename theobject."'
-        )
 
     animation = AnimationExport(
         name=context.scene.nusiq_mcblend.animation_name,
@@ -121,7 +111,8 @@ def set_uvs(context: bpy_types.Context):
     '''
     Used by the operator that sets UV. Calculates the UV-map for selected
     objects. Raises NotEnoughTextureSpace when the texture width and height
-    wasn't big enough.
+    wasn't big enough. Raises NameConflictException if name conflicts in some
+    bones are detected.
 
     Depending on operator configuration this function can: add mc_uv
     property to the objects, add new Blender UV, remove old Blender UV.
@@ -164,7 +155,7 @@ def set_uvs(context: bpy_types.Context):
     for objprop in objprops:
         if objprop.name() in uv_dict:
             curr_uv = uv_dict[objprop.name()]
-            objprop.set_mc_uv((curr_uv.uv[0], curr_uv.uv[1]))
+            objprop.mc_uv = (curr_uv.uv[0], curr_uv.uv[1])
 
     if height is None:
         new_height = max([i.uv[1] + i.size[1] for i in uv_dict.values()])

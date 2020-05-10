@@ -12,6 +12,7 @@ import numpy as np
 import bpy_types
 import mathutils
 
+from .exception import NameConflictException
 
 MINECRAFT_SCALE_FACTOR = 16
 
@@ -76,41 +77,76 @@ class McblendObject:
                 self.thisobj.data.uv_layers[0]
             )
 
-    def set_mc_uv(self, uv: Tuple[int, int]):
-        '''Sets the mc_uv property of the cube.'''
-        self.thisobj['mc_uv'] = uv
-
-    def get_mc_uv(self) -> Tuple[int, int]:
+    @property
+    def mc_uv(self) -> Optional[Tuple[int, int]]:
         '''Returns the mc_uv property of the object.'''
-        return tuple(self.thisobj['mc_uv'])  # type: ignore
+        if 'mc_uv' in self.thisobj:
+            return tuple(self.thisobj['mc_uv'])  # type: ignore
+        return None
 
-    def has_uv(self):
-        '''Returns true if the object has mc_uv property.'''
-        return 'mc_uv' in self.thisobj
+    @mc_uv.setter
+    def mc_uv(self, uv:  Optional[Tuple[int, int]]):
+        '''Sets the mc_uv property of the cube.'''
+        if uv is not None:
+            self.thisobj['mc_uv'] = list(uv)
+        elif 'mc_uv' in self.thisobj:
+            del self.thisobj['mc_uv']
 
-    def has_mc_inflate(self) -> bool:
-        '''Returns true if the object has the mc_inflate property'''
-        return 'mc_inflate' in self.thisobj
-
-    def get_mc_inflate(self) -> float:
+    @property
+    def mc_inflate(self) -> float:
         '''Returns the value of mc_inflate property of the object'''
-        return self.thisobj['mc_inflate']
+        if 'mc_inflate' in self.thisobj:
+            return self.thisobj['mc_inflate']
+        return 0
 
-    def has_mc_mirror(self) -> bool:
+    @mc_inflate.setter
+    def mc_inflate(self, mc_inflate: float):
+        '''Sets the mc_inflate property of the cube.'''
+        if mc_inflate != 0:
+            self.thisobj['mc_inflate'] = mc_inflate
+        elif 'mc_inflate' in self.thisobj:  # 0 is default value
+            del self.thisobj['mc_inflate']
+
+    @property
+    def mc_mirror(self) -> bool:
         '''Returns true if the object has mc_mirror object'''
         return 'mc_mirror' in self.thisobj
 
-    def has_mc_is_bone(self) -> bool:
-        '''Returns true if the object has mc_is_bone property'''
+    @mc_mirror.setter
+    def mc_mirror(self, mc_mirror: bool):
+        '''Sets the mc_mirror property of the cube.'''
+        if mc_mirror:
+            self.thisobj['mc_mirror'] = {}
+        elif 'mc_mirror' in self.thisobj:
+            del self.thisobj['mc_mirror']
+
+    @property
+    def mc_is_bone(self) -> bool:
+        '''Returns true if the object has mc_is_bone object'''
         return 'mc_is_bone' in self.thisobj
 
-    def has_mc_uv_group(self) -> bool:
-        '''Return True if the object has mc_uv_group property'''
-        return 'mc_uv_group' in self.thisobj
+    @mc_is_bone.setter
+    def mc_is_bone(self, mc_is_bone: bool):
+        '''Sets the mc_is_bone property of the cube.'''
+        if mc_is_bone:
+            self.thisobj['mc_is_bone'] = {}
+        elif 'mc_is_bone' in self.thisobj:
+            del self.thisobj['mc_is_bone']
 
-    def get_mc_uv_group(self) -> str:
+    @property
+    def mc_uv_group(self) -> Optional[str]:
         '''Returns the value of mc_uv_group property of the object'''
-        return self.thisobj['mc_uv_group']
+        if 'mc_uv_group' in self.thisobj:
+            return self.thisobj['mc_uv_group']
+        return None
+
+    @mc_uv_group.setter
+    def mc_uv_group(self, mc_uv_group: Optional[str]):
+        '''Returns the value of mc_uv_group property of the object'''
+        if mc_uv_group is not None:
+            self.thisobj['mc_uv_group'] = mc_uv_group
+        elif 'mc_uv_group' in self.thisobj:
+            del self.thisobj['mc_uv_group']
 
     def data_polygons(self) -> Any:
         '''Returns the polygons (faces) of the object'''
@@ -165,6 +201,7 @@ class McblendObjectGroup:
     def __init__(self, context: bpy_types.Context):
         self.data: Dict[ObjectId, McblendObject] = {}
         self._load_objects(context)
+        self._check_name_conflicts()
 
     def __len__(self):
         return len(self.data)
@@ -199,7 +236,7 @@ class McblendObjectGroup:
         - `context: bpy_types.Context` - the context of running the operator.
         '''
         # pylint: disable=too-many-branches
-        for obj_id, obj in loop_objects(context.selected_objects):
+        for obj_id, obj in self._loop_objects(context.selected_objects):
             curr_obj_mc_type: MCObjType
             curr_obj_mc_parent: Optional[ObjectId] = None
             if obj.type == 'EMPTY':
@@ -209,12 +246,12 @@ class McblendObjectGroup:
                     curr_obj_mc_type = MCObjType.LOCATOR
 
                 if obj.parent is not None:
-                    curr_obj_mc_parent = get_parent_mc_bone(obj)
+                    curr_obj_mc_parent = self._get_parent_mc_bone(obj)
             elif obj.type == 'MESH':
                 if obj.parent is None or 'mc_is_bone' in obj:
                     curr_obj_mc_type = MCObjType.BOTH
                 else:
-                    curr_obj_mc_parent = get_parent_mc_bone(obj)
+                    curr_obj_mc_parent = self._get_parent_mc_bone(obj)
                     curr_obj_mc_type = MCObjType.CUBE
             elif obj.type == 'ARMATURE':
                 bone = obj.data.bones[obj_id.bone_name]
@@ -230,10 +267,79 @@ class McblendObjectGroup:
                 [], curr_obj_mc_type, self
             )
         # Fill the children property. Must be in separate loop to reverse the
-        # effect of get_parent_mc_bone() function.
+        # effect of _get_parent_mc_bone() function.
         for objid, objprop in self.data.items():
             if objprop.parentobj_id is not None and objprop.parentobj_id in self.data:
                 self.data[objprop.parentobj_id].mcchildren.append(objid)
+
+    def _check_name_conflicts(self):
+        '''
+        Looks through the object_properties dictionary and tries to find name
+        conflicts. Raises NameConflictException if name conflicts in some bones
+        are detected. Used in constructor.
+        '''
+        names: List[str] = []
+        for objprop in self.values():
+            if objprop.mctype not in [MCObjType.BONE, MCObjType.BOTH]:
+                continue  # Only bone names conflicts count
+            if objprop.name() in names:
+                raise NameConflictException(
+                    f'Name conflict "{objprop.name()}". Please rename theobject."'
+                )
+            names.append(objprop.name())
+
+    @staticmethod
+    def _loop_objects(objects: List) -> Iterable[Tuple[ObjectId, Any]]:
+        '''
+        Loops over the empties, meshes and armature objects and yields them and
+        their ids. If object is an armatre than it loops over every bone and
+        yields the armature and the id of the bone.
+
+        Used in constructor of McblendObjectGroup.
+
+        # Arguments:
+        - `objects: List` - the list of blender objects
+
+        # Returns:
+        `Iterable[Tuple[ObjectId, Any]]` - iterable that goes throug objects and
+        bones.
+        '''
+        for obj in objects:
+            if obj.type in ['MESH', 'EMPTY']:
+                yield ObjectId(obj.name, ''), obj
+            elif obj.type == 'ARMATURE':
+                for bone in obj.data.bones:
+                    yield ObjectId(obj.name, bone.name), obj
+
+    @staticmethod
+    def _get_parent_mc_bone(obj: bpy_types.Object) -> Optional[ObjectId]:
+        '''
+        Goes up through the ancesstors of an bpy_types.Object and tries to find
+        the object that represents its parent bone in Minecraft model.
+
+        Used in constructor of McblendObjectGroup.
+
+        # Arguments:
+        - `obj: bpy_types.Object` - a Blender object which will be truned into
+        Minecraft bone
+
+        # Returns:
+        `Optional[ObjectId]` - parent Minecraft bone of the object or None.
+        '''
+        obj_id = None
+        while obj.parent is not None:
+            if obj.parent_type == 'BONE':
+                return ObjectId(obj.parent.name, obj.parent_bone)
+
+            if obj.parent_type == 'OBJECT':
+                obj = obj.parent
+                obj_id = ObjectId(obj.name, '')
+                if obj.type == 'EMPTY' or 'mc_is_bone' in obj:
+                    return obj_id
+            else:
+                raise Exception(f'Unsuported parent type {obj.parent_type}')
+        return obj_id
+
 
 
 def get_vect_json(arr: Iterable) -> List[float]:
@@ -372,75 +478,3 @@ def get_mcpivot(objprop: McblendObject) -> np.ndarray:
         return result
 
     return np.array(_get_mcpivot(objprop).xzy)
-
-
-def loop_objects(objects: List) -> Iterable[Tuple[ObjectId, Any]]:
-    '''
-    Loops over the empties, meshes and armature objects and yields them and
-    their ids. If object is an armatre than it loops over every bone and
-    yields the armature and the id of the bone.
-
-    # Arguments:
-    - `objects: List` - the list of blender objects
-
-    # Returns:
-    `Iterable[Tuple[ObjectId, Any]]` - iterable that goes throug objects and
-    bones.
-    '''
-    for obj in objects:
-        if obj.type in ['MESH', 'EMPTY']:
-            yield ObjectId(obj.name, ''), obj
-        elif obj.type == 'ARMATURE':
-            for bone in obj.data.bones:
-                yield ObjectId(obj.name, bone.name), obj
-
-def get_parent_mc_bone(obj: bpy_types.Object) -> Optional[ObjectId]:
-    '''
-    Goes up through the ancesstors of an bpy_types.Object and tries to find
-    the object that represents its parent bone in Minecraft model.
-
-    # Arguments:
-    - `obj: bpy_types.Object` - a Blender object which will be truned into
-    Minecraft bone
-
-    # Returns:
-    `Optional[ObjectId]` - parent Minecraft bone of the object or None.
-    '''
-    obj_id = None
-    while obj.parent is not None:
-        if obj.parent_type == 'BONE':
-            return ObjectId(obj.parent.name, obj.parent_bone)
-
-        if obj.parent_type == 'OBJECT':
-            obj = obj.parent
-            obj_id = ObjectId(obj.name, '')
-            if obj.type == 'EMPTY' or 'mc_is_bone' in obj:
-                return obj_id
-        else:
-            raise Exception(f'Unsuported parent type {obj.parent_type}')
-    return obj_id
-
-
-def get_name_conflicts(
-        object_properties: McblendObjectGroup
-    ) -> str:
-    '''
-    Looks through the object_properties dictionary and tries to find name
-    conflicts. Returns empty string (when there are no conflicts) or a name
-    of an object that causes the conflict.
-
-    # Arguments:
-    - `object_properties: McblendObjectGroup` - the properties
-    of all objects.
-
-    # Returns:
-    `str` - name of conflictiong objects or empty string.
-    '''
-    names: List[str] = []
-    for objprop in object_properties.values():
-        if objprop.mctype not in [MCObjType.BONE, MCObjType.BOTH]:
-            continue  # Only bone names conflicts count
-        if objprop.name() in names:
-            return objprop.name()
-        names.append(objprop.name())
-    return ''
