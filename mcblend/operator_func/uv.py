@@ -12,7 +12,7 @@ import numpy as np
 
 from .exception import NotEnoughTextureSpace
 from .common import (
-    MINECRAFT_SCALE_FACTOR, get_mcube_size, McblendObject
+    MINECRAFT_SCALE_FACTOR, get_mcube_size, McblendObject, ObjectId
 )
 
 
@@ -462,7 +462,7 @@ class _UvGroup:
 def get_uv_mc_cubes(
         objprops: List[McblendObject],
         read_existing_uvs: bool
-    ) -> Dict[str, UvMcCube]:
+    ) -> Dict[ObjectId, UvMcCube]:
     '''
     Creates UvMcCube for every object from objprops and returns the dictionary
     of that uses the names of the objects as keys and UvMcCubes as values.
@@ -483,7 +483,7 @@ def get_uv_mc_cubes(
 
     # defaultdict(lambda: _UvGroup())
     uv_groups: Dict[str, _UvGroup] = defaultdict(_UvGroup)
-    result = {}
+    result: Dict[ObjectId, UvMcCube] = {}
 
     for objprop in objprops:
         scale = (
@@ -498,7 +498,7 @@ def get_uv_mc_cubes(
         width, height, depth = tuple([round(i) for i in scale])
 
         if read_existing_uvs and objprop.has_uv():
-            result[objprop.name()] = UvMcCube(
+            result[objprop.thisobj_id] = UvMcCube(
                 width, depth, height,
                 objprop.get_mc_uv()
             )
@@ -508,13 +508,13 @@ def get_uv_mc_cubes(
                     (width, depth, height) in
                     uv_groups[objprop.get_mc_uv_group()].items
                 ):
-                result[objprop.name()] = uv_groups[
+                result[objprop.thisobj_id] = uv_groups[
                     objprop.get_mc_uv_group()
                 ].items[(width, depth, height)]
             else:
-                result[objprop.name()] = UvMcCube(width, depth, height)
+                result[objprop.thisobj_id] = UvMcCube(width, depth, height)
                 if objprop.has_mc_uv_group():
                     uv_groups[
                         objprop.get_mc_uv_group()
-                    ].items[(width, depth, height)] = result[objprop.name()]
+                    ].items[(width, depth, height)] = result[objprop.thisobj_id]
     return result

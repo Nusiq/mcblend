@@ -148,7 +148,7 @@ def set_uvs(context: bpy_types.Context):
         if o.type() == 'MESH'
     ]
 
-    uv_dict: Dict[str, UvMcCube] = get_uv_mc_cubes(
+    uv_dict: Dict[ObjectId, UvMcCube] = get_uv_mc_cubes(
         objprops, read_existing_uvs=not move_existing_mappings
     )
     uv_mc_cubes = list(uv_dict.values())
@@ -162,8 +162,8 @@ def set_uvs(context: bpy_types.Context):
             objprop.clear_uv_layers()
 
     for objprop in objprops:
-        if objprop.name() in uv_dict:
-            curr_uv = uv_dict[objprop.name()]
+        if objprop.thisobj_id in uv_dict:
+            curr_uv = uv_dict[objprop.thisobj_id]
             objprop.set_mc_uv((curr_uv.uv[0], curr_uv.uv[1]))
 
     if height is None:
@@ -208,8 +208,8 @@ def set_uvs(context: bpy_types.Context):
 
     if move_blender_uvs:
         for objprop in objprops:
-            if objprop.name() in uv_dict:
-                curr_uv = uv_dict[objprop.name()]
+            if objprop.thisobj_id in uv_dict:
+                curr_uv = uv_dict[objprop.thisobj_id]
                 objprop.data_uv_layers_new()
                 set_cube_uv(
                     objprop, (curr_uv.uv[0], curr_uv.uv[1]),
