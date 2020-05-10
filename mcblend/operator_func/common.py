@@ -46,12 +46,12 @@ class McblendObject:
     '''
     def __init__(
             self, thisobj_id: ObjectId, thisobj: bpy_types.Object,
-            parentobj_id: Optional[ObjectId], mcchildren: List[ObjectId],
+            parentobj_id: Optional[ObjectId], children_ids: List[ObjectId],
             mctype: MCObjType, group: McblendObjectGroup):
         self.thisobj_id = thisobj_id
         self.thisobj: bpy_types.Object = thisobj
         self.parentobj_id: Optional[ObjectId] = parentobj_id
-        self.mcchildren: List[ObjectId] = mcchildren
+        self.children_ids: List[ObjectId] = children_ids
         self.mctype: MCObjType = mctype
         self.group = group
 
@@ -64,6 +64,17 @@ class McblendObject:
             return self.group[self.parentobj_id]
         except KeyError:
             return None
+
+    @property
+    def children(self) -> Tuple[McblendObject]:
+        '''
+        Return list of children of this object accessible via self.group.
+        '''
+        children: List[McblendObject] = []
+        for child_id in self.children_ids:
+            if child_id in self.group:
+                children.append(self.group[child_id])
+        return tuple(children)  # type: ignore
 
     @property
     def mc_uv(self) -> Optional[Tuple[int, int]]:
@@ -363,7 +374,7 @@ class McblendObjectGroup:
         # effect of _get_parent_mc_bone() function.
         for objid, objprop in self.data.items():
             if objprop.parentobj_id is not None and objprop.parentobj_id in self.data:
-                self.data[objprop.parentobj_id].mcchildren.append(objid)
+                self.data[objprop.parentobj_id].children_ids.append(objid)
 
     def _check_name_conflicts(self):
         '''
@@ -432,4 +443,3 @@ class McblendObjectGroup:
             else:
                 raise Exception(f'Unsuported parent type {obj.parent_type}')
         return obj_id
-

@@ -16,7 +16,7 @@ import bpy_types
 
 from .uv import get_uv_mc_cubes, UvMcCube, plan_uv, set_cube_uv
 from .animation import AnimationExport
-from .model import get_mcbone_json, get_mcmodel_json
+from .model import ModelExport
 from .json_tools import get_vect_json
 from .common import (
     MCObjType, ObjectId, McblendObject, MINECRAFT_SCALE_FACTOR,
@@ -39,44 +39,13 @@ def export_model(context: bpy_types.Context) -> Dict:
     '''
     object_properties = McblendObjectGroup(context)
 
-    # Save starting frame
-    start_frame = context.scene.frame_current
-    # Stop animation if running & jump to the frame 0
-    bpy.ops.screen.animation_cancel()
-    context.scene.frame_set(0)
-
-    texture_width = context.scene.nusiq_mcblend.texture_width
-    texture_height = context.scene.nusiq_mcblend.texture_height
-    model_name = context.scene.nusiq_mcblend.model_name
-    mc_bones: List[Dict] = []
-
-    for _, objprop in object_properties.items():
-        if (objprop.mctype in [MCObjType.BONE, MCObjType.BOTH]):
-            # Create cubes and locators list
-            cubes: List[McblendObject] = []
-            if objprop.mctype == MCObjType.BOTH:  # Else MCObjType == BOTH
-                cubes = [objprop]
-            locators: List[McblendObject] = []
-            # Add children cubes if they are MCObjType.CUBE type
-            for child_id in objprop.mcchildren:
-                if child_id in object_properties:
-                    if object_properties[child_id].mctype == MCObjType.CUBE:
-                        cubes.append(object_properties[child_id])
-                    elif (object_properties[child_id].mctype ==
-                          MCObjType.LOCATOR):
-                        locators.append(object_properties[child_id])
-
-            mcbone = get_mcbone_json(
-                objprop, cubes, locators
-            )
-            mc_bones.append(mcbone)
-
-    # Return to first frame and create the result
-    context.scene.frame_set(start_frame)
-    result = get_mcmodel_json(
-        model_name, mc_bones, texture_width, texture_height
+    model = ModelExport(
+        texture_width=context.scene.nusiq_mcblend.texture_width,
+        texture_height=context.scene.nusiq_mcblend.texture_height,
+        model_name=context.scene.nusiq_mcblend.model_name,
     )
-    return result
+    model.load(object_properties, context)
+    return model.json()
 
 
 def export_animation(
