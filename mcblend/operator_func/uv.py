@@ -112,7 +112,7 @@ def set_cube_uv(
     - `texture_height: int` - texture height for scaling.
     '''
     uv = (uv[0], texture_height-uv[1]-depth-height)
-    if objprop.has_mc_mirror():
+    if objprop.mc_mirror:
         set_uv(
             objprop, get_uv_face(objprop, 'left'),
             (uv[0]/texture_width, uv[1]/texture_height),
@@ -491,30 +491,29 @@ def get_uv_mc_cubes(
             MINECRAFT_SCALE_FACTOR
         )
 
-        if objprop.has_mc_inflate():
-            scale = scale - objprop.get_mc_inflate()*2
+        if objprop.mc_inflate != 0:
+            scale = scale - objprop.mc_inflate*2
 
         # width, height, depth
         width, height, depth = tuple([round(i) for i in scale])
 
-        if read_existing_uvs and objprop.has_uv():
+        if read_existing_uvs and objprop.mc_uv is not None:
             result[objprop.thisobj_id] = UvMcCube(
-                width, depth, height,
-                objprop.get_mc_uv()
+                width, depth, height, objprop.mc_uv
             )
         else:
             if (
-                    objprop.has_mc_uv_group() and
+                    objprop.mc_uv_group is not None and
                     (width, depth, height) in
-                    uv_groups[objprop.get_mc_uv_group()].items
+                    uv_groups[objprop.mc_uv_group].items
                 ):
                 result[objprop.thisobj_id] = uv_groups[
-                    objprop.get_mc_uv_group()
+                    objprop.mc_uv_group
                 ].items[(width, depth, height)]
             else:
                 result[objprop.thisobj_id] = UvMcCube(width, depth, height)
-                if objprop.has_mc_uv_group():
+                if objprop.mc_uv_group is not None:
                     uv_groups[
-                        objprop.get_mc_uv_group()
+                        objprop.mc_uv_group
                     ].items[(width, depth, height)] = result[objprop.thisobj_id]
     return result

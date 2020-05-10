@@ -110,14 +110,15 @@ def get_mcbone_json(
         )
         c_rot = get_mcrotation(cubeprop, boneprop)
 
-        if cubeprop.has_uv():
-            uv = cubeprop.get_mc_uv()
+
+        if cubeprop.mc_uv is not None:
+            uv = cubeprop.mc_uv
         else:
             uv = (0, 0)
 
-        if cubeprop.has_mc_inflate():
-            c_size = c_size - cubeprop.get_mc_inflate()*2
-            c_origin = c_origin + cubeprop.get_mc_inflate()
+        if cubeprop.mc_inflate != 0:
+            c_size = c_size - cubeprop.mc_inflate*2
+            c_origin = c_origin + cubeprop.mc_inflate
 
         cube_dict: Dict = {
             'uv': get_vect_json(uv),
@@ -128,10 +129,10 @@ def get_mcbone_json(
             'rotation': [i if i != -180 else 180 for i in get_vect_json(c_rot)]
         }
 
-        if cubeprop.has_mc_inflate():
-            cube_dict['inflate'] = cubeprop.get_mc_inflate()
+        if cubeprop.mc_inflate != 0:
+            cube_dict['inflate'] = cubeprop.mc_inflate
 
-        if cubeprop.has_mc_mirror():
+        if cubeprop.mc_mirror:
             cube_dict['mirror'] = True
 
         mcbone['cubes'].append(cube_dict)

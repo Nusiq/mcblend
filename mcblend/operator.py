@@ -154,6 +154,9 @@ class OBJECT_OT_NusiqMcblendMapUvOperator(bpy.types.Operator):
         except NotEnoughTextureSpace:
             self.report({'ERROR'}, "Unable to create UV-mapping.")
             return {'FINISHED'}
+        except NameConflictException as e:
+            self.report({'WARNING'}, str(e))
+            return {'FINISHED'}
         width = context.scene.nusiq_mcblend.texture_width
         height = context.scene.nusiq_mcblend.texture_height
         self.report(
