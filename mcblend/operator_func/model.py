@@ -112,6 +112,10 @@ class BoneExport:
         self.cubes = cubes
         self.locators = locators
 
+    # TODO - implement load for BoneExport. Currently the bone loads the data
+    # during json operation which means that it loads the data from the wrong
+    # frame
+
     def json(self) -> Dict:
         '''
         Returns the dictionary that represents a single mcbone in json file

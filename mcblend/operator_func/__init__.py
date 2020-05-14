@@ -14,7 +14,7 @@ import bpy
 import mathutils
 import bpy_types
 
-from .uv import get_uv_mc_cubes, UvMcCube, plan_uv, set_cube_uv
+from .uv import UvMcCube, UvMapper, UvGroup, CoordinatesConverter
 from .animation import AnimationExport
 from .model import ModelExport
 from .json_tools import get_vect_json
@@ -93,94 +93,51 @@ def set_uvs(context: bpy_types.Context):
     width = context.scene.nusiq_mcblend.texture_width
     height = context.scene.nusiq_mcblend.texture_height
     move_blender_uvs = context.scene.nusiq_mcblend.move_blender_uvs
-    move_existing_mappings = context.scene.nusiq_mcblend.move_existing_mappings
+    # move_existing_mappings = context.scene.nusiq_mcblend.move_existing_mappings
     remove_old_mappings = context.scene.nusiq_mcblend.remove_old_mappings
     resolution = context.scene.nusiq_mcblend.texture_template_resolution
-
-    # Save starting frame
-    start_frame = context.scene.frame_current
-    # Stop animation if running & jump to the frame 0
-    bpy.ops.screen.animation_cancel()
-    context.scene.frame_set(0)
-
-    object_properties = McblendObjectGroup(context)
-    objprops = [
-        o for o in object_properties.values()
-        if o.obj_type == 'MESH'
-    ]
-
-    uv_dict: Dict[ObjectId, UvMcCube] = get_uv_mc_cubes(
-        objprops, read_existing_uvs=not move_existing_mappings
-    )
-    uv_mc_cubes = list(uv_dict.values())
     if height <= 0:
         height = None
 
-    plan_uv(uv_mc_cubes, width, height)
+    object_properties = McblendObjectGroup(context)
+    mapper = UvMapper(width, height)
+    mapper.load_uv_boxes(object_properties, context)
+    mapper.plan_uv()
 
     if remove_old_mappings:
-        for objprop in objprops:
+        for objprop in mapper:
             objprop.clear_uv_layers()
 
-    for objprop in objprops:
-        if objprop.thisobj_id in uv_dict:
-            curr_uv = uv_dict[objprop.thisobj_id]
-            objprop.mc_uv = (curr_uv.uv[0], curr_uv.uv[1])
+    for objprop in mapper.uv_boxes:
+        objprop.set_mc_uv()
 
     if height is None:
-        new_height = max([i.uv[1] + i.size[1] for i in uv_dict.values()])
+        new_height = max([i.uv[1] + i.size[1] for i in mapper.uv_boxes])
     else:
         new_height = height
     context.scene.nusiq_mcblend.texture_height = new_height
 
     if resolution >= 1:
         image = bpy.data.images.new(
-            "template",
-            width*resolution,
-            new_height*resolution,
-            alpha=True
+            "template", width*resolution, new_height*resolution, alpha=True
         )
-        def paint_texture(arr, uv_box, color, resolution):
-            min1 = int(arr.shape[0]/resolution)-int(uv_box.uv[1]+uv_box.size[1])
-            max1 = int(arr.shape[0]/resolution)-int(uv_box.uv[1])
-            min2, max2 = int(uv_box.uv[0]), int(uv_box.uv[0]+uv_box.size[0])
-            min1 = min1 * resolution
-            min2 = min2 * resolution
-            max1 = max1 * resolution
-            max2 = max2 * resolution
-            paint_bounds = arr[min1:max1, min2:max2]
-            paint_bounds[..., 0] = color[0]
-            paint_bounds[..., 1] = color[1]
-            paint_bounds[..., 2] = color[2]
-            paint_bounds[..., 3] = color[3]
 
         # This array represents new texture
         # DIM0:up axis DIM1:right axis DIM2:rgba axis
         arr = np.zeros([image.size[1], image.size[0], 4])
 
-        for uv_cube in uv_dict.values():
-            paint_texture(arr, uv_cube.front, [0, 1, 0, 1], resolution)
-            paint_texture(arr, uv_cube.back, [1, 0, 1, 1], resolution)
-            paint_texture(arr, uv_cube.right, [1, 0, 0, 1], resolution)
-            paint_texture(arr, uv_cube.left, [0, 1, 1, 1], resolution)
-            paint_texture(arr, uv_cube.top, [0, 0, 1, 1], resolution)
-            paint_texture(arr, uv_cube.bottom, [1, 1, 0, 1], resolution)
+        for uv_cube in mapper.uv_boxes:
+            uv_cube.paint_texture(arr, resolution)
         image.pixels = arr.ravel()  # Apply texture pixels values
 
     if move_blender_uvs:
-        for objprop in objprops:
-            if objprop.thisobj_id in uv_dict:
-                curr_uv = uv_dict[objprop.thisobj_id]
-                objprop.obj_data.uv_layers.new()
-                set_cube_uv(
-                    objprop, (curr_uv.uv[0], curr_uv.uv[1]),
-                    curr_uv.width, curr_uv.depth, curr_uv.height,
-                    width, new_height
-                )
-
-    # Return to first frame
-    context.scene.frame_set(start_frame)
-
+        converter = CoordinatesConverter(
+            np.array([[0, width], [0, new_height]]),
+            np.array([[0, 1], [1, 0]])
+        )
+        for curr_uv in mapper.uv_boxes:
+            curr_uv.new_uv_layer()
+            curr_uv.set_blender_uv(converter)
 
 def set_inflate(context: bpy_types.Context, inflate: float, mode: str) -> int:
     '''

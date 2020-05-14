@@ -224,18 +224,6 @@ class McblendObject:
 
         return np.array(_get_mcpivot(self).xzy)
 
-    def clear_uv_layers(self):
-        '''
-        Clears the uv layers from the object. Rises exception when the object
-        is armature
-        '''
-        if self.thisobj.type == 'ARMATURE':
-            raise Exception('Invalid method for ARMATURE.')
-        while len(self.thisobj.data.uv_layers) > 0:
-            self.thisobj.data.uv_layers.remove(
-                self.thisobj.data.uv_layers[0]
-            )
-
     def get_local_matrix(
             self, other: Optional[McblendObject] = None
         ) -> mathutils.Matrix:
