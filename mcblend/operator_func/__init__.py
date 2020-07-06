@@ -84,12 +84,10 @@ def set_uvs(context: bpy_types.Context):
     wasn't big enough. Raises NameConflictException if name conflicts in some
     bones are detected.
 
-    Depending on operator configuration this function can: add mc_uv
-    property to the objects, add new Blender UV, remove old Blender UV.
-
     # Arguments:
     - `context: bpy_types.Context` - the context of running the operator.
     '''
+    # TODO - update description
     width = context.scene.nusiq_mcblend.texture_width
     height = context.scene.nusiq_mcblend.texture_height
 
@@ -105,9 +103,6 @@ def set_uvs(context: bpy_types.Context):
     # Remove old mappings
     for objprop in mapper:
         objprop.clear_uv_layers()
-
-    for objprop in mapper.uv_boxes:
-        objprop.set_mc_uv()
 
     if height is None:
         new_height = max([i.uv[1] + i.size[1] for i in mapper.uv_boxes])

@@ -482,7 +482,6 @@ def build_geometry(geometry: ImportGeometry, context: bpy_types.Context):
             # 2. Apply translation
             _mc_translate(cube_obj, cube.origin, cube.size, cube.pivot)
             # 5. Apply custom properties
-            cube_obj['mc_uv'] = list(cube.uv)
             if cube.mirror:
                 cube_obj['mc_mirror'] = {}
         for locator in bone.locators:

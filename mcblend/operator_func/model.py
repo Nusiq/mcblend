@@ -173,12 +173,6 @@ class BoneExport:
             )
             c_rot = cubeprop.get_mcrotation(self.thisobj)
 
-
-            # if cubeprop.mc_uv is not None:
-            #     uv = cubeprop.mc_uv
-            # else:
-            #     uv = (0, 0)
-
             uv = uv_factory.get_uv_export(cubeprop)
 
             if cubeprop.mc_inflate != 0:

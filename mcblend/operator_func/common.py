@@ -79,38 +79,6 @@ class McblendObject:
         return tuple(children)  # type: ignore
 
     @property
-    def mc_uv(self) -> Optional[Union[Tuple[int, int], Dict]]:
-        '''Returns the mc_uv property of the object.'''
-        # TODO - return the value based on loops of the object.
-        # TODO - THIS FUNCTION SHOULD RETURN THE UV VALUE ON BLENDER SPACE
-        # [0, 1] VALUE
-        # TODO - Version one of the refactoring. Always return special object.
-        # The object should has the properties: list of faces. Faces should
-        # have face_name and face_size
-        # PLAN:
-        # Create UvExport class in model.py
-        # class UvExport:
-        #   __init__(uv_mc_cube, texture_size)
-        #   json() -> returns json representation
-        # Create a factory for this calss to decide if the UV should be
-        # exported as A. Cube UV (single vecotr); B. Per face UV for cube;
-        # C. Fancy new object UV feature (implement this later)
-        # Firstly implement the option B only.
-        if 'mc_uv' in self.thisobj:
-            return tuple(self.thisobj['mc_uv'])  # type: ignore
-        return None
-
-    @mc_uv.setter
-    def mc_uv(self, uv: Optional[Union[Tuple[int, int], Dict]]):
-        '''Sets the mc_uv property of the cube.'''
-        # TODO - remove this code? UV should be represented by the loops of
-        # the object!!!
-        if uv is not None:
-            self.thisobj['mc_uv'] = list(uv)
-        elif 'mc_uv' in self.thisobj:
-            del self.thisobj['mc_uv']
-
-    @property
     def mc_inflate(self) -> float:
         '''Returns the value of mc_inflate property of the object'''
         if 'mc_inflate' in self.thisobj:

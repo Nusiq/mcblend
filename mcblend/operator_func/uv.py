@@ -224,10 +224,6 @@ class McblendObjUvBox(UvBox):
         '''Adds new UV-layer to contained McblendObject.'''
         raise NotImplementedError()
 
-    def set_mc_uv(self):
-        '''Set the mc_uv property of the contained McblendObject.'''
-        raise NotImplementedError()
-
     def set_blender_uv(self, converter: CoordinatesConverter):
         '''
         Sets the UV of a blender object.
@@ -456,9 +452,6 @@ class UvMcCube(McblendObjUvBox):
         ])
         return result
 
-    def set_mc_uv(self):
-        self.thisobj.mc_uv = self.uv
-
     def set_blender_uv(self, converter: CoordinatesConverter):
         self.right.set_blender_uv(converter)
         self.front.set_blender_uv(converter)
@@ -560,10 +553,6 @@ class UvGroup(McblendObjUvBox):
         ):
         for obj in self._objects:
             obj.apply_suggestion(suggestion)
-
-    def set_mc_uv(self):
-        for obj in self._objects:
-            obj.set_mc_uv()
 
     def set_blender_uv(self, converter: CoordinatesConverter):
         for obj in self._objects:
