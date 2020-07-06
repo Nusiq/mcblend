@@ -5,14 +5,16 @@ from __future__ import annotations
 
 import math
 from enum import Enum
-from typing import Dict, NamedTuple, List, Optional, Tuple, Any, Iterable
+from typing import (
+    Dict, NamedTuple, List, Optional, Tuple, Any, Iterable, Union
+)
 
 import numpy as np
 
 import bpy_types
 import mathutils
 
-from .exception import NameConflictException
+from .exception import NameConflictException, NoCubePolygonsException
 
 MINECRAFT_SCALE_FACTOR = 16
 
@@ -77,15 +79,32 @@ class McblendObject:
         return tuple(children)  # type: ignore
 
     @property
-    def mc_uv(self) -> Optional[Tuple[int, int]]:
+    def mc_uv(self) -> Optional[Union[Tuple[int, int], Dict]]:
         '''Returns the mc_uv property of the object.'''
+        # TODO - return the value based on loops of the object.
+        # TODO - THIS FUNCTION SHOULD RETURN THE UV VALUE ON BLENDER SPACE
+        # [0, 1] VALUE
+        # TODO - Version one of the refactoring. Always return special object.
+        # The object should has the properties: list of faces. Faces should
+        # have face_name and face_size
+        # PLAN:
+        # Create UvExport class in model.py
+        # class UvExport:
+        #   __init__(uv_mc_cube, texture_size)
+        #   json() -> returns json representation
+        # Create a factory for this calss to decide if the UV should be
+        # exported as A. Cube UV (single vecotr); B. Per face UV for cube;
+        # C. Fancy new object UV feature (implement this later)
+        # Firstly implement the option B only.
         if 'mc_uv' in self.thisobj:
             return tuple(self.thisobj['mc_uv'])  # type: ignore
         return None
 
     @mc_uv.setter
-    def mc_uv(self, uv: Optional[Tuple[int, int]]):
+    def mc_uv(self, uv: Optional[Union[Tuple[int, int], Dict]]):
         '''Sets the mc_uv property of the cube.'''
+        # TODO - remove this code? UV should be represented by the loops of
+        # the object!!!
         if uv is not None:
             self.thisobj['mc_uv'] = list(uv)
         elif 'mc_uv' in self.thisobj:
@@ -280,6 +299,115 @@ class McblendObject:
         result = result * 180/math.pi  # math.degrees() for array
         return result
 
+    def cube_polygons(self) -> CubePolygons:
+        '''
+        Returns the polygons of the cube inside a CubePolygons object which
+        assigns proper names of the face sides (north, south, east, ...).
+        '''
+        # 1. Check if the object has UV
+        if self.obj_data.uv_layers.active is None:
+            raise NoCubePolygonsException(
+                f"Object {self.obj_name} doesn't have active UV-layer."
+            )
+        # 2. Check if object has 6 quadrilateral faces
+        if len(self.obj_data.polygons) != 6:
+            raise NoCubePolygonsException(
+                f"Object {self.obj_name} is not a cube. Number of faces != 6."
+            )
+        for polygon in self.obj_data.polygons:
+            if len(polygon.vertices) != 4:
+                raise NoCubePolygonsException(
+                    f"Object {self.obj_name} is not a cube. Not all faces are "
+                    "quadrilateral."
+                )
+
+        # Blender crds (bounding box):
+        # 0. ---; 1. --+; 2. -++; 3. -+-; 4. +--; 5. +-+; 6. +++; 7. ++-
+        mmm, mmp, mpp, mpm, pmm, pmp, ppp, ppm = tuple(
+            self.obj_bound_box
+        )
+        # MC:      0+0 top; -00 right; 00- front;
+        # Blender: 00+ top; -00 right; 0-0 front
+        bb_crds = {
+            "---": np.array(mmm), "--+": np.array(mmp),
+            "-++": np.array(mpp), "-+-": np.array(mpm),
+            "+--": np.array(pmm), "+-+": np.array(pmp),
+            "+++": np.array(ppp), "++-": np.array(ppm)
+        }
+
+        north: List[str] = ['--+', '+-+', '+--', '---']  # Cube Front
+        east: List[str] = ['---', '-+-', '-++', '--+']  # Cube Right
+        south: List[str] = ['-+-', '++-', '+++', '-++']  # Cube Back
+        west: List[str] = ['+--', '++-', '+++', '+-+']  # Cube Left
+        up: List[str] = ['--+', '+-+', '+++', '-++']  # Cube Up
+        down: List[str] = ['---', '+--', '++-', '-+-']  # Cube Down
+        cube_polygon_builder = {}  # Input for CubePolygons constructor
+        for polygon in self.obj_data.polygons:
+            bbv: List[str] = []  # bound box vertices
+            for vertex_id in polygon.vertices:
+                vertex_crds = np.array(
+                    self.obj_data.vertices[vertex_id].co
+                )
+                # Find the closest point of bounding box (key from bb_crds)
+                shortest_distance: Optional[float] = None
+                closest_bb_point = '---'
+                for k, v in bb_crds.items():
+                    curr_distance = np.linalg.norm(v-vertex_crds)
+                    if shortest_distance is None:
+                        shortest_distance = curr_distance
+                        closest_bb_point = k
+                    elif curr_distance < shortest_distance:
+                        shortest_distance = curr_distance
+                        closest_bb_point = k
+                bbv.append(closest_bb_point)
+
+            # Im not sure which order of vertices is correct so I just check
+            # original and reversed
+            rbbv = [i for i in reversed(bbv)]
+            if cyclic_equiv(north, bbv) or cyclic_equiv(north, rbbv):
+                cube_polygon_builder['north'] = polygon
+                cube_polygon_builder['bound_box_vertices_north'] = tuple(bbv)
+            elif cyclic_equiv(east, bbv) or cyclic_equiv(east, rbbv):
+                cube_polygon_builder['east'] = polygon
+                cube_polygon_builder['bound_box_vertices_east'] = tuple(bbv)
+            elif cyclic_equiv(south, bbv) or cyclic_equiv(south, rbbv):
+                cube_polygon_builder['south'] = polygon
+                cube_polygon_builder['bound_box_vertices_south'] = tuple(bbv)
+            elif cyclic_equiv(west, bbv) or cyclic_equiv(west, rbbv):
+                cube_polygon_builder['west'] = polygon
+                cube_polygon_builder['bound_box_vertices_west'] = tuple(bbv)
+            elif cyclic_equiv(up, bbv) or cyclic_equiv(up, rbbv):
+                cube_polygon_builder['up'] = polygon
+                cube_polygon_builder['bound_box_vertices_up'] = tuple(bbv)
+            elif cyclic_equiv(down, bbv) or cyclic_equiv(down, rbbv):
+                cube_polygon_builder['down'] = polygon
+                cube_polygon_builder['bound_box_vertices_down'] = tuple(bbv)
+        try:
+            return CubePolygons(**cube_polygon_builder)
+        except TypeError:  # Missing argument
+            raise NoCubePolygonsException(
+                f"Object {self.obj_name} is not filling a bounding box "
+                "good enough to aproximate its shape to a cube."
+            )
+
+class CubePolygons(NamedTuple):
+    '''
+    A polygons of a cube that correspond to Minecraft cube faces.
+    '''
+    north: bpy_types.MeshPolygon
+    east: bpy_types.MeshPolygon
+    south: bpy_types.MeshPolygon
+    west: bpy_types.MeshPolygon
+    up: bpy_types.MeshPolygon
+    down: bpy_types.MeshPolygon
+    # The tuple with 3-character string with + and - characters that identifes
+    # the order of corresponding  bpy_types.MeshPolygon (north, south ,east...)
+    bound_box_vertices_north: Tuple[str]
+    bound_box_vertices_east: Tuple[str]
+    bound_box_vertices_south: Tuple[str]
+    bound_box_vertices_west: Tuple[str]
+    bound_box_vertices_up: Tuple[str]
+    bound_box_vertices_down: Tuple[str]
 
 class McblendObjectGroup:
     '''
@@ -431,3 +559,26 @@ class McblendObjectGroup:
             else:
                 raise Exception(f'Unsuported parent type {obj.parent_type}')
         return obj_id
+
+
+def cyclic_equiv(u: List, v: List) -> bool:
+    '''
+    Compare cyclic equivalency of two lists.
+    
+    Source:
+    https://stackoverflow.com/questions/31000591/
+    '''
+    n, i, j = len(u), 0, 0
+    if n != len(v):
+        return False
+    while i < n and j < n:
+        k = 1
+        while k <= n and u[(i + k) % n] == v[(j + k) % n]:
+            k += 1
+        if k > n:
+            return True
+        if u[(i + k) % n] > v[(j + k) % n]:
+            i += k
+        else:
+            j += k
+    return False

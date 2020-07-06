@@ -3,8 +3,9 @@ Functions related to exporting models.
 '''
 from __future__ import annotations
 
-from typing import List, Dict
+from typing import List, Dict, Tuple, Any, NamedTuple, Deque, Optional
 from dataclasses import dataclass, field
+from collections import deque
 
 import numpy as np
 
@@ -12,9 +13,12 @@ import bpy
 import bpy_types
 
 from .common import (
-    MINECRAFT_SCALE_FACTOR, McblendObject, McblendObjectGroup, MCObjType
+    MINECRAFT_SCALE_FACTOR, McblendObject, McblendObjectGroup, MCObjType,
+    cyclic_equiv, CubePolygons
 )
 from .json_tools import get_vect_json
+from .exception import NoCubePolygonsException
+from .uv import CoordinatesConverter
 
 
 @dataclass
@@ -50,7 +54,7 @@ class ModelExport:
             context.scene.frame_set(0)
             for _, objprop in object_properties.items():
                 try:
-                    self.bones.append(BoneExport(objprop))
+                    self.bones.append(BoneExport(objprop, self))
                 except ValueError:
                     pass
         finally:
@@ -85,11 +89,12 @@ class BoneExport:
     '''
     Object that represents a Bone during model export.
     '''
-    def __init__(self, bone: McblendObject):
+    def __init__(self, bone: McblendObject, model: ModelExport):
         '''
         Creates BoneExport. If the input value of BONE or BOTH McObjectType
         than ValueError is raised.
         '''
+        self.model = model
         # Test if bone is valid input object
         if bone.mctype not in [MCObjType.BONE, MCObjType.BOTH]:
             raise ValueError('Input object is not a bone.')
@@ -112,9 +117,10 @@ class BoneExport:
         self.cubes = cubes
         self.locators = locators
 
+    # TODO - Check if comment below still applies.
     # TODO - implement load for BoneExport. Currently the bone loads the data
     # during json operation which means that it loads the data from the wrong
-    # frame
+    # frame.
 
     def json(self) -> Dict:
         '''
@@ -124,6 +130,11 @@ class BoneExport:
         # Returns:
         `Dict` - the single bone from Minecraft model.
         '''
+        # TODO - UvFactory should know the real texture size
+        uv_factory = UvExportFactory(
+            (self.model.texture_width, self.model.texture_height)
+        )
+
         def _scale(objprop: McblendObject) -> np.ndarray:
             '''Scale of a bone'''
             _, _, scale = objprop.obj_matrix_world.decompose()
@@ -163,17 +174,19 @@ class BoneExport:
             c_rot = cubeprop.get_mcrotation(self.thisobj)
 
 
-            if cubeprop.mc_uv is not None:
-                uv = cubeprop.mc_uv
-            else:
-                uv = (0, 0)
+            # if cubeprop.mc_uv is not None:
+            #     uv = cubeprop.mc_uv
+            # else:
+            #     uv = (0, 0)
+
+            uv = uv_factory.get_uv_export(cubeprop)
 
             if cubeprop.mc_inflate != 0:
                 c_size = c_size - cubeprop.mc_inflate*2
                 c_origin = c_origin + cubeprop.mc_inflate
 
             cube_dict: Dict = {
-                'uv': get_vect_json(uv),
+                'uv': uv.json(),
                 'size': [round(i) for i in get_vect_json(c_size)],
                 'origin': get_vect_json(c_origin),
                 'pivot': get_vect_json(c_pivot),
@@ -190,3 +203,107 @@ class BoneExport:
             mcbone['cubes'].append(cube_dict)
 
         return mcbone
+
+class UvExport:
+    '''
+    Base class for creating the UV part of exported cube.
+    '''
+    def json(self) -> Any:
+        '''
+        Returns josonable object that represents a single uv of a cube in
+        Minecraft model.
+        '''
+        return [0, 0]
+
+class PerFaceUvExport(UvExport):
+    '''
+    UvExport for per face UV-mapping (the uv mapping of a cube which maps
+    every UV face separately).
+    '''
+    def __init__(
+            self, cube_polygons: CubePolygons,
+            uv_layer: bpy.types.MeshUVLoopLayer,
+            blend_to_mc_converter: CoordinatesConverter):
+        super().__init__()
+        self.cube_polygons = cube_polygons
+        self.uv_layer = uv_layer
+        self.converter = blend_to_mc_converter
+
+    def json(self):
+        return {
+            "north": self._one_face_uv(
+                self.cube_polygons.north,
+                self.cube_polygons.bound_box_vertices_north.index('---')
+                ),
+            "east": self._one_face_uv(
+                self.cube_polygons.east,
+                self.cube_polygons.bound_box_vertices_east.index('-+-')
+                ),
+            "south": self._one_face_uv(
+                self.cube_polygons.south,
+                self.cube_polygons.bound_box_vertices_south.index('++-')
+                ),
+            "west": self._one_face_uv(
+                self.cube_polygons.west,
+                self.cube_polygons.bound_box_vertices_west.index('+--')
+                ),
+            "up": self._one_face_uv(
+                self.cube_polygons.up,
+                self.cube_polygons.bound_box_vertices_up.index('--+')
+                ),
+            "down": self._one_face_uv(
+                self.cube_polygons.down,
+                self.cube_polygons.bound_box_vertices_down.index('---')
+                )
+        }
+
+    def _one_face_uv(
+            self, face: bpy_types.MeshPolygon, starting_corner: int
+        ) -> Dict:
+        # uv_coords = []
+        # for loop_id in face.loop_indices:
+        #     uv_coords.append(
+        #         self.converter.convert(self.uv_layer.data[loop_id].uv)
+        #     )
+        # uv_coords_arr: np.ndarray = np.array(uv_coords)
+        corner1_id = (starting_corner + 3) % 4
+        corner2_id = (corner1_id + 2) % 4
+
+        corner1_crds = np.array(self.converter.convert(
+            self.uv_layer.data[face.loop_indices[corner1_id]].uv
+        ))
+        corner2_crds = np.array(self.converter.convert(
+            self.uv_layer.data[face.loop_indices[corner2_id]].uv
+        ))
+        uv = corner1_crds
+        uv_size = corner2_crds-corner1_crds
+        # TODO - Should I do something with this rounding?
+        return {
+            "uv": [round(i) for i in uv],
+            "uv_size": [round(i) for i in uv_size],
+        }
+
+class UvExportFactory:
+    '''
+    Used for creating the UvExport objects. Decides which subtype of the
+    UvExport object should be used.
+    '''
+    def __init__(self, texture_size: Tuple[int, int]):
+        self.blend_to_mc_converter = CoordinatesConverter(
+            np.array([[0, 1], [1, 0]]),
+            np.array([[0, texture_size[0]], [0, texture_size[1]]])
+        )
+        self.mc_to_blend_converter = CoordinatesConverter(
+            np.array([[0, texture_size[0]], [0, texture_size[1]]]),
+            np.array([[0, 1], [1, 0]])
+        )
+
+    def get_uv_export(self, mcobj: McblendObject) -> UvExport:
+        try:
+            polygons = mcobj.cube_polygons()
+            return PerFaceUvExport(
+                polygons, mcobj.obj_data.uv_layers.active,
+                self.blend_to_mc_converter
+            )
+        except NoCubePolygonsException as e:
+            return UvExport()

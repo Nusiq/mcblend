@@ -14,3 +14,9 @@ class InvalidDictPathException(LookupError):
     '''
     Raise when using using function for quick access to dictonary path fails.
     '''
+
+class NoCubePolygonsException(Exception):
+    '''
+    Raise when trying to get CubePolygons from McblendObject but some data is
+    missing.
+    '''
