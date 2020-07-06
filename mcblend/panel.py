@@ -49,30 +49,6 @@ class OBJECT_NusiqMcblendExporterProperties(bpy.types.PropertyGroup):
         default=0,
         min=0
     )
-    move_blender_uvs: BoolProperty(  # type: ignore
-        name="Move blender UVs",
-        description=(
-            "Decides if the UV mapping in blender should be moved to fit the"
-            " minecraft UV mapping."
-        ),
-        default=True
-    )
-    move_existing_mappings: BoolProperty(  # type: ignore
-        name="Move existing mappings",
-        description=(
-            "Decides if the minecraft UV mappings that already exist should be"
-            " moved during planning the minecraft UV map."
-        ),
-        default=True
-    )
-    remove_old_mappings: BoolProperty(  # type: ignore
-        name="Remove old UV-maps",
-        description=(
-            "Decides if current UV-mapping should be removed from selected "
-            "objects."
-        ),
-        default=True
-    )
     texture_template_resolution: IntProperty(  # type: ignore
         name="Template texture resolution",
         description=(
@@ -166,18 +142,6 @@ class OBJECT_PT_NusiqMcblendSetUvsPanel(bpy.types.Panel):
         )
         col.prop(
             context.scene.nusiq_mcblend, "texture_height", text="Texture height"
-        )
-        col.prop(
-            context.scene.nusiq_mcblend, "move_existing_mappings",
-            text="Move existing mcUv mappings"
-        )
-        col.prop(
-            context.scene.nusiq_mcblend, "move_blender_uvs",
-            text="Move blender UV mappings"
-        )
-        col.prop(
-            context.scene.nusiq_mcblend, "remove_old_mappings",
-            text="Remove old UV maps"
         )
         col.prop(
             context.scene.nusiq_mcblend, "texture_template_resolution",

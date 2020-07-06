@@ -92,9 +92,7 @@ def set_uvs(context: bpy_types.Context):
     '''
     width = context.scene.nusiq_mcblend.texture_width
     height = context.scene.nusiq_mcblend.texture_height
-    move_blender_uvs = context.scene.nusiq_mcblend.move_blender_uvs
-    # move_existing_mappings = context.scene.nusiq_mcblend.move_existing_mappings
-    remove_old_mappings = context.scene.nusiq_mcblend.remove_old_mappings
+
     resolution = context.scene.nusiq_mcblend.texture_template_resolution
     if height <= 0:
         height = None
@@ -104,9 +102,9 @@ def set_uvs(context: bpy_types.Context):
     mapper.load_uv_boxes(object_properties, context)
     mapper.plan_uv()
 
-    if remove_old_mappings:
-        for objprop in mapper:
-            objprop.clear_uv_layers()
+    # Remove old mappings
+    for objprop in mapper:
+        objprop.clear_uv_layers()
 
     for objprop in mapper.uv_boxes:
         objprop.set_mc_uv()
@@ -130,14 +128,14 @@ def set_uvs(context: bpy_types.Context):
             uv_cube.paint_texture(arr, resolution)
         image.pixels = arr.ravel()  # Apply texture pixels values
 
-    if move_blender_uvs:
-        converter = CoordinatesConverter(
-            np.array([[0, width], [0, new_height]]),
-            np.array([[0, 1], [1, 0]])
-        )
-        for curr_uv in mapper.uv_boxes:
-            curr_uv.new_uv_layer()
-            curr_uv.set_blender_uv(converter)
+    # Set blender UVs
+    converter = CoordinatesConverter(
+        np.array([[0, width], [0, new_height]]),
+        np.array([[0, 1], [1, 0]])
+    )
+    for curr_uv in mapper.uv_boxes:
+        curr_uv.new_uv_layer()
+        curr_uv.set_blender_uv(converter)
 
 def set_inflate(context: bpy_types.Context, inflate: float, mode: str) -> int:
     '''
