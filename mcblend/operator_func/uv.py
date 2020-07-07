@@ -9,6 +9,7 @@ from typing import (
 from enum import Enum
 from dataclasses import dataclass, field
 from itertools import filterfalse
+from collections import deque
 
 import numpy as np
 
@@ -84,8 +85,6 @@ class Suggestion(NamedTuple):
     '''
     position: Tuple[int, int]
     corner: UvCorner
-
-
 
 class UvBox:
     '''Rectangular space on the texture.'''
@@ -214,7 +213,6 @@ class UvBox:
         paint_bounds[..., 2] = color[2]
         paint_bounds[..., 3] = color[3]
 
-
 class McblendObjUvBox(UvBox):
     '''
     An UvBox that holds reference to an McblendObject and provides a method
@@ -260,56 +258,32 @@ class UvMcCubeFace(UvBox):
         super().__init__(size, uv=uv)
         self.cube = cube
         self.face_type = face_type
-        left_d, right_d, right_u, left_u = self._load_uv_face(face_type)
-        self.left_down = left_d
-        self.right_down = right_d
-        self.right_up = right_u
-        self.left_up = left_u
 
-    def _load_uv_face(
-            self, face_type: CubeFaceType
-        ) -> Tuple[int, int, int, int]:
-        '''
-        Returns a tuple indices of 4 loops of the uv face (left down, right
-        down, right up, left up).
-
-        # Arguments:
-        - `face_type: CubeFaceType` - decides which face should be returned.
-
-        # Returns:
-        `Tuple[int, int, int, int]` - the UV-face sa loops indices.
-        '''
-        bound_box_faces = {
-            CubeFaceType.FRONT: [0, 4, 5, 1], CubeFaceType.BACK: [7, 3, 2, 6],
-            CubeFaceType.LEFT: [4, 7, 6, 5], CubeFaceType.RIGHT: [3, 0, 1, 2],
-            CubeFaceType.TOP: [1, 5, 6, 2], CubeFaceType.BOTTOM: [0, 4, 7, 3]
-        }
-        # list with bound box vertex indices in order LD, RD, RU, LU
-        f = bound_box_faces[face_type]
-
-        bound_box = self.cube.thisobj.obj_bound_box
-        bb_verts = {
-            'LD': np.array(bound_box[f[0]]), 'RD': np.array(bound_box[f[1]]),
-            'RU': np.array(bound_box[f[2]]), 'LU': np.array(bound_box[f[3]]),
-        }
-
-        for face in self.cube.thisobj.obj_data.polygons:
-            confirmed_vertices = {'LD': None, 'RD': None, 'RU': None, 'LU': None}
-            for vertex_id, loop_id in zip(face.vertices, face.loop_indices):
-                vertex = np.array(
-                    self.cube.thisobj.obj_data.vertices[vertex_id].co
-                )
-                for bbv_key, bbv_value in bb_verts.items():
-                    if np.allclose(vertex, bbv_value):
-                        confirmed_vertices[bbv_key] = loop_id
-            if all([i is not None for i in confirmed_vertices.values()]):
-                return (
-                    confirmed_vertices['LD'],  # type: ignore
-                    confirmed_vertices['RD'],
-                    confirmed_vertices['RU'],
-                    confirmed_vertices['LU']
-                )
-        raise ValueError("Object is not a cube!")
+        # front/north: '--+', '+-+', '+--', '---'
+        # right/east: '---', '-+-', '-++', '--+'
+        # back/south: '-+-', '++-', '+++', '-++'
+        # left/west: '+--', '++-', '+++', '+-+'
+        # up/up: '--+', '+-+', '+++', '-++'
+        # down/down: '---', '+--', '++-', '-+-'
+        cube_polygons = self.cube.thisobj.cube_polygons()
+        if self.face_type is CubeFaceType.FRONT:
+            self.face_polygon = cube_polygons.north
+            self.polygon_orientation = cube_polygons.bound_box_vertices_north
+        elif self.face_type is CubeFaceType.RIGHT:
+            self.face_polygon = cube_polygons.east
+            self.polygon_orientation = cube_polygons.bound_box_vertices_east
+        elif self.face_type is CubeFaceType.BACK:
+            self.face_polygon = cube_polygons.south
+            self.polygon_orientation = cube_polygons.bound_box_vertices_south
+        elif self.face_type is CubeFaceType.LEFT:
+            self.face_polygon = cube_polygons.west
+            self.polygon_orientation = cube_polygons.bound_box_vertices_west
+        elif self.face_type is CubeFaceType.TOP:
+            self.face_polygon = cube_polygons.up
+            self.polygon_orientation = cube_polygons.bound_box_vertices_up
+        elif self.face_type is CubeFaceType.BOTTOM:
+            self.face_polygon = cube_polygons.down
+            self.polygon_orientation = cube_polygons.bound_box_vertices_down
 
     def set_blender_uv(self, converter: CoordinatesConverter):
         '''
@@ -320,6 +294,7 @@ class UvMcCubeFace(UvBox):
           convert from Minecraft UV coordinates (used internally by this
           object) to Blender UV coordinates.
         '''
+        # Test if some axes should be mirrored
         mirror_x = (
             self.face_type in [
                 CubeFaceType.LEFT, CubeFaceType.RIGHT, CubeFaceType.TOP,
@@ -330,30 +305,52 @@ class UvMcCubeFace(UvBox):
             self.face_type in [CubeFaceType.FRONT, CubeFaceType.BACK] and
             self.cube.thisobj.mc_mirror
         )
-        ###
-        uv_face = {
-            'LD': self.left_down, 'RD': self.right_down,
-            'RU': self.right_up, 'LU': self.left_up
-        }
-        uv_data = self.cube.thisobj.obj_data.uv_layers.active.data
-        order = ['LD', 'RD', 'RU', 'LU']
-
+        
+        # Order of the faces for: left_down, right_down, right_up, left_up
+        if self.face_type is CubeFaceType.FRONT:
+            order = ['---', '+--', '+-+', '--+',]  # front/north
+        elif self.face_type is CubeFaceType.RIGHT:
+            order = ['-+-', '---', '--+', '-++']  # right/east
+        elif self.face_type is CubeFaceType.BACK:
+            order = ['++-', '-+-', '-++', '+++']  # back/south
+        elif self.face_type is CubeFaceType.LEFT:
+            order = ['+--', '++-', '+++', '+-+']  # left/west
+        elif self.face_type is CubeFaceType.TOP:
+            order = ['--+', '+-+', '+++', '-++']  # up/up
+        elif self.face_type is CubeFaceType.BOTTOM:
+            order = ['---', '+--', '++-', '-+-']  # down/down
+        # Apply mirror effects
         if mirror_x:
             order = [order[i] for i in [1, 0, 3, 2]]
         if mirror_y:
             order = [order[i] for i in [2, 3, 0, 1]]
 
-        uv_data[uv_face[order[0]]].uv = converter.convert(self.uv)
-        uv_data[uv_face[order[1]]].uv = converter.convert(
+        # Insert loop indices into easy to read format
+        uv_face = {
+            'left-down': self.face_polygon.loop_indices[
+                self.polygon_orientation.index(order[0])
+            ],
+            'right-down': self.face_polygon.loop_indices[
+                self.polygon_orientation.index(order[1])
+            ],
+            'right-up': self.face_polygon.loop_indices[
+                self.polygon_orientation.index(order[2])
+            ],
+            'left-up': self.face_polygon.loop_indices[
+                self.polygon_orientation.index(order[3])
+            ],
+        }
+        uv_data = self.cube.thisobj.obj_data.uv_layers.active.data
+        uv_data[uv_face['left-up']].uv = converter.convert(self.uv)
+        uv_data[uv_face['right-up']].uv = converter.convert(
             (self.uv[0] + self.size[0], self.uv[1])
         )
-        uv_data[uv_face[order[2]]].uv = converter.convert(
+        uv_data[uv_face['right-down']].uv = converter.convert(
             (self.uv[0] + self.size[0], self.uv[1] + self.size[1])
         )
-        uv_data[uv_face[order[3]]].uv = converter.convert(
+        uv_data[uv_face['left-down']].uv = converter.convert(
             (self.uv[0], self.uv[1] + self.size[1])
         )
-
 
 class UvMcCube(McblendObjUvBox):
     '''
@@ -491,7 +488,6 @@ class UvMcCube(McblendObjUvBox):
 
     def new_uv_layer(self):
         self.thisobj.obj_data.uv_layers.new()
-
 
 class UvGroup(McblendObjUvBox):
     '''

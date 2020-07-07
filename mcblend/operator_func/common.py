@@ -362,12 +362,12 @@ class CubePolygons(NamedTuple):
     '''
     A polygons of a cube that correspond to Minecraft cube faces.
     '''
-    north: bpy_types.MeshPolygon
-    east: bpy_types.MeshPolygon
-    south: bpy_types.MeshPolygon
-    west: bpy_types.MeshPolygon
-    up: bpy_types.MeshPolygon
-    down: bpy_types.MeshPolygon
+    north: bpy_types.MeshPolygon  # Cube Front
+    east: bpy_types.MeshPolygon  # Cube Right
+    south: bpy_types.MeshPolygon  # Cube Back
+    west: bpy_types.MeshPolygon  # Cube Left
+    up: bpy_types.MeshPolygon  # Cube Up
+    down: bpy_types.MeshPolygon  # Cube Down
     # The tuple with 3-character string with + and - characters that identifes
     # the order of corresponding  bpy_types.MeshPolygon (north, south ,east...)
     bound_box_vertices_north: Tuple[str]
