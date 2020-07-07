@@ -87,7 +87,6 @@ def set_uvs(context: bpy_types.Context):
     # Arguments:
     - `context: bpy_types.Context` - the context of running the operator.
     '''
-    # TODO - update description
     width = context.scene.nusiq_mcblend.texture_width
     height = context.scene.nusiq_mcblend.texture_height
 

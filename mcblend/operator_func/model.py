@@ -117,7 +117,6 @@ class BoneExport:
         self.cubes = cubes
         self.locators = locators
 
-    # TODO - Check if comment below still applies.
     # TODO - implement load for BoneExport. Currently the bone loads the data
     # during json operation which means that it loads the data from the wrong
     # frame.
@@ -130,7 +129,6 @@ class BoneExport:
         # Returns:
         `Dict` - the single bone from Minecraft model.
         '''
-        # TODO - UvFactory should know the real texture size
         uv_factory = UvExportFactory(
             (self.model.texture_width, self.model.texture_height)
         )
@@ -271,10 +269,10 @@ class PerFaceUvExport(UvExport):
         ))
         uv = corner1_crds
         uv_size = corner2_crds-corner1_crds
-        # TODO - Should I do something with this rounding?
+
         return {
-            "uv": [round(i) for i in uv],
-            "uv_size": [round(i) for i in uv_size],
+            "uv": [round(i, 3) for i in uv],
+            "uv_size": [round(i, 3) for i in uv_size],
         }
 
 class UvExportFactory:
