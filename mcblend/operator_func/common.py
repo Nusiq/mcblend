@@ -257,12 +257,12 @@ class McblendObject:
             ).to_quaternion().to_euler('XZY')
 
         if other is not None:
-            result = local_rotation(
+            result_euler = local_rotation(
                 self.obj_matrix_world, other.obj_matrix_world
             )
         else:
-            result = self.obj_matrix_world.to_euler('XZY')
-        result = np.array(result)[[0, 2, 1]]
+            result_euler = self.obj_matrix_world.to_euler('XZY')
+        result: np.ndarray = np.array(result_euler)[[0, 2, 1]]
         result = result * np.array([1, -1, 1])
         result = result * 180/math.pi  # math.degrees() for array
         return result

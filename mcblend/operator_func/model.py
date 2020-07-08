@@ -114,21 +114,21 @@ class BoneExport:
 
         # Set fields values
         self.thisobj = bone
-        self.cubes = cubes
-        self.locators = locators
+        self.cube_objs = cubes
+        self.locator_objs = locators
 
-    # TODO - implement load for BoneExport. Currently the bone loads the data
-    # during json operation which means that it loads the data from the wrong
-    # frame.
+        # Load other properties
+        # name ,parent ,pivot ,rotation,
+        # cubes: List[size, pivot, origin, rotation, inflate, mirror, uv],
+        # locators: Dict[origin],
+        self.load()
 
-    def json(self) -> Dict:
-        '''
-        Returns the dictionary that represents a single mcbone in json file
-        of model.
+    def load(self):
+        # TODO - documentation
 
-        # Returns:
-        `Dict` - the single bone from Minecraft model.
-        '''
+        # Prepare lists, dictionaries etc.
+        self.cubes: List[CubeExport] = []
+        self.locators: Dict[str, LocatorExport] = {}
         uv_factory = UvExportFactory(
             (self.model.texture_width, self.model.texture_height)
         )
@@ -138,31 +138,33 @@ class BoneExport:
             _, _, scale = objprop.obj_matrix_world.decompose()
             return np.array(scale.xzy)
 
-        # Set basic bone properties
-        mcbone: Dict = {'name': self.thisobj.obj_name, 'cubes': []}
+        # Set name
+        self.name = self.thisobj.obj_name
+
+        # Set parent
         if self.thisobj.parent is not None:
-            mcbone['parent'] = self.thisobj.parent.obj_name
-            b_rot = self.thisobj.get_mcrotation(self.thisobj.parent)
+            self.parent: Optional[str] = self.thisobj.parent.obj_name
         else:
-            b_rot = self.thisobj.get_mcrotation()
+            self.parent = None
+
+        # Set rotation and pivot
+        b_rot = self.thisobj.get_mcrotation(self.thisobj.parent)
         b_pivot = self.thisobj.mcpivot * MINECRAFT_SCALE_FACTOR
-        mcbone['pivot'] = get_vect_json(b_pivot)
-        mcbone['rotation'] = get_vect_json(b_rot)
+        self.pivot = b_pivot
+        self.rotation = b_rot
 
         # Set locators
-        if len(self.locators) > 0:
-            mcbone['locators'] = {}
-        for locatorprop in self.locators:
+        for locatorprop in self.locator_objs:
             _l_scale = _scale(locatorprop)
             l_pivot = locatorprop.mcpivot * MINECRAFT_SCALE_FACTOR
             l_origin = l_pivot + (
                 locatorprop.mccube_position *
                 _l_scale * MINECRAFT_SCALE_FACTOR
             )
-            mcbone['locators'][locatorprop.obj_name] = get_vect_json(l_origin)
+            self.locators[locatorprop.obj_name] = LocatorExport(l_origin)
 
         # Set cubes
-        for cubeprop in self.cubes:
+        for cubeprop in self.cube_objs:
             _c_scale = _scale(cubeprop)
             c_size = cubeprop.mcube_size * _c_scale * MINECRAFT_SCALE_FACTOR
             c_pivot = cubeprop.mcpivot * MINECRAFT_SCALE_FACTOR
@@ -171,30 +173,82 @@ class BoneExport:
             )
             c_rot = cubeprop.get_mcrotation(self.thisobj)
 
-            uv = uv_factory.get_uv_export(cubeprop)
-
             if cubeprop.mc_inflate != 0:
                 c_size = c_size - cubeprop.mc_inflate*2
                 c_origin = c_origin + cubeprop.mc_inflate
 
-            cube_dict: Dict = {
-                'uv': uv.json(),
-                'size': [round(i) for i in get_vect_json(c_size)],
-                'origin': get_vect_json(c_origin),
-                'pivot': get_vect_json(c_pivot),
-                # Change -180 in rotations to 180
-                'rotation': [i if i != -180 else 180 for i in get_vect_json(c_rot)]
-            }
+            uv = uv_factory.get_uv_export(cubeprop)
 
-            if cubeprop.mc_inflate != 0:
-                cube_dict['inflate'] = cubeprop.mc_inflate
+            cube = CubeExport(size=c_size, pivot=c_pivot, origin=c_origin,
+                    rotation=c_rot, inflate=cubeprop.mc_inflate,
+                    mirror=cubeprop.mc_mirror, uv=uv)
+            self.cubes.append(cube)
 
-            if cubeprop.mc_mirror:
-                cube_dict['mirror'] = True
 
-            mcbone['cubes'].append(cube_dict)
+    def json(self) -> Dict:
+        '''
+        Returns the dictionary that represents a single mcbone in json file
+        of model.
+
+        # Returns:
+        `Dict` - the single bone from Minecraft model.
+        '''
+        # Basic bone properties
+        mcbone: Dict = {'name': self.name, 'cubes': []}
+        if self.parent is not None:
+            mcbone['parent'] = self.parent
+        mcbone['pivot'] = get_vect_json(self.pivot)
+        mcbone['rotation'] = get_vect_json(self.rotation)
+
+        # Locators
+        if len(self.locators) > 0:
+            mcbone['locators'] = {}
+            for name, locator in self.locators.items():
+                mcbone['locators'][name] = locator.json()
+
+        # Cubess
+        for cube in self.cubes:
+            mcbone['cubes'].append(cube.json())
 
         return mcbone
+
+@dataclass
+class LocatorExport:
+    # TODO - documentation
+    origin: np.ndarray
+
+    def json(self):
+        # TODO - documentation
+        return get_vect_json(origin)
+
+@dataclass
+class CubeExport:
+    # TODO - documentation
+    size: np.ndarray
+    pivot: np.ndarray
+    origin: np.ndarray
+    rotation: np.ndarray
+    inflate: float
+    mirror: bool
+    uv: UvExport
+
+    def json(self):
+        # TODO - documentation
+        cube_dict = {
+            'uv': self.uv.json(),
+            'size': [round(i) for i in get_vect_json(self.size)],
+            'origin': get_vect_json(self.origin),
+            'pivot': get_vect_json(self.pivot),
+            'rotation': [  # Change -180 in rotations to 180
+                i if i != -180 else 180
+                for i in get_vect_json(self.rotation)
+            ]
+        }
+        if self.inflate != 0:
+            cube_dict['inflate'] = self.inflate
+        if self.mirror:
+            cube_dict['mirror'] = True
+        return cube_dict
 
 class UvExport:
     '''
