@@ -333,23 +333,29 @@ class McblendObject:
             # original and reversed
             rbbv = [i for i in reversed(bbv)]
             if cyclic_equiv(north, bbv) or cyclic_equiv(north, rbbv):
-                cube_polygon_builder['north'] = polygon
-                cube_polygon_builder['bound_box_vertices_north'] = tuple(bbv)
+                cube_polygon_builder['north'] = CubePolygon(
+                    polygon, tuple(bbv)  # type: ignore
+                )
             elif cyclic_equiv(east, bbv) or cyclic_equiv(east, rbbv):
-                cube_polygon_builder['east'] = polygon
-                cube_polygon_builder['bound_box_vertices_east'] = tuple(bbv)
+                cube_polygon_builder['east'] = CubePolygon(
+                    polygon, tuple(bbv)  # type: ignore
+                )
             elif cyclic_equiv(south, bbv) or cyclic_equiv(south, rbbv):
-                cube_polygon_builder['south'] = polygon
-                cube_polygon_builder['bound_box_vertices_south'] = tuple(bbv)
+                cube_polygon_builder['south'] = CubePolygon(
+                    polygon, tuple(bbv)  # type: ignore
+                )
             elif cyclic_equiv(west, bbv) or cyclic_equiv(west, rbbv):
-                cube_polygon_builder['west'] = polygon
-                cube_polygon_builder['bound_box_vertices_west'] = tuple(bbv)
+                cube_polygon_builder['west'] = CubePolygon(
+                    polygon, tuple(bbv)  # type: ignore
+                )
             elif cyclic_equiv(up, bbv) or cyclic_equiv(up, rbbv):
-                cube_polygon_builder['up'] = polygon
-                cube_polygon_builder['bound_box_vertices_up'] = tuple(bbv)
+                cube_polygon_builder['up'] = CubePolygon(
+                    polygon, tuple(bbv)  # type: ignore
+                )
             elif cyclic_equiv(down, bbv) or cyclic_equiv(down, rbbv):
-                cube_polygon_builder['down'] = polygon
-                cube_polygon_builder['bound_box_vertices_down'] = tuple(bbv)
+                cube_polygon_builder['down'] = CubePolygon(
+                    polygon, tuple(bbv)  # type: ignore
+                )
         try:
             return CubePolygons(**cube_polygon_builder)
         except TypeError:  # Missing argument
@@ -362,20 +368,28 @@ class CubePolygons(NamedTuple):
     '''
     A polygons of a cube that correspond to Minecraft cube faces.
     '''
-    north: bpy_types.MeshPolygon  # Cube Front
-    east: bpy_types.MeshPolygon  # Cube Right
-    south: bpy_types.MeshPolygon  # Cube Back
-    west: bpy_types.MeshPolygon  # Cube Left
-    up: bpy_types.MeshPolygon  # Cube Up
-    down: bpy_types.MeshPolygon  # Cube Down
-    # The tuple with 3-character string with + and - characters that identifes
-    # the order of corresponding  bpy_types.MeshPolygon (north, south ,east...)
-    bound_box_vertices_north: Tuple[str]
-    bound_box_vertices_east: Tuple[str]
-    bound_box_vertices_south: Tuple[str]
-    bound_box_vertices_west: Tuple[str]
-    bound_box_vertices_up: Tuple[str]
-    bound_box_vertices_down: Tuple[str]
+    north: CubePolygon  # Cube Front
+    east: CubePolygon  # Cube Right
+    south: CubePolygon  # Cube Back
+    west: CubePolygon  # Cube Left
+    up: CubePolygon  # Cube Up
+    down: CubePolygon  # Cube Down
+
+class CubePolygon(NamedTuple):
+    '''
+    Single face in CubePolygons.
+
+    # Arguments:
+    - `side: bpy_types.MeshPolygon` - MeshPolygon object from blender mesh
+    - `order: Tuple[str, str, str, str]` - the names of the vertices of the
+     Mesh polygon. Every name should be a 3-character string with + and -
+     characters to show on which side of the cube is corresponding vertex.
+     Example: '++-' should correspond to a vertex which is at increasing X and
+     Y but decreasing Z coordinate (in local cube space).
+    '''
+    side: bpy_types.MeshPolygon
+    order: Tuple[str, str, str, str]
+
 
 class McblendObjectGroup:
     '''

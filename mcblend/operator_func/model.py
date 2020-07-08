@@ -14,7 +14,7 @@ import bpy_types
 
 from .common import (
     MINECRAFT_SCALE_FACTOR, McblendObject, McblendObjectGroup, MCObjType,
-    cyclic_equiv, CubePolygons
+    cyclic_equiv, CubePolygons, CubePolygon
 )
 from .json_tools import get_vect_json
 from .exception import NoCubePolygonsException
@@ -223,49 +223,25 @@ class PerFaceUvExport(UvExport):
 
     def json(self):
         return {
-            "north": self._one_face_uv(
-                self.cube_polygons.north,
-                self.cube_polygons.bound_box_vertices_north.index('---')
-                ),
-            "east": self._one_face_uv(
-                self.cube_polygons.east,
-                self.cube_polygons.bound_box_vertices_east.index('-+-')
-                ),
-            "south": self._one_face_uv(
-                self.cube_polygons.south,
-                self.cube_polygons.bound_box_vertices_south.index('++-')
-                ),
-            "west": self._one_face_uv(
-                self.cube_polygons.west,
-                self.cube_polygons.bound_box_vertices_west.index('+--')
-                ),
-            "up": self._one_face_uv(
-                self.cube_polygons.up,
-                self.cube_polygons.bound_box_vertices_up.index('--+')
-                ),
-            "down": self._one_face_uv(
-                self.cube_polygons.down,
-                self.cube_polygons.bound_box_vertices_down.index('---')
-                )
+            "north": self._one_face_uv(self.cube_polygons.north, '--+', '+--'),
+            "east": self._one_face_uv(self.cube_polygons.east, '-++', '---'),
+            "south": self._one_face_uv(self.cube_polygons.south, '+++', '-+-'),
+            "west": self._one_face_uv(self.cube_polygons.west, '+-+', '++-'),
+            "up": self._one_face_uv(self.cube_polygons.up, '-++', '+-+'),
+            "down": self._one_face_uv(self.cube_polygons.down, '+--', '-+-')
         }
 
-    def _one_face_uv(
-            self, face: bpy_types.MeshPolygon, starting_corner: int
-        ) -> Dict:
-        # uv_coords = []
-        # for loop_id in face.loop_indices:
-        #     uv_coords.append(
-        #         self.converter.convert(self.uv_layer.data[loop_id].uv)
-        #     )
-        # uv_coords_arr: np.ndarray = np.array(uv_coords)
-        corner1_id = (starting_corner + 3) % 4
-        corner2_id = (corner1_id + 2) % 4
+    def _one_face_uv(self, cube_polygon: CubePolygon, corner1_name: str,
+            corner2_name: str) -> Dict:
+        face: bpy_types.MeshPolygon = cube_polygon.side
+        corner1_index = cube_polygon.order.index(corner1_name)
+        corner2_index = cube_polygon.order.index(corner2_name)
 
         corner1_crds = np.array(self.converter.convert(
-            self.uv_layer.data[face.loop_indices[corner1_id]].uv
+            self.uv_layer.data[face.loop_indices[corner1_index]].uv
         ))
         corner2_crds = np.array(self.converter.convert(
-            self.uv_layer.data[face.loop_indices[corner2_id]].uv
+            self.uv_layer.data[face.loop_indices[corner2_index]].uv
         ))
         uv = corner1_crds
         uv_size = corner2_crds-corner1_crds
@@ -274,6 +250,13 @@ class PerFaceUvExport(UvExport):
             "uv": [round(i, 3) for i in uv],
             "uv_size": [round(i, 3) for i in uv_size],
         }
+
+# class CubeUvExport(UvExport):
+#     '''
+#     Class for standard Minecraft UV-mapping:
+#     Single vector with UV-values (the shape of the faces is implicitly
+#     determined by the dimensions of the cuboid)
+#     '''
 
 class UvExportFactory:
     '''

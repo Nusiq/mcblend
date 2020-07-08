@@ -245,12 +245,9 @@ class UvMcCubeFace(UvBox):
 
     # Properties
     `cube: UvMcCube` - the UvMcCube that contains this face
-    `left_down: int` - left down loop
-    `right_down: int` - right down loop
-    `right_up: int` - right up loop
-    `left_up: int` - left up loop
     `face_type: CubeFaceType` - the direction of the face
     '''
+    # TODO - update description
     def __init__(
             self, cube: UvMcCube, face_type: CubeFaceType,
             size, uv=None
@@ -267,23 +264,17 @@ class UvMcCubeFace(UvBox):
         # down/down: '---', '+--', '++-', '-+-'
         cube_polygons = self.cube.thisobj.cube_polygons()
         if self.face_type is CubeFaceType.FRONT:
-            self.face_polygon = cube_polygons.north
-            self.polygon_orientation = cube_polygons.bound_box_vertices_north
+            self.cube_polygon = cube_polygons.north
         elif self.face_type is CubeFaceType.RIGHT:
-            self.face_polygon = cube_polygons.east
-            self.polygon_orientation = cube_polygons.bound_box_vertices_east
+            self.cube_polygon = cube_polygons.east
         elif self.face_type is CubeFaceType.BACK:
-            self.face_polygon = cube_polygons.south
-            self.polygon_orientation = cube_polygons.bound_box_vertices_south
+            self.cube_polygon = cube_polygons.south
         elif self.face_type is CubeFaceType.LEFT:
-            self.face_polygon = cube_polygons.west
-            self.polygon_orientation = cube_polygons.bound_box_vertices_west
+            self.cube_polygon = cube_polygons.west
         elif self.face_type is CubeFaceType.TOP:
-            self.face_polygon = cube_polygons.up
-            self.polygon_orientation = cube_polygons.bound_box_vertices_up
+            self.cube_polygon = cube_polygons.up
         elif self.face_type is CubeFaceType.BOTTOM:
-            self.face_polygon = cube_polygons.down
-            self.polygon_orientation = cube_polygons.bound_box_vertices_down
+            self.cube_polygon = cube_polygons.down
 
     def set_blender_uv(self, converter: CoordinatesConverter):
         '''
@@ -294,6 +285,8 @@ class UvMcCubeFace(UvBox):
           convert from Minecraft UV coordinates (used internally by this
           object) to Blender UV coordinates.
         '''
+        # TODO - simplify this function
+
         # Test if some axes should be mirrored
         mirror_x = (
             self.face_type in [
@@ -327,17 +320,17 @@ class UvMcCubeFace(UvBox):
 
         # Insert loop indices into easy to read format
         uv_face = {
-            'left-down': self.face_polygon.loop_indices[
-                self.polygon_orientation.index(order[0])
+            'left-down': self.cube_polygon.side.loop_indices[
+                self.cube_polygon.order.index(order[0])
             ],
-            'right-down': self.face_polygon.loop_indices[
-                self.polygon_orientation.index(order[1])
+            'right-down': self.cube_polygon.side.loop_indices[
+                self.cube_polygon.order.index(order[1])
             ],
-            'right-up': self.face_polygon.loop_indices[
-                self.polygon_orientation.index(order[2])
+            'right-up': self.cube_polygon.side.loop_indices[
+                self.cube_polygon.order.index(order[2])
             ],
-            'left-up': self.face_polygon.loop_indices[
-                self.polygon_orientation.index(order[3])
+            'left-up': self.cube_polygon.side.loop_indices[
+                self.cube_polygon.order.index(order[3])
             ],
         }
         uv_data = self.cube.thisobj.obj_data.uv_layers.active.data
