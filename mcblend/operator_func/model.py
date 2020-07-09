@@ -3,9 +3,8 @@ Functions related to exporting models.
 '''
 from __future__ import annotations
 
-from typing import List, Dict, Tuple, Any, NamedTuple, Deque, Optional
+from typing import List, Dict, Tuple, Any, NamedTuple, Optional
 from dataclasses import dataclass, field
-from collections import deque
 
 import numpy as np
 
@@ -17,7 +16,7 @@ from .common import (
     cyclic_equiv, CubePolygons, CubePolygon
 )
 from .json_tools import get_vect_json
-from .exception import NoCubePolygonsException
+from .exception import NoCubePolygonsException, NotAStandardUvException
 from .uv import CoordinatesConverter
 
 
@@ -88,6 +87,17 @@ class ModelExport:
 class BoneExport:
     '''
     Object that represents a Bone during model export.
+
+    # Properties
+    - `model: ModelExport` - a model that contains this bone.
+    - `name: str` - the name of the bone.
+    - `parent: Optional[str]` - the name of a parent of this bone
+    - `rotation: np.ndarray` - rotation of the bone.
+    - `pivot: np.ndarray` - pivot of the bone.
+    - `cubes: List[CubeExport]` - list of cubes to export.
+    - `locators: Dict[str, LocatorExport]` - list of locators to export.
+      (if exists) or None
+
     '''
     def __init__(self, bone: McblendObject, model: ModelExport):
         '''
@@ -112,23 +122,21 @@ class BoneExport:
             elif child.mctype is MCObjType.LOCATOR:
                 locators.append(child)
 
-        # Set fields values
-        self.thisobj = bone
-        self.cube_objs = cubes
-        self.locator_objs = locators
-
-        # Load other properties
-        # name ,parent ,pivot ,rotation,
-        # cubes: List[size, pivot, origin, rotation, inflate, mirror, uv],
-        # locators: Dict[origin],
-        self.load()
-
-    def load(self):
-        # TODO - documentation
-
-        # Prepare lists, dictionaries etc.
+        self.name: str = bone.obj_name
+        self.parent: Optional[str] = (
+            None if bone.parent is None else bone.parent.obj_name)
+        self.rotation: np.ndarray = bone.get_mcrotation(bone.parent)
+        self.pivot: np.ndarray = bone.mcpivot * MINECRAFT_SCALE_FACTOR
         self.cubes: List[CubeExport] = []
         self.locators: Dict[str, LocatorExport] = {}
+        self.load(bone, cubes, locators)
+
+    def load(
+            self, thisobj: McblendObject, cube_objs: List[McblendObject],
+            locator_objs: List[McblendObject]):
+        '''
+        Used in constructor to cubes and locators.
+        '''
         uv_factory = UvExportFactory(
             (self.model.texture_width, self.model.texture_height)
         )
@@ -138,23 +146,8 @@ class BoneExport:
             _, _, scale = objprop.obj_matrix_world.decompose()
             return np.array(scale.xzy)
 
-        # Set name
-        self.name = self.thisobj.obj_name
-
-        # Set parent
-        if self.thisobj.parent is not None:
-            self.parent: Optional[str] = self.thisobj.parent.obj_name
-        else:
-            self.parent = None
-
-        # Set rotation and pivot
-        b_rot = self.thisobj.get_mcrotation(self.thisobj.parent)
-        b_pivot = self.thisobj.mcpivot * MINECRAFT_SCALE_FACTOR
-        self.pivot = b_pivot
-        self.rotation = b_rot
-
         # Set locators
-        for locatorprop in self.locator_objs:
+        for locatorprop in locator_objs:
             _l_scale = _scale(locatorprop)
             l_pivot = locatorprop.mcpivot * MINECRAFT_SCALE_FACTOR
             l_origin = l_pivot + (
@@ -164,24 +157,25 @@ class BoneExport:
             self.locators[locatorprop.obj_name] = LocatorExport(l_origin)
 
         # Set cubes
-        for cubeprop in self.cube_objs:
+        for cubeprop in cube_objs:
             _c_scale = _scale(cubeprop)
             c_size = cubeprop.mcube_size * _c_scale * MINECRAFT_SCALE_FACTOR
             c_pivot = cubeprop.mcpivot * MINECRAFT_SCALE_FACTOR
             c_origin = c_pivot + (
                 cubeprop.mccube_position * _c_scale * MINECRAFT_SCALE_FACTOR
             )
-            c_rot = cubeprop.get_mcrotation(self.thisobj)
+            c_rot = cubeprop.get_mcrotation(thisobj)
 
             if cubeprop.mc_inflate != 0:
                 c_size = c_size - cubeprop.mc_inflate*2
                 c_origin = c_origin + cubeprop.mc_inflate
 
-            uv = uv_factory.get_uv_export(cubeprop)
+            uv = uv_factory.get_uv_export(cubeprop, c_size)
 
-            cube = CubeExport(size=c_size, pivot=c_pivot, origin=c_origin,
-                    rotation=c_rot, inflate=cubeprop.mc_inflate,
-                    mirror=cubeprop.mc_mirror, uv=uv)
+            cube = CubeExport(
+                size=c_size, pivot=c_pivot, origin=c_origin,
+                rotation=c_rot, inflate=cubeprop.mc_inflate,
+                mirror=cubeprop.mc_mirror, uv=uv)
             self.cubes.append(cube)
 
 
@@ -219,7 +213,7 @@ class LocatorExport:
 
     def json(self):
         # TODO - documentation
-        return get_vect_json(origin)
+        return get_vect_json(self.origin)
 
 @dataclass
 class CubeExport:
@@ -305,12 +299,120 @@ class PerFaceUvExport(UvExport):
             "uv_size": [round(i, 3) for i in uv_size],
         }
 
-# class CubeUvExport(UvExport):
-#     '''
-#     Class for standard Minecraft UV-mapping:
-#     Single vector with UV-values (the shape of the faces is implicitly
-#     determined by the dimensions of the cuboid)
-#     '''
+class CubeUvExport(UvExport):
+    '''
+    Class for standard Minecraft UV-mapping:
+    Single vector with UV-values (the shape of the faces is implicitly
+    determined by the dimensions of the cuboid)
+    '''
+    def __init__(
+            self, cube_polygons: CubePolygons,
+            uv_layer: bpy.types.MeshUVLoopLayer, cube_size: np.array,
+            blend_to_mc_converter: CoordinatesConverter):
+        super().__init__()
+        self.cube_size = cube_size
+        self.cube_polygons = cube_polygons
+        self.uv_layer = uv_layer
+        self.converter = blend_to_mc_converter
+
+        # test if the shape of the  UV is the standard Minecraft shape
+        self.assert_standard_uv_shape()
+
+    def _uv_from_name(
+            self, cube_polygon: CubePolygon, name: str) -> np.ndarray:
+        '''
+        Helper function used to get certain UV coordinates from a face by
+        its name.
+        '''
+        face: bpy_types.MeshPolygon = cube_polygon.side
+        name_index = cube_polygon.order.index(name)
+        uv_layer_data_index = face.loop_indices[name_index]
+        return self.converter.convert(
+            np.array(self.uv_layer.data[uv_layer_data_index].uv)
+        )
+
+    def assert_standard_uv_shape(self):
+        # Get min and max value of he loop coordinates
+        loop_crds_list: List[np.array] = []
+        for loop in self.uv_layer.data:
+            loop_crds_list.append(
+                self.converter.convert(np.array(loop.uv))
+            )
+        loop_crds_arr: np.ndarray = np.vstack(loop_crds_list)
+        min_loop_crds = loop_crds_arr.min(0)
+        max_loop_crds = loop_crds_arr.max(0)
+        
+        # Depth width height 
+        # TODO - insert real depth, width and height
+        w, h, d = [i for i in self.cube_size]  # pylint: disable=invalid-name
+        expected_shape = np.array([
+            [d, d + h],  # north/front LD
+            [d + w, d + h],  # north/front RD
+            [d + w, d],  # north/front RU
+            [d, d],  # north/front LU
+            [0, d + h],  # east/right LD
+            [d, d + h],  # east/right RD
+            [d, d],  # east/right RU
+            [0, d],  # east/right LU
+            [2 * d + w, d + h],  # south/back LD
+            [2 * d + 2 * w, d + h],  # south/back RD
+            [2 * d + 2 * w, d],  # south/back RU
+            [2 * d + w, d],  # south/back LU
+            [d + w, d + h],  # west/left LD
+            [2 * d + w, d + h],  # west/left RD
+            [2 * d + w, d],  # west/left RU
+            [d + w, d],  # west/left LU
+            [d, d],  # up/up LD
+            [d + w, d],  # up/up RD
+            [d + w, 0],  # up/up RU
+            [d, 0],  # up/up LU
+            [d + w, d],  # down/down LD
+            [d + 2 * w, d],  # down/down RD
+            [d + 2 * w, 0],  # down/down RU
+            [d + w, 0],  # down/down LU
+        ])
+        # Shift the expected values so they start from the minimal point
+        # instead of 0
+        expected_shape += min_loop_crds
+
+        real_shape = np.array([
+            self._uv_from_name(self.cube_polygons.north, '---'),  # north/front LD
+            self._uv_from_name(self.cube_polygons.north, '+--'),  # north/front RD
+            self._uv_from_name(self.cube_polygons.north, '+-+'),  # north/front RU
+            self._uv_from_name(self.cube_polygons.north, '--+'),  # north/front LU
+            self._uv_from_name(self.cube_polygons.east, '-+-'),  # east/right LD
+            self._uv_from_name(self.cube_polygons.east, '---'),  # east/right RD
+            self._uv_from_name(self.cube_polygons.east, '--+'),  # east/right RU
+            self._uv_from_name(self.cube_polygons.east, '-++'),  # east/right LU
+            self._uv_from_name(self.cube_polygons.south, '++-'),  # south/back LD
+            self._uv_from_name(self.cube_polygons.south, '-+-'),  # south/back RD
+            self._uv_from_name(self.cube_polygons.south, '-++'),  # south/back RU
+            self._uv_from_name(self.cube_polygons.south, '+++'),  # south/back LU
+            self._uv_from_name(self.cube_polygons.west, '+--'),  # west/left LD
+            self._uv_from_name(self.cube_polygons.west, '++-'),  # west/left RD
+            self._uv_from_name(self.cube_polygons.west, '+++'),  # west/left RU
+            self._uv_from_name(self.cube_polygons.west, '+-+'),  # west/left LU
+            self._uv_from_name(self.cube_polygons.up, '--+'),  # up/up LD
+            self._uv_from_name(self.cube_polygons.up, '+-+'),  # up/up RD
+            self._uv_from_name(self.cube_polygons.up, '+++'),  # up/up RU
+            self._uv_from_name(self.cube_polygons.up, '-++'),  # up/up LU
+            self._uv_from_name(self.cube_polygons.down, '---'),  # down/down LD
+            self._uv_from_name(self.cube_polygons.down, '+--'),  # down/down RD
+            self._uv_from_name(self.cube_polygons.down, '++-'),  # down/down RU
+            self._uv_from_name(self.cube_polygons.down, '-+-'),  # down/down LU
+        ])
+        if not np.isclose(expected_shape, real_shape).all():
+            raise NotAStandardUvException()
+
+    def json(self):
+        loop_crds_list: List[np.array] = []
+        for loop in self.uv_layer.data:
+            loop_crds_list.append(
+                self.converter.convert(np.array(loop.uv))
+            )
+        loop_crds_arr: np.ndarray = np.vstack(loop_crds_list)
+        min_loop_crds = loop_crds_arr.min(0)
+        return [round(i, 3) for i in min_loop_crds]
 
 class UvExportFactory:
     '''
@@ -327,12 +429,19 @@ class UvExportFactory:
             np.array([[0, 1], [1, 0]])
         )
 
-    def get_uv_export(self, mcobj: McblendObject) -> UvExport:
+    def get_uv_export(
+            self, mcobj: McblendObject, cube_size: np.ndarray) -> UvExport:
+        # TODO - documentation
+        layer: Optional[bpy.types.MeshUVLoopLayer] = (
+            mcobj.obj_data.uv_layers.active)
+        if layer is None:  # Make sure that UV exists
+            return UvExport()
         try:
             polygons = mcobj.cube_polygons()
-            return PerFaceUvExport(
-                polygons, mcobj.obj_data.uv_layers.active,
-                self.blend_to_mc_converter
-            )
-        except NoCubePolygonsException as e:
+        except NoCubePolygonsException:
             return UvExport()
+        try:
+            return CubeUvExport(
+                polygons, layer, cube_size, self.blend_to_mc_converter)
+        except NotAStandardUvException:
+            return PerFaceUvExport(polygons, layer, self.blend_to_mc_converter)

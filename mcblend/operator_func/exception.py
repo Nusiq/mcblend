@@ -20,3 +20,9 @@ class NoCubePolygonsException(Exception):
     Raise when trying to get CubePolygons from McblendObject but some data is
     missing.
     '''
+
+class NotAStandardUvException(Exception):
+    '''
+    Raised by CubeUvExport class when the UV of an object doesn't have standard
+    Minecraft UV mapping shape
+    '''

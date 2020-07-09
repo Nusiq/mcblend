@@ -9,7 +9,6 @@ from typing import (
 from enum import Enum
 from dataclasses import dataclass, field
 from itertools import filterfalse
-from collections import deque
 
 import numpy as np
 
