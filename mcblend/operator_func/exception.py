@@ -23,6 +23,6 @@ class NoCubePolygonsException(Exception):
 
 class NotAStandardUvException(Exception):
     '''
-    Raised by CubeUvExport class when the UV of an object doesn't have standard
+    Raised by StandardCubeUvExport class when the UV of an object doesn't have standard
     Minecraft UV mapping shape
     '''

@@ -265,11 +265,17 @@ class UvMcCubeFace(UvBox):
         if self.face_type is CubeFaceType.FRONT:
             self.cube_polygon = cube_polygons.north
         elif self.face_type is CubeFaceType.RIGHT:
-            self.cube_polygon = cube_polygons.east
+            if self.cube.thisobj.mc_mirror:
+                self.cube_polygon = cube_polygons.west
+            else:
+                self.cube_polygon = cube_polygons.east
         elif self.face_type is CubeFaceType.BACK:
             self.cube_polygon = cube_polygons.south
         elif self.face_type is CubeFaceType.LEFT:
-            self.cube_polygon = cube_polygons.west
+            if self.cube.thisobj.mc_mirror:
+                self.cube_polygon = cube_polygons.east
+            else:
+                self.cube_polygon = cube_polygons.west
         elif self.face_type is CubeFaceType.TOP:
             self.cube_polygon = cube_polygons.up
         elif self.face_type is CubeFaceType.BOTTOM:
@@ -285,64 +291,46 @@ class UvMcCubeFace(UvBox):
           object) to Blender UV coordinates.
         '''
         # TODO - simplify this function
-
-        # Test if some axes should be mirrored
-        mirror_x = (
-            self.face_type in [
-                CubeFaceType.LEFT, CubeFaceType.RIGHT, CubeFaceType.TOP,
-                CubeFaceType.BOTTOM,
-            ] and self.cube.thisobj.mc_mirror
-        )
-        mirror_y = (
-            self.face_type in [CubeFaceType.FRONT, CubeFaceType.BACK] and
-            self.cube.thisobj.mc_mirror
-        )
-        
         # Order of the faces for: left_down, right_down, right_up, left_up
         if self.face_type is CubeFaceType.FRONT:
-            order = ['---', '+--', '+-+', '--+',]  # front/north
+            order = np.array(['---', '+--', '+-+', '--+',])  # front/north
         elif self.face_type is CubeFaceType.RIGHT:
-            order = ['-+-', '---', '--+', '-++']  # right/east
+            if self.cube.thisobj.mc_mirror:
+                order = np.array(['+--', '++-', '+++', '+-+'])  # left/west
+            else:
+                order = np.array(['-+-', '---', '--+', '-++'])  # right/east
         elif self.face_type is CubeFaceType.BACK:
-            order = ['++-', '-+-', '-++', '+++']  # back/south
+            order = np.array(['++-', '-+-', '-++', '+++'])  # back/south
         elif self.face_type is CubeFaceType.LEFT:
-            order = ['+--', '++-', '+++', '+-+']  # left/west
+            if self.cube.thisobj.mc_mirror:
+                order = np.array(['-+-', '---', '--+', '-++'])  # right/east
+            else:
+                order = np.array(['+--', '++-', '+++', '+-+'])  # left/west
         elif self.face_type is CubeFaceType.TOP:
-            order = ['--+', '+-+', '+++', '-++']  # up/up
+            order = np.array(['--+', '+-+', '+++', '-++'])  # up/up
         elif self.face_type is CubeFaceType.BOTTOM:
-            order = ['---', '+--', '++-', '-+-']  # down/down
+            order = np.array(['---', '+--', '++-', '-+-'])  # down/down
         # Apply mirror effects
-        if mirror_x:
-            order = [order[i] for i in [1, 0, 3, 2]]
-        if mirror_y:
-            order = [order[i] for i in [2, 3, 0, 1]]
+        if self.cube.thisobj.mc_mirror:
+            order = order[[1, 0, 3, 2]]
 
-        # Insert loop indices into easy to read format
-        uv_face = {
-            'left-down': self.cube_polygon.side.loop_indices[
-                self.cube_polygon.order.index(order[0])
-            ],
-            'right-down': self.cube_polygon.side.loop_indices[
-                self.cube_polygon.order.index(order[1])
-            ],
-            'right-up': self.cube_polygon.side.loop_indices[
-                self.cube_polygon.order.index(order[2])
-            ],
-            'left-up': self.cube_polygon.side.loop_indices[
-                self.cube_polygon.order.index(order[3])
-            ],
-        }
+        cp_loop_indices = self.cube_polygon.side.loop_indices
+        cp_order = self.cube_polygon.order
+
+        left_down = cp_loop_indices[cp_order.index(order[0])]
+        right_down = cp_loop_indices[cp_order.index(order[1])]
+        right_up = cp_loop_indices[cp_order.index(order[2])]
+        left_up = cp_loop_indices[cp_order.index(order[3])]
+
         uv_data = self.cube.thisobj.obj_data.uv_layers.active.data
-        uv_data[uv_face['left-up']].uv = converter.convert(self.uv)
-        uv_data[uv_face['right-up']].uv = converter.convert(
-            (self.uv[0] + self.size[0], self.uv[1])
-        )
-        uv_data[uv_face['right-down']].uv = converter.convert(
-            (self.uv[0] + self.size[0], self.uv[1] + self.size[1])
-        )
-        uv_data[uv_face['left-down']].uv = converter.convert(
-            (self.uv[0], self.uv[1] + self.size[1])
-        )
+
+        uv_data[left_down].uv = converter.convert(
+            (self.uv[0], self.uv[1] + self.size[1]))
+        uv_data[right_down].uv = converter.convert(
+            (self.uv[0] + self.size[0], self.uv[1] + self.size[1]))
+        uv_data[right_up].uv = converter.convert(
+            (self.uv[0] + self.size[0], self.uv[1]))
+        uv_data[left_up].uv = converter.convert(self.uv)
 
 class UvMcCube(McblendObjUvBox):
     '''

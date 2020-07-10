@@ -174,8 +174,7 @@ class BoneExport:
 
             cube = CubeExport(
                 size=c_size, pivot=c_pivot, origin=c_origin,
-                rotation=c_rot, inflate=cubeprop.mc_inflate,
-                mirror=cubeprop.mc_mirror, uv=uv)
+                rotation=c_rot, inflate=cubeprop.mc_inflate, uv=uv)
             self.cubes.append(cube)
 
 
@@ -223,7 +222,6 @@ class CubeExport:
     origin: np.ndarray
     rotation: np.ndarray
     inflate: float
-    mirror: bool
     uv: UvExport
 
     def json(self):
@@ -240,7 +238,7 @@ class CubeExport:
         }
         if self.inflate != 0:
             cube_dict['inflate'] = self.inflate
-        if self.mirror:
+        if self.uv.mirror:
             cube_dict['mirror'] = True
         return cube_dict
 
@@ -248,6 +246,11 @@ class UvExport:
     '''
     Base class for creating the UV part of exported cube.
     '''
+    def __init__(self):
+        # Mirror is used only for StandardCubeUvExport but any other UV has to
+        # be able to return False when asked about mirror property
+        self.mirror = False
+
     def json(self) -> Any:
         '''
         Returns josonable object that represents a single uv of a cube in
@@ -299,7 +302,7 @@ class PerFaceUvExport(UvExport):
             "uv_size": [round(i, 3) for i in uv_size],
         }
 
-class CubeUvExport(UvExport):
+class StandardCubeUvExport(UvExport):
     '''
     Class for standard Minecraft UV-mapping:
     Single vector with UV-values (the shape of the faces is implicitly
@@ -343,37 +346,45 @@ class CubeUvExport(UvExport):
         max_loop_crds = loop_crds_arr.max(0)
         
         # Depth width height 
-        # TODO - insert real depth, width and height
         w, h, d = [i for i in self.cube_size]  # pylint: disable=invalid-name
         expected_shape = np.array([
-            [d, d + h],  # north/front LD
-            [d + w, d + h],  # north/front RD
-            [d + w, d],  # north/front RU
-            [d, d],  # north/front LU
-            [0, d + h],  # east/right LD
-            [d, d + h],  # east/right RD
-            [d, d],  # east/right RU
-            [0, d],  # east/right LU
-            [2 * d + w, d + h],  # south/back LD
-            [2 * d + 2 * w, d + h],  # south/back RD
-            [2 * d + 2 * w, d],  # south/back RU
-            [2 * d + w, d],  # south/back LU
-            [d + w, d + h],  # west/left LD
-            [2 * d + w, d + h],  # west/left RD
-            [2 * d + w, d],  # west/left RU
-            [d + w, d],  # west/left LU
-            [d, d],  # up/up LD
-            [d + w, d],  # up/up RD
-            [d + w, 0],  # up/up RU
-            [d, 0],  # up/up LU
-            [d + w, d],  # down/down LD
-            [d + 2 * w, d],  # down/down RD
-            [d + 2 * w, 0],  # down/down RU
-            [d + w, 0],  # down/down LU
+            [d, d + h],  # north/front LD 0
+            [d + w, d + h],  # north/front RD 1
+            [d + w, d],  # north/front RU 2
+            [d, d],  # north/front LU 3
+            [0, d + h],  # east/right LD 4
+            [d, d + h],  # east/right RD 5
+            [d, d],  # east/right RU 6
+            [0, d],  # east/right LU 7
+            [2 * d + w, d + h],  # south/back LD 8
+            [2 * d + 2 * w, d + h],  # south/back RD 9
+            [2 * d + 2 * w, d],  # south/back RU 10
+            [2 * d + w, d],  # south/back LU 11
+            [d + w, d + h],  # west/left LD 12
+            [2 * d + w, d + h],  # west/left RD 13
+            [2 * d + w, d],  # west/left RU 14
+            [d + w, d],  # west/left LU 15
+            [d, d],  # up/up LD 16
+            [d + w, d],  # up/up RD 17
+            [d + w, 0],  # up/up RU 18
+            [d, 0],  # up/up LU 19
+            [d + w, d],  # down/down LD 20
+            [d + 2 * w, d],  # down/down RD 21
+            [d + 2 * w, 0],  # down/down RU 22
+            [d + w, 0],  # down/down LU 23
         ])
         # Shift the expected values so they start from the minimal point
         # instead of 0
         expected_shape += min_loop_crds
+
+        expected_shape_mirror = expected_shape[[
+            1, 0, 3, 2,  # Mirror front
+            13, 12, 15, 14,  # Mirror left (and swap with right)
+            9, 8, 11, 10,  # Mirror back
+            5, 4, 7, 6,  # Mirror right (and swap with left)
+            17, 16, 19, 18,  # Mirror up
+            21, 20, 23, 22,  # Mirror down
+        ]]
 
         real_shape = np.array([
             self._uv_from_name(self.cube_polygons.north, '---'),  # north/front LD
@@ -401,8 +412,12 @@ class CubeUvExport(UvExport):
             self._uv_from_name(self.cube_polygons.down, '++-'),  # down/down RU
             self._uv_from_name(self.cube_polygons.down, '-+-'),  # down/down LU
         ])
+
         if not np.isclose(expected_shape, real_shape).all():
-            raise NotAStandardUvException()
+            if not np.isclose(expected_shape_mirror, real_shape).all():
+                raise NotAStandardUvException()
+            else:
+                self.mirror = True
 
     def json(self):
         loop_crds_list: List[np.array] = []
@@ -441,7 +456,7 @@ class UvExportFactory:
         except NoCubePolygonsException:
             return UvExport()
         try:
-            return CubeUvExport(
+            return StandardCubeUvExport(
                 polygons, layer, cube_size, self.blend_to_mc_converter)
         except NotAStandardUvException:
             return PerFaceUvExport(polygons, layer, self.blend_to_mc_converter)
