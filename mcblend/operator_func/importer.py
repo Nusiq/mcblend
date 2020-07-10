@@ -29,7 +29,7 @@ def _assert(expr: bool, msg: str = ''):
         raise AssertionError(msg)
 
 
-def assert_is_vector(
+def _assert_is_vector(
         vect: Any, length: int, types: Tuple, msg: str = ''
     ) -> None:
     '''
@@ -47,7 +47,7 @@ def assert_is_vector(
     _assert(all([isinstance(i, types) for i in vect]), msg)
 
 
-def assert_is_model(model: Any) -> None:
+def _assert_is_model_file(model: Any) -> None:
     '''
     Asserts that the input dictionary is a valid model file.
 
@@ -126,7 +126,7 @@ def assert_is_model(model: Any) -> None:
             isinstance(desc['visible_bounds_height'], (float, int)),
             'visible_bounds_height must be a number'
         )
-        assert_is_vector(
+        _assert_is_vector(
             desc['visible_bounds_offset'], 3, (int, float),
             'visible_bounds_offset must be a vector of 3 numbers'
         )
@@ -150,11 +150,11 @@ def assert_is_model(model: Any) -> None:
             )
             _assert(isinstance(bone['name'], str), 'Bone name must be a string')
 
-            assert_is_vector(
+            _assert_is_vector(
                 bone['pivot'], 3, (int, float),
                 'pivot property of a bone must be a vector of 3 numbers'
             )
-            assert_is_vector(
+            _assert_is_vector(
                 bone['rotation'], 3, (int, float),
                 'rotation property of a bone must be a vector of 3 numbers'
             )
@@ -174,7 +174,7 @@ def assert_is_model(model: Any) -> None:
                         isinstance(locator_name, str),
                         'Locator name property must be a string'
                     )
-                    assert_is_vector(
+                    _assert_is_vector(
                         locator, 3, (int, float),
                         'Locator value must be a vector of 3 numbers'
                     )
@@ -199,23 +199,23 @@ def assert_is_model(model: Any) -> None:
                     'Every cube must have following properties: '
                     'uv, size, origin, pivot, rotation'
                 )
-                assert_is_vector(
+                _assert_is_vector(
                     cube['uv'], 2, (int, float),
                     'size property of a cube must be a vector of 2 numbers'
                 )
-                assert_is_vector(
+                _assert_is_vector(
                     cube['size'], 3, (int, float),
                     'size property of a cube must be a vector of 3 numbers'
                 )
-                assert_is_vector(
+                _assert_is_vector(
                     cube['origin'], 3, (int, float),
                     'origin property of a cube must be a vector of 3 numbers'
                 )
-                assert_is_vector(
+                _assert_is_vector(
                     cube['pivot'], 3, (int, float),
                     'pivot property of a cube must be a vector of 3 numbers'
                 )
-                assert_is_vector(
+                _assert_is_vector(
                     cube['rotation'], 3, (int, float),
                     'rotation property of a cube must be a vector of 3 numbers'
                 )
@@ -235,303 +235,242 @@ class ImportLocator:
 class ImportCube:
     '''Represents minecraft cube during import operation.'''
     def __init__(
-            self,
-            uv: Tuple[int, int],
-            mirror: bool,
-            origin: Tuple[float, float, float],
-            pivot: Tuple[float, float, float],
-            size: Tuple[float, float, float],
-            rotation: Tuple[float, float, float]):
-        self.uv = uv
-        self.mirror = mirror
-        self.origin = origin
-        self.size = size
+            self, data: Dict):
+        '''
+        Creates ImportCube object created from a dictinary (part of the JSON)
+        file in the model.
 
-        self.pivot = pivot
-        self.rotation = rotation
-
+        # Arguments:
+        - `data: Dict` - the part of the Minecraft model JSON file that represents
+        the cube.
+        '''
         self.blend_cube: Optional[bpy_types.Object] = None
+
+        self.uv: Tuple[int, int] = data['uv']
+        self.mirror: bool = False if 'mirror' not in data else data['mirror']
+        self.origin: Tuple[float, float, float] = tuple(  # type: ignore
+            data['origin'])
+        self.pivot: Tuple[float, float, float] = tuple(  # type: ignore
+            data['pivot'])
+        self.size: Tuple[float, float, float] = tuple(  # type: ignore
+            data['size'])
+        self.rotation: Tuple[float, float, float] = tuple(  # type: ignore
+            data['rotation'])
 
 
 class ImportBone:
     '''Represents minecraft bone during import operation.'''
-    def __init__(
-            self, name: str, parent: Optional[str],
-            pivot: Tuple[float, float, float],
-            rotation: Tuple[float, float, float],
-            cubes: List[ImportCube], locators: List[ImportLocator]):
-        self.name = name
-        self.parent = parent
-        self.cubes = cubes
-        self.locators = locators
+    def __init__(self, data: Dict):
+        '''
+        Creates ImportBone object created from a dictinary (part of the JSON)
+        file in the model.
 
-        self.pivot = pivot
-        self.rotation = rotation
-
+        # Arguments:
+        - `data: Dict` - the part of the Minecraft model JSON file that represents
+        the bone.
+        '''
         self.blend_empty: Optional[bpy_types.Object] = None
+
+        # Locators
+        locators: List[ImportLocator] = []
+        if 'locators' in data:
+            for k, v in data['locators'].items():
+                locators.append(ImportLocator(k, tuple(v)))  # type: ignore
+        # Cubes
+        import_cubes: List[ImportCube] = []
+        for cube in data['cubes']:
+            import_cubes.append(ImportCube(cube))
+
+        self.name: str = data['name']
+        self.parent = None if 'parent' not in data else data['parent']
+        self.cubes = import_cubes
+        self.locators = locators
+        self.pivot: Tuple[float, float, float] = tuple(  # type: ignore
+            data['pivot'])
+        self.rotation: Tuple[float, float, float] = tuple(  # type: ignore
+            data['rotation'])
 
 
 class ImportGeometry:
     '''Represents whole minecraft geometry during import operation.'''
     def __init__(
-            self, identifier: str,
-            texture_width: Optional[int],
-            texture_height: Optional[int],
-            bones: Dict[str, ImportBone]):
-        self.identifier = identifier
+            self, data: Dict, geometry_name: str = ""):
+        '''
+        The data dict is a dictionary representaiton of the JSON file with
+        Minecraft model.
+
+        geometry_name is a name of the geometry to load. This argument is
+        optional if not specified or epmty string only the first model is
+        imported.
+
+        # Arguments:
+        - `data: Dict` - a dictionary with a valid Minecraft model file (can
+        have multiple geometries).
+        - `geometry_name: str` - a name of the geometry to import.
+        '''
+        # Validate the input data
+        _assert_is_model_file(data)
+
+        # format_version: str = data['format_version']
+        geometries: List = data['minecraft:geometry']
+        geometry, geometry_name = self._load_geometry(
+            geometries, geometry_name)
+        texture_width, texture_height = self._load_dimensions(geometry)
+        import_bones = self._load_bones(geometry)
+
+        # Set the values
+        self.identifier = geometry_name
         self.texture_width = texture_width
         self.texture_height = texture_height
-        self.bones = bones
+        self.bones = import_bones
 
+    def _load_geometry(
+            self, geometries: List, geometry_name: str) -> Tuple[Dict, str]:
+        # Find geometry
+        geometry: Optional[Dict] = None
+        for curr_geometry in geometries:
+            try:
+                identifier = get_path(curr_geometry, ['description', 'identifier'])
+            except InvalidDictPathException:
+                continue
 
-def _load_cube(data: Dict) -> ImportCube:
-    '''
-    Returns ImportCube object created from a dictinary (part of the JSON)
-    file in the model.
+            # Found THE geometry
+            if geometry_name == "" or f'geometry.{geometry_name}' == identifier:
+                identifier = cast(str, identifier)  # mypy cast
+                geometry_name = identifier
+                geometry = curr_geometry
+                break
 
-    # Arguments:
-    - `data: Dict` - the part of the Minecraft model JSON file that represents
-    the cube.
+        # Geometry not found
+        if geometry is None:
+            if geometry_name == "":
+                raise ValueError('Unable to find valid geometry')
+            raise ValueError(
+                f'Unable to find geometry called geometry.{geometry_name}'
+            )
+        return geometry, geometry_name
 
-    # Returns:
-    `ImportCube` - object used for importing Minecraft cubes.
-    '''
-    # uv
-    uv: Tuple[int, int] = data['uv']
-    # mirror
-    if 'mirror' not in data:
-        mirror: bool = False
-    else:
-        mirror = data['mirror']
-
-    # size
-    size: Tuple[float, float, float] = tuple(data['size'])  # type: ignore
-
-    # origin
-    origin: Tuple[float, float, float] = tuple(  # type: ignore
-        data['origin']
-    )
-
-    # rotation
-    rotation: Tuple[float, float, float] = tuple(  # type: ignore
-        data['rotation']
-    )
-
-    # pivot
-    pivot: Tuple[float, float, float] = tuple(data['pivot'])  # type: ignore
-    return ImportCube(uv, mirror, origin, pivot, size, rotation)
-
-
-def _load_bone(data: Dict) -> ImportBone:
-    '''
-    Returns ImportBone object created from a dictinary (part of the JSON)
-    file in the model.
-
-    # Arguments:
-    - `data: Dict` - the part of the Minecraft model JSON file that represents
-    the bone.
-
-    # Returns:
-    `ImportBone` - object used for importing Minecraft bones.
-    '''
-
-    name: str = data['name']
-    # Pivot
-    pivot: Tuple[float, float, float] = tuple(data['pivot'])  # type: ignore
-
-    # Roatation
-    rotation: Tuple[float, float, float] = tuple(  # type: ignore
-        data['rotation']
-    )
-    # Parent
-    if 'parent' not in data:
-        parent = None
-    else:
-        parent = data['parent']
-
-
-    # Locators
-    locators: List[ImportLocator] = []
-    if 'locators' not in data:
-        pass
-    else:
-        for k, v in data['locators'].items():
-            locators.append(ImportLocator(
-                k,
-                tuple(v)  # type: ignore
-            ))
-    # Cubes
-    import_cubes: List[ImportCube] = []
-    for cube in data['cubes']:
-        import_cubes.append(_load_cube(cube))
-
-    return ImportBone(
-        name, parent, pivot, rotation, import_cubes, locators
-    )
-
-
-def load_model(data: Dict, geometry_name: str = "") -> ImportGeometry:
-    '''
-    Returns ImportGeometry object with all of the data loaded from data dict.
-    The data dict is a dictionary representaiton of the JSON file with
-    Minecraft model. This doesn't validates the input use assert_is_model for
-    that.
-
-    geometry_name is a name of the geometry to load. This argument is optional
-    if not specified or epmty string only the first model is imported.
-
-    # Arguments:
-    - `data: Dict` - a dictionary with a valid Minecraft model file (can have
-      multiple geometries).
-    - `geometry_name: str` - a name of the geometry to import.
-
-    # Returns:
-    `ImportGeometry` - object used for importing Minecraft geometries.
-    '''
-    # format_version: str = data['format_version']
-    geometries: List = data['minecraft:geometry']
-
-    # Find geometry
-    geometry: Optional[Dict] = None
-    for curr_geometry in geometries:
+    def _load_dimensions(
+            self, geometry: Dict) -> Tuple[int, int]:
+        # Load texture_width
         try:
-            identifier = get_path(curr_geometry, ['description', 'identifier'])
-        except InvalidDictPathException:
-            continue
-
-        # Found THE geometry
-        if geometry_name == "" or f'geometry.{geometry_name}' == identifier:
-            identifier = cast(str, identifier)  # mypy cast
-            geometry_name = identifier
-            geometry = curr_geometry
-            break
-
-    # Geometry not found
-    if geometry is None:
-        if geometry_name == "":
-            raise ValueError('Unable to find valid geometry')
-        raise ValueError(
-            f'Unable to find geometry called geometry.{geometry_name}'
-        )
-
-    # Load texture_width
-    try:
-        texture_width: Optional[int] = int(
-            get_path(  # type: ignore
-                geometry, ['description', 'texture_width']
+            texture_width: int = int(
+                get_path(  # type: ignore
+                    geometry, ['description', 'texture_width']
+                )
             )
-        )
-    except (InvalidDictPathException, ValueError):
-        texture_width = None
+        except (InvalidDictPathException, ValueError):
+            # TODO - give user some kind of warning if this happens
+            # there is clearly something wrong about the model that doesn't
+            # define the texture width
+            texture_width = 100
 
-    # Load texture_height
-    try:
-        texture_height: Optional[int] = int(
-            get_path(  # type: ignore
-                geometry, ['description', 'texture_height']
+        # Load texture_height
+        try:
+            texture_height: int = int(
+                get_path(  # type: ignore
+                    geometry, ['description', 'texture_height']
+                )
             )
-        )
-    except (InvalidDictPathException, ValueError):
-        texture_height = None
+        except (InvalidDictPathException, ValueError):
+            # TODO - give user some kind of warning if this happens
+            # there is clearly something wrong about the model that doesn't
+            # define the texture width
+            texture_height = 100
+        return texture_width, texture_height
 
-    # Load bones from geometry
-    bones: List = geometry['bones']
+    def _load_bones(self, geometry: Dict) -> Dict[str, ImportBone]:
+        # Load bones from geometry
+        bones: List = geometry['bones']
 
-    # Read bones
-    import_bones: Dict[str, ImportBone] = {}
-    for bone in bones:
-        import_bone = _load_bone(bone)
-        import_bones[import_bone.name] = import_bone
+        # Read bones
+        import_bones: Dict[str, ImportBone] = {}
+        for bone in bones:
+            import_bone = ImportBone(bone)
+            import_bones[import_bone.name] = import_bone
+        return import_bones
 
-    return ImportGeometry(
-        geometry_name,
-        texture_width,
-        texture_height,
-        import_bones
-    )
+    def build(
+            self, context: bpy_types.Context):
+        '''
+        Builds the geometry in Blender based on ImportGeometry object.
 
-
-def build_geometry(geometry: ImportGeometry, context: bpy_types.Context):
-    '''
-    Builds the geometry in Blender based on ImportGeometry object.
-
-    # Arguments:
-    `geometry: ImportGeometry` - the geometry to build.
-    `context: bpy_types.Context` - the context of running the operator.
-    '''
-    # context.view_layer.update()
-    # Create objects - and set their pivots
-    for bone in geometry.bones.values():
-        # 1. Spawn bone (empty)
-        bpy.ops.object.empty_add(type='SPHERE', location=(0, 0, 0))
-        bone_obj: bpy_types.Object
-        bone_obj = bone.blend_empty = context.object
-        _mc_pivot(bone_obj, bone.pivot)  # 2. Apply translation
-        bone_obj.name = bone.name  # 3. Apply custom properties
-        bone_obj['mc_is_bone'] = {}
-        for cube in bone.cubes:
-            cube_obj: bpy_types.Object
-            # 1. Spawn cube
-            bpy.ops.mesh.primitive_cube_add(
-                size=1, enter_editmode=False, location=(0, 0, 0)
-            )
-            cube_obj = cube.blend_cube = context.object
-
-            _mc_set_size(cube_obj, cube.size)  # 3. Set size
-            _mc_pivot(cube_obj, cube.pivot)  # 4. Move pivot
-            # 2. Apply translation
-            _mc_translate(cube_obj, cube.origin, cube.size, cube.pivot)
-            # 5. Apply custom properties
-            # cube_obj['mc_uv'] = list(cube.uv)  # TODO - map the UV
-            if cube.mirror:
-                cube_obj['mc_mirror'] = {}
-        for locator in bone.locators:
-            # 1. Spawn locator (empty)
-            locator_obj: bpy_types.Object
+        # Arguments:
+        `context: bpy_types.Context` - the context of running the operator.
+        '''
+        # context.view_layer.update()
+        # Create objects - and set their pivots
+        for bone in self.bones.values():
+            # 1. Spawn bone (empty)
             bpy.ops.object.empty_add(type='SPHERE', location=(0, 0, 0))
-            locator_obj = locator.blend_empty = context.object
-            _mc_pivot(locator_obj, locator.position)  # 2. Apply translation
-            # 3. Apply custom properties
-            locator_obj.name = locator.name
+            bone_obj: bpy_types.Object
+            bone_obj = bone.blend_empty = context.object
+            _mc_pivot(bone_obj, bone.pivot)  # 2. Apply translation
+            bone_obj.name = bone.name  # 3. Apply custom properties
+            bone_obj['mc_is_bone'] = {}
+            for cube in bone.cubes:
+                cube_obj: bpy_types.Object
+                # 1. Spawn cube
+                bpy.ops.mesh.primitive_cube_add(
+                    size=1, enter_editmode=False, location=(0, 0, 0)
+                )
+                cube_obj = cube.blend_cube = context.object
 
-    # Parent objects (keep offset)
-    for bone in geometry.bones.values():
-        bone_obj = bone.blend_empty
-        # 1. Parent bone keep transform
-        if bone.parent is not None and bone.parent in geometry.bones:
-            parent_obj: bpy_types.Object = geometry.bones[
-                bone.parent
-            ].blend_empty
-            context.view_layer.update()
-            bone_obj.parent = parent_obj
-            bone_obj.matrix_parent_inverse = (
-                parent_obj.matrix_world.inverted()
-            )
-        # 2. Parent cubes keep transform
-        for cube in bone.cubes:
-            cube_obj = cube.blend_cube
-            context.view_layer.update()
-            cube_obj.parent = bone_obj
-            cube_obj.matrix_parent_inverse = (
-                bone_obj.matrix_world.inverted()
-            )
-        # 3. Parent locators keep transform
-        for locator in bone.locators:
-            locator_obj = locator.blend_empty
-            context.view_layer.update()
-            locator_obj.parent = bone_obj
-            locator_obj.matrix_parent_inverse = (
-                bone_obj.matrix_world.inverted()
-            )
+                _mc_set_size(cube_obj, cube.size)  # 3. Set size
+                _mc_pivot(cube_obj, cube.pivot)  # 4. Move pivot
+                # 2. Apply translation
+                _mc_translate(cube_obj, cube.origin, cube.size, cube.pivot)
+                # 5. Apply custom properties
+                # cube_obj['mc_uv'] = list(cube.uv)  # TODO - map the UV
+                if cube.mirror:
+                    cube_obj['mc_mirror'] = {}
+            for locator in bone.locators:
+                # 1. Spawn locator (empty)
+                locator_obj: bpy_types.Object
+                bpy.ops.object.empty_add(type='SPHERE', location=(0, 0, 0))
+                locator_obj = locator.blend_empty = context.object
+                _mc_pivot(locator_obj, locator.position)  # 2. Apply translation
+                # 3. Apply custom properties
+                locator_obj.name = locator.name
 
-    # Rotate objects
-    for bone in geometry.bones.values():
-        bone_obj = bone.blend_empty
-        context.view_layer.update()
-        _mc_rotate(bone_obj, bone.rotation)
-        for cube in bone.cubes:
-            cube_obj = cube.blend_cube
-            _mc_rotate(cube_obj, cube.rotation)
+        # Parent objects (keep offset)
+        for bone in self.bones.values():
+            bone_obj = bone.blend_empty
+            # 1. Parent bone keep transform
+            if bone.parent is not None and bone.parent in self.bones:
+                parent_obj: bpy_types.Object = self.bones[
+                    bone.parent
+                ].blend_empty
+                context.view_layer.update()
+                bone_obj.parent = parent_obj
+                bone_obj.matrix_parent_inverse = (
+                    parent_obj.matrix_world.inverted()
+                )
+            # 2. Parent cubes keep transform
+            for cube in bone.cubes:
+                cube_obj = cube.blend_cube
+                context.view_layer.update()
+                cube_obj.parent = bone_obj
+                cube_obj.matrix_parent_inverse = (
+                    bone_obj.matrix_world.inverted()
+                )
+            # 3. Parent locators keep transform
+            for locator in bone.locators:
+                locator_obj = locator.blend_empty
+                context.view_layer.update()
+                locator_obj.parent = bone_obj
+                locator_obj.matrix_parent_inverse = (
+                    bone_obj.matrix_world.inverted()
+                )
+
+        # Rotate objects
+        for bone in self.bones.values():
+            bone_obj = bone.blend_empty
+            context.view_layer.update()
+            _mc_rotate(bone_obj, bone.rotation)
+            for cube in bone.cubes:
+                cube_obj = cube.blend_cube
+                _mc_rotate(cube_obj, cube.rotation)
 
 
 def _mc_translate(
@@ -584,7 +523,6 @@ def _mc_set_size(obj: bpy_types.Object, mcsize: Tuple[float, float, float]):
     data.vertices[5].co = mathutils.Vector(pos_delta * np.array([1, -1, 1]))
     data.vertices[6].co = mathutils.Vector(pos_delta * np.array([1, 1, -1]))
     data.vertices[7].co = mathutils.Vector(pos_delta * np.array([1, 1, 1]))
-
 
 
 def _mc_pivot(obj: bpy_types.Object, mcpivot: Tuple[float, float, float]):

@@ -22,7 +22,7 @@ from .common import (
     MCObjType, ObjectId, McblendObject, MINECRAFT_SCALE_FACTOR,
     McblendObjectGroup
 )
-from .importer import load_model, build_geometry, assert_is_model
+from .importer import ImportGeometry
 from .exception import NameConflictException
 
 
@@ -259,9 +259,8 @@ def import_model(
        into Blender.
     - `context: bpy_types.Context` - the context of running the operator.
     '''
-    assert_is_model(data)
-    geometry = load_model(data, geometry_name)
-    build_geometry(geometry, context)
+    geometry = ImportGeometry(data, geometry_name)
+    geometry.build(context)
 
     context.scene.nusiq_mcblend.texture_width = geometry.texture_width
     context.scene.nusiq_mcblend.texture_height = geometry.texture_height
