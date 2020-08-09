@@ -17,18 +17,7 @@ import bpy_types
 
 from .exception import NotEnoughTextureSpace
 from .common import (
-    MINECRAFT_SCALE_FACTOR, McblendObject, McblendObjectGroup
-)
-
-
-class CubeFaceType(Enum):
-    '''Used in some functions to select face of a cube.'''
-    FRONT = 0
-    BACK = 1
-    LEFT = 2
-    RIGHT = 3
-    TOP = 4
-    BOTTOM = 5
+    MINECRAFT_SCALE_FACTOR, McblendObject, McblendObjectGroup, CubePolygon)
 
 
 class CoordinatesConverter:
@@ -241,45 +230,13 @@ class McblendObjUvBox(UvBox):
 class UvMcCubeFace(UvBox):
     '''
     A single face in the UvBox.
-
-    # Properties
-    `cube: UvMcCube` - the UvMcCube that contains this face
-    `face_type: CubeFaceType` - the direction of the face
     '''
-    # TODO - update description
     def __init__(
-            self, cube: UvMcCube, face_type: CubeFaceType,
-            size, uv=None
-        ):
+            self, cube: UvMcCube, cube_polygon: CubePolygon,
+            size, uv=None):
         super().__init__(size, uv=uv)
         self.cube = cube
-        self.face_type = face_type
-
-        # front/north: '--+', '+-+', '+--', '---'
-        # right/east: '---', '-+-', '-++', '--+'
-        # back/south: '-+-', '++-', '+++', '-++'
-        # left/west: '+--', '++-', '+++', '+-+'
-        # up/up: '--+', '+-+', '+++', '-++'
-        # down/down: '---', '+--', '++-', '-+-'
-        cube_polygons = self.cube.thisobj.cube_polygons()
-        if self.face_type is CubeFaceType.FRONT:
-            self.cube_polygon = cube_polygons.north
-        elif self.face_type is CubeFaceType.RIGHT:
-            if self.cube.thisobj.mc_mirror:
-                self.cube_polygon = cube_polygons.west
-            else:
-                self.cube_polygon = cube_polygons.east
-        elif self.face_type is CubeFaceType.BACK:
-            self.cube_polygon = cube_polygons.south
-        elif self.face_type is CubeFaceType.LEFT:
-            if self.cube.thisobj.mc_mirror:
-                self.cube_polygon = cube_polygons.east
-            else:
-                self.cube_polygon = cube_polygons.west
-        elif self.face_type is CubeFaceType.TOP:
-            self.cube_polygon = cube_polygons.up
-        elif self.face_type is CubeFaceType.BOTTOM:
-            self.cube_polygon = cube_polygons.down
+        self.cube_polygon = cube_polygon
 
     def set_blender_uv(self, converter: CoordinatesConverter):
         '''
@@ -290,37 +247,16 @@ class UvMcCubeFace(UvBox):
           convert from Minecraft UV coordinates (used internally by this
           object) to Blender UV coordinates.
         '''
-        # TODO - simplify this function
         # Order of the faces for: left_down, right_down, right_up, left_up
-        if self.face_type is CubeFaceType.FRONT:
-            order = np.array(['---', '+--', '+-+', '--+',])  # front/north
-        elif self.face_type is CubeFaceType.RIGHT:
-            if self.cube.thisobj.mc_mirror:
-                order = np.array(['+--', '++-', '+++', '+-+'])  # left/west
-            else:
-                order = np.array(['-+-', '---', '--+', '-++'])  # right/east
-        elif self.face_type is CubeFaceType.BACK:
-            order = np.array(['++-', '-+-', '-++', '+++'])  # back/south
-        elif self.face_type is CubeFaceType.LEFT:
-            if self.cube.thisobj.mc_mirror:
-                order = np.array(['-+-', '---', '--+', '-++'])  # right/east
-            else:
-                order = np.array(['+--', '++-', '+++', '+-+'])  # left/west
-        elif self.face_type is CubeFaceType.TOP:
-            order = np.array(['--+', '+-+', '+++', '-++'])  # up/up
-        elif self.face_type is CubeFaceType.BOTTOM:
-            order = np.array(['---', '+--', '++-', '-+-'])  # down/down
-        # Apply mirror effects
-        if self.cube.thisobj.mc_mirror:
-            order = order[[1, 0, 3, 2]]
 
+        # Cube polygon data
         cp_loop_indices = self.cube_polygon.side.loop_indices
         cp_order = self.cube_polygon.order
 
-        left_down = cp_loop_indices[cp_order.index(order[0])]
-        right_down = cp_loop_indices[cp_order.index(order[1])]
-        right_up = cp_loop_indices[cp_order.index(order[2])]
-        left_up = cp_loop_indices[cp_order.index(order[3])]
+        left_down = cp_loop_indices[cp_order[0]]
+        right_down = cp_loop_indices[cp_order[1]]
+        right_up = cp_loop_indices[cp_order[2]]
+        left_up = cp_loop_indices[cp_order[3]]
 
         uv_data = self.cube.thisobj.obj_data.uv_layers.active.data
 
@@ -352,26 +288,29 @@ class UvMcCube(McblendObjUvBox):
         self.width = width
         self.thisobj = thisobj
 
-        self.right = UvMcCubeFace(
-            self, CubeFaceType.RIGHT, (depth, height), (0, depth)
-        )
-        self.front = UvMcCubeFace(
-            self, CubeFaceType.FRONT, (width, height), (depth, depth)
-        )
-        self.left = UvMcCubeFace(
-            self, CubeFaceType.LEFT, (depth, height),
-            (depth + width, depth)
-        )
-        self.back = UvMcCubeFace(
-            self, CubeFaceType.BACK, (width, height),
-            (2*depth + width, depth)
-        )
-        self.top = UvMcCubeFace(
-            self, CubeFaceType.TOP, (width, depth), (depth, 0)
-        )
-        self.bottom = UvMcCubeFace(
-            self, CubeFaceType.BOTTOM, (width, depth), (depth + width, 0)
-        )
+        cube_polygons = self.thisobj.cube_polygons()
+
+        if self.thisobj.mc_mirror:
+            cp1, cp3 = cube_polygons.west, cube_polygons.east
+        else:
+            cp1, cp3 = cube_polygons.east, cube_polygons.west
+        # right/left
+        self.side1 = UvMcCubeFace(self, cp1, (depth, height), (0, depth))
+        # front
+        self.side2 = UvMcCubeFace(
+            self, cube_polygons.north, (width, height), (depth, depth))
+        # left/right
+        self.side3 = UvMcCubeFace(
+            self, cp3, (depth, height), (depth + width, depth))
+        # back
+        self.side4 = UvMcCubeFace(
+            self, cube_polygons.south, (width, height), (2*depth + width, depth))
+        # top
+        self.side5 = UvMcCubeFace(
+            self, cube_polygons.up, (width, depth), (depth, 0))
+        # bottom
+        self.side6 = UvMcCubeFace(
+            self, cube_polygons.down, (width, depth), (depth + width, 0))
         super().__init__(size, uv)
 
     @property  # type: ignore
@@ -382,18 +321,18 @@ class UvMcCube(McblendObjUvBox):
     @uv.setter
     def uv(self, uv: Tuple[int, int]):
         self._uv = uv
-        self.right.uv = (uv[0], uv[1] + self.depth)
-        self.front.uv = (uv[0] + self.depth, uv[1] + self.depth)
-        self.left.uv = (uv[0] + self.depth + self.width, uv[1] + self.depth)
-        self.back.uv = (uv[0] + 2*self.depth + self.width, uv[1] + self.depth)
+        self.side1.uv = (uv[0], uv[1] + self.depth)
+        self.side2.uv = (uv[0] + self.depth, uv[1] + self.depth)
+        self.side3.uv = (uv[0] + self.depth + self.width, uv[1] + self.depth)
+        self.side4.uv = (uv[0] + 2*self.depth + self.width, uv[1] + self.depth)
 
-        self.top.uv = (uv[0] + self.depth, uv[1])
-        self.bottom.uv = (uv[0] + self.depth + self.width, uv[1])
+        self.side5.uv = (uv[0] + self.depth, uv[1])
+        self.side6.uv = (uv[0] + self.depth + self.width, uv[1])
 
     def collides(self, other: UvBox):
         for i in [
-                self.right, self.front, self.left, self.back, self.top,
-                self.bottom
+                self.side1, self.side2, self.side3, self.side4, self.side5,
+                self.side6
             ]:
             if i.collides(other):
                 return True
@@ -412,30 +351,30 @@ class UvMcCube(McblendObjUvBox):
         # 4. (bottom right) 5. (bottom left) 6. (left bottom) 7. (left top)
         result = []
         result.extend([
-            s for i, s  in enumerate(self.right.suggest_positions())
+            s for i, s  in enumerate(self.side1.suggest_positions())
             if i in  [0, 5, 6]
         ])
         result.extend([
-            s for i, s  in enumerate(self.top.suggest_positions())
+            s for i, s  in enumerate(self.side5.suggest_positions())
             if i in  [0, 6, 7]
         ])
         result.extend([
-            s for i, s  in enumerate(self.bottom.suggest_positions())
+            s for i, s  in enumerate(self.side6.suggest_positions())
             if i in  [1, 2, 3]
         ])
         result.extend([
-            s for i, s  in enumerate(self.back.suggest_positions())
+            s for i, s  in enumerate(self.side4.suggest_positions())
             if i in  [1, 3, 4]
         ])
         return result
 
     def set_blender_uv(self, converter: CoordinatesConverter):
-        self.right.set_blender_uv(converter)
-        self.front.set_blender_uv(converter)
-        self.left.set_blender_uv(converter)
-        self.back.set_blender_uv(converter)
-        self.top.set_blender_uv(converter)
-        self.bottom.set_blender_uv(converter)
+        self.side1.set_blender_uv(converter)
+        self.side2.set_blender_uv(converter)
+        self.side3.set_blender_uv(converter)
+        self.side4.set_blender_uv(converter)
+        self.side5.set_blender_uv(converter)
+        self.side6.set_blender_uv(converter)
 
     def clear_uv_layers(self):
         while len(self.thisobj.obj_data.uv_layers) > 0:
@@ -447,22 +386,22 @@ class UvMcCube(McblendObjUvBox):
             self, arr: np.ndarray, resolution: int = 1,
             color: Tuple[float, float, float, float] = None,
         ):
-        self.right.paint_texture(
+        self.side1.paint_texture(
             arr, resolution, color if color is not None else (0, 1, 0, 1)
         )
-        self.front.paint_texture(
+        self.side2.paint_texture(
             arr, resolution, color if color is not None else (1, 0, 1, 1)
         )
-        self.left.paint_texture(
+        self.side3.paint_texture(
             arr, resolution, color if color is not None else (1, 0, 0, 1)
         )
-        self.back.paint_texture(
+        self.side4.paint_texture(
             arr, resolution, color if color is not None else (0, 1, 1, 1)
         )
-        self.top.paint_texture(
+        self.side5.paint_texture(
             arr, resolution, color if color is not None else (0, 0, 1, 1)
         )
-        self.bottom.paint_texture(
+        self.side6.paint_texture(
             arr, resolution, color if color is not None else (1, 1, 0, 1)
         )
 

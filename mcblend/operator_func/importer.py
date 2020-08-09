@@ -4,7 +4,7 @@ Functions and objects related to importing Minecraft models to Blender.
 from __future__ import annotations
 
 import math
-from typing import cast, Dict, List, Optional, Any, Tuple
+from typing import cast, Dict, List, Optional, Any, Tuple, Set
 
 import numpy as np
 
@@ -12,216 +12,434 @@ import bpy_types
 import mathutils
 import bpy
 
-from .common import MINECRAFT_SCALE_FACTOR
-from .exception import InvalidDictPathException
+from .common import MINECRAFT_SCALE_FACTOR, CubePolygons, CubePolygon
+from .uv import CoordinatesConverter
+from .exception import (
+    InvalidDictPathException, FileIsNotAModelException,
+    ImportingNotImplementedError)
 from .json_tools import get_path
 
 def _assert(expr: bool, msg: str = ''):
-    '''
-    Same functionality as normal assert statement but works even
-    if __debug__ is False.
-
-    # Arguments:
-    `expr: bool` - boolean expression
-    `msg: str` - error message for assertion error if expression is false.
-    '''
+    '''Used in this module to raise exceptions based on condition.'''
     if not expr:
-        raise AssertionError(msg)
-
+        raise FileIsNotAModelException(msg)
 
 def _assert_is_vector(
-        vect: Any, length: int, types: Tuple, msg: str = ''
+        name: str, obj: Any, length: int, types: Tuple, json_path: List
     ) -> None:
     '''
-    Asserts that the "vect" is "length" long vector and all of the items
-    in the vector are instances of types from types list.
-
-    # Arguments:
-    - `vect: Any` - input iterable
-    - `length: int` - expected length of the iterable
-    - `types: Tuple` - expected types of the items of iterable
-    - `msg: str` - error message for AssertionError if assertion fails.
+    Asserts that object is an aray of specific length with specyfic type of
+    items.
     '''
-    _assert(isinstance(vect, list), msg)
-    _assert(len(vect) == length, msg)
-    _assert(all([isinstance(i, types) for i in vect]), msg)
+    _assert(isinstance(obj, list), f'{json_path}::{name} is not a list')
+    _assert(
+        len(obj) == length,
+        f'{json_path}::{name} has invalid length {len(obj)} != {length}')
+    _assert(
+        all([isinstance(i, types) for i in obj]),
+        f'{json_path}::{name} is not instance of List[{types}]')
 
+def _assert_has_required_keys(
+        what: str, has_keys: Set, required_keys: Set, json_path: List):
+    '''Asserts that object has required keys.'''
+    missing_keys = required_keys - has_keys
+    if len(missing_keys) != 0:
+        raise FileIsNotAModelException(
+            f'{json_path}::{what} is missing properties: {missing_keys}')
 
-def _assert_is_model_file(model: Any) -> None:
+def _assert_has_accepted_keys_only(
+        what: str, has_keys: Set, accepted_keys: Set, json_path: List):
+    '''Asserts that object has only keys from accepted set.'''
+    additional_keys = has_keys - accepted_keys
+    if len(additional_keys) != 0:
+        raise FileIsNotAModelException(
+            f'{json_path}::{what} has unexpected properties: {additional_keys}')
+
+def _assert_is_type(
+        name: str, obj: Any, types: Tuple, json_path: List):
+    '''Asserts that object is instance of specyfic type'''
+    if not isinstance(obj, types):
+        raise FileIsNotAModelException(
+            f'{json_path}::{name} is not an instance of {types}')
+
+class ModelLoader:
     '''
-    Asserts that the input dictionary is a valid model file.
-
-    # Arguments:
-    - `model: Any` - a dictionary
+    Interface loads model from a dictionary that represents the model.
+    Fills missing/optional data with default values.
     '''
-    _assert(isinstance(model, dict), 'Model file must be an object')
-    _assert(
-        set(model.keys()) == {'format_version', 'minecraft:geometry'},
-        'Model file must have format_version and minecraft:geometry properties'
-    )
+    def __init__(self, data: Dict, geometry_name: str = ""):
+        self.data = data
+        self.format_version = self._load_format_version(data)
+        geometry, geometry_path = self._load_geometry(
+            geometry_name, self.data['minecraft:geometry'])
 
-    _assert(model['format_version'] == "1.12.0", 'Unsuported format version')
+        self.description: Dict = self._load_description(
+            geometry, geometry_path)
+        self.bones: List = self._load_bones(
+            geometry['bones'],  geometry_path + ['bones'])
+    
+    def _load_format_version(self, data: Dict) -> str:
+        '''
+        Returns the version of the model from JSON file loaded into data.
 
-    geometries = model['minecraft:geometry']
-    _assert(
-        isinstance(geometries, list),
-        'minecraft:geometry property must be a list'
-    )
-    _assert(
-        len(geometries) > 0, 'minecraft:geometry must have at least one item'
-    )
+        - `data: Dict` - loaded JSON file into model.
+        '''
+        _assert_has_required_keys(
+            'model file', set(data.keys()), {'format_version'}, [])
+        if data['format_version'] == '1.12.0':  # TODO - support format version 1.10.0 (bee) and 1.8.0
+            _assert_has_required_keys(
+                'model file', set(data.keys()),
+                {'minecraft:geometry', 'format_version'},
+                [])
+            _assert_has_accepted_keys_only(
+                'model file', set(data.keys()),
+                {'minecraft:geometry', 'format_version', 'cape'}, [])
+            if 'cape' in data.keys():
+                raise ImportingNotImplementedError('cape', [])
+            return data['format_version']
+        else:
+            raise FileIsNotAModelException('Unsuported format version')
 
-    # minecraft:geometry
-    for geometry in geometries:
-        _assert(
-            isinstance(geometry, dict),
-            'Every item from minecraft:geometry list must be an object'
-        )
-        _assert(
-            set(geometry.keys()) == {'description', 'bones'},
-            'Every item from minecraft:geometry list must have description '
-            'and bones properties'
-        )
-        desc = geometry['description']
-        bones = geometry['bones']
+    def _load_geometry(
+            self, geometry_name: str, geometries: Any) -> Tuple[Dict, List]:
+        '''
+        Finds and returns geometry with specific name from list of gemoeties
+        from JSON file with models. Returns the geometry dictionary with added
+        all of the missing values and the JSON path to the geometry.
 
-        # minecraft:geometry -> description
-        _assert(isinstance(desc, dict), 'Geometry description must be an object')
-        _assert(
-            set(desc.keys()) == {
-                'identifier', 'texture_width',
-                'texture_height', 'visible_bounds_width',
-                'visible_bounds_height', 'visible_bounds_offset'
-            },
-            'Geometry description must have following properties: '
-            'identifier, texture_width, texture_height, visible_bounds_width, '
-            'visible_bounds_height, visible_bounds_offset'
-        )
-        _assert(
-            isinstance(desc['identifier'], str),
-            'Geometry identifier must be a string'
-        )
-        _assert(
-            isinstance(desc['texture_width'], int),
-            'texture_width must be an integer'
-        )
-        _assert(
-            isinstance(desc['texture_height'], int),
-            'texture_height must be an integer'
-        )
-        _assert(
-            desc['texture_width'] >= 0,
-            'texture_width must be greater than 0'
-        )
-        _assert(
-            desc['texture_height'] >= 0,
-            'texture_height must be greater than 0'
-        )
+        - `geometry_name: str` - the name of geometry
+        - `geometries: Any` - the list of gemoetries
+        '''
+        if self.format_version == '1.12.0':
+            path: List = ['minecraft:geometry']
+            _assert_is_type('geometries', geometries, (list,), path)
+            for i, geometry in enumerate(geometries):
+                path = ['minecraft:geometry', i]
+                _assert_is_type('gometry', geometry, (dict,),
+                    path)
+                _assert_has_required_keys(
+                    'geometry', set(geometry.keys()), {'description', 'bones'},
+                    path)
+                _assert_has_accepted_keys_only(
+                    'geometry', set(geometry.keys()), {'description', 'bones'},
+                    path)
+                desc = geometry['description']
+                if 'identifier' not in desc:
+                    raise FileIsNotAModelException(
+                        f'{path}::description is missing identifier')
+                identifier = desc['identifier']
+                if identifier == geometry_name or geometry_name == '':
+                    return geometry, path
+            raise ValueError(f'Unable to find geometry called geometry.{geometry_name}')
+        else:
+            raise FileIsNotAModelException(f'Unsuported format version: {self.format_version}')
 
-        _assert(
-            isinstance(desc['visible_bounds_width'], (float, int)),
-            'visible_bounds_width must be a number'
-        )
-        _assert(
-            isinstance(desc['visible_bounds_height'], (float, int)),
-            'visible_bounds_height must be a number'
-        )
-        _assert_is_vector(
-            desc['visible_bounds_offset'], 3, (int, float),
-            'visible_bounds_offset must be a vector of 3 numbers'
-        )
+    def _load_description(self, geometry: Any, geometry_path: List) -> Dict:
+        '''
+        Returns the description of the geometry.
 
-        # minecraft:geometry -> bones
-        _assert(isinstance(bones, list))
-        for bone in bones:
-            _assert(isinstance(bone, dict), 'Every bone must be an object')
+        - `geometry: Any` - the geometry with description
+        - `geometry_path: List` - the JSON path to the geometry (for error
+          messages)
+        '''
+        result = {
+            "texture_width" : 64,
+            "texture_height" : 64,
+            "visible_bounds_offset" : [0, 0, 0],
+            "visible_bounds_width" : 1,
+            "visible_bounds_height": 1
+        }
+        if self.format_version == '1.12.0':
+            desc = geometry['description']
+            path = geometry_path + ['description']
 
-            _assert(
-                set(bone.keys()) <= {  # acceptable keys
-                    'name', 'cubes', 'pivot', 'rotation', 'parent', 'locators'
-                },
-                'Only properties from this list are allowed for bones: '
-                'name, cubes, pivot, rotation, parent, locators'
-            )
-            _assert(  # obligatory keys
-                set(bone.keys()) >= {'name', 'cubes', 'pivot', 'rotation'},
-                'Every bone must have following properties: name, cubes, '
-                'pivot, rotation'
-            )
-            _assert(isinstance(bone['name'], str), 'Bone name must be a string')
+            _assert_has_required_keys(
+                'description', set(desc.keys()), {'identifier'}, path)
+            acceptable_keys = {
+                    'identifier', 'texture_width', 'texture_height',
+                    'visible_bounds_offset', 'visible_bounds_width',
+                    'visible_bounds_height'}
+            _assert_has_accepted_keys_only(
+                'description', set(desc.keys()), acceptable_keys, path)
 
-            _assert_is_vector(
-                bone['pivot'], 3, (int, float),
-                'pivot property of a bone must be a vector of 3 numbers'
-            )
-            _assert_is_vector(
-                bone['rotation'], 3, (int, float),
-                'rotation property of a bone must be a vector of 3 numbers'
-            )
+            _assert_is_type(
+                'identifier', desc['identifier'], (str,),
+                geometry_path + ['identifier'])
+            result['identifier'] = desc['identifier']
+            if 'texture_width' in desc:
+                _assert_is_type(
+                    'texture_width', desc['texture_width'], (int, float),
+                    geometry_path + ['texture_width'])
+                result['texture_width'] = int(desc['texture_width'])
+            if 'texture_height' in desc:
+                _assert_is_type(
+                    'texture_height', desc['texture_height'], (int, float),
+                    geometry_path + ['texture_height'])
+                result['texture_height'] = int(desc['texture_height'])
+            if 'visible_bounds_offset' in desc:
+                _assert_is_vector(
+                    'visible_bounds_offset', desc['visible_bounds_offset'], 3,
+                    (int, float), geometry_path + ['visible_bounds_offset'])
+                result['visible_bounds_offset'] = desc['visible_bounds_offset']
+            if 'visible_bounds_width' in desc:
+                _assert_is_type(
+                    'visible_bounds_width', desc['visible_bounds_width'],
+                    (int, float), geometry_path + ['visible_bounds_width'])
+                result['visible_bounds_width'] = desc['visible_bounds_width']
+            if 'visible_bounds_height' in desc:
+                _assert_is_type(
+                    'visible_bounds_height', desc['visible_bounds_height'],
+                    (int, float), geometry_path + ['visible_bounds_height'])
+                result['visible_bounds_height'] = desc['visible_bounds_height']
+            return result
+        else:
+            raise FileIsNotAModelException('Unsuported format version')
+
+    def _load_bones(
+            self, bones: Any, bones_path: List) -> List[Dict[str, Any]]:
+        '''
+        Returns the bones from a list of bones with added missing values.
+
+        - `bones: Any` - list of bones
+        - `bones_path: List` - path to the bones list (for error messages)
+        '''
+        result: List = []
+        if self.format_version == '1.12.0':
+            _assert_is_type('bones property', bones, (list,), bones_path)
+            for i, bone in enumerate(bones):
+                bone_path = bones_path + [i]
+                result.append(self._load_bone(bone, bone_path))
+            return result
+        else:
+            raise FileIsNotAModelException('Unsuported format version')
+
+    def _load_bone(self, bone: Any, bone_path: List) -> Dict[str, Any]:
+        '''
+        Returns a bone with added all of the missing default values of the
+        properties.
+
+        - `bone: Any` - part of the json file that has the inforation about the
+          bone
+        - `bone_path: List` - path to the bone (for error messages)
+        '''
+        result: Dict[str, Any] = {
+            "parent": None,  # str
+            "pivot" : [0, 0, 0],  # List[float] len=3
+            "rotation" : [0, 0, 0],  # List[float] len=3
+            "mirror" : False,  # bool
+            "inflate": 0.0,  # float
+            "debug": False,  # bool
+            "render_group_id": 0,  # int >= 0
+            "cubes" : [],  # List[Dict]
+            "locators": {},  # Dict[...]  # TODO - parsing dict locators Dict[List or Dict]
+            "poly_mesh": {},  # Dict
+            "texture_meshes": []  # List[Dict]
+        }
+        if self.format_version == '1.12.0':
+            _assert_is_type('bone', bone, (dict,), bone_path)
+
+
+            _assert_has_required_keys(
+                'bone', set(bone.keys()), {'name'}, bone_path)
+            acceptable_keys = {
+                'name', 'parent', 'pivot', 'rotation', 'mirror', 'inflate',
+                'debug', 'render_group_id', 'cubes', 'locators', 'poly_mesh',
+                'texture_meshes'}
+            _assert_has_accepted_keys_only(
+                'bone', set(bone.keys()), acceptable_keys, bone_path)
+
+            if 'name' in bone:
+                _assert_is_type(
+                    'name', bone['name'], (str,), bone_path + ['name'])
+                result['name'] = bone['name']
             if 'parent' in bone:
-                _assert(
-                    isinstance(bone['parent'], str),
-                    'parent property of a bone must be a string'
-                )
-            # minecraft:geometry -> bones -> locators
+                _assert_is_type(
+                    'parent', bone['parent'], (str,), bone_path + ['parent'])
+                result['parent'] = bone['parent']
+            if 'pivot' in bone:
+                _assert_is_vector(
+                    'pivot', bone['pivot'], 3, (int, float),
+                    bone_path + ['pivot'])
+                result['pivot'] = bone['pivot']
+            if 'rotation' in bone:
+                _assert_is_vector(
+                    'rotation', bone['rotation'], 3, (int, float),
+                    bone_path + ['rotation'])
+                result['rotation'] = bone['rotation']
+            if 'mirror' in bone:
+                _assert_is_type(
+                    'mirror', bone['mirror'], (bool,), bone_path + ['mirror'])
+                result['mirror'] = bone['mirror']
+            if 'inflate' in bone:
+                _assert_is_type(
+                    'inflate', bone['inflate'], (float, int),
+                    bone_path + ['inflate'])
+                raise ImportingNotImplementedError('inflate', bone_path + ['inflate'])
+            if 'debug' in bone:
+                _assert_is_type(
+                    'debug', bone['debug'], (bool,), bone_path + ['debug'])
+                raise ImportingNotImplementedError(
+                    'debug', bone_path + ['debug'])
+            if 'redner_group_id' in bone:
+                _assert_is_type(
+                    'redner_group_id', bone['redner_group_id'], (int, float),
+                    bone_path + ['redner_group_id'])
+                # int >= 0
+                raise ImportingNotImplementedError(
+                    'redner_group_id', bone_path + ['redner_group_id'])
+            if 'cubes' in bone:
+                # default mirror for cube is the bones mirror property
+                result['cubes'] = self._load_cubes(
+                    bone['cubes'], bone_path + ['cubes'], result['mirror'])
             if 'locators' in bone:
-                _assert(
-                    isinstance(bone['locators'], dict),
-                    'locators property of a bone must be an object'
-                )
-                for locator_name, locator in bone['locators'].items():
-                    _assert(
-                        isinstance(locator_name, str),
-                        'Locator name property must be a string'
-                    )
-                    _assert_is_vector(
-                        locator, 3, (int, float),
-                        'Locator value must be a vector of 3 numbers'
-                    )
-            # minecraft:geometry -> bones -> cubes
-            _assert(
-                isinstance(bone['cubes'], list),
-                'cubes property of a bone must be a list'
-            )
-            for cube in bone['cubes']:
-                _assert(isinstance(cube, dict), 'Every cube must be an object')
-                _assert(
-                    set(cube.keys()) <= {  # acceptable keys
-                        'uv', 'size', 'origin', 'pivot', 'rotation', 'mirror'
-                    },
-                    'Only properties from this list are allowed for cubes: '
-                    'uv, size, origin, pivot, rotation, mirror'
-                )
-                _assert(
-                    set(cube.keys()) >= {  # obligatory keys
-                        'uv', 'size', 'origin', 'pivot', 'rotation'
-                    },
-                    'Every cube must have following properties: '
-                    'uv, size, origin, pivot, rotation'
-                )
-                _assert_is_vector(
-                    cube['uv'], 2, (int, float),
-                    'size property of a cube must be a vector of 2 numbers'
-                )
-                _assert_is_vector(
-                    cube['size'], 3, (int, float),
-                    'size property of a cube must be a vector of 3 numbers'
-                )
-                _assert_is_vector(
-                    cube['origin'], 3, (int, float),
-                    'origin property of a cube must be a vector of 3 numbers'
-                )
-                _assert_is_vector(
-                    cube['pivot'], 3, (int, float),
-                    'pivot property of a cube must be a vector of 3 numbers'
-                )
-                _assert_is_vector(
-                    cube['rotation'], 3, (int, float),
-                    'rotation property of a cube must be a vector of 3 numbers'
-                )
-                if 'mirror' in cube:
-                    _assert(isinstance(cube['mirror'], bool))
+                result['locators'] = self._load_locators(
+                    bone['locators'], bone_path + ['locators'])
+            if 'poly_mesh' in bone:
+                # type: dict
+                raise ImportingNotImplementedError(
+                    'poly_mesh', bone_path + ['poly_mesh'])
+            if 'texture_meshes' in bone:
+                # type: list
+                raise ImportingNotImplementedError(
+                    'texture_meshes', bone_path + ['texture_meshes'])
+                
+            return result
+        else:
+            raise FileIsNotAModelException('Unsuported format version')
 
+    def _load_cubes(
+            self, cubes: Any, cubes_path: List[Any],
+            default_mirror: bool) -> List[Dict[str, Any]]:
+        '''
+        Returns the cubes from the list of cubes with added missing values.
+
+        - `cubes: Any` - list of cubes
+        - `cubes_path: List[Any]` - path to the cubes list (for error messages)
+        - `default_mirror: bool` - mirror value of a bone that owns this list
+          of cubes.
+        '''
+        result = []
+        if self.format_version == '1.12.0':
+            _assert_is_type('cubes property', cubes, (list,), cubes_path)
+            for i, cube in enumerate(cubes):
+                cube_path = cubes_path + [i]
+                result.append(self._load_cube(cube, cube_path, default_mirror))
+            return result
+        else:
+            raise FileIsNotAModelException('Unsuported format version')
+
+    def _load_cube(
+            self, cube: Any, cube_path: List,
+            default_mirror: bool) -> Dict[str, Any]:
+        '''
+        Returns a cube with added all of the missing default values of the
+        properties.
+
+        - `cube: Any` - part of the json file that has the inforation about the
+          cube
+        - `cube_path: List` - path to the cube (for error messages)
+        - `default_mirror: bool` - mirror value of a bone that owns this cube
+        '''
+        result = {
+            "origin" : [0, 0, 0],  # Listfloat] len=3
+            "size" : [0, 0, 0],  # Listfloat] len=3
+            "rotation" : [0, 0, 0],  # Listfloat] len=3
+            "pivot" : [0, 0, 0],  # Listfloat] len=3
+            "inflate" : 0,  # float
+            "mirror" : default_mirror,  # mirror
+            "uv": [0, 0]  # List[float] len=2 or Dict  # TODO - load dictionary format
+        }
+        if self.format_version == '1.12.0':
+            _assert_is_type('cube', cube, (dict,), cube_path)
+            # There is no required keys {} is a valid cube
+            acceptable_keys = {
+                "name", "mirror", "inflate", "pivot", "rotation", "origin",
+                "size", "uv"}
+            _assert_has_accepted_keys_only(
+                'cube', set(cube.keys()), acceptable_keys, cube_path)
+            if 'origin' in cube:
+                _assert_is_vector(
+                    'origin', cube['origin'], 3, (int, float),
+                    cube_path + ['origin'])
+                result['origin'] = cube['origin']
+            if 'size' in cube:
+                _assert_is_vector(
+                    'size', cube['size'], 3, (int, float),
+                    cube_path + ['size'])
+                result['size'] = cube['size']
+            if 'rotation' in cube:
+                _assert_is_vector(
+                    'rotation', cube['rotation'], 3, (int, float),
+                    cube_path + ['rotation'])
+                result['rotation'] = cube['rotation']
+            if 'pivot' in cube:
+                _assert_is_vector(
+                    'pivot', cube['pivot'], 3, (int, float),
+                    cube_path + ['pivot'])
+                result['pivot'] = cube['pivot']
+            if 'inflate' in cube:
+                _assert_is_type(
+                    'inflate', cube['inflate'], (int, float), cube_path + ['inflate'])
+                result['inflate'] = cube['inflate']
+            if 'mirror' in cube:
+                _assert_is_type(
+                    'mirror', cube['mirror'], (bool,), cube_path + ['mirror'])
+                result['mirror'] = cube['mirror']
+            if 'uv' in cube:
+                _assert_is_type(
+                    'uv', cube['uv'], (list, dict), cube_path + ['uv'])
+                if isinstance(cube['uv'], dict):
+                    raise ImportingNotImplementedError(
+                        'uv dictionary', cube_path + ['uv'])
+                elif isinstance(cube['uv'], list):
+                    _assert_is_vector(
+                        'uv', cube['uv'], 2, (int, float), cube_path + ['uv'])
+                    result['uv'] = cube['uv']
+                else:
+                    raise FileIsNotAModelException(
+                        f'{cube_path + ["uv"]}::{"uv"} is not an '
+                        f'instance of {(list, dict)}')
+            return result
+        else:
+            raise FileIsNotAModelException('Unsuported format version')
+
+    def _load_locators(
+            self, locators: Any, locators_path: List) -> Dict[str, Any]:
+        '''
+        Returns the locators from the list of locators with added missing
+        values.
+
+        - `locators: Any` - list of locators
+        - `locators_path: List[Any]` - path to the locators list (for error
+          messages)
+        '''
+        result = {}
+        if self.format_version == '1.12.0':
+            _assert_is_type(
+                'locators property', locators, (dict,), locators_path)
+            for i, locator in locators.items():
+                locator_path = locators_path + [i]
+                result[i] = self._load_locator(locator, locator_path)
+            return result
+        else:
+            raise FileIsNotAModelException('Unsuported format version')
+
+    def _load_locator(self, locator: Any, locator_path: List) -> Any:
+        '''
+        Returns the locators from the list of locators with added missing
+        values.
+
+        - `locator: Any` - the locator
+        - `locator_path: List[Any]` - path to the locator
+        '''
+        if isinstance(locator, list):
+            _assert_is_vector('locator', locator, 3, (int, float), locator_path)
+            return locator
+        elif isinstance(locator, dict):
+            raise ImportingNotImplementedError('locator', locator_path)
+        raise FileIsNotAModelException(
+            f'{locator_path + ["locator"]}::{"locator"} is not an '
+            f'instance of {(list, dict)}')
 
 class ImportLocator:
     '''Represents Minecraft locator during import operation.'''
@@ -246,8 +464,9 @@ class ImportCube:
         '''
         self.blend_cube: Optional[bpy_types.Object] = None
 
-        self.uv: Tuple[int, int] = data['uv']
-        self.mirror: bool = False if 'mirror' not in data else data['mirror']
+        self.uv: Tuple[int, int] = tuple(# type: ignore
+            data['uv'])
+        self.mirror: bool = data['mirror']
         self.origin: Tuple[float, float, float] = tuple(  # type: ignore
             data['origin'])
         self.pivot: Tuple[float, float, float] = tuple(  # type: ignore
@@ -273,125 +492,51 @@ class ImportBone:
 
         # Locators
         locators: List[ImportLocator] = []
-        if 'locators' in data:
-            for k, v in data['locators'].items():
-                locators.append(ImportLocator(k, tuple(v)))  # type: ignore
+        for k, v in data['locators'].items():
+            locators.append(ImportLocator(k, tuple(v)))  # type: ignore
         # Cubes
         import_cubes: List[ImportCube] = []
         for cube in data['cubes']:
             import_cubes.append(ImportCube(cube))
 
         self.name: str = data['name']
-        self.parent = None if 'parent' not in data else data['parent']
+        self.parent = data['parent']
         self.cubes = import_cubes
         self.locators = locators
         self.pivot: Tuple[float, float, float] = tuple(  # type: ignore
             data['pivot'])
         self.rotation: Tuple[float, float, float] = tuple(  # type: ignore
             data['rotation'])
+        self.mirror = data['mirror']
 
 
 class ImportGeometry:
     '''Represents whole minecraft geometry during import operation.'''
-    def __init__(
-            self, data: Dict, geometry_name: str = ""):
+    def __init__(self, loader: ModelLoader):
+        # TODO - update description
         '''
-        The data dict is a dictionary representaiton of the JSON file with
-        Minecraft model.
+        Creates ImportGeometry object.
 
-        geometry_name is a name of the geometry to load. This argument is
-        optional if not specified or epmty string only the first model is
-        imported.
-
-        # Arguments:
-        - `data: Dict` - a dictionary with a valid Minecraft model file (can
-        have multiple geometries).
-        - `geometry_name: str` - a name of the geometry to import.
+        - `loader: ModelLoader` - a loader object with all of the required
+          model properties.
         '''
-        # Validate the input data
-        _assert_is_model_file(data)
-
-        # format_version: str = data['format_version']
-        geometries: List = data['minecraft:geometry']
-        geometry, geometry_name = self._load_geometry(
-            geometries, geometry_name)
-        texture_width, texture_height = self._load_dimensions(geometry)
-        import_bones = self._load_bones(geometry)
-
         # Set the values
-        self.identifier = geometry_name
-        self.texture_width = texture_width
-        self.texture_height = texture_height
-        self.bones = import_bones
-
-    def _load_geometry(
-            self, geometries: List, geometry_name: str) -> Tuple[Dict, str]:
-        # Find geometry
-        geometry: Optional[Dict] = None
-        for curr_geometry in geometries:
-            try:
-                identifier = get_path(curr_geometry, ['description', 'identifier'])
-            except InvalidDictPathException:
-                continue
-
-            # Found THE geometry
-            if geometry_name == "" or f'geometry.{geometry_name}' == identifier:
-                identifier = cast(str, identifier)  # mypy cast
-                geometry_name = identifier
-                geometry = curr_geometry
-                break
-
-        # Geometry not found
-        if geometry is None:
-            if geometry_name == "":
-                raise ValueError('Unable to find valid geometry')
-            raise ValueError(
-                f'Unable to find geometry called geometry.{geometry_name}'
-            )
-        return geometry, geometry_name
-
-    def _load_dimensions(
-            self, geometry: Dict) -> Tuple[int, int]:
-        # Load texture_width
-        try:
-            texture_width: int = int(
-                get_path(  # type: ignore
-                    geometry, ['description', 'texture_width']
-                )
-            )
-        except (InvalidDictPathException, ValueError):
-            # TODO - give user some kind of warning if this happens
-            # there is clearly something wrong about the model that doesn't
-            # define the texture width
-            texture_width = 100
-
-        # Load texture_height
-        try:
-            texture_height: int = int(
-                get_path(  # type: ignore
-                    geometry, ['description', 'texture_height']
-                )
-            )
-        except (InvalidDictPathException, ValueError):
-            # TODO - give user some kind of warning if this happens
-            # there is clearly something wrong about the model that doesn't
-            # define the texture width
-            texture_height = 100
-        return texture_width, texture_height
-
-    def _load_bones(self, geometry: Dict) -> Dict[str, ImportBone]:
-        # Load bones from geometry
-        bones: List = geometry['bones']
+        self.identifier = loader.description['identifier']
+        self.texture_width = int(loader.description['texture_width'])
+        self.texture_height = int(loader.description['texture_height'])
+        self.bones: Dict[str, ImportBone] = {}
+        self.uv_converter = CoordinatesConverter(
+            np.array([[0, self.texture_width], [0, self.texture_height]]),
+            np.array([[0, 1], [1, 0]])
+        )
 
         # Read bones
-        import_bones: Dict[str, ImportBone] = {}
-        for bone in bones:
+        for bone in loader.bones:
             import_bone = ImportBone(bone)
-            import_bones[import_bone.name] = import_bone
-        return import_bones
+            self.bones[import_bone.name] = import_bone
 
-    def build(
-            self, context: bpy_types.Context):
+
+    def build(self, context: bpy_types.Context):
         '''
         Builds the geometry in Blender based on ImportGeometry object.
 
@@ -416,14 +561,22 @@ class ImportGeometry:
                 )
                 cube_obj = cube.blend_cube = context.object
 
-                _mc_set_size(cube_obj, cube.size)  # 3. Set size
-                _mc_pivot(cube_obj, cube.pivot)  # 4. Move pivot
-                # 2. Apply translation
-                _mc_translate(cube_obj, cube.origin, cube.size, cube.pivot)
-                # 5. Apply custom properties
-                # cube_obj['mc_uv'] = list(cube.uv)  # TODO - map the UV
+                # 2. Set uv
+                # warning! Moving this code below cube transformation would
+                # break it because bound_box is not getting updated properly
+                # before the end of running of the opperator.
                 if cube.mirror:
                     cube_obj['mc_mirror'] = {}
+                _set_uv(
+                    self.uv_converter,
+                    CubePolygons.build(cube_obj, cube.mirror), cube.mirror,
+                    cube.size, cube.uv, cube_obj.data.uv_layers.active)
+
+                _mc_set_size(cube_obj, cube.size)  # 3. Set size
+                _mc_pivot(cube_obj, cube.pivot)  # 4. Move pivot
+                # 5. Apply translation
+                _mc_translate(cube_obj, cube.origin, cube.size, cube.pivot)
+
             for locator in bone.locators:
                 # 1. Spawn locator (empty)
                 locator_obj: bpy_types.Object
@@ -556,3 +709,61 @@ def _mc_rotate(
         'XZY'
     )
     obj.rotation_euler.rotate(rotation)
+
+def _set_uv(
+        uv_converter: CoordinatesConverter, cube_polygons: CubePolygons,
+        mirror: bool, size: Tuple[float, float, float], uv: Tuple[float, float],
+        uv_layer: bpy.types.MeshUVLoopLayer):
+    '''
+    Sets the uv of a face of a blender cube mesh based on some minecraft
+    properties.
+
+    - `uv_converter: CoordinatesConverter` - converter used for converting from
+      minecraft uv coordinates to blender uv coordinates
+    - `cube_polygons: CubePolygons` - CybePolygons object created from the mesh
+    - `mirror: bool` - cube mirror property
+    - `size: Tuple[float, float, float]` - cube size
+    - `uv: Tuple[float, float]` - uv coordinate of the cube
+    - `uv_layer: bpy.types.MeshUVLoopLayer` - uv layer of the mesh
+    '''
+    width, height, depth = size
+    if mirror:
+        cp1, cp3 = cube_polygons.west, cube_polygons.east
+    else:
+        cp1, cp3 = cube_polygons.east, cube_polygons.west
+
+    uv_data = uv_layer.data
+    def set_uv(cp: CubePolygon, size: Tuple[float, float], uv_local: Tuple[float, float]):
+        cp_loop_indices = cp.side.loop_indices
+        cp_order = cp.order
+
+        left_down = cp_loop_indices[cp_order[0]]
+        right_down = cp_loop_indices[cp_order[1]]
+        right_up = cp_loop_indices[cp_order[2]]
+        left_up = cp_loop_indices[cp_order[3]]
+
+        uv_data[left_down].uv = uv_converter.convert((
+            uv[0] + uv_local[0],
+            uv[1] + uv_local[1] + size[1]))
+        uv_data[right_down].uv = uv_converter.convert((
+            uv[0] + uv_local[0] + size[0],
+            uv[1] + uv_local[1] + size[1]))
+        uv_data[right_up].uv = uv_converter.convert((
+            uv[0] + uv_local[0] + size[0],
+            uv[1] + uv_local[1]))
+        uv_data[left_up].uv = uv_converter.convert((
+            uv[0] + uv_local[0],
+            uv[1] + uv_local[1]))
+
+    # right/left
+    set_uv(cp1, (depth, height), (0, depth))
+    # front
+    set_uv(cube_polygons.north, (width, height), (depth, depth))
+    # left/right
+    set_uv(cp3, (depth, height), (depth + width, depth))
+    # back
+    set_uv(cube_polygons.south, (width, height), (2*depth + width, depth))
+    # top
+    set_uv(cube_polygons.up, (width, depth), (depth, 0))
+    # bottom
+    set_uv(cube_polygons.down, (width, depth), (depth + width, 0))

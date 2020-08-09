@@ -52,10 +52,8 @@ class ModelExport:
         try:
             context.scene.frame_set(0)
             for _, objprop in object_properties.items():
-                try:
+                if objprop.mctype in [MCObjType.BONE, MCObjType.BOTH]:
                     self.bones.append(BoneExport(objprop, self))
-                except ValueError:
-                    pass
         finally:
             context.scene.frame_set(original_frame)
 
@@ -285,8 +283,8 @@ class PerFaceUvExport(UvExport):
     def _one_face_uv(self, cube_polygon: CubePolygon, corner1_name: str,
             corner2_name: str) -> Dict:
         face: bpy_types.MeshPolygon = cube_polygon.side
-        corner1_index = cube_polygon.order.index(corner1_name)
-        corner2_index = cube_polygon.order.index(corner2_name)
+        corner1_index = cube_polygon.orientation.index(corner1_name)
+        corner2_index = cube_polygon.orientation.index(corner2_name)
 
         corner1_crds = np.array(self.converter.convert(
             self.uv_layer.data[face.loop_indices[corner1_index]].uv
@@ -328,7 +326,8 @@ class StandardCubeUvExport(UvExport):
         its name.
         '''
         face: bpy_types.MeshPolygon = cube_polygon.side
-        name_index = cube_polygon.order.index(name)
+        name_index = cube_polygon.orientation.index(name)
+        
         uv_layer_data_index = face.loop_indices[name_index]
         return self.converter.convert(
             np.array(self.uv_layer.data[uv_layer_data_index].uv)

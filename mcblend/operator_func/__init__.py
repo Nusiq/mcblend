@@ -22,7 +22,7 @@ from .common import (
     MCObjType, ObjectId, McblendObject, MINECRAFT_SCALE_FACTOR,
     McblendObjectGroup
 )
-from .importer import ImportGeometry
+from .importer import ImportGeometry, ModelLoader
 from .exception import NameConflictException
 
 
@@ -99,7 +99,7 @@ def set_uvs(context: bpy_types.Context):
     mapper.load_uv_boxes(object_properties, context)
     mapper.plan_uv()
 
-    # Remove old mappings
+    # Replace old mappings
     for objprop in mapper:
         objprop.clear_uv_layers()
 
@@ -201,7 +201,7 @@ def set_inflate(context: bpy_types.Context, inflate: float, mode: str) -> int:
 
 def round_dimensions(context: bpy_types.Context) -> int:
     '''
-    Rounds dimensions of selected objects so they are the whole numbers in
+    Rounds dimensions of selected objects so they are whole numbers in
     Minecraft model. Returns the number of edited objects.
 
     # Arguments:
@@ -259,7 +259,8 @@ def import_model(
        into Blender.
     - `context: bpy_types.Context` - the context of running the operator.
     '''
-    geometry = ImportGeometry(data, geometry_name)
+
+    geometry = ImportGeometry(ModelLoader(data, geometry_name))
     geometry.build(context)
 
     context.scene.nusiq_mcblend.texture_width = geometry.texture_width

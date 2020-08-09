@@ -2,7 +2,7 @@
 Custom mcblend xceptions.
 '''
 from __future__ import annotations
-
+from typing import List
 
 class NameConflictException(Exception):
     '''Raise when two bones in Minecraft model have the same name.'''
@@ -26,3 +26,18 @@ class NotAStandardUvException(Exception):
     Raised by StandardCubeUvExport class when the UV of an object doesn't have standard
     Minecraft UV mapping shape
     '''
+
+class FileIsNotAModelException(Exception):
+    '''
+    Raised in importer when the loaded file is not a model.
+    '''
+
+class ImportingNotImplementedError(NotImplementedError):
+    '''
+    Raised by imported when given property is valid but there is no
+    implementation for loading it into blender.
+    '''
+    def __init__(self, what: str, path: List):
+        super().__init__(
+            f'{path}:: importing {what} is not implemented in this version of'
+            ' mcblend.')

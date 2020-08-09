@@ -12,6 +12,7 @@ from typing import (
 import numpy as np
 
 import bpy_types
+import bpy
 import mathutils
 
 from .exception import NameConflictException, NoCubePolygonsException
@@ -269,31 +270,75 @@ class McblendObject:
 
     def cube_polygons(self) -> CubePolygons:
         '''
-        Returns the polygons of the cube inside a CubePolygons object which
-        assigns proper names of the face sides (north, south, east, ...).
+        Returns the polygons of the cube inside a CubePolygons object.
         '''
-        # 1. Check if the object has UV
-        if self.obj_data.uv_layers.active is None:
+        return CubePolygons.build(self.thisobj, self.mc_mirror)
+
+# key (side, is_mirrored) : value (names of the vertices)
+# Used in CubePolygons constructor
+_MC_MAPPING_UV_ORDERS = {
+    ('east', False) :('-+-', '---', '--+', '-++'),
+    ('north', False) :('---', '+--', '+-+', '--+'),
+    ('west', False) :('+--', '++-', '+++', '+-+'),
+    ('south', False) :('++-', '-+-', '-++', '+++'),
+    ('up', False) :('--+', '+-+', '+++', '-++'),
+    ('down', False) :('---', '+--', '++-', '-+-'),
+    ('west', True) :('++-', '+--', '+-+', '+++'),
+    ('north', True) :('+--', '---', '--+', '+-+'),
+    ('east', True) :('---', '-+-', '-++', '--+'),
+    ('south', True) :('-+-', '++-', '+++', '-++'),
+    ('up', True) :('+-+', '--+', '-++', '+++'),
+    ('down', True) :('+--', '---', '-+-', '++-'),
+}
+
+class CubePolygons(NamedTuple):
+    '''
+    A polygons of a cube that correspond to Minecraft cube faces.
+    '''
+    east: CubePolygon  # Cube Right
+    north: CubePolygon  # Cube Front
+    west: CubePolygon  # Cube Left
+    south: CubePolygon  # Cube Back
+    up: CubePolygon  # Cube Up
+    down: CubePolygon  # Cube Down
+
+    @staticmethod
+    def build(cube: bpy.types.Object, mirror: bool) -> CubePolygons:
+        '''
+        Creates a CubePolygons object for given blender cube.
+
+        - `cube: bpy.types.Object` - blender mesh with cube shape
+        - `mirror: bool` - if set to true than the order of vertices in
+          CubePolygon is changed to change the positons of verices during
+          UV-mapping.
+        '''
+        def get_order(
+            name: str, mirror: bool,
+            bount_box_vertices: Tuple[str, str, str, str]
+        ) -> Tuple[int, int, int, int]:
+            '''Gets the order of verices for given cube polygon'''
+            mc_mapping_uv_order = _MC_MAPPING_UV_ORDERS[(name, mirror)]
+            result = []
+            for name in mc_mapping_uv_order:
+                index = bount_box_vertices.index(name)  # Throws ValueError
+                result.append(index)
+            return tuple(result)  # type: ignore
+
+        # 1. Check if object has 6 quadrilateral faces
+        if len(cube.data.polygons) != 6:
             raise NoCubePolygonsException(
-                f"Object {self.obj_name} doesn't have active UV-layer."
+                f"Object {cube.name.split('.')} is not a cube. Number of faces != 6."
             )
-        # 2. Check if object has 6 quadrilateral faces
-        if len(self.obj_data.polygons) != 6:
-            raise NoCubePolygonsException(
-                f"Object {self.obj_name} is not a cube. Number of faces != 6."
-            )
-        for polygon in self.obj_data.polygons:
+        for polygon in cube.data.polygons:
             if len(polygon.vertices) != 4:
                 raise NoCubePolygonsException(
-                    f"Object {self.obj_name} is not a cube. Not all faces are "
+                    f"Object {cube.name.split('.')} is not a cube. Not all faces are "
                     "quadrilateral."
                 )
 
         # Blender crds (bounding box):
         # 0. ---; 1. --+; 2. -++; 3. -+-; 4. +--; 5. +-+; 6. +++; 7. ++-
-        mmm, mmp, mpp, mpm, pmm, pmp, ppp, ppm = tuple(
-            self.obj_bound_box
-        )
+        mmm, mmp, mpp, mpm, pmm, pmp, ppp, ppm = tuple(cube.bound_box)
         # MC:      0+0 top; -00 right; 00- front;
         # Blender: 00+ top; -00 right; 0-0 front
         bb_crds = {
@@ -310,11 +355,11 @@ class McblendObject:
         up: List[str] = ['--+', '+-+', '+++', '-++']  # Cube Up
         down: List[str] = ['---', '+--', '++-', '-+-']  # Cube Down
         cube_polygon_builder = {}  # Input for CubePolygons constructor
-        for polygon in self.obj_data.polygons:
+        for polygon in cube.data.polygons:
             bbv: List[str] = []  # bound box vertices
             for vertex_id in polygon.vertices:
                 vertex_crds = np.array(
-                    self.obj_data.vertices[vertex_id].co
+                    cube.data.vertices[vertex_id].co
                 )
                 # Find the closest point of bounding box (key from bb_crds)
                 shortest_distance: Optional[float] = None
@@ -333,47 +378,42 @@ class McblendObject:
             # original and reversed
             rbbv = [i for i in reversed(bbv)]
             if cyclic_equiv(north, bbv) or cyclic_equiv(north, rbbv):
+                t_bbv: Tuple[str, str, str, str] = tuple(bbv)  # type: ignore
                 cube_polygon_builder['north'] = CubePolygon(
-                    polygon, tuple(bbv)  # type: ignore
+                    polygon, t_bbv, get_order('north', mirror, t_bbv)
                 )
             elif cyclic_equiv(east, bbv) or cyclic_equiv(east, rbbv):
+                t_bbv: Tuple[str, str, str, str] = tuple(bbv)  # type: ignore
                 cube_polygon_builder['east'] = CubePolygon(
-                    polygon, tuple(bbv)  # type: ignore
+                    polygon, t_bbv, get_order('east', mirror, t_bbv)
                 )
             elif cyclic_equiv(south, bbv) or cyclic_equiv(south, rbbv):
+                t_bbv: Tuple[str, str, str, str] = tuple(bbv)  # type: ignore
                 cube_polygon_builder['south'] = CubePolygon(
-                    polygon, tuple(bbv)  # type: ignore
+                    polygon, t_bbv, get_order('south', mirror, t_bbv)
                 )
             elif cyclic_equiv(west, bbv) or cyclic_equiv(west, rbbv):
+                t_bbv: Tuple[str, str, str, str] = tuple(bbv)  # type: ignore
                 cube_polygon_builder['west'] = CubePolygon(
-                    polygon, tuple(bbv)  # type: ignore
+                    polygon, t_bbv, get_order('west', mirror, t_bbv)
                 )
             elif cyclic_equiv(up, bbv) or cyclic_equiv(up, rbbv):
+                t_bbv: Tuple[str, str, str, str] = tuple(bbv)  # type: ignore
                 cube_polygon_builder['up'] = CubePolygon(
-                    polygon, tuple(bbv)  # type: ignore
+                    polygon, t_bbv, get_order('up', mirror, t_bbv)
                 )
             elif cyclic_equiv(down, bbv) or cyclic_equiv(down, rbbv):
+                t_bbv: Tuple[str, str, str, str] = tuple(bbv)  # type: ignore
                 cube_polygon_builder['down'] = CubePolygon(
-                    polygon, tuple(bbv)  # type: ignore
+                    polygon, t_bbv, get_order('down', mirror, t_bbv)
                 )
         try:
             return CubePolygons(**cube_polygon_builder)
         except TypeError:  # Missing argument
             raise NoCubePolygonsException(
-                f"Object {self.obj_name} is not filling a bounding box "
+                f"Object {cube.name.split('.')} is not filling a bounding box "
                 "good enough to aproximate its shape to a cube."
             )
-
-class CubePolygons(NamedTuple):
-    '''
-    A polygons of a cube that correspond to Minecraft cube faces.
-    '''
-    north: CubePolygon  # Cube Front
-    east: CubePolygon  # Cube Right
-    south: CubePolygon  # Cube Back
-    west: CubePolygon  # Cube Left
-    up: CubePolygon  # Cube Up
-    down: CubePolygon  # Cube Down
 
 class CubePolygon(NamedTuple):
     '''
@@ -381,14 +421,19 @@ class CubePolygon(NamedTuple):
 
     # Arguments:
     - `side: bpy_types.MeshPolygon` - MeshPolygon object from blender mesh
-    - `order: Tuple[str, str, str, str]` - the names of the vertices of the
-     Mesh polygon. Every name should be a 3-character string with + and -
-     characters to show on which side of the cube is corresponding vertex.
-     Example: '++-' should correspond to a vertex which is at increasing X and
-     Y but decreasing Z coordinate (in local cube space).
+    - `orientation: Tuple[str, str, str, str]` - the names of the vertices of
+      the Mesh polygon. Every name should be a 3-character string with + and -
+      characters to show on which side of the cube is corresponding vertex.
+      Example: '++-' should correspond to a vertex which is at increasing X and
+    Y but decreasing Z coordinate (in local cube space).
+    - `order: Tuple[int, int, int, int]` - stores the order (values from 0 to
+      4) in which the 4 loops of the face should be rearranged to be in this
+      order: 0. left bottom corner; 1. right bottom corner; 2. right top
+      corner; 3. left top corner
     '''
     side: bpy_types.MeshPolygon
-    order: Tuple[str, str, str, str]
+    orientation: Tuple[str, str, str, str]
+    order: Tuple[int, int, int, int]
 
 
 class McblendObjectGroup:
