@@ -71,7 +71,7 @@ class ModelLoader:
         self.data = data
         self.format_version = self._load_format_version(data)
         geometry, geometry_path = self._load_geometry(
-            geometry_name, self.data['minecraft:geometry'])
+            geometry_name, self.data)
 
         self.description: Dict = self._load_description(
             geometry, geometry_path)
@@ -86,9 +86,10 @@ class ModelLoader:
         '''
         _assert_has_required_keys(
             'model file', set(data.keys()), {'format_version'}, [])
-        if data['format_version'] == '1.12.0':  # TODO - support format version 1.10.0 (bee) and 1.8.0
+        if data['format_version'] == '1.12.0':
             _assert_has_required_keys(
                 'model file', set(data.keys()),
+                    
                 {'minecraft:geometry', 'format_version'},
                 [])
             _assert_has_accepted_keys_only(
@@ -97,20 +98,35 @@ class ModelLoader:
             if 'cape' in data.keys():
                 raise ImportingNotImplementedError('cape', [])
             return data['format_version']
+        elif data['format_version'] == '1.8.0':
+            # All geometries must start with geometry.
+            for k in data.keys():  # key must be string because its from json
+                _assert(
+                    (
+                        k.startswith('geometry.') or
+                        k in ['debug', 'format_version']
+                    ),
+                    f'{[]}::{k} is invalid geometry name (it should start '
+                    'with "geometry."'
+                )
+            if 'debug' in data.keys():
+                raise ImportingNotImplementedError('debug', [])
+            return data['format_version']
         else:
             raise FileIsNotAModelException('Unsuported format version')
 
     def _load_geometry(
-            self, geometry_name: str, geometries: Any) -> Tuple[Dict, List]:
+            self, geometry_name: str, data: Any) -> Tuple[Dict, List]:
         '''
         Finds and returns geometry with specific name from list of gemoeties
         from JSON file with models. Returns the geometry dictionary with added
         all of the missing values and the JSON path to the geometry.
 
         - `geometry_name: str` - the name of geometry
-        - `geometries: Any` - the list of gemoetries
+        - `data: Any` - root object of the json
         '''
         if self.format_version == '1.12.0':
+            geometries = data['minecraft:geometry']
             path: List = ['minecraft:geometry']
             _assert_is_type('geometries', geometries, (list,), path)
             for i, geometry in enumerate(geometries):
@@ -128,6 +144,27 @@ class ModelLoader:
                     raise FileIsNotAModelException(
                         f'{path}::description is missing identifier')
                 identifier = desc['identifier']
+                if identifier == geometry_name or geometry_name == '':
+                    return geometry, path
+            raise ValueError(f'Unable to find geometry called geometry.{geometry_name}')
+        elif self.format_version == '1.8.0':
+            geometries = data
+            path = []
+            _assert_is_type('geometries', geometries, (dict,), path)
+            for k, geometry in geometries.items():
+                if k in ['format_version', 'debug']:
+                    continue
+                path = [k]
+                _assert_is_type('gometry', geometry, (dict,),
+                    path)
+                _assert_has_accepted_keys_only(
+                    'geometry', set(geometry.keys()),
+                    {
+                        "debug", "visible_bounds_width",
+                        "visible_bounds_height", "visible_bounds_offset",
+                        "texturewidth", "textureheight", "cape", "bones"
+                    }, path)
+                identifier = k
                 if identifier == geometry_name or geometry_name == '':
                     return geometry, path
             raise ValueError(f'Unable to find geometry called geometry.{geometry_name}')
@@ -192,6 +229,54 @@ class ModelLoader:
                     (int, float), geometry_path + ['visible_bounds_height'])
                 result['visible_bounds_height'] = desc['visible_bounds_height']
             return result
+        elif self.format_version == '1.8.0':
+            desc = geometry
+            path = geometry_path
+
+            acceptable_keys = {
+                        "debug", "visible_bounds_width",
+                        "visible_bounds_height", "visible_bounds_offset",
+                        "texturewidth", "textureheight", "cape", "bones"}
+            _assert_has_accepted_keys_only(
+                'geometry', set(desc.keys()), acceptable_keys, path)
+
+            _assert_is_type(
+                'identifier', path[-1], (str,),
+                geometry_path + ['identifier'])
+            result['identifier'] = path[-1]
+            if 'debug' in desc:
+                _assert_is_type(
+                    'debug', desc['debug'], (bool,),
+                    geometry_path + ['debug'])
+                raise ImportingNotImplementedError('debug', path + ['debug'])
+            if 'texturewidth' in desc:
+                _assert_is_type(
+                    'texturewidth', desc['texturewidth'], (int, float),
+                    geometry_path + ['texturewidth'])
+                # texture_width not texturewidth (not a bug!!!)
+                result['texture_width'] = int(desc['texturewidth'])
+            if 'textureheight' in desc:
+                _assert_is_type(
+                    'textureheight', desc['textureheight'], (int, float),
+                    geometry_path + ['textureheight'])
+                # texture_height not textureheight (not a bug!!!)
+                result['texture_height'] = int(desc['textureheight'])
+            if 'visible_bounds_offset' in desc:
+                _assert_is_vector(
+                    'visible_bounds_offset', desc['visible_bounds_offset'], 3,
+                    (int, float), geometry_path + ['visible_bounds_offset'])
+                result['visible_bounds_offset'] = desc['visible_bounds_offset']
+            if 'visible_bounds_width' in desc:
+                _assert_is_type(
+                    'visible_bounds_width', desc['visible_bounds_width'],
+                    (int, float), geometry_path + ['visible_bounds_width'])
+                result['visible_bounds_width'] = desc['visible_bounds_width']
+            if 'visible_bounds_height' in desc:
+                _assert_is_type(
+                    'visible_bounds_height', desc['visible_bounds_height'],
+                    (int, float), geometry_path + ['visible_bounds_height'])
+                result['visible_bounds_height'] = desc['visible_bounds_height']
+            return result
         else:
             raise FileIsNotAModelException('Unsuported format version')
 
@@ -204,7 +289,7 @@ class ModelLoader:
         - `bones_path: List` - path to the bones list (for error messages)
         '''
         result: List = []
-        if self.format_version == '1.12.0':
+        if self.format_version == '1.12.0' or self.format_version == '1.8.0':
             _assert_is_type('bones property', bones, (list,), bones_path)
             for i, bone in enumerate(bones):
                 bone_path = bones_path + [i]
@@ -304,6 +389,91 @@ class ModelLoader:
                     'texture_meshes', bone_path + ['texture_meshes'])
                 
             return result
+        elif self.format_version == '1.8.0':
+            _assert_is_type('bone', bone, (dict,), bone_path)
+
+            _assert_has_required_keys(
+                'bone', set(bone.keys()), {'name'}, bone_path)
+            acceptable_keys = {
+                'name', 'reset', 'neverRender', 'parent', 'pivot', 'rotation',
+                'bind_pose_rotation', 'mirror', 'inflate', 'debug',
+                'render_group_id', 'cubes', 'locators', 'poly_mesh',
+                'texture_meshes'}
+            _assert_has_accepted_keys_only(
+                'bone', set(bone.keys()), acceptable_keys, bone_path)
+
+            if 'name' in bone:
+                _assert_is_type(
+                    'name', bone['name'], (str,), bone_path + ['name'])
+                result['name'] = bone['name']
+            if 'reset' in bone:
+                _assert_is_type(
+                    'reset', bone['reset'], (bool,), bone_path + ['reset'])
+                raise ImportingNotImplementedError(
+                    'reset', bone_path + ['reset'])
+            if 'neverRender' in bone:
+                _assert_is_type(
+                    'neverRender', bone['neverRender'], (bool,),
+                    bone_path + ['neverRender'])
+                raise ImportingNotImplementedError(
+                    'neverRender', bone_path + ['neverRender'])
+            if 'parent' in bone:
+                _assert_is_type(
+                    'parent', bone['parent'], (str,), bone_path + ['parent'])
+                result['parent'] = bone['parent']
+            if 'pivot' in bone:
+                _assert_is_vector(
+                    'pivot', bone['pivot'], 3, (int, float),
+                    bone_path + ['pivot'])
+                result['pivot'] = bone['pivot']
+            if 'rotation' in bone:
+                _assert_is_vector(
+                    'rotation', bone['rotation'], 3, (int, float),
+                    bone_path + ['rotation'])
+                result['rotation'] = bone['rotation']
+            if 'bind_pose_rotation' in bone:
+                _assert_is_vector(
+                    'bind_pose_rotation', bone['bind_pose_rotation'], 3,
+                    (int, float), bone_path + ['bind_pose_rotation'])
+                raise ImportingNotImplementedError(
+                    'bind_pose_rotation', bone_path + ['bind_pose_rotation'])
+            if 'mirror' in bone:
+                _assert_is_type(
+                    'mirror', bone['mirror'], (bool,), bone_path + ['mirror'])
+                result['mirror'] = bone['mirror']
+            if 'inflate' in bone:
+                _assert_is_type(
+                    'inflate', bone['inflate'], (float, int),
+                    bone_path + ['inflate'])
+                raise ImportingNotImplementedError('inflate', bone_path + ['inflate'])
+            if 'debug' in bone:
+                _assert_is_type(
+                    'debug', bone['debug'], (bool,), bone_path + ['debug'])
+                raise ImportingNotImplementedError(
+                    'debug', bone_path + ['debug'])
+            if 'redner_group_id' in bone:
+                _assert_is_type(
+                    'redner_group_id', bone['redner_group_id'], (int, float),
+                    bone_path + ['redner_group_id'])
+                # int >= 0
+                raise ImportingNotImplementedError(
+                    'redner_group_id', bone_path + ['redner_group_id'])
+            if 'cubes' in bone:
+                # default mirror for cube is the bones mirror property
+                result['cubes'] = self._load_cubes(
+                    bone['cubes'], bone_path + ['cubes'], result['mirror'])
+            if 'locators' in bone:
+                result['locators'] = self._load_locators(
+                    bone['locators'], bone_path + ['locators'])
+            if 'poly_mesh' in bone:
+                # type: dict
+                raise ImportingNotImplementedError(
+                    'poly_mesh', bone_path + ['poly_mesh'])
+            if 'texture_meshes' in bone:
+                # type: list
+                raise ImportingNotImplementedError(
+                    'texture_meshes', bone_path + ['texture_meshes'])
+            return result
         else:
             raise FileIsNotAModelException('Unsuported format version')
 
@@ -319,7 +489,7 @@ class ModelLoader:
           of cubes.
         '''
         result = []
-        if self.format_version == '1.12.0':
+        if self.format_version == '1.12.0' or self.format_version == '1.8.0':
             _assert_is_type('cubes property', cubes, (list,), cubes_path)
             for i, cube in enumerate(cubes):
                 cube_path = cubes_path + [i]
@@ -353,7 +523,7 @@ class ModelLoader:
             _assert_is_type('cube', cube, (dict,), cube_path)
             # There is no required keys {} is a valid cube
             acceptable_keys = {
-                "name", "mirror", "inflate", "pivot", "rotation", "origin",
+                "mirror", "inflate", "pivot", "rotation", "origin",
                 "size", "uv"}
             _assert_has_accepted_keys_only(
                 'cube', set(cube.keys()), acceptable_keys, cube_path)
@@ -400,6 +570,37 @@ class ModelLoader:
                         f'{cube_path + ["uv"]}::{"uv"} is not an '
                         f'instance of {(list, dict)}')
             return result
+        elif self.format_version == '1.8.0':
+            _assert_is_type('cube', cube, (dict,), cube_path)
+            # There is no required keys {} is a valid cube
+            acceptable_keys = {"origin", "size", "uv", "inflate", "mirror"}
+            _assert_has_accepted_keys_only(
+                'cube', set(cube.keys()), acceptable_keys, cube_path)
+            if 'origin' in cube:
+                _assert_is_vector(
+                    'origin', cube['origin'], 3, (int, float),
+                    cube_path + ['origin'])
+                result['origin'] = cube['origin']
+            if 'size' in cube:
+                _assert_is_vector(
+                    'size', cube['size'], 3, (int, float),
+                    cube_path + ['size'])
+                result['size'] = cube['size']
+            if 'inflate' in cube:
+                _assert_is_type(
+                    'inflate', cube['inflate'], (int, float), cube_path + ['inflate'])
+                result['inflate'] = cube['inflate']
+            if 'mirror' in cube:
+                _assert_is_type(
+                    'mirror', cube['mirror'], (bool,), cube_path + ['mirror'])
+                result['mirror'] = cube['mirror']
+            if 'uv' in cube:
+                _assert_is_type(
+                    'uv', cube['uv'], (list,), cube_path + ['uv'])
+                _assert_is_vector(
+                    'uv', cube['uv'], 2, (int, float), cube_path + ['uv'])
+                result['uv'] = cube['uv']
+            return result
         else:
             raise FileIsNotAModelException('Unsuported format version')
 
@@ -414,7 +615,7 @@ class ModelLoader:
           messages)
         '''
         result = {}
-        if self.format_version == '1.12.0':
+        if self.format_version == '1.12.0' or self.format_version == '1.8.0':
             _assert_is_type(
                 'locators property', locators, (dict,), locators_path)
             for i, locator in locators.items():
@@ -432,14 +633,21 @@ class ModelLoader:
         - `locator: Any` - the locator
         - `locator_path: List[Any]` - path to the locator
         '''
-        if isinstance(locator, list):
+        if self.format_version == '1.12.0':
+            if isinstance(locator, list):
+                _assert_is_vector('locator', locator, 3, (int, float), locator_path)
+                return locator
+            elif isinstance(locator, dict):
+                raise ImportingNotImplementedError('locator', locator_path)
+            raise FileIsNotAModelException(
+                f'{locator_path + ["locator"]}::{"locator"} is not an '
+                f'instance of {(list, dict)}')
+        elif self.format_version == '1.8.0':
+            _assert_is_type('locator', locator, (list,), locator_path)
             _assert_is_vector('locator', locator, 3, (int, float), locator_path)
             return locator
-        elif isinstance(locator, dict):
-            raise ImportingNotImplementedError('locator', locator_path)
-        raise FileIsNotAModelException(
-            f'{locator_path + ["locator"]}::{"locator"} is not an '
-            f'instance of {(list, dict)}')
+        else:
+            raise FileIsNotAModelException('Unsuported format version')
 
 class ImportLocator:
     '''Represents Minecraft locator during import operation.'''
