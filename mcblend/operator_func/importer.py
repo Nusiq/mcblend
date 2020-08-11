@@ -12,7 +12,8 @@ import bpy_types
 import mathutils
 import bpy
 
-from .common import MINECRAFT_SCALE_FACTOR, CubePolygons, CubePolygon
+from .common import (
+    MINECRAFT_SCALE_FACTOR, CubePolygons, CubePolygon, inflate_objets)
 from .uv import CoordinatesConverter
 from .exception import (
     InvalidDictPathException, FileIsNotAModelException,
@@ -397,7 +398,7 @@ class ModelLoader:
                 _assert_is_type(
                     'inflate', bone['inflate'], (float, int),
                     bone_path + ['inflate'])
-                raise ImportingNotImplementedError('inflate', bone_path + ['inflate'])
+                result['inflate'] = bone['inflate']
             if 'debug' in bone:
                 _assert_is_type(
                     'debug', bone['debug'], (bool,), bone_path + ['debug'])
@@ -413,7 +414,8 @@ class ModelLoader:
             if 'cubes' in bone:
                 # default mirror for cube is the bones mirror property
                 result['cubes'] = self._load_cubes(
-                    bone['cubes'], bone_path + ['cubes'], result['mirror'])
+                    bone['cubes'], bone_path + ['cubes'], result['mirror'],
+                    result['inflate'])
             if 'locators' in bone:
                 result['locators'] = self._load_locators(
                     bone['locators'], bone_path + ['locators'])
@@ -483,7 +485,7 @@ class ModelLoader:
                 _assert_is_type(
                     'inflate', bone['inflate'], (float, int),
                     bone_path + ['inflate'])
-                raise ImportingNotImplementedError('inflate', bone_path + ['inflate'])
+                result['inflate'] = bone['inflate']
             if 'debug' in bone:
                 _assert_is_type(
                     'debug', bone['debug'], (bool,), bone_path + ['debug'])
@@ -499,7 +501,8 @@ class ModelLoader:
             if 'cubes' in bone:
                 # default mirror for cube is the bones mirror property
                 result['cubes'] = self._load_cubes(
-                    bone['cubes'], bone_path + ['cubes'], result['mirror'])
+                    bone['cubes'], bone_path + ['cubes'], result['mirror'],
+                    result['inflate'])
             if 'locators' in bone:
                 result['locators'] = self._load_locators(
                     bone['locators'], bone_path + ['locators'])
@@ -516,8 +519,8 @@ class ModelLoader:
             raise FileIsNotAModelException('Unsuported format version')
 
     def _load_cubes(
-            self, cubes: Any, cubes_path: List[Any],
-            default_mirror: bool) -> List[Dict[str, Any]]:
+            self, cubes: Any, cubes_path: List[Any], default_mirror: bool,
+            default_inflate: float) -> List[Dict[str, Any]]:
         '''
         Returns the cubes from the list of cubes with added missing values.
 
@@ -533,14 +536,16 @@ class ModelLoader:
             _assert_is_type('cubes property', cubes, (list,), cubes_path)
             for i, cube in enumerate(cubes):
                 cube_path = cubes_path + [i]
-                result.append(self._load_cube(cube, cube_path, default_mirror))
+                result.append(
+                    self._load_cube(cube, cube_path, default_mirror,
+                    default_inflate))
             return result
         else:
             raise FileIsNotAModelException('Unsuported format version')
 
     def _load_cube(
-            self, cube: Any, cube_path: List,
-            default_mirror: bool) -> Dict[str, Any]:
+            self, cube: Any, cube_path: List, default_mirror: bool,
+            default_inflate: float) -> Dict[str, Any]:
         '''
         Returns a cube with added all of the missing default values of the
         properties.
@@ -555,7 +560,7 @@ class ModelLoader:
             "size" : [0, 0, 0],  # Listfloat] len=3
             "rotation" : [0, 0, 0],  # Listfloat] len=3
             "pivot" : [0, 0, 0],  # Listfloat] len=3
-            "inflate" : 0,  # float
+            "inflate" : default_inflate,  # float
             "mirror" : default_mirror,  # mirror
             "uv": [0, 0]  # List[float] len=2 or Dict  # TODO - load dictionary format
         }
@@ -721,6 +726,7 @@ class ImportCube:
         self.uv: Tuple[int, int] = tuple(# type: ignore
             data['uv'])
         self.mirror: bool = data['mirror']
+        self.inflate: bool = data['inflate']
         self.origin: Tuple[float, float, float] = tuple(  # type: ignore
             data['origin'])
         self.pivot: Tuple[float, float, float] = tuple(  # type: ignore
@@ -878,6 +884,12 @@ class ImportGeometry:
             for cube in bone.cubes:
                 cube_obj = cube.blend_cube
                 _mc_rotate(cube_obj, cube.rotation)
+
+        # Inflate objects
+        for bone in self.bones.values():
+            for cube in bone.cubes:
+                inflate_objets(
+                    bpy.context, [cube.blend_cube], cube.inflate, 'ABSOLUTE')
 
 
 def _mc_translate(

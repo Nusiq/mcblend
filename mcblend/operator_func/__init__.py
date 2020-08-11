@@ -20,7 +20,7 @@ from .model import ModelExport
 from .json_tools import get_vect_json
 from .common import (
     MCObjType, ObjectId, McblendObject, MINECRAFT_SCALE_FACTOR,
-    McblendObjectGroup
+    McblendObjectGroup, inflate_objets
 )
 from .importer import ImportGeometry, ModelLoader
 from .exception import NameConflictException
@@ -132,71 +132,8 @@ def set_uvs(context: bpy_types.Context):
         curr_uv.set_blender_uv(converter)
 
 def set_inflate(context: bpy_types.Context, inflate: float, mode: str) -> int:
-    '''
-    Adds mc_inflate property to objects and changes their dimensions. Returns
-    the number of edited objects.
-    Returns the number of edited objects.
-
-    # Arguments:
-    - `context: bpy_types.Context` - the context of running the operator.
-    - `inflate: float` - the inflation value.
-    - `mode: str` - Can be either "RELATIVE" or "ABSOLUTE". If "RELATIVE" than
-      the value before appying the operator is taken as a base (0 means that
-      no changes should be applied). If "ABSOLUTE" than the inflate value passed
-      by the user is passed directly to the inflate value in Minecraft model.
-
-    # Returns:
-    `bool` - the success value of the function.
-    '''
-    if mode == 'RELATIVE':
-        relative = True
-    elif mode == 'ABSOLUTE':
-        relative = False
-    else:
-        raise ValueError(f'Unknown mode for set_inflate operator: {mode}')
-
-    counter = 0
-    for obj in context.selected_objects:
-        if obj.type == 'MESH':
-            if 'mc_inflate' in obj:
-                if relative:
-                    effective_inflate = obj['mc_inflate'] + inflate
-                else:
-                    effective_inflate = inflate
-                delta_inflate = effective_inflate - obj['mc_inflate']
-                obj['mc_inflate'] = effective_inflate
-            else:
-                delta_inflate = inflate
-                obj['mc_inflate'] = inflate
-            # Clear parent from children for a moment
-            children = obj.children
-            for child in children:
-                old_matrix = child.matrix_world.copy()
-                child.parent = None
-                child.matrix_world = old_matrix
-
-            dimensions = np.array(obj.dimensions)
-
-            # Set new dimensions
-            dimensions = (
-                dimensions +
-                (2*delta_inflate/MINECRAFT_SCALE_FACTOR)
-            )
-
-            obj.dimensions = dimensions
-            context.view_layer.update()
-
-            # Add children back and set their previous transformations
-            for child in children:
-                child.parent = obj
-                child.matrix_parent_inverse = obj.matrix_world.inverted()
-
-            # Remove the property if it's equal to 0
-            if obj['mc_inflate'] == 0:
-                del obj['mc_inflate']
-
-            counter += 1
-    return counter
+    '''Run common.inflate_objets function.'''
+    return inflate_objets(context, context.selected_objects, inflate, mode)
 
 
 def round_dimensions(context: bpy_types.Context) -> int:
