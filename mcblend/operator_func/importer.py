@@ -62,6 +62,34 @@ def _assert_is_type(
         raise FileIsNotAModelException(
             f'{json_path}::{name} is not an instance of {types}')
 
+def pick_version_parser(parsers: Tuple[str, ...], version: str):
+    '''
+    Out of known list of parser names for different format versions picks the
+    earliest possible format_version greater or equal to the version.
+    '''
+    def to_tuple(version: str) -> Tuple[int]:
+        try:
+            return tuple(  # type: ignore
+                map(lambda a: int(a), version.split('.')))
+        except:
+            raise FileIsNotAModelException(
+                f'Unable to parse format version number: {version}')
+
+    t_parsers = [to_tuple(parser) for parser in parsers]
+    t_parsers.sort(reverse=True)
+    t_version = to_tuple(version)
+
+    best_choice = None
+    for t_parser in t_parsers:
+        if t_parser <= t_version:
+            best_choice = t_parser
+            break
+    if best_choice is None:
+        raise FileIsNotAModelException(
+            f'Unsuported format version: {version}')
+    return '.'.join([str(i) for i in best_choice])
+
+
 class ModelLoader:
     '''
     Interface loads model from a dictionary that represents the model.
@@ -86,7 +114,9 @@ class ModelLoader:
         '''
         _assert_has_required_keys(
             'model file', set(data.keys()), {'format_version'}, [])
-        if data['format_version'] == '1.12.0':
+        parser_version = pick_version_parser(
+            ('1.12.0', '1.8.0'), data['format_version'])
+        if parser_version == '1.12.0':
             _assert_has_required_keys(
                 'model file', set(data.keys()),
                     
@@ -98,7 +128,7 @@ class ModelLoader:
             if 'cape' in data.keys():
                 raise ImportingNotImplementedError('cape', [])
             return data['format_version']
-        elif data['format_version'] == '1.8.0':
+        elif parser_version == '1.8.0':
             # All geometries must start with geometry.
             for k in data.keys():  # key must be string because its from json
                 _assert(
@@ -125,7 +155,9 @@ class ModelLoader:
         - `geometry_name: str` - the name of geometry
         - `data: Any` - root object of the json
         '''
-        if self.format_version == '1.12.0':
+        parser_version = pick_version_parser(
+            ('1.12.0', '1.8.0'), self.format_version)
+        if parser_version == '1.12.0':
             geometries = data['minecraft:geometry']
             path: List = ['minecraft:geometry']
             _assert_is_type('geometries', geometries, (list,), path)
@@ -147,7 +179,7 @@ class ModelLoader:
                 if identifier == geometry_name or geometry_name == '':
                     return geometry, path
             raise ValueError(f'Unable to find geometry called geometry.{geometry_name}')
-        elif self.format_version == '1.8.0':
+        elif parser_version == '1.8.0':
             geometries = data
             path = []
             _assert_is_type('geometries', geometries, (dict,), path)
@@ -186,7 +218,9 @@ class ModelLoader:
             "visible_bounds_width" : 1,
             "visible_bounds_height": 1
         }
-        if self.format_version == '1.12.0':
+        parser_version = pick_version_parser(
+            ('1.12.0', '1.8.0'), self.format_version)
+        if parser_version == '1.12.0':
             desc = geometry['description']
             path = geometry_path + ['description']
 
@@ -229,7 +263,7 @@ class ModelLoader:
                     (int, float), geometry_path + ['visible_bounds_height'])
                 result['visible_bounds_height'] = desc['visible_bounds_height']
             return result
-        elif self.format_version == '1.8.0':
+        elif parser_version == '1.8.0':
             desc = geometry
             path = geometry_path
 
@@ -289,7 +323,9 @@ class ModelLoader:
         - `bones_path: List` - path to the bones list (for error messages)
         '''
         result: List = []
-        if self.format_version == '1.12.0' or self.format_version == '1.8.0':
+        parser_version = pick_version_parser(
+            ('1.12.0', '1.8.0'), self.format_version)
+        if parser_version == '1.12.0' or parser_version == '1.8.0':
             _assert_is_type('bones property', bones, (list,), bones_path)
             for i, bone in enumerate(bones):
                 bone_path = bones_path + [i]
@@ -320,7 +356,9 @@ class ModelLoader:
             "poly_mesh": {},  # Dict
             "texture_meshes": []  # List[Dict]
         }
-        if self.format_version == '1.12.0':
+        parser_version = pick_version_parser(
+            ('1.12.0', '1.8.0'), self.format_version)
+        if parser_version == '1.12.0':
             _assert_is_type('bone', bone, (dict,), bone_path)
 
 
@@ -389,7 +427,7 @@ class ModelLoader:
                     'texture_meshes', bone_path + ['texture_meshes'])
                 
             return result
-        elif self.format_version == '1.8.0':
+        elif parser_version == '1.8.0':
             _assert_is_type('bone', bone, (dict,), bone_path)
 
             _assert_has_required_keys(
@@ -489,7 +527,9 @@ class ModelLoader:
           of cubes.
         '''
         result = []
-        if self.format_version == '1.12.0' or self.format_version == '1.8.0':
+        parser_version = pick_version_parser(
+            ('1.12.0', '1.8.0'), self.format_version)
+        if parser_version == '1.12.0' or parser_version == '1.8.0':
             _assert_is_type('cubes property', cubes, (list,), cubes_path)
             for i, cube in enumerate(cubes):
                 cube_path = cubes_path + [i]
@@ -519,7 +559,9 @@ class ModelLoader:
             "mirror" : default_mirror,  # mirror
             "uv": [0, 0]  # List[float] len=2 or Dict  # TODO - load dictionary format
         }
-        if self.format_version == '1.12.0':
+        parser_version = pick_version_parser(
+            ('1.12.0', '1.8.0'), self.format_version)
+        if parser_version == '1.12.0':
             _assert_is_type('cube', cube, (dict,), cube_path)
             # There is no required keys {} is a valid cube
             acceptable_keys = {
@@ -570,7 +612,7 @@ class ModelLoader:
                         f'{cube_path + ["uv"]}::{"uv"} is not an '
                         f'instance of {(list, dict)}')
             return result
-        elif self.format_version == '1.8.0':
+        elif parser_version == '1.8.0':
             _assert_is_type('cube', cube, (dict,), cube_path)
             # There is no required keys {} is a valid cube
             acceptable_keys = {"origin", "size", "uv", "inflate", "mirror"}
@@ -615,7 +657,9 @@ class ModelLoader:
           messages)
         '''
         result = {}
-        if self.format_version == '1.12.0' or self.format_version == '1.8.0':
+        parser_version = pick_version_parser(
+            ('1.12.0', '1.8.0'), self.format_version)
+        if parser_version == '1.12.0' or parser_version == '1.8.0':
             _assert_is_type(
                 'locators property', locators, (dict,), locators_path)
             for i, locator in locators.items():
@@ -633,7 +677,9 @@ class ModelLoader:
         - `locator: Any` - the locator
         - `locator_path: List[Any]` - path to the locator
         '''
-        if self.format_version == '1.12.0':
+        parser_version = pick_version_parser(
+            ('1.12.0', '1.8.0'), self.format_version)
+        if parser_version == '1.12.0':
             if isinstance(locator, list):
                 _assert_is_vector('locator', locator, 3, (int, float), locator_path)
                 return locator
@@ -642,7 +688,7 @@ class ModelLoader:
             raise FileIsNotAModelException(
                 f'{locator_path + ["locator"]}::{"locator"} is not an '
                 f'instance of {(list, dict)}')
-        elif self.format_version == '1.8.0':
+        elif parser_version == '1.8.0':
             _assert_is_type('locator', locator, (list,), locator_path)
             _assert_is_vector('locator', locator, 3, (int, float), locator_path)
             return locator
