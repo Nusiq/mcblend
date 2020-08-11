@@ -543,6 +543,35 @@ class ModelLoader:
         else:
             raise FileIsNotAModelException('Unsuported format version')
 
+    def _create_default_uv(
+            self, size: Tuple[float, float, float], mirror: bool,
+            uv: Tuple[float, float]=(0.0, 0.0)) -> Dict:
+        '''
+        Creates default UV dictionary based on some other properties of a cube.
+        '''
+        width, height, depth = size
+
+        def _face(size: Tuple[float, float], uv: Tuple[float, float]):
+            return {"uv_size": size, "uv": uv, "material_instance": ""}
+
+        face1 = _face((depth, height), (uv[0], uv[1] + depth))
+        face2 = _face((width, height), (uv[0]+depth, uv[1] + depth))
+        face3 = _face((depth, height), (uv[0]+depth + width, uv[1] + depth))
+        face4 = _face((width, height), (uv[0]+2*depth + width, uv[1] + depth))
+        face5 = _face((width, depth), (uv[0]+depth, uv[1]))
+        face6 = _face((width, depth), (uv[0]+depth + width, uv[1]))
+        if mirror:
+            face_west, face_east = face1, face3
+        else:
+            face_east, face_west = face1, face3
+        # No mirror: | # Mirror:
+        #   5 6      | #   5 6
+        # 1 2 3 4    | # 3 2 1 4
+        result: Dict = {
+            "north": face2, "south": face4, "east": face_east,
+            "west": face_west, "up": face5, "down": face6}
+        return result
+
     def _load_cube(
             self, cube: Any, cube_path: List, default_mirror: bool,
             default_inflate: float) -> Dict[str, Any]:
@@ -556,13 +585,16 @@ class ModelLoader:
         - `default_mirror: bool` - mirror value of a bone that owns this cube
         '''
         result = {
-            "origin" : [0, 0, 0],  # Listfloat] len=3
-            "size" : [0, 0, 0],  # Listfloat] len=3
-            "rotation" : [0, 0, 0],  # Listfloat] len=3
-            "pivot" : [0, 0, 0],  # Listfloat] len=3
+            "origin" : (0, 0, 0),  # Listfloat] len=3
+            "size" : (0, 0, 0),  # Listfloat] len=3
+            "rotation" : (0, 0, 0),  # Listfloat] len=3
+            "pivot" : (0, 0, 0),  # Listfloat] len=3
             "inflate" : default_inflate,  # float
             "mirror" : default_mirror,  # mirror
-            "uv": [0, 0]  # List[float] len=2 or Dict  # TODO - load dictionary format
+
+            # Default UV value is based on the size and mirror of the cube
+            # before return statement
+            "uv": None  
         }
         parser_version = pick_version_parser(
             ('1.12.0', '1.8.0'), self.format_version)
@@ -606,16 +638,26 @@ class ModelLoader:
                 _assert_is_type(
                     'uv', cube['uv'], (list, dict), cube_path + ['uv'])
                 if isinstance(cube['uv'], dict):
-                    raise ImportingNotImplementedError(
-                        'uv dictionary', cube_path + ['uv'])
+                    result['uv'] = self._load_uv(
+                        cube['uv'], cube_path + ['uv'],
+                        tuple(result['size'])  # type: ignore
+                    )
                 elif isinstance(cube['uv'], list):
                     _assert_is_vector(
                         'uv', cube['uv'], 2, (int, float), cube_path + ['uv'])
-                    result['uv'] = cube['uv']
+                    result['uv'] = self._create_default_uv(
+                        tuple(result['size']),  # type: ignore
+                        result['mirror'],  # type: ignore
+                        tuple(cube['uv']))  # type: ignore
                 else:
                     raise FileIsNotAModelException(
                         f'{cube_path + ["uv"]}::{"uv"} is not an '
                         f'instance of {(list, dict)}')
+            # Create default UV based on size and mirror
+            if result['uv'] is None:
+                result['uv'] = result['uv'] = self._create_default_uv(
+                    tuple(result['size']),  # type: ignore
+                    result['mirror'])  # type: ignore
             return result
         elif parser_version == '1.8.0':
             _assert_is_type('cube', cube, (dict,), cube_path)
@@ -646,7 +688,127 @@ class ModelLoader:
                     'uv', cube['uv'], (list,), cube_path + ['uv'])
                 _assert_is_vector(
                     'uv', cube['uv'], 2, (int, float), cube_path + ['uv'])
-                result['uv'] = cube['uv']
+                result['uv'] = self._create_default_uv(
+                    tuple(result['size']),  # type: ignore
+                    tuple(result['mirror']),  # type: ignore
+                    tuple(cube['uv']))  # type: ignore
+            # Create default UV based on size and mirror
+            if result['uv'] is None:
+                result['uv'] = result['uv'] = self._create_default_uv(
+                    tuple(result['size']),  # type: ignore
+                    tuple(result['mirror']))  # type: ignore
+            return result
+        else:
+            raise FileIsNotAModelException('Unsuported format version')
+
+    def _load_uv(self, uv: Any, uv_path: List,
+            cube_size: Tuple[float, float, float]) -> Dict[str, Any]:
+        '''
+        Returns UV with added all of the missing default values of the
+        properties.
+
+        - `uv: Any` - part of the json file that has the inforation about the
+          uv
+        - `uv_path: List` - path to the uv (for error messages)
+        - `cube_size: Tuple[float, float, float]` - size of the cube which is
+          being mapped (for default values).
+        '''
+        width, height, depth = cube_size
+        def _face(size: Tuple[float, float], uv: Tuple[float, float]):
+            return {"uv_size": size, "uv": uv, "material_instance": ""}
+        result = {
+            # Faces outside of the texture are invisible and should be skipped
+            # on export
+            "north": _face((0, 0), (0, -1)),
+            "south": _face((0, 0), (0, -1)),
+            "east": _face((0, 0), (0, -1)),
+            "west": _face((0, 0), (0, -1)),
+            "up": _face((0, 0), (0, -1)),
+            "down": _face((0, 0), (0, -1))
+        }
+
+        parser_version = pick_version_parser(
+            ('1.12.0',), self.format_version)
+        if parser_version == '1.12.0':
+            _assert_is_type('uv', uv, (dict,), uv_path)
+            # There is no required keys {} is a valid UV
+            acceptable_keys = {"north", "south", "east", "west", "up","down"}
+            _assert_has_accepted_keys_only(
+                'uv', set(uv.keys()), acceptable_keys, uv_path)
+            if "north" in uv:
+                _assert_is_type(
+                    'north', uv['north'], (dict,), uv_path + ['north'])
+                result["north"] = self._load_uv_face(
+                    uv["north"], uv_path + ["north"], (depth, height))
+            if "south" in uv:
+                _assert_is_type(
+                    'south', uv['south'], (dict,), uv_path + ['south'])
+                result["south"] = self._load_uv_face(
+                    uv["south"], uv_path + ["south"], (width, height))
+            if "east" in uv:
+                _assert_is_type(
+                    'east', uv['east'], (dict,), uv_path + ['east'])
+                result["east"] = self._load_uv_face(
+                    uv["east"], uv_path + ["east"], (depth, height))
+            if "west" in uv:
+                _assert_is_type(
+                    'west', uv['west'], (dict,), uv_path + ['west'])
+                result["west"] = self._load_uv_face(
+                    uv["west"], uv_path + ["west"], (width, height))
+            if "up" in uv:
+                _assert_is_type(
+                    'up', uv['up'], (dict,), uv_path + ['up'])
+                result["up"] = self._load_uv_face(
+                    uv["up"], uv_path + ["up"], (width, depth))
+            if "down" in uv:
+                _assert_is_type(
+                    'down', uv['down'], (dict,), uv_path + ['down'])
+                result["down"] = self._load_uv_face(
+                    uv["down"], uv_path + ["down"], (width, depth))
+            return result
+        else:
+            raise FileIsNotAModelException('Unsuported format version')
+
+    def _load_uv_face(self, uv_face: Any, uv_face_path: List,
+            default_size: Tuple[float, float]) -> Dict[str, Any]:
+        '''
+        Returns UV with added all of the missing default values of the
+        properties.
+
+        - `uv_face: Any` - part of the json file that has the inforation about the
+          uv face
+        - `uv_face_path: List` - path to the uv face (for error messages)
+        - `default_size: Tuple[float, float]` - default size of the UV face
+        '''
+        result = {
+            "uv_size": default_size, "uv": [0, 0], "material_instance": ""
+        }
+        parser_version = pick_version_parser(
+            ('1.12.0',), self.format_version)
+        if parser_version == '1.12.0':
+            _assert_is_type('uv_face', uv_face, (dict,), uv_face_path)
+            _assert_has_required_keys(
+                'uv', set(uv_face.keys()), {'uv'}, uv_face_path)
+            _assert_has_accepted_keys_only(
+                'uv_face', set(uv_face.keys()),
+                {"uv", "uv_size", "material_instance"}, uv_face_path)
+            
+
+            _assert_is_vector(
+                'uv', uv_face['uv'], 2, (int, float),
+                uv_face_path + ['uv'])
+            result["uv"] = uv_face["uv"]
+            if "uv_size" in uv_face:
+                _assert_is_vector(
+                    'uv_size', uv_face['uv_size'], 2, (int, float),
+                    uv_face_path + ['uv_size'])
+                result["uv_size"] = uv_face["uv_size"]
+            if "material_instance" in uv_face:
+                _assert_is_type(
+                    'material_instance', uv_face['material_instance'], (str,),
+                    uv_face_path + ['material_instance'])
+                raise ImportingNotImplementedError(
+                    'material_instance', uv_face_path + ['material_instance'])
             return result
         else:
             raise FileIsNotAModelException('Unsuported format version')
@@ -723,8 +885,7 @@ class ImportCube:
         '''
         self.blend_cube: Optional[bpy_types.Object] = None
 
-        self.uv: Tuple[int, int] = tuple(# type: ignore
-            data['uv'])
+        self.uv: Dict = data['uv']
         self.mirror: bool = data['mirror']
         self.inflate: bool = data['inflate']
         self.origin: Tuple[float, float, float] = tuple(  # type: ignore
@@ -829,8 +990,8 @@ class ImportGeometry:
                     cube_obj['mc_mirror'] = {}
                 _set_uv(
                     self.uv_converter,
-                    CubePolygons.build(cube_obj, cube.mirror), cube.mirror,
-                    cube.size, cube.uv, cube_obj.data.uv_layers.active)
+                    CubePolygons.build(cube_obj, cube.mirror),
+                    cube.uv, cube_obj.data.uv_layers.active)
 
                 _mc_set_size(cube_obj, cube.size)  # 3. Set size
                 _mc_pivot(cube_obj, cube.pivot)  # 4. Move pivot
@@ -978,8 +1139,7 @@ def _mc_rotate(
 
 def _set_uv(
         uv_converter: CoordinatesConverter, cube_polygons: CubePolygons,
-        mirror: bool, size: Tuple[float, float, float], uv: Tuple[float, float],
-        uv_layer: bpy.types.MeshUVLoopLayer):
+        uv: Dict, uv_layer: bpy.types.MeshUVLoopLayer):
     '''
     Sets the uv of a face of a blender cube mesh based on some minecraft
     properties.
@@ -987,19 +1147,11 @@ def _set_uv(
     - `uv_converter: CoordinatesConverter` - converter used for converting from
       minecraft uv coordinates to blender uv coordinates
     - `cube_polygons: CubePolygons` - CybePolygons object created from the mesh
-    - `mirror: bool` - cube mirror property
-    - `size: Tuple[float, float, float]` - cube size
-    - `uv: Tuple[float, float]` - uv coordinate of the cube
+    - `uv: Dict[float, float]` - uv mapping for each face
     - `uv_layer: bpy.types.MeshUVLoopLayer` - uv layer of the mesh
     '''
-    width, height, depth = size
-    if mirror:
-        cp1, cp3 = cube_polygons.west, cube_polygons.east
-    else:
-        cp1, cp3 = cube_polygons.east, cube_polygons.west
-
     uv_data = uv_layer.data
-    def set_uv(cp: CubePolygon, size: Tuple[float, float], uv_local: Tuple[float, float]):
+    def set_uv(cp: CubePolygon, size: Tuple[float, float], uv: Tuple[float, float]):
         cp_loop_indices = cp.side.loop_indices
         cp_order = cp.order
 
@@ -1008,28 +1160,22 @@ def _set_uv(
         right_up = cp_loop_indices[cp_order[2]]
         left_up = cp_loop_indices[cp_order[3]]
 
-        uv_data[left_down].uv = uv_converter.convert((
-            uv[0] + uv_local[0],
-            uv[1] + uv_local[1] + size[1]))
-        uv_data[right_down].uv = uv_converter.convert((
-            uv[0] + uv_local[0] + size[0],
-            uv[1] + uv_local[1] + size[1]))
-        uv_data[right_up].uv = uv_converter.convert((
-            uv[0] + uv_local[0] + size[0],
-            uv[1] + uv_local[1]))
-        uv_data[left_up].uv = uv_converter.convert((
-            uv[0] + uv_local[0],
-            uv[1] + uv_local[1]))
+        uv_data[left_down].uv = uv_converter.convert((uv[0], uv[1] + size[1]))
+        uv_data[right_down].uv = uv_converter.convert(
+            (uv[0] + size[0],uv[1] + size[1]))
+        uv_data[right_up].uv = uv_converter.convert((uv[0] + size[0], uv[1]))
+        uv_data[left_up].uv = uv_converter.convert((uv[0], uv[1]))
 
     # right/left
-    set_uv(cp1, (depth, height), (0, depth))
+    set_uv(cube_polygons.east, uv["east"]["uv_size"], uv["east"]["uv"])
     # front
-    set_uv(cube_polygons.north, (width, height), (depth, depth))
+    set_uv(cube_polygons.north, uv["north"]["uv_size"], uv["north"]["uv"])
     # left/right
-    set_uv(cp3, (depth, height), (depth + width, depth))
+    set_uv(cube_polygons.west, uv["west"]["uv_size"], uv["west"]["uv"])
     # back
-    set_uv(cube_polygons.south, (width, height), (2*depth + width, depth))
+    set_uv(cube_polygons.south, uv["south"]["uv_size"], uv["south"]["uv"])
     # top
-    set_uv(cube_polygons.up, (width, depth), (depth, 0))
+    set_uv(cube_polygons.up, uv["up"]["uv_size"], uv["up"]["uv"])
     # bottom
-    set_uv(cube_polygons.down, (width, depth), (depth + width, 0))
+    set_uv(cube_polygons.down,  uv["down"]["uv_size"], uv["down"]["uv"]
+)
