@@ -7,6 +7,8 @@ standard for a reason so use it only if you have to.
 
 Source: https://gist.github.com/Nusiq/4d6cc83a6acc8b373b5e56801d273ba3
 '''
+# pylint: disable=no-else-return, no-else-break, no-else-break,
+# pylint: disable=too-many-branches
 import json
 from json import scanner, JSONDecodeError  # type: ignore
 from json.decoder import WHITESPACE, WHITESPACE_STR, scanstring  # type: ignore
@@ -14,21 +16,22 @@ import re
 
 FLAGS = re.VERBOSE | re.MULTILINE | re.DOTALL
 INLINE_COMMENT = re.compile(r'//[^\n]*\n?', FLAGS)
-INLINE_COMMENT_STRING_START='//'
+INLINE_COMMENT_STRING_START = '//'
 MULTILINE_COMMENT = re.compile(r"/[*]([^*]|([*][^/]))*[*]+/", FLAGS)
-MULTILINE_COMMENT_STRING_START='/*'
+MULTILINE_COMMENT_STRING_START = '/*'
 
 
 def parse_object(
-    s_and_end, strict, scan_once, object_hook, object_pairs_hook,
-    memo=None, _w=WHITESPACE.match, _ws=WHITESPACE_STR,
-    _ilcs=INLINE_COMMENT_STRING_START, _ilc=INLINE_COMMENT.match,
-    _mlcs=MULTILINE_COMMENT_STRING_START, _mlc=MULTILINE_COMMENT.match
-):
+        s_and_end, strict, scan_once, object_hook, object_pairs_hook,
+        memo=None, _w=WHITESPACE.match, _ws=WHITESPACE_STR,
+        _ilcs=INLINE_COMMENT_STRING_START, _ilc=INLINE_COMMENT.match,
+        _mlcs=MULTILINE_COMMENT_STRING_START, _mlc=MULTILINE_COMMENT.match):
     '''
     Modified json.decoder.JSONObject function from standard json module
     (python 3.7.7).
     '''
+    # pylint: disable=too-many-branches, too-many-statements
+    # pylint: disable=invalid-name
     s, end = s_and_end
     pairs = []
     pairs_append = pairs.append
@@ -148,14 +151,14 @@ def parse_object(
 
 
 def parse_array(
-    s_and_end, scan_once, _w=WHITESPACE.match, _ws=WHITESPACE_STR,
-    _ilcs=INLINE_COMMENT_STRING_START, _ilc=INLINE_COMMENT.match,
-    _mlcs=MULTILINE_COMMENT_STRING_START, _mlc=MULTILINE_COMMENT.match
-):
+        s_and_end, scan_once, _w=WHITESPACE.match, _ws=WHITESPACE_STR,
+        _ilcs=INLINE_COMMENT_STRING_START, _ilc=INLINE_COMMENT.match,
+        _mlcs=MULTILINE_COMMENT_STRING_START, _mlc=MULTILINE_COMMENT.match):
     '''
     Modified json.decoder.JSONArray function from standard module json
     (python 3.7.7).
     '''
+    # pylint: disable=invalid-name
     s, end = s_and_end
     values = []
     nextchar = s[end:end + 1]
@@ -229,11 +232,12 @@ class JSONCDecoder(json.JSONDecoder):
         self.scan_once = scanner.py_make_scanner(self)
 
     def decode(
-        self, s, _w=WHITESPACE.match,
-        _ws=WHITESPACE_STR,
-        _ilcs=INLINE_COMMENT_STRING_START, _ilc=INLINE_COMMENT.match,
-        _mlcs=MULTILINE_COMMENT_STRING_START, _mlc=MULTILINE_COMMENT.match
-    ):
+            self, s, _w=WHITESPACE.match,
+            _ws=WHITESPACE_STR,
+            _ilcs=INLINE_COMMENT_STRING_START, _ilc=INLINE_COMMENT.match,
+            _mlcs=MULTILINE_COMMENT_STRING_START,
+            _mlc=MULTILINE_COMMENT.match):
+        # pylint: disable=arguments-differ
         idx = 0
         try:
             while True:  # Handle comments and whitespaces

@@ -3,7 +3,7 @@ Functions related to exporting models.
 '''
 from __future__ import annotations
 
-from typing import List, Dict, Tuple, Any, NamedTuple, Optional
+from typing import List, Dict, Tuple, Any, Optional
 from dataclasses import dataclass, field
 
 import numpy as np
@@ -13,7 +13,7 @@ import bpy_types
 
 from .common import (
     MINECRAFT_SCALE_FACTOR, McblendObject, McblendObjectGroup, MCObjType,
-    cyclic_equiv, CubePolygons, CubePolygon
+    CubePolygons, CubePolygon
 )
 from .json_tools import get_vect_json
 from .exception import NoCubePolygonsException, NotAStandardUvException
@@ -213,16 +213,16 @@ class BoneExport:
 
 @dataclass
 class LocatorExport:
-    # TODO - documentation
+    '''Object that represents a Locator during model export.'''
     origin: np.ndarray
 
     def json(self):
-        # TODO - documentation
+        '''Returns json representation of this object'''
         return get_vect_json(self.origin)
 
 @dataclass
 class CubeExport:
-    # TODO - documentation
+    '''Object that represents a cube during model export.'''
     size: np.ndarray
     pivot: np.ndarray
     origin: np.ndarray
@@ -231,7 +231,7 @@ class CubeExport:
     uv: UvExport
 
     def json(self):
-        # TODO - documentation
+        '''Returns json representation of this object'''
         cube_dict = {
             'uv': self.uv.json(),
             'size': [round(i) for i in get_vect_json(self.size)],
@@ -262,6 +262,7 @@ class UvExport:
         Returns josonable object that represents a single uv of a cube in
         Minecraft model.
         '''
+        # pylint: disable=no-self-use
         return [0, 0]
 
 class PerFaceUvExport(UvExport):
@@ -283,19 +284,19 @@ class PerFaceUvExport(UvExport):
 
         if not self._is_face_uv_outside(self.cube_polygons.north):
             result["north"] = self._one_face_uv(
-                self.cube_polygons.north, '--+', '+--'),
+                self.cube_polygons.north, '--+', '+--')
         if not self._is_face_uv_outside(self.cube_polygons.east):
             result["east"] = self._one_face_uv(
-                self.cube_polygons.east, '-++', '---'),
+                self.cube_polygons.east, '-++', '---')
         if not self._is_face_uv_outside(self.cube_polygons.south):
             result["south"] = self._one_face_uv(
-                self.cube_polygons.south, '+++', '-+-'),
+                self.cube_polygons.south, '+++', '-+-')
         if not self._is_face_uv_outside(self.cube_polygons.west):
             result["west"] = self._one_face_uv(
-                self.cube_polygons.west, '+-+', '++-'),
+                self.cube_polygons.west, '+-+', '++-')
         if not self._is_face_uv_outside(self.cube_polygons.up):
             result["up"] = self._one_face_uv(
-                self.cube_polygons.up, '-++', '+-+'),
+                self.cube_polygons.up, '-++', '+-+')
         if not self._is_face_uv_outside(self.cube_polygons.down):
             result["down"] = self._one_face_uv(
                 self.cube_polygons.down, '+--', '-+-')
@@ -311,7 +312,8 @@ class PerFaceUvExport(UvExport):
                 return False  # Something isn't outside
         return True  # Went through the loop (everything is outside)
 
-    def _one_face_uv(self, cube_polygon: CubePolygon, corner1_name: str,
+    def _one_face_uv(
+            self, cube_polygon: CubePolygon, corner1_name: str,
             corner2_name: str) -> Dict:
         face: bpy_types.MeshPolygon = cube_polygon.side
         corner1_index = cube_polygon.orientation.index(corner1_name)
@@ -358,13 +360,14 @@ class StandardCubeUvExport(UvExport):
         '''
         face: bpy_types.MeshPolygon = cube_polygon.side
         name_index = cube_polygon.orientation.index(name)
-        
+
         uv_layer_data_index = face.loop_indices[name_index]
         return self.converter.convert(
             np.array(self.uv_layer.data[uv_layer_data_index].uv)
         )
 
     def assert_standard_uv_shape(self):
+        '''Asserts that this object has cubic shape'''
         # Get min and max value of he loop coordinates
         loop_crds_list: List[np.array] = []
         for loop in self.uv_layer.data:
@@ -373,10 +376,10 @@ class StandardCubeUvExport(UvExport):
             )
         loop_crds_arr: np.ndarray = np.vstack(loop_crds_list)
         min_loop_crds = loop_crds_arr.min(0)
-        max_loop_crds = loop_crds_arr.max(0)
-        
-        # Depth width height 
-        w, h, d = [i for i in self.cube_size]  # pylint: disable=invalid-name
+        # max_loop_crds = loop_crds_arr.max(0)
+
+        # Depth width height
+        w, h, d = list(self.cube_size)  # pylint: disable=invalid-name
         expected_shape = np.array([
             [d, d + h],  # north/front LD 0
             [d + w, d + h],  # north/front RD 1
@@ -446,8 +449,7 @@ class StandardCubeUvExport(UvExport):
         if not np.isclose(expected_shape, real_shape).all():
             if not np.isclose(expected_shape_mirror, real_shape).all():
                 raise NotAStandardUvException()
-            else:
-                self.mirror = True
+            self.mirror = True
 
     def json(self):
         loop_crds_list: List[np.array] = []
@@ -476,7 +478,13 @@ class UvExportFactory:
 
     def get_uv_export(
             self, mcobj: McblendObject, cube_size: np.ndarray) -> UvExport:
-        # TODO - documentation
+        '''
+        Creates UvExport object for given MclbendObject.
+
+        - `mcobj: McblendObject` - object that needs UvExport
+        - `cube_size: np.ndarray` - size of the cube in minecraft coordinates
+          system
+        '''
         layer: Optional[bpy.types.MeshUVLoopLayer] = (
             mcobj.obj_data.uv_layers.active)
         if layer is None:  # Make sure that UV exists

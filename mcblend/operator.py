@@ -24,7 +24,7 @@ from .operator_func.jsonc_decoder import JSONCDecoder
 
 class OBJECT_OT_NusiqMcblendExportModelOperator(bpy.types.Operator, ExportHelper):
     '''Operator used for exporting minecraft models from blender'''
-    # pylint: disable=C0116, W0613
+    # pylint: disable=C0116, W0613, no-member
     bl_idname = "object.nusiq_mcblend_export_operator"
     bl_label = "Export model"
     bl_options = {'REGISTER'}
@@ -73,7 +73,7 @@ def menu_func_nusiq_mcblend_export_model(self, context):
 class OBJECT_OT_NusiqMcblendExportAnimationOperator(
         bpy.types.Operator, ExportHelper):
     '''Operator used for exporting minecraft animations from blender'''
-    # pylint: disable=C0116, W0613
+    # pylint: disable=C0116, W0613, no-member
     bl_idname = "object.nusiq_mcblend_export_animation_operator"
     bl_label = "Export animation"
     bl_options = {'REGISTER'}
@@ -133,7 +133,7 @@ def menu_func_nusiq_mcblend_export_animation(self, context):
 # Uv map
 class OBJECT_OT_NusiqMcblendMapUvOperator(bpy.types.Operator):
     '''Operator used for creating UV-mapping for minecraft model.'''
-    # pylint: disable=C0116, W0613
+    # pylint: disable=C0116, W0613, no-member
     bl_idname = "object.nusiq_mcblend_map_uv_operator"
     bl_label = "Map uv for bedrock model."
     bl_options = {'REGISTER', 'UNDO'}
@@ -174,7 +174,7 @@ class OBJECT_OT_NusiqMcblendUvGroupOperator(bpy.types.Operator):
     Operator used for setting custom property called mc_uv_group for selected
     objects.
     '''
-    # pylint: disable=C0116, W0613
+    # pylint: disable=C0116, W0613, no-member
     bl_idname = "object.nusiq_mcblend_uv_group_operator"
     bl_label = "Set mc_uv_group for bedrock model."
     bl_options = {'REGISTER', 'UNDO'}
@@ -221,7 +221,7 @@ class OBJECT_OT_NusiqMcblendToggleMcMirrorOperator(bpy.types.Operator):
     Operator used for toggling custom property called mc_mirror for selected
     objects
     '''
-    # pylint: disable=C0116, W0613
+    # pylint: disable=C0116, W0613, no-member
     bl_idname = "object.nusiq_mcblend_toggle_mc_mirror_operator"
     bl_label = "Toggle mc_mirror for selected objects."
     bl_options = {'REGISTER', 'UNDO'}
@@ -266,7 +266,7 @@ class OBJECT_OT_NusiqMcblendToggleMcIsBoneOperator(bpy.types.Operator):
     Operator used for toggling custom property called mc_is_bone for selected
     objects.
     '''
-    # pylint: disable=C0116, W0613
+    # pylint: disable=C0116, W0613, no-member
     bl_idname = "object.nusiq_mcblend_toggle_mc_is_bone_operator"
     bl_label = "Toggle mc_is_bone for selected objects."
     bl_options = {'REGISTER', 'UNDO'}
@@ -316,7 +316,7 @@ class OBJECT_OT_NusiqMcblendSetInflateOperator(bpy.types.Operator):
     the dimensions of selected object and adds custom property called
     mc_inflate.
     '''
-    # pylint: disable=C0116, W0613
+    # pylint: disable=C0116, W0613, no-member
     bl_idname = "object.nusiq_mcblend_set_inflate_operator"
     bl_label = "Set mc_inflate"
     bl_options = {'REGISTER', 'UNDO', 'BLOCKING', 'GRAB_CURSOR'}
@@ -360,7 +360,7 @@ class OBJECT_OT_NusiqMcblendRoundDimensionsOperator(bpy.types.Operator):
     '''
     Operator used for rounding the values of dimensions.
     '''
-    # pylint: disable=C0116, W0613, R0201
+    # pylint: disable=C0116, W0613, R0201, no-member
     bl_idname = "object.nusiq_mcblend_round_dimensions_operator"
     bl_label = "Round dimensions"
     bl_options = {'REGISTER', 'UNDO'}
@@ -385,7 +385,7 @@ class OBJECT_OT_NusiqMcblendRoundDimensionsOperator(bpy.types.Operator):
 
 class OBJECT_OT_NusiqMcblendImport(bpy.types.Operator, ImportHelper):
     '''Operator used for importiong minecraft models to blender'''
-    # pylint: disable=C0116, W0613
+    # pylint: disable=C0116, W0613, no-member
     bl_idname = "object.nusiq_mcblend_import_operator"
     bl_label = "Import model"
     bl_options = {'REGISTER'}

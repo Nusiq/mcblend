@@ -173,6 +173,7 @@ class Pose:
                 # Scale
                 scale = (
                     np.array(objprop.obj_matrix_world.to_scale()) /
+                    # pylint: disable=no-value-for-parameter
                     np.array(mathutils.Matrix().to_scale())
                 )[[0, 2, 1]]
                 # Locatin

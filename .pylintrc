@@ -144,7 +144,9 @@ disable=print-statement,
         too-many-arguments,
         too-many-instance-attributes,
         too-many-locals,
-        fixme
+        too-many-lines,
+        fixme,
+        duplicate-code
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
@@ -257,7 +259,9 @@ good-names=i,j,k,
            f,
            Run,
            _,
-           uv, u, v
+           uv, u, v,
+           n,
+           up
 
 # Good variable names regexes, separated by a comma. If names match any regex,
 # they will always be accepted

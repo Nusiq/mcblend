@@ -57,9 +57,9 @@ classes = (
     OBJECT_PT_NusiqMcblendImportPanel,
 )
 
-
 def register():
     '''Register the plugin'''
+    # pylint: disable=assignment-from-no-return, no-member
     for _class in classes:
         bpy.utils.register_class(_class)
     bpy.types.Scene.nusiq_mcblend = PointerProperty(
@@ -78,6 +78,7 @@ def register():
 
 def unregister():
     '''Unregister the plugin'''
+    # pylint: disable=no-member
     for _class in reversed(classes):
         bpy.utils.unregister_class(_class)
     del bpy.types.Scene.nusiq_mcblend

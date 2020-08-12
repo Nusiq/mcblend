@@ -1,10 +1,11 @@
 '''
 Functions and objects related to importing Minecraft models to Blender.
 '''
+# pylint: disable=too-many-branches, too-many-statements
 from __future__ import annotations
 
 import math
-from typing import cast, Dict, List, Optional, Any, Tuple, Set
+from typing import Dict, List, Optional, Any, Tuple, Set
 
 import numpy as np
 
@@ -15,10 +16,7 @@ import bpy
 from .common import (
     MINECRAFT_SCALE_FACTOR, CubePolygons, CubePolygon, inflate_objets)
 from .uv import CoordinatesConverter
-from .exception import (
-    InvalidDictPathException, FileIsNotAModelException,
-    ImportingNotImplementedError)
-from .json_tools import get_path
+from .exception import FileIsNotAModelException, ImportingNotImplementedError
 
 def _assert(expr: bool, msg: str = ''):
     '''Used in this module to raise exceptions based on condition.'''
@@ -71,7 +69,7 @@ def pick_version_parser(parsers: Tuple[str, ...], version: str):
     def to_tuple(version: str) -> Tuple[int]:
         try:
             return tuple(  # type: ignore
-                map(lambda a: int(a), version.split('.')))
+                map(int, version.split('.')))
         except:
             raise FileIsNotAModelException(
                 f'Unable to parse format version number: {version}')
@@ -105,14 +103,15 @@ class ModelLoader:
         self.description: Dict = self._load_description(
             geometry, geometry_path)
         self.bones: List = self._load_bones(
-            geometry['bones'],  geometry_path + ['bones'])
-    
+            geometry['bones'], geometry_path + ['bones'])
+
     def _load_format_version(self, data: Dict) -> str:
         '''
         Returns the version of the model from JSON file loaded into data.
 
         - `data: Dict` - loaded JSON file into model.
         '''
+        # pylint: disable=no-self-use
         _assert_has_required_keys(
             'model file', set(data.keys()), {'format_version'}, [])
         parser_version = pick_version_parser(
@@ -120,7 +119,7 @@ class ModelLoader:
         if parser_version == '1.12.0':
             _assert_has_required_keys(
                 'model file', set(data.keys()),
-                    
+
                 {'minecraft:geometry', 'format_version'},
                 [])
             _assert_has_accepted_keys_only(
@@ -129,7 +128,8 @@ class ModelLoader:
             if 'cape' in data.keys():
                 raise ImportingNotImplementedError('cape', [])
             return data['format_version']
-        elif parser_version == '1.8.0':
+
+        if parser_version == '1.8.0':
             # All geometries must start with geometry.
             for k in data.keys():  # key must be string because its from json
                 _assert(
@@ -143,8 +143,7 @@ class ModelLoader:
             if 'debug' in data.keys():
                 raise ImportingNotImplementedError('debug', [])
             return data['format_version']
-        else:
-            raise FileIsNotAModelException('Unsuported format version')
+        raise FileIsNotAModelException('Unsuported format version')
 
     def _load_geometry(
             self, geometry_name: str, data: Any) -> Tuple[Dict, List]:
@@ -164,8 +163,7 @@ class ModelLoader:
             _assert_is_type('geometries', geometries, (list,), path)
             for i, geometry in enumerate(geometries):
                 path = ['minecraft:geometry', i]
-                _assert_is_type('gometry', geometry, (dict,),
-                    path)
+                _assert_is_type('gometry', geometry, (dict,), path)
                 _assert_has_required_keys(
                     'geometry', set(geometry.keys()), {'description', 'bones'},
                     path)
@@ -177,10 +175,11 @@ class ModelLoader:
                     raise FileIsNotAModelException(
                         f'{path}::description is missing identifier')
                 identifier = desc['identifier']
-                if identifier == geometry_name or geometry_name == '':
+                if geometry_name in (identifier, ''):
                     return geometry, path
             raise ValueError(f'Unable to find geometry called geometry.{geometry_name}')
-        elif parser_version == '1.8.0':
+
+        if parser_version == '1.8.0':
             geometries = data
             path = []
             _assert_is_type('geometries', geometries, (dict,), path)
@@ -188,8 +187,7 @@ class ModelLoader:
                 if k in ['format_version', 'debug']:
                     continue
                 path = [k]
-                _assert_is_type('gometry', geometry, (dict,),
-                    path)
+                _assert_is_type('gometry', geometry, (dict,), path)
                 _assert_has_accepted_keys_only(
                     'geometry', set(geometry.keys()),
                     {
@@ -198,11 +196,10 @@ class ModelLoader:
                         "texturewidth", "textureheight", "cape", "bones"
                     }, path)
                 identifier = k
-                if identifier == geometry_name or geometry_name == '':
+                if geometry_name in (identifier, ''):
                     return geometry, path
             raise ValueError(f'Unable to find geometry called geometry.{geometry_name}')
-        else:
-            raise FileIsNotAModelException(f'Unsuported format version: {self.format_version}')
+        raise FileIsNotAModelException(f'Unsuported format version: {self.format_version}')
 
     def _load_description(self, geometry: Any, geometry_path: List) -> Dict:
         '''
@@ -228,9 +225,9 @@ class ModelLoader:
             _assert_has_required_keys(
                 'description', set(desc.keys()), {'identifier'}, path)
             acceptable_keys = {
-                    'identifier', 'texture_width', 'texture_height',
-                    'visible_bounds_offset', 'visible_bounds_width',
-                    'visible_bounds_height'}
+                'identifier', 'texture_width', 'texture_height',
+                'visible_bounds_offset', 'visible_bounds_width',
+                'visible_bounds_height'}
             _assert_has_accepted_keys_only(
                 'description', set(desc.keys()), acceptable_keys, path)
 
@@ -264,14 +261,14 @@ class ModelLoader:
                     (int, float), geometry_path + ['visible_bounds_height'])
                 result['visible_bounds_height'] = desc['visible_bounds_height']
             return result
-        elif parser_version == '1.8.0':
+        if parser_version == '1.8.0':
             desc = geometry
             path = geometry_path
 
             acceptable_keys = {
-                        "debug", "visible_bounds_width",
-                        "visible_bounds_height", "visible_bounds_offset",
-                        "texturewidth", "textureheight", "cape", "bones"}
+                "debug", "visible_bounds_width",
+                "visible_bounds_height", "visible_bounds_offset",
+                "texturewidth", "textureheight", "cape", "bones"}
             _assert_has_accepted_keys_only(
                 'geometry', set(desc.keys()), acceptable_keys, path)
 
@@ -312,8 +309,7 @@ class ModelLoader:
                     (int, float), geometry_path + ['visible_bounds_height'])
                 result['visible_bounds_height'] = desc['visible_bounds_height']
             return result
-        else:
-            raise FileIsNotAModelException('Unsuported format version')
+        raise FileIsNotAModelException('Unsuported format version')
 
     def _load_bones(
             self, bones: Any, bones_path: List) -> List[Dict[str, Any]]:
@@ -326,14 +322,13 @@ class ModelLoader:
         result: List = []
         parser_version = pick_version_parser(
             ('1.12.0', '1.8.0'), self.format_version)
-        if parser_version == '1.12.0' or parser_version == '1.8.0':
+        if parser_version in ('1.12.0', '1.8.0'):
             _assert_is_type('bones property', bones, (list,), bones_path)
             for i, bone in enumerate(bones):
                 bone_path = bones_path + [i]
                 result.append(self._load_bone(bone, bone_path))
             return result
-        else:
-            raise FileIsNotAModelException('Unsuported format version')
+        raise FileIsNotAModelException('Unsuported format version')
 
     def _load_bone(self, bone: Any, bone_path: List) -> Dict[str, Any]:
         '''
@@ -427,9 +422,8 @@ class ModelLoader:
                 # type: list
                 raise ImportingNotImplementedError(
                     'texture_meshes', bone_path + ['texture_meshes'])
-                
             return result
-        elif parser_version == '1.8.0':
+        if parser_version == '1.8.0':
             _assert_is_type('bone', bone, (dict,), bone_path)
 
             _assert_has_required_keys(
@@ -515,8 +509,7 @@ class ModelLoader:
                 raise ImportingNotImplementedError(
                     'texture_meshes', bone_path + ['texture_meshes'])
             return result
-        else:
-            raise FileIsNotAModelException('Unsuported format version')
+        raise FileIsNotAModelException('Unsuported format version')
 
     def _load_cubes(
             self, cubes: Any, cubes_path: List[Any], default_mirror: bool,
@@ -532,23 +525,24 @@ class ModelLoader:
         result = []
         parser_version = pick_version_parser(
             ('1.12.0', '1.8.0'), self.format_version)
-        if parser_version == '1.12.0' or parser_version == '1.8.0':
+        if parser_version in ('1.12.0', '1.8.0'):
             _assert_is_type('cubes property', cubes, (list,), cubes_path)
             for i, cube in enumerate(cubes):
                 cube_path = cubes_path + [i]
                 result.append(
-                    self._load_cube(cube, cube_path, default_mirror,
-                    default_inflate))
+                    self._load_cube(
+                        cube, cube_path, default_mirror,
+                        default_inflate))
             return result
-        else:
-            raise FileIsNotAModelException('Unsuported format version')
+        raise FileIsNotAModelException('Unsuported format version')
 
     def _create_default_uv(
             self, size: Tuple[float, float, float], mirror: bool,
-            uv: Tuple[float, float]=(0.0, 0.0)) -> Dict:
+            uv: Tuple[float, float] = (0.0, 0.0)) -> Dict:
         '''
         Creates default UV dictionary based on some other properties of a cube.
         '''
+        # pylint: disable=no-self-use
         width, height, depth = size
 
         def _face(size: Tuple[float, float], uv: Tuple[float, float]):
@@ -594,7 +588,7 @@ class ModelLoader:
 
             # Default UV value is based on the size and mirror of the cube
             # before return statement
-            "uv": None  
+            "uv": None
         }
         parser_version = pick_version_parser(
             ('1.12.0', '1.8.0'), self.format_version)
@@ -659,7 +653,7 @@ class ModelLoader:
                     tuple(result['size']),  # type: ignore
                     result['mirror'])  # type: ignore
             return result
-        elif parser_version == '1.8.0':
+        if parser_version == '1.8.0':
             _assert_is_type('cube', cube, (dict,), cube_path)
             # There is no required keys {} is a valid cube
             acceptable_keys = {"origin", "size", "uv", "inflate", "mirror"}
@@ -698,10 +692,10 @@ class ModelLoader:
                     tuple(result['size']),  # type: ignore
                     tuple(result['mirror']))  # type: ignore
             return result
-        else:
-            raise FileIsNotAModelException('Unsuported format version')
+        raise FileIsNotAModelException('Unsuported format version')
 
-    def _load_uv(self, uv: Any, uv_path: List,
+    def _load_uv(
+            self, uv: Any, uv_path: List,
             cube_size: Tuple[float, float, float]) -> Dict[str, Any]:
         '''
         Returns UV with added all of the missing default values of the
@@ -732,7 +726,7 @@ class ModelLoader:
         if parser_version == '1.12.0':
             _assert_is_type('uv', uv, (dict,), uv_path)
             # There is no required keys {} is a valid UV
-            acceptable_keys = {"north", "south", "east", "west", "up","down"}
+            acceptable_keys = {"north", "south", "east", "west", "up", "down"}
             _assert_has_accepted_keys_only(
                 'uv', set(uv.keys()), acceptable_keys, uv_path)
             if "north" in uv:
@@ -766,10 +760,10 @@ class ModelLoader:
                 result["down"] = self._load_uv_face(
                     uv["down"], uv_path + ["down"], (width, depth))
             return result
-        else:
-            raise FileIsNotAModelException('Unsuported format version')
+        raise FileIsNotAModelException('Unsuported format version')
 
-    def _load_uv_face(self, uv_face: Any, uv_face_path: List,
+    def _load_uv_face(
+            self, uv_face: Any, uv_face_path: List,
             default_size: Tuple[float, float]) -> Dict[str, Any]:
         '''
         Returns UV with added all of the missing default values of the
@@ -792,7 +786,7 @@ class ModelLoader:
             _assert_has_accepted_keys_only(
                 'uv_face', set(uv_face.keys()),
                 {"uv", "uv_size", "material_instance"}, uv_face_path)
-            
+
 
             _assert_is_vector(
                 'uv', uv_face['uv'], 2, (int, float),
@@ -810,8 +804,7 @@ class ModelLoader:
                 raise ImportingNotImplementedError(
                     'material_instance', uv_face_path + ['material_instance'])
             return result
-        else:
-            raise FileIsNotAModelException('Unsuported format version')
+        raise FileIsNotAModelException('Unsuported format version')
 
     def _load_locators(
             self, locators: Any, locators_path: List) -> Dict[str, Any]:
@@ -826,15 +819,14 @@ class ModelLoader:
         result = {}
         parser_version = pick_version_parser(
             ('1.12.0', '1.8.0'), self.format_version)
-        if parser_version == '1.12.0' or parser_version == '1.8.0':
+        if parser_version in ['1.12.0', '1.8.0']:
             _assert_is_type(
                 'locators property', locators, (dict,), locators_path)
             for i, locator in locators.items():
                 locator_path = locators_path + [i]
                 result[i] = self._load_locator(locator, locator_path)
             return result
-        else:
-            raise FileIsNotAModelException('Unsuported format version')
+        raise FileIsNotAModelException('Unsuported format version')
 
     def _load_locator(self, locator: Any, locator_path: List) -> Any:
         '''
@@ -850,17 +842,17 @@ class ModelLoader:
             if isinstance(locator, list):
                 _assert_is_vector('locator', locator, 3, (int, float), locator_path)
                 return locator
-            elif isinstance(locator, dict):
+
+            if isinstance(locator, dict):
                 raise ImportingNotImplementedError('locator', locator_path)
             raise FileIsNotAModelException(
                 f'{locator_path + ["locator"]}::{"locator"} is not an '
                 f'instance of {(list, dict)}')
-        elif parser_version == '1.8.0':
+        if parser_version == '1.8.0':
             _assert_is_type('locator', locator, (list,), locator_path)
             _assert_is_vector('locator', locator, 3, (int, float), locator_path)
             return locator
-        else:
-            raise FileIsNotAModelException('Unsuported format version')
+        raise FileIsNotAModelException('Unsuported format version')
 
 class ImportLocator:
     '''Represents Minecraft locator during import operation.'''
@@ -934,7 +926,6 @@ class ImportBone:
 class ImportGeometry:
     '''Represents whole minecraft geometry during import operation.'''
     def __init__(self, loader: ModelLoader):
-        # TODO - update description
         '''
         Creates ImportGeometry object.
 
@@ -1134,7 +1125,8 @@ def _mc_rotate(
     - `obj: bpy_types.Object` - Blender object
     - `mcrotation: Tuple[float, float, float]` - Minecraft object rotation.
     '''
-    rotation = mathutils.Euler(
+
+    rotation = mathutils.Euler(  # pylint: disable=too-many-function-args
         (np.array(mcrotation)[[0, 2, 1]] * np.array([1, 1, -1])) * math.pi/180,
         'XZY'
     )
@@ -1154,9 +1146,12 @@ def _set_uv(
     - `uv_layer: bpy.types.MeshUVLoopLayer` - uv layer of the mesh
     '''
     uv_data = uv_layer.data
-    def set_uv(cp: CubePolygon, size: Tuple[float, float], uv: Tuple[float, float]):
-        cp_loop_indices = cp.side.loop_indices
-        cp_order = cp.order
+
+    def set_uv(
+            cube_polygon: CubePolygon, size: Tuple[float, float],
+            uv: Tuple[float, float]):
+        cp_loop_indices = cube_polygon.side.loop_indices
+        cp_order = cube_polygon.order
 
         left_down = cp_loop_indices[cp_order[0]]
         right_down = cp_loop_indices[cp_order[1]]
@@ -1165,7 +1160,7 @@ def _set_uv(
 
         uv_data[left_down].uv = uv_converter.convert((uv[0], uv[1] + size[1]))
         uv_data[right_down].uv = uv_converter.convert(
-            (uv[0] + size[0],uv[1] + size[1]))
+            (uv[0] + size[0], uv[1] + size[1]))
         uv_data[right_up].uv = uv_converter.convert((uv[0] + size[0], uv[1]))
         uv_data[left_up].uv = uv_converter.convert((uv[0], uv[1]))
 
@@ -1180,5 +1175,4 @@ def _set_uv(
     # top
     set_uv(cube_polygons.up, uv["up"]["uv_size"], uv["up"]["uv"])
     # bottom
-    set_uv(cube_polygons.down,  uv["down"]["uv_size"], uv["down"]["uv"]
-)
+    set_uv(cube_polygons.down, uv["down"]["uv_size"], uv["down"]["uv"])

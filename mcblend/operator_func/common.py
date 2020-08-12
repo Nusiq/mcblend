@@ -5,9 +5,7 @@ from __future__ import annotations
 
 import math
 from enum import Enum
-from typing import (
-    Dict, NamedTuple, List, Optional, Tuple, Any, Iterable, Union
-)
+from typing import Dict, NamedTuple, List, Optional, Tuple, Any, Iterable
 
 import numpy as np
 
@@ -228,7 +226,10 @@ class McblendObject:
         if other is not None:
             p_matrix = other.obj_matrix_world
         else:
-            p_matrix = mathutils.Matrix()
+            p_matrix = (
+                # pylint: disable=no-value-for-parameter
+                mathutils.Matrix()
+            )
         c_matrix = self.obj_matrix_world
         return p_matrix.inverted() @ c_matrix
 
@@ -313,14 +314,15 @@ class CubePolygons(NamedTuple):
           UV-mapping.
         '''
         def get_order(
-            name: str, mirror: bool,
-            bount_box_vertices: Tuple[str, str, str, str]
-        ) -> Tuple[int, int, int, int]:
+                name: str, mirror: bool,
+                bount_box_vertices: Tuple[str, str, str, str]
+                ) -> Tuple[int, int, int, int]:
             '''Gets the order of verices for given cube polygon'''
             mc_mapping_uv_order = _MC_MAPPING_UV_ORDERS[(name, mirror)]
             result = []
-            for name in mc_mapping_uv_order:
-                index = bount_box_vertices.index(name)  # Throws ValueError
+            for vertex_name in mc_mapping_uv_order:
+                # Throws ValueError
+                index = bount_box_vertices.index(vertex_name)
                 result.append(index)
             return tuple(result)  # type: ignore
 
@@ -376,7 +378,7 @@ class CubePolygons(NamedTuple):
 
             # Im not sure which order of vertices is correct so I just check
             # original and reversed
-            rbbv = [i for i in reversed(bbv)]
+            rbbv = list(reversed(bbv))
             if cyclic_equiv(north, bbv) or cyclic_equiv(north, rbbv):
                 t_bbv: Tuple[str, str, str, str] = tuple(bbv)  # type: ignore
                 cube_polygon_builder['north'] = CubePolygon(
@@ -597,7 +599,7 @@ class McblendObjectGroup:
 def cyclic_equiv(u: List, v: List) -> bool:
     '''
     Compare cyclic equivalency of two lists.
-    
+
     Source:
     https://stackoverflow.com/questions/31000591/
     '''
@@ -618,7 +620,8 @@ def cyclic_equiv(u: List, v: List) -> bool:
 
 
 def inflate_objets(
-        context: bpy_types.Context, objects: List[bpy_types.Object], inflate: float, mode: str) -> int:
+        context: bpy_types.Context, objects: List[bpy_types.Object],
+        inflate: float, mode: str) -> int:
     '''
     Adds mc_inflate property to objects and changes their dimensions. Returns
     the number of edited objects.
