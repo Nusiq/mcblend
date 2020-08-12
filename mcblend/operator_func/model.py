@@ -33,6 +33,9 @@ class ModelExport:
     model_name: str
     texture_width: int
     texture_height: int
+    visible_bounds_offset: Tuple[float, float, float]
+    visible_bounds_width: float
+    visible_bounds_height: float
     bones: List[BoneExport] = field(default_factory=list)
 
     def load(
@@ -72,9 +75,9 @@ class ModelExport:
                         "identifier": f"geometry.{self.model_name}",
                         "texture_width": self.texture_width,
                         "texture_height": self.texture_height,
-                        "visible_bounds_width": 10,
-                        "visible_bounds_height": 10,
-                        "visible_bounds_offset": [0, 2, 0]
+                        "visible_bounds_width": round(self.visible_bounds_width, 3),
+                        "visible_bounds_height": round(self.visible_bounds_height, 3),
+                        "visible_bounds_offset": get_vect_json(self.visible_bounds_offset)
                     },
                     "bones": [bone.json() for bone in self.bones]
                 }

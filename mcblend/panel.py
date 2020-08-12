@@ -4,7 +4,8 @@ This module contains all of the panels for mcblend GUI.
 # don't import future annotations Blender needs that
 import bpy
 from bpy.props import (
-    StringProperty, IntProperty, BoolProperty
+    StringProperty, IntProperty, BoolProperty, FloatProperty,
+    FloatVectorProperty
 )
 
 
@@ -16,6 +17,22 @@ class OBJECT_NusiqMcblendExporterProperties(bpy.types.PropertyGroup):
         default="b_model",
         maxlen=1024
     )
+    visible_bounds_offset: FloatVectorProperty(  # type: ignore
+        name="Visible bounts offset",
+        description="visible_bounds_offset of the model",
+        default=(0.0, 0.0, 0.0)
+    )
+    visible_bounds_width: FloatProperty(  # type: ignore
+        name="Visible bounds width",
+        description="visible_bounds_width of the model",
+        default=1.0
+    )
+    visible_bounds_height: FloatProperty(  # type: ignore
+        name="Visible bounds height",
+        description="visible_bounds_height of the model",
+        default=1.0
+    )
+
     loop_animation: BoolProperty(  # type: ignore
         name="",
         description="Decides if animation should be looped.",
@@ -78,6 +95,15 @@ class OBJECT_PT_NusiqMcblendExportPanel(bpy.types.Panel):
         col.prop(context.scene.nusiq_mcblend, "path", text="")
         col.prop(
             context.scene.nusiq_mcblend, "model_name", text="Name"
+        )
+        col.prop(
+            context.scene.nusiq_mcblend, "visible_bounds_width", text="Visible bounds width"
+        )
+        col.prop(
+            context.scene.nusiq_mcblend, "visible_bounds_height", text="Visible bounds height"
+        )
+        col.prop(
+            context.scene.nusiq_mcblend, "visible_bounds_offset", text="Visible bounds offset"
         )
         self.layout.row().operator(
             "object.nusiq_mcblend_export_operator", text="Export model"

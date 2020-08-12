@@ -945,6 +945,9 @@ class ImportGeometry:
         self.identifier = loader.description['identifier']
         self.texture_width = int(loader.description['texture_width'])
         self.texture_height = int(loader.description['texture_height'])
+        self.visible_bounds_offset = loader.description['visible_bounds_offset']
+        self.visible_bounds_width = loader.description['visible_bounds_width']
+        self.visible_bounds_height = loader.description['visible_bounds_height']
         self.bones: Dict[str, ImportBone] = {}
         self.uv_converter = CoordinatesConverter(
             np.array([[0, self.texture_width], [0, self.texture_height]]),

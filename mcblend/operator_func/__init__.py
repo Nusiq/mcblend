@@ -42,6 +42,10 @@ def export_model(context: bpy_types.Context) -> Dict:
     model = ModelExport(
         texture_width=context.scene.nusiq_mcblend.texture_width,
         texture_height=context.scene.nusiq_mcblend.texture_height,
+        visible_bounds_offset=tuple(  # type: ignore
+            context.scene.nusiq_mcblend.visible_bounds_offset),
+        visible_bounds_width=context.scene.nusiq_mcblend.visible_bounds_width,
+        visible_bounds_height=context.scene.nusiq_mcblend.visible_bounds_height,
         model_name=context.scene.nusiq_mcblend.model_name,
     )
     model.load(object_properties, context)
@@ -202,6 +206,9 @@ def import_model(
 
     context.scene.nusiq_mcblend.texture_width = geometry.texture_width
     context.scene.nusiq_mcblend.texture_height = geometry.texture_height
+    context.scene.nusiq_mcblend.visible_bounds_offset = geometry.visible_bounds_offset
+    context.scene.nusiq_mcblend.visible_bounds_width = geometry.visible_bounds_width
+    context.scene.nusiq_mcblend.visible_bounds_height = geometry.visible_bounds_height
 
     if geometry.identifier.startswith('geometry.'):
         context.scene.nusiq_mcblend.model_name = geometry.identifier[9:]
