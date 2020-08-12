@@ -5,7 +5,7 @@
 			"description": {
 				"identifier": "geometry.b_model",
 				"texture_width": 512,
-				"texture_height": 0,
+				"texture_height": 512,
 				"visible_bounds_width": 10,
 				"visible_bounds_height": 10,
 				"visible_bounds_offset": [0, 2, 0]

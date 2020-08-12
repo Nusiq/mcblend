@@ -8,8 +8,8 @@ standard for a reason so use it only if you have to.
 Source: https://gist.github.com/Nusiq/4d6cc83a6acc8b373b5e56801d273ba3
 '''
 import json
-from json import scanner, JSONDecodeError
-from json.decoder import WHITESPACE, WHITESPACE_STR, scanstring
+from json import scanner, JSONDecodeError  # type: ignore
+from json.decoder import WHITESPACE, WHITESPACE_STR, scanstring  # type: ignore
 import re
 
 FLAGS = re.VERBOSE | re.MULTILINE | re.DOTALL
