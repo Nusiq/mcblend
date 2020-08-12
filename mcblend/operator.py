@@ -18,6 +18,7 @@ from .operator_func.json_tools import CompactEncoder
 from .operator_func.exception import (
     NameConflictException, NotEnoughTextureSpace,
 )
+from .operator_func.jsonc_decoder import JSONCDecoder
 
 
 
@@ -103,7 +104,7 @@ class OBJECT_OT_NusiqMcblendExportAnimationOperator(
         old_dict: Optional[Dict] = None
         try:
             with open(self.filepath, 'r') as f:
-                old_dict = json.load(f)
+                old_dict = json.load(f, cls=JSONCDecoder)
         except (json.JSONDecodeError, OSError):
             pass
 
@@ -405,7 +406,7 @@ class OBJECT_OT_NusiqMcblendImport(bpy.types.Operator, ImportHelper):
     def execute(self, context):
         # Save file and finish
         with open(self.filepath, 'r') as f:
-            data = json.load(f)
+            data = json.load(f, cls=JSONCDecoder)
         try:
             import_model(data, self.geometry_name, context)
         except AssertionError as e:
