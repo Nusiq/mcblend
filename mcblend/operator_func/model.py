@@ -271,14 +271,37 @@ class PerFaceUvExport(UvExport):
         self.converter = blend_to_mc_converter
 
     def json(self):
-        return {
-            "north": self._one_face_uv(self.cube_polygons.north, '--+', '+--'),
-            "east": self._one_face_uv(self.cube_polygons.east, '-++', '---'),
-            "south": self._one_face_uv(self.cube_polygons.south, '+++', '-+-'),
-            "west": self._one_face_uv(self.cube_polygons.west, '+-+', '++-'),
-            "up": self._one_face_uv(self.cube_polygons.up, '-++', '+-+'),
-            "down": self._one_face_uv(self.cube_polygons.down, '+--', '-+-')
-        }
+        result = {}
+
+        if not self._is_face_uv_outside(self.cube_polygons.north):
+            result["north"] = self._one_face_uv(
+                self.cube_polygons.north, '--+', '+--'),
+        if not self._is_face_uv_outside(self.cube_polygons.east):
+            result["east"] = self._one_face_uv(
+                self.cube_polygons.east, '-++', '---'),
+        if not self._is_face_uv_outside(self.cube_polygons.south):
+            result["south"] = self._one_face_uv(
+                self.cube_polygons.south, '+++', '-+-'),
+        if not self._is_face_uv_outside(self.cube_polygons.west):
+            result["west"] = self._one_face_uv(
+                self.cube_polygons.west, '+-+', '++-'),
+        if not self._is_face_uv_outside(self.cube_polygons.up):
+            result["up"] = self._one_face_uv(
+                self.cube_polygons.up, '-++', '+-+'),
+        if not self._is_face_uv_outside(self.cube_polygons.down):
+            result["down"] = self._one_face_uv(
+                self.cube_polygons.down, '+--', '-+-')
+
+        return result
+
+    def _is_face_uv_outside(self, cube_polygon):
+        '''Tests if UV face is completly outside of the texture'''
+        face: bpy_types.MeshPolygon = cube_polygon.side
+        for loop_index in face.loop_indices:
+            curr_loop = np.array(self.uv_layer.data[loop_index].uv)
+            if not ((curr_loop < 0).any() or (curr_loop > 1).any()):
+                return False  # Something isn't outside
+        return True  # Went through the loop (everything is outside)
 
     def _one_face_uv(self, cube_polygon: CubePolygon, corner1_name: str,
             corner2_name: str) -> Dict:
