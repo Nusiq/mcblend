@@ -67,14 +67,12 @@ class ModelExport:
         # Returns:
         `Dict` - Minecraft model.
         '''
-        return {
+        result: Dict = {
             "format_version": "1.12.0",
             "minecraft:geometry": [
                 {
                     "description": {
                         "identifier": f"geometry.{self.model_name}",
-                        "texture_width": self.texture_width,
-                        "texture_height": self.texture_height,
                         "visible_bounds_width": round(self.visible_bounds_width, 3),
                         "visible_bounds_height": round(self.visible_bounds_height, 3),
                         "visible_bounds_offset": get_vect_json(self.visible_bounds_offset)
@@ -83,6 +81,13 @@ class ModelExport:
                 }
             ]
         }
+        if self.texture_width > 0:  # Dont't export invalid values
+            result["minecraft:geometry"][0]["description"][
+                "texture_width"] = self.texture_width
+        if self.texture_height > 0:  # Dont't export invalid values
+            result["minecraft:geometry"][0]["description"][
+                "texture_height"] = self.texture_height
+        return result
 
 
 class BoneExport:
