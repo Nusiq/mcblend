@@ -502,7 +502,13 @@ class McblendObjectGroup:
                     curr_obj_mc_type = MCObjType.CUBE
             elif obj.type == 'ARMATURE':
                 bone = obj.data.bones[obj_id.bone_name]
-                if bone.parent is None and len(bone.children) == 0:
+                if (
+                        bone.parent is None and len(bone.children) == 0 and
+                        len([  # Children of a bone which are not other bones.
+                            c for c in obj.children
+                            if c.parent_bone == bone.name
+                        ]) == 0
+                    ):
                     continue  # Skip empty bones
                 curr_obj_mc_type = MCObjType.BONE
                 if bone.parent is not None:
