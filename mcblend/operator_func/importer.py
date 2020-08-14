@@ -684,13 +684,13 @@ class ModelLoader:
                     'uv', cube['uv'], 2, (int, float), cube_path + ['uv'])
                 result['uv'] = self._create_default_uv(
                     tuple(result['size']),  # type: ignore
-                    tuple(result['mirror']),  # type: ignore
+                    result['mirror'],  # type: ignore
                     tuple(cube['uv']))  # type: ignore
             # Create default UV based on size and mirror
             if result['uv'] is None:
                 result['uv'] = result['uv'] = self._create_default_uv(
                     tuple(result['size']),  # type: ignore
-                    tuple(result['mirror']))  # type: ignore
+                    result['mirror'])  # type: ignore
             return result
         raise FileIsNotAModelException('Unsuported format version')
 
@@ -913,7 +913,7 @@ class ImportBone:
             import_cubes.append(ImportCube(cube))
 
         self.name: str = data['name']
-        self.parent = data['parent']
+        self.parent: str = data['parent']
         self.cubes = import_cubes
         self.locators = locators
         self.pivot: Tuple[float, float, float] = tuple(  # type: ignore
@@ -951,7 +951,7 @@ class ImportGeometry:
             self.bones[import_bone.name] = import_bone
 
 
-    def build(self, context: bpy_types.Context):
+    def build_old(self, context: bpy_types.Context):
         '''
         Builds the geometry in Blender based on ImportGeometry object.
 
@@ -962,7 +962,7 @@ class ImportGeometry:
         # Create objects - and set their pivots
         for bone in self.bones.values():
             # 1. Spawn bone (empty)
-            bpy.ops.object.empty_add(type='SPHERE', location=(0, 0, 0))
+            bpy.ops.object.empty_add(type='SPHERE', location=(0, 0, 0), radius=0.2)
             bone_obj: bpy_types.Object
             bone_obj = bone.blend_empty = context.object
             _mc_pivot(bone_obj, bone.pivot)  # 2. Apply translation
@@ -995,7 +995,7 @@ class ImportGeometry:
             for locator in bone.locators:
                 # 1. Spawn locator (empty)
                 locator_obj: bpy_types.Object
-                bpy.ops.object.empty_add(type='SPHERE', location=(0, 0, 0))
+                bpy.ops.object.empty_add(type='SPHERE', location=(0, 0, 0), radius=0.1)
                 locator_obj = locator.blend_empty = context.object
                 _mc_pivot(locator_obj, locator.position)  # 2. Apply translation
                 # 3. Apply custom properties
@@ -1046,6 +1046,96 @@ class ImportGeometry:
                 inflate_objets(
                     bpy.context, [cube.blend_cube], cube.inflate, 'ABSOLUTE')
 
+
+    def build(self, context: bpy_types.Context):
+        '''
+        Builds the geometry in Blender based on ImportGeometry object.
+
+        # Arguments:
+        `context: bpy_types.Context` - the context of running the operator.
+        '''
+        # TODO - IMPLEMENT. build_with_bones doesn't work.
+
+        # context.view_layer.update()
+        # Create objects - and set their pivots
+
+
+        # Build everything using empties
+        self.build_old(context)
+
+        # Build armature
+        start_building_armature()
+        armature = context.object
+        edit_bones = armature.data.edit_bones
+        # Create bones
+        for bone in self.bones.values():
+            add_bone(edit_bones, 0.3, bone)
+
+        # Parent bones
+        for bone in self.bones.values():
+            # 1. Parent bone keep transform
+            if bone.parent is not None and bone.parent in self.bones:
+                parent_obj: bpy_types.Object = self.bones[
+                    bone.parent
+                ]
+                # context.view_layer.update()
+                edit_bones[bone.name].parent = edit_bones[parent_obj.name]
+        bpy.ops.object.mode_set(mode='OBJECT')
+
+        # Replace empties with bones
+        for bone in self.bones.values():
+            bone_obj = bone.blend_empty
+
+            # 2. Parent cubes keep transform
+            for cube in bone.cubes:
+                cube_obj = cube.blend_cube
+                context.view_layer.update()
+
+                # Copy matrix_parent_inverse from previous parent
+                # It can be copied because old parent (locator) has the same
+                # transformation as the new one (bone)
+                parent_inverse = cube_obj.matrix_parent_inverse.copy()
+
+                cube_obj.parent = armature
+                cube_obj.parent_bone = bone.name
+                cube_obj.parent_type='BONE'
+
+                cube_obj.matrix_parent_inverse = parent_inverse
+
+                # Correct parenting to tail of the bone instead of head
+                context.view_layer.update()
+                blend_bone = armature.pose.bones[bone.name]
+                correction = mathutils.Matrix.Translation(
+                    blend_bone.head-blend_bone.tail
+                )
+                cube_obj.matrix_world = correction @ cube_obj.matrix_world
+
+
+            # 3. Parent locators keep transform
+            for locator in bone.locators:
+                locator_obj = locator.blend_empty
+                context.view_layer.update()
+
+                # Copy matrix_parent_inverse from previous parent
+                parent_inverse = locator_obj.matrix_parent_inverse.copy()
+
+                locator_obj.parent = armature
+                locator_obj.parent_bone = bone.name
+                locator_obj.parent_type='BONE'
+
+                locator_obj.matrix_parent_inverse = parent_inverse
+
+                # Correct parenting to tail of the bone instead of head
+                context.view_layer.update()
+                blend_bone = armature.pose.bones[bone.name]
+                correction = mathutils.Matrix.Translation(
+                    blend_bone.head-blend_bone.tail
+                )
+                locator_obj.matrix_world = correction @ locator_obj.matrix_world
+
+
+            # remove the locators
+            bpy.data.objects.remove(bone_obj)
 
 def _mc_translate(
         obj: bpy_types.Object, mctranslation: Tuple[float, float, float],
@@ -1176,3 +1266,28 @@ def _set_uv(
     set_uv(cube_polygons.up, uv["up"]["uv_size"], uv["up"]["uv"])
     # bottom
     set_uv(cube_polygons.down, uv["down"]["uv_size"], uv["down"]["uv"])
+
+
+
+def start_building_armature():
+    '''Creates new empty armature and enters edit mode'''
+    bpy.ops.object.armature_add(enter_editmode=True, align='WORLD', location=(0, 0, 0))
+    bpy.ops.armature.select_all(action='SELECT')
+    bpy.ops.armature.delete()
+
+def add_bone(
+        edit_bones: bpy.types.bpy_prop_collection,
+        length: float, import_bone: ImportBone):
+    '''
+    - `edit_bones: bpy.types.bpy_prop_collection` - edit bones of the armature
+      (from armature.data.edit_bones)
+    - `length: float` - lenght of the bone
+    - `import_bone: ImportBone` - import bone with all of the minecraft data
+      and the reference to empty object that currently represents the bone.
+    '''
+    matrix_world: mathutils.Matrix = (
+        import_bone.blend_empty.matrix_world  # type: ignore
+    )
+    b = edit_bones.new(import_bone.name)
+    b.head, b.tail = (0.0, 0.0, 0.0), (0.0, length, 0.0)
+    b.matrix = matrix_world
