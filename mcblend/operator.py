@@ -7,7 +7,7 @@ from typing import Optional, Dict
 
 import bpy_types
 import bpy
-from bpy.props import StringProperty, FloatProperty, EnumProperty
+from bpy.props import StringProperty, FloatProperty, EnumProperty, BoolProperty
 from bpy_extras.io_utils import ExportHelper, ImportHelper
 
 from .operator_func import (
@@ -403,12 +403,19 @@ class OBJECT_OT_NusiqMcblendImport(bpy.types.Operator, ImportHelper):
         maxlen=500
     )
 
+    replace_bones_with_empties: BoolProperty(  # type: ignore
+        default=False,
+        description='Creates empties instead of armature and bones'
+    )
+
     def execute(self, context):
         # Save file and finish
         with open(self.filepath, 'r') as f:
             data = json.load(f, cls=JSONCDecoder)
         try:
-            import_model(data, self.geometry_name, context)
+            import_model(
+                data, self.geometry_name, self.replace_bones_with_empties,
+                context)
         except AssertionError as e:
             self.report(
                 {'ERROR'}, f'Invalid model: {e}'

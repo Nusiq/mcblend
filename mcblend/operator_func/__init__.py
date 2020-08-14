@@ -189,7 +189,8 @@ def round_dimensions(context: bpy_types.Context) -> int:
 
 
 def import_model(
-        data: Dict, geometry_name: str, context: bpy_types.Context
+        data: Dict, geometry_name: str, replace_bones_with_empties: bool,
+        context: bpy_types.Context
     ):
     '''
     Import and build model from JSON file.
@@ -198,11 +199,16 @@ def import_model(
     - `data: Dict` - a dictionary with data loaded from JSON file.
     - `geometry_name: str` - the name of the geometry that should be loaded
        into Blender.
+    - `replace_bones_with_empties: bool` - imports model bones as empties
+      instead of armatrue and bones
     - `context: bpy_types.Context` - the context of running the operator.
     '''
 
     geometry = ImportGeometry(ModelLoader(data, geometry_name))
-    geometry.build(context)
+    if replace_bones_with_empties:
+        geometry.build_with_empties(context)
+    else:
+        geometry.build_with_armature(context)
 
     context.scene.nusiq_mcblend.texture_width = geometry.texture_width
     context.scene.nusiq_mcblend.texture_height = geometry.texture_height

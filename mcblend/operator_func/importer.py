@@ -951,14 +951,14 @@ class ImportGeometry:
             self.bones[import_bone.name] = import_bone
 
 
-    def build_old(self, context: bpy_types.Context):
+    def build_with_empties(self, context: bpy_types.Context):
         '''
         Builds the geometry in Blender based on ImportGeometry object.
+        Uses empties to represent minecraft bones.
 
         # Arguments:
         `context: bpy_types.Context` - the context of running the operator.
         '''
-        # context.view_layer.update()
         # Create objects - and set their pivots
         for bone in self.bones.values():
             # 1. Spawn bone (empty)
@@ -1047,21 +1047,16 @@ class ImportGeometry:
                     bpy.context, [cube.blend_cube], cube.inflate, 'ABSOLUTE')
 
 
-    def build(self, context: bpy_types.Context):
+    def build_with_armature(self, context: bpy_types.Context):
         '''
         Builds the geometry in Blender based on ImportGeometry object.
+        Uses armature and bones to represent the bones from minecraft.
 
         # Arguments:
         `context: bpy_types.Context` - the context of running the operator.
         '''
-        # TODO - IMPLEMENT. build_with_bones doesn't work.
-
-        # context.view_layer.update()
-        # Create objects - and set their pivots
-
-
         # Build everything using empties
-        self.build_old(context)
+        self.build_with_empties(context)
 
         # Build armature
         start_building_armature()
