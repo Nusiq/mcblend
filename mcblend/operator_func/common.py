@@ -501,8 +501,9 @@ class McblendObjectGroup:
                 if obj.parent is None or 'mc_is_bone' in obj:
                     curr_obj_mc_type = MCObjType.BOTH
                 else:
-                    curr_obj_mc_parent = self._get_parent_mc_bone(obj)
                     curr_obj_mc_type = MCObjType.CUBE
+                # If parent is none than it will return none
+                curr_obj_mc_parent = self._get_parent_mc_bone(obj)
             elif obj.type == 'ARMATURE':
                 bone = obj.data.bones[obj_id.bone_name]
                 if (
