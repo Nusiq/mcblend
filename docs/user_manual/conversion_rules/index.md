@@ -12,7 +12,7 @@ should be converted into bones, locators or cubes in the Minecraft model.
   a bone or a bone with cube respectively.
 2. A bone is converted into a bone unless it has no children and no
   parents. In this case it isn't converted at all. This behavior is to prevent
-  the conversions of inverse kinematics bones.
+  the unnecessary exporting of inverse kinematics bones.
 3. An empty becomes a bone unless it has a parent but no children. In this case
   it creates a locator.
 4. Mesh without parent becomes a bone with a cube inside it. Mesh with a parent

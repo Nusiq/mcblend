@@ -32,6 +32,7 @@ dimensions (non-integer dimensions may cause problems with UV-mapping).
 
 
 !!! Note
+
     If an object uses the inflate property the "Dimensions" panel doesn't show
     it's real Minecraft dimensions. In this case, the panel can't be used to
     check if the dimensions use integer values only.
@@ -55,8 +56,8 @@ Remember to change the "Template resolution" setting a to value greater than
 
 **3.** Remove the `Principled BSDF` node and replace it with `Image Texture` node
 (`SHIFT + A` and search "Image Texture"). Connect the node to material output
-just like on the image. Set interpolation setting to "Closest" and choose your
-texture under the image setting.
+just like on the image. Set interpolation setting to "Closest", the third
+setting to "Clip"  and choose your to texture under the image setting.
 
 ![](../../img/nodes.png)
 
@@ -67,6 +68,15 @@ Go to `Material Properties` right click on the material and select "Copy to
 selected".
 
 ![](../../img/copy_material_to_selected.png)
+
+If you want to have a material that supports transparency than the nodes in
+the shading editor will need to have more complicated layout:
+
+![](../../img/nodes_advanced.png)
+
+You will also have to enable the transparency settings in the material configuration:
+
+![](../../img/transparency_setting.png)
 
 ## Multiple animations
 If you want to have multiple animations in your project you can copy the scene

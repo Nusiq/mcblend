@@ -400,12 +400,14 @@ class OBJECT_OT_NusiqMcblendImport(bpy.types.Operator, ImportHelper):
 
     geometry_name: StringProperty(  # type: ignore
         default='',
-        maxlen=500
+        maxlen=500,
+        name='Geometry name'
     )
 
     replace_bones_with_empties: BoolProperty(  # type: ignore
         default=False,
-        description='Creates empties instead of armature and bones'
+        description='Creates empties instead of armature and bones',
+        name='Replace bones with empties'
     )
 
     def execute(self, context):
