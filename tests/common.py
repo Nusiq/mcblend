@@ -115,3 +115,24 @@ def assert_is_model(a: tp.Dict):
                 assert_is_vector(cube['rotation'], 3, (int, float))
                 if 'mirror' in cube:
                     assert type(cube['mirror']) is bool
+
+
+def make_comparable_json(
+        jsonable: tp.Any, set_paths: tp.Set[tp.Tuple], curr_path=None):
+    if curr_path is None:
+        curr_path = []
+
+    if isinstance(jsonable, dict):
+        result = [
+            (k, make_comparable_json(v, set_paths, curr_path+[k]))
+            for k, v in jsonable.items()]
+        return frozenset(result)
+    if isinstance(jsonable, list):
+        result = [
+            make_comparable_json(i, set_paths, curr_path+[0])
+            for i in jsonable]
+        if tuple(curr_path) in set_paths:
+            return frozenset(result)
+        return tuple(result)
+    if isinstance(jsonable, (type(None), bool, int, float, str)):
+        return jsonable

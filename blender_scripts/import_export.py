@@ -18,7 +18,12 @@ def main(source_path: str, target_path: str):
     bpy.ops.object.delete(use_global=False)
 
     # Load model from source file
-    bpy.ops.object.nusiq_mcblend_import_operator(filepath=source_path)
+    if "use_empties" in argv:
+        bpy.ops.object.nusiq_mcblend_import_operator(
+            filepath=source_path, replace_bones_with_empties=True)
+    else:
+        bpy.ops.object.nusiq_mcblend_import_operator(
+            filepath=source_path, replace_bones_with_empties=False)
 
     # Save model to target file
     bpy.ops.object.select_all(action='SELECT')

@@ -14,8 +14,8 @@
 				{
 					"name": "Empty",
 					"cubes": [],
-					"pivot": [0.0, 0.0, 0.0],
-					"rotation": [0.0, 0.0, 0.0]
+					"pivot": [0, 0, 0],
+					"rotation": [0, 0, 0]
 				}
 			]
 		}

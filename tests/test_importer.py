@@ -8,11 +8,11 @@ from pathlib import Path
 import typing as tp
 import pytest
 import shutil
-from .common import assert_is_model, blender_run_script
+from .common import assert_is_model, blender_run_script, make_comparable_json
 
 
 def make_comparison_files(
-        source: str, tmp: str
+        source: str, tmp: str, use_empties: bool
     ) -> tp.Tuple[tp.Dict, tp.Dict, str]:
     '''
     Loads model from source to blender using nusiq_mcblend_import_operator
@@ -39,7 +39,10 @@ def make_comparison_files(
     Path(tmp).mkdir(parents=True, exist_ok=True)
 
     # Run blender actions
-    blender_run_script(script, source, target)
+    if use_empties:
+        blender_run_script(script, source, target, "use_empties")
+    else:
+        blender_run_script(script, source, target)
 
     # Validate results
     with open(source, 'r') as f:
@@ -55,19 +58,35 @@ def make_comparison_files(
 
 # PYTEST FUNCTIONS
 MODEL_FILES = [
-    "cube_translated.geo.json",
-    "cube_with_offset_pivot.geo.json",
-    "cube.geo.json",
-    "single_bone_rotated_x.geo.json",
-    "single_bone_rotated_xyz.geo.json",
-    "single_bone_rotated_y.geo.json",
-    "single_bone_rotated_z.geo.json",
-    "single_bone_translated.geo.json",
-    "single_bone.geo.json",
-    "three_bones_rotated_x.geo.json",
-    "three_bones.geo.json",
-    "two_bones.geo.json",
-    "battle_mech.geo.json",
+    # Import empties
+    ("cube_translated.geo.json", True),
+    ("cube_with_offset_pivot.geo.json", True),
+    ("cube.geo.json", True),
+    ("single_bone_rotated_x.geo.json", True),
+    ("single_bone_rotated_xyz.geo.json", True),
+    ("single_bone_rotated_y.geo.json", True),
+    ("single_bone_rotated_z.geo.json", True),
+    ("single_bone_translated.geo.json", True),
+    ("single_bone.geo.json", True),
+    ("three_bones_rotated_x.geo.json", True),
+    ("three_bones.geo.json", True),
+    ("two_bones.geo.json", True),
+    ("battle_mech.geo.json", True),
+    
+    # Import bones
+    ("cube_translated.geo.json", True),
+    ("cube_with_offset_pivot.geo.json", True),
+    ("cube.geo.json", True),
+    # ("single_bone_rotated_x.geo.json", True),  # Single bones not supported by export
+    # ("single_bone_rotated_xyz.geo.json", True),
+    # ("single_bone_rotated_y.geo.json", True),
+    # ("single_bone_rotated_z.geo.json", True),
+    # ("single_bone_translated.geo.json", True),
+    ("single_bone.geo.json", True),
+    ("three_bones_rotated_x.geo.json", True),
+    ("three_bones.geo.json", True),
+    ("two_bones.geo.json", True),
+    ("battle_mech.geo.json", True),
 ]
 
 
@@ -79,17 +98,31 @@ def setup_module(module):
 
 
 @pytest.fixture(params=MODEL_FILES)
-def model_file(request):
+def import_properties(request):
     return request.param
 
 
 # TESTS
-def test_importer(model_file):
-    model_file = os.path.join('./tests/data/test_importer/models/', model_file)
+def test_importer(import_properties):
+    model_file = os.path.join('./tests/data/test_importer/models/', import_properties[0])
+    use_empties = import_properties[1]
 
     source_dict, target_dict, target_path = make_comparison_files(
-        model_file, "./.tmp/test_importer"
+        model_file, "./.tmp/test_importer", use_empties
     )
 
     assert_is_model(target_dict)
-    assert source_dict == target_dict
+    set_paths = {
+        ("minecraft:geometry"),
+        ("minecraft:geometry", 0, "bones"),
+        ("minecraft:geometry", 0, "bones", 0, "cubes"),
+        ("minecraft:geometry", 0, "bones", 0, "cubes", 0, "locators"),
+    }
+    a = make_comparable_json(source_dict, set_paths)
+    b = make_comparable_json(target_dict, set_paths)
+    print("===== source_dict =====")
+    print(a)
+    print("===== target_dict =====")
+    print(b)
+    assert a == b
+
