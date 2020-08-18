@@ -208,6 +208,7 @@ class AnimationExport:
     anim_time_update: str
     fps: float
     original_pose: Pose = field(default_factory=Pose)
+    single_frame: bool = field(default_factory=bool)  # bool() = False
     poses: Dict[int, Pose] = field(default_factory=dict)
 
     def load_poses(
@@ -227,13 +228,21 @@ class AnimationExport:
         try:
             context.scene.frame_set(0)
             self.original_pose.load_poses(object_properties)
-            next_keyframe = _get_next_keyframe(context)
-            while next_keyframe is not None:
-                context.scene.frame_set(next_keyframe)
-                curr_pose = Pose()
-                curr_pose.load_poses(object_properties)
-                self.poses[next_keyframe] = curr_pose
+            if self.single_frame:
+                context.scene.frame_set(original_frame)
+                pose = Pose()
+                pose.load_poses(object_properties)
+
+                # The frame value in the dictionary key doesn't really matter
+                self.poses[original_frame] = pose
+            else:
                 next_keyframe = _get_next_keyframe(context)
+                while next_keyframe is not None:
+                    context.scene.frame_set(next_keyframe)
+                    curr_pose = Pose()
+                    curr_pose.load_poses(object_properties)
+                    self.poses[next_keyframe] = curr_pose
+                    next_keyframe = _get_next_keyframe(context)
         finally:
             context.scene.frame_set(original_frame)
 
@@ -263,15 +272,22 @@ class AnimationExport:
         for bone_name in self.original_pose.pose_bones:
             bones[bone_name] = self._json_bone(bone_name)
 
-        result["animations"][f"animation.{self.name}"] = {
-            "animation_length": self.length,
-            "bones": bones
-        }
-        data = result["animations"][f"animation.{self.name}"]
-        if self.loop_animation:
-            data['loop'] = True
-        if self.anim_time_update != "":
-            data['anim_time_update'] = self.anim_time_update
+        if self.single_frame:
+            # Other properties don't apply
+            result["animations"][f"animation.{self.name}"] = {
+                "bones": bones,
+                "loop": True
+            }
+        else:
+            result["animations"][f"animation.{self.name}"] = {
+                "animation_length": self.length,
+                "bones": bones
+            }
+            data = result["animations"][f"animation.{self.name}"]
+            if self.loop_animation:
+                data['loop'] = True
+            if self.anim_time_update != "":
+                data['anim_time_update'] = self.anim_time_update
         return result
 
     def _json_bone(
@@ -317,6 +333,11 @@ class AnimationExport:
         # Filter unnecessary frames and add them to bone
         if not poses:  # If empty return empty animation
             return {'position': {}, 'rotation': {}, 'scale': {}}
+        if self.single_frame:  # Returning single frame pose is easier
+            return {  # dictionary populated with 0 timestamp frame
+                'position': poses[0]['loc'],
+                'rotation': poses[0]['rot'],
+                'scale': poses[0]['scl']}
         bone: Dict = {  # dictionary populated with 0 timestamp frame
             'position': {poses[0]['t']: poses[0]['loc']},
             'rotation': {poses[0]['t']: poses[0]['rot']},

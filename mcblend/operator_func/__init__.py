@@ -74,6 +74,7 @@ def export_animation(
         name=context.scene.nusiq_mcblend.animation_name,
         length=(context.scene.frame_end-1)/context.scene.render.fps,
         loop_animation=context.scene.nusiq_mcblend.loop_animation,
+        single_frame=context.scene.nusiq_mcblend.single_frame_animation,
         anim_time_update=context.scene.nusiq_mcblend.anim_time_update,
         fps=context.scene.render.fps
     )

@@ -38,6 +38,11 @@ class OBJECT_NusiqMcblendExporterProperties(bpy.types.PropertyGroup):
         description="Decides if animation should be looped.",
         default=True,
     )
+    single_frame_animation: BoolProperty(  # type: ignore
+        name="",
+        description="Exports current pose as single frame animation.",
+        default=False,
+    )
     anim_time_update: StringProperty(  # type: ignore
         name="",
         description="Adds anim_time_update value unless is left empty.",
@@ -142,6 +147,10 @@ class OBJECT_PT_NusiqMcblendExportAnimationPanel(bpy.types.Panel):
         )
         col.prop(
             context.scene.nusiq_mcblend, "loop_animation", text="Loop"
+        )
+        col.prop(
+            context.scene.nusiq_mcblend, "single_frame_animation",
+            text="Current frame only"
         )
         col.prop(
             context.scene.nusiq_mcblend, "anim_time_update",
