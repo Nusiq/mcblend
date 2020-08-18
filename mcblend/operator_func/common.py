@@ -313,6 +313,7 @@ class CubePolygons(NamedTuple):
           CubePolygon is changed to change the positons of verices during
           UV-mapping.
         '''
+        # pylint: disable=too-many-branches, too-many-statements
         def get_order(
                 name: str, mirror: bool,
                 bount_box_vertices: Tuple[str, str, str, str]

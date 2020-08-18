@@ -1089,21 +1089,27 @@ class ImportGeometry:
                 # Copy matrix_parent_inverse from previous parent
                 # It can be copied because old parent (locator) has the same
                 # transformation as the new one (bone)
-                parent_inverse = cube_obj.matrix_parent_inverse.copy()
+                parent_inverse = (
+                    cube_obj.matrix_parent_inverse.copy()  # type:ignore
+                )
 
-                cube_obj.parent = armature
-                cube_obj.parent_bone = bone.name
-                cube_obj.parent_type='BONE'
+                cube_obj.parent = armature  # type: ignore
+                cube_obj.parent_bone = bone.name  # type: ignore
+                cube_obj.parent_type = 'BONE'  # type: ignore
 
-                cube_obj.matrix_parent_inverse = parent_inverse
+                cube_obj.matrix_parent_inverse = parent_inverse  # type: ignore
 
                 # Correct parenting to tail of the bone instead of head
                 context.view_layer.update()
                 blend_bone = armature.pose.bones[bone.name]
+                # pylint: disable=no-member
                 correction = mathutils.Matrix.Translation(
                     blend_bone.head-blend_bone.tail
                 )
-                cube_obj.matrix_world = correction @ cube_obj.matrix_world
+                cube_obj.matrix_world = (  # type: ignore
+                    correction @
+                    cube_obj.matrix_world  # type: ignore
+                )
 
 
             # 3. Parent locators keep transform
@@ -1112,21 +1118,26 @@ class ImportGeometry:
                 context.view_layer.update()
 
                 # Copy matrix_parent_inverse from previous parent
-                parent_inverse = locator_obj.matrix_parent_inverse.copy()
+                parent_inverse = (  # type: ignore
+                    locator_obj.matrix_parent_inverse.copy())  # type: ignore
 
-                locator_obj.parent = armature
-                locator_obj.parent_bone = bone.name
-                locator_obj.parent_type='BONE'
+                locator_obj.parent = armature  # type: ignore
+                locator_obj.parent_bone = bone.name  # type: ignore
+                locator_obj.parent_type = 'BONE'  # type: ignore
 
-                locator_obj.matrix_parent_inverse = parent_inverse
+                locator_obj.matrix_parent_inverse = (  # type: ignore
+                    parent_inverse)
 
                 # Correct parenting to tail of the bone instead of head
                 context.view_layer.update()
                 blend_bone = armature.pose.bones[bone.name]
+                # pylint: disable=no-member
                 correction = mathutils.Matrix.Translation(
                     blend_bone.head-blend_bone.tail
                 )
-                locator_obj.matrix_world = correction @ locator_obj.matrix_world
+                locator_obj.matrix_world = (    # type: ignore
+                    correction @ locator_obj.matrix_world  # type: ignore
+                )
 
 
             # remove the locators
@@ -1283,6 +1294,6 @@ def add_bone(
     matrix_world: mathutils.Matrix = (
         import_bone.blend_empty.matrix_world  # type: ignore
     )
-    b = edit_bones.new(import_bone.name)
-    b.head, b.tail = (0.0, 0.0, 0.0), (0.0, length, 0.0)
-    b.matrix = matrix_world
+    bone = edit_bones.new(import_bone.name)
+    bone.head, bone.tail = (0.0, 0.0, 0.0), (0.0, length, 0.0)
+    bone.matrix = matrix_world
