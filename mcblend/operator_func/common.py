@@ -198,7 +198,9 @@ class McblendObject:
             # Applying normalize() function to matrix world of parent and child
             # suppose to fix some errors with scaling but tests doesn't show any
             # difference.
-            return child.get_local_matrix(parent).to_translation()
+            # It does fix the issue #62 so PLEASE dont change it again!
+            return child.get_local_matrix(
+                parent, normlize=True).to_translation()
 
         def _get_mcpivot(objprop: McblendObject) -> mathutils.Vector:
             if objprop.parent is not None:
@@ -211,7 +213,7 @@ class McblendObject:
         return np.array(_get_mcpivot(self).xzy)
 
     def get_local_matrix(
-            self, other: Optional[McblendObject] = None
+            self, other: Optional[McblendObject] = None, normlize: bool = False
         ) -> mathutils.Matrix:
         '''
         Returns translation matrix of this object in relation the other object.
@@ -220,8 +222,11 @@ class McblendObject:
         # Arguments:
         - `other: McblendObject` - the other object
         # Returns:
-        `mathutils.Matrix` - translation matrix for child object in other
+        - `mathutils.Matrix` - translation matrix for child object in other
         object space.
+        - `normlize: bool=False` - normalizes parent and child matrixes which
+          can remove some problems related to different scales of parent and
+          child transfomtions (see issue #62)
         '''
         if other is not None:
             p_matrix = other.obj_matrix_world
@@ -231,6 +236,9 @@ class McblendObject:
                 mathutils.Matrix()
             )
         c_matrix = self.obj_matrix_world
+        if normlize:
+            p_matrix.normalize()
+            c_matrix.normalize()
         return p_matrix.inverted() @ c_matrix
 
     def get_mcrotation(
