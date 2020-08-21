@@ -1,5 +1,6 @@
 '''
-This is a testing script fomr model importer.
+This is a testing script fomr model importer. Imports file, exports imported
+content and than compares the exported file with the original.
 '''
 import os
 import subprocess
@@ -107,7 +108,7 @@ def test_importer(import_properties):
     model_file = os.path.join('./tests/data/test_importer/models/', import_properties[0])
     use_empties = import_properties[1]
 
-    source_dict, target_dict, target_path = make_comparison_files(
+    source_dict, target_dict, _ = make_comparison_files(
         model_file, "./.tmp/test_importer", use_empties
     )
 
@@ -118,11 +119,7 @@ def test_importer(import_properties):
         ("minecraft:geometry", 0, "bones", 0, "cubes"),
         ("minecraft:geometry", 0, "bones", 0, "cubes", 0, "locators"),
     }
-    a = make_comparable_json(source_dict, set_paths)
-    b = make_comparable_json(target_dict, set_paths)
-    print("===== source_dict =====")
-    print(a)
-    print("===== target_dict =====")
-    print(b)
-    assert a == b
+    source_comparable = make_comparable_json(source_dict, set_paths)
+    target_comparable = make_comparable_json(target_dict, set_paths)
 
+    assert source_comparable == target_comparable
