@@ -97,6 +97,10 @@ class OBJECT_OT_NusiqMcblendExportAnimationOperator(
             return False
         if len(context.selected_objects) < 1:
             return False
+        len_anims = len(context.scene.nusiq_mcblend_animations)
+        curr_anim_id = context.scene.nusiq_mcblend_active_animation
+        if 0 < curr_anim_id or curr_anim_id >= len_anims:
+            return False
         return True
 
     def execute(self, context):
@@ -126,7 +130,7 @@ def menu_func_nusiq_mcblend_export_animation(self, context):
     '''Function that adds export animation operator to the menu.'''
     self.layout.operator(
         OBJECT_OT_NusiqMcblendExportAnimationOperator.bl_idname,
-        text="Mcblend: Export anmiation"
+        text="Mcblend: Export animation"
     )
 
 
