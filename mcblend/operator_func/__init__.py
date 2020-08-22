@@ -69,13 +69,17 @@ def export_animation(
     '''
     # Check and create object properties
     object_properties = McblendObjectGroup(context)
+    
+    
+    anim_data = context.scene.nusiq_mcblend_animations[
+        context.scene.nusiq_mcblend_active_animation]
 
     animation = AnimationExport(
-        name=context.scene.nusiq_mcblend.animation_name,
+        name=anim_data.name,
         length=(context.scene.frame_end-1)/context.scene.render.fps,
-        loop_animation=context.scene.nusiq_mcblend.loop_animation,
-        single_frame=context.scene.nusiq_mcblend.single_frame_animation,
-        anim_time_update=context.scene.nusiq_mcblend.anim_time_update,
+        loop_animation=anim_data.loop,
+        single_frame=anim_data.single_frame,
+        anim_time_update=anim_data.anim_time_update,
         fps=context.scene.render.fps
     )
     animation.load_poses(object_properties, context)

@@ -236,7 +236,8 @@ class AnimationExport:
                 # The frame value in the dictionary key doesn't really matter
                 self.poses[original_frame] = pose
             else:
-                next_keyframe = _get_next_keyframe(context)
+                # next_keyframe = _get_next_keyframe(context)
+                next_keyframe = context.scene.frame_start
                 while next_keyframe is not None:
                     context.scene.frame_set(next_keyframe)
                     curr_pose = Pose()

@@ -435,3 +435,99 @@ def menu_func_nusiq_mcblend_import(self, context):
     self.layout.operator(
         OBJECT_OT_NusiqMcblendImport.bl_idname, text="Mcblend: Import model"
     )
+
+# Animation GUI
+def save_animation_frame_properties(animation, context):
+    '''Helper function for saving animation when its changed in GUI'''
+    animation.frame_start = context.scene.frame_start
+    animation.frame_end = context.scene.frame_end
+    animation.frame_current = context.scene.frame_current
+
+def load_animation_frame_properties(animation, context):
+    '''Helper function for loading animation when its changed in GUI'''
+    context.scene.frame_start = animation.frame_start
+    context.scene.frame_end = animation.frame_end
+    context.scene.frame_current = animation.frame_current
+
+class OBJECT_OT_NusiqMcblendListAnimations(bpy.types.Operator):
+    bl_idname = "object.nusiq_mcblend_list_animations"
+    bl_label = "List animations and save them to Enum to display them in GUI"
+
+    def list_animations(self, context):
+        items = [
+            (str(i), x.name, x.name)
+            for i, x in enumerate(bpy.context.scene.nusiq_mcblend_animations)]
+        return items
+
+    animations_enum: bpy.props.EnumProperty(  # type: ignore
+        items=list_animations, name="Animations")
+
+    # @classmethod
+    # def poll(cls, context):
+    #     return context.mode == 'OBJECT'
+    
+    def execute(self, context):
+        '''
+        Runs when user picks an item from the dropdown menu in animations
+        panel. Sets the active animation.
+        '''
+        # If OK than save old animation state
+        len_anims = len(context.scene.nusiq_mcblend_animations)
+        curr_anim_id = context.scene.nusiq_mcblend_active_animation
+        if curr_anim_id >= 0 and curr_anim_id < len_anims:
+            save_animation_frame_properties(
+                context.scene.nusiq_mcblend_animations[curr_anim_id], context)
+
+        # Set new animation and load its state
+        new_anim_id=int(self.animations_enum)
+        context.scene.nusiq_mcblend_active_animation=new_anim_id
+        load_animation_frame_properties(
+                context.scene.nusiq_mcblend_animations[new_anim_id], context)
+        return {'FINISHED'}
+
+
+class OBJECT_OT_NusiqMcblendAddAnimation(bpy.types.Operator):
+    bl_idname = "object.nusiq_mcblend_add_animation"
+    bl_label = '''Adds new animation to the list.'''
+
+    def execute(self, context):
+        # If OK save old animation
+        len_anims = len(context.scene.nusiq_mcblend_animations)
+        curr_anim_id = context.scene.nusiq_mcblend_active_animation
+        if 0 <= curr_anim_id and curr_anim_id < len_anims:
+            save_animation_frame_properties(
+                context.scene.nusiq_mcblend_animations[curr_anim_id], context)
+
+        # Add new animation and set its properties
+        animation_new = context.scene.nusiq_mcblend_animations.add()
+        len_anims = len(context.scene.nusiq_mcblend_animations)
+        context.scene.nusiq_mcblend_active_animation=len_anims-1
+        animation_new.name = f'animation{len_anims}'
+
+        return {'FINISHED'}
+
+class OBJECT_OT_NusiqMcblendRemoveAnimation(bpy.types.Operator):
+    bl_idname = "object.nusiq_mcblend_remove_animation"
+    bl_label = "Remove current animation from the list."
+
+    @classmethod
+    def poll(cls, context):
+        return len(context.scene.nusiq_mcblend_animations) > 0
+
+    def execute(self, context):
+        # Remove animation
+        context.scene.nusiq_mcblend_animations.remove(
+            context.scene.nusiq_mcblend_active_animation)
+
+        # Set new active animation
+        last_active=context.scene.nusiq_mcblend_active_animation
+        len_anims=len(context.scene.nusiq_mcblend_animations)
+        if last_active > 0:
+            context.scene.nusiq_mcblend_active_animation=last_active-1
+
+        # Load data from new active animation
+        curr_anim_id=context.scene.nusiq_mcblend_active_animation
+        if 0 >= curr_anim_id and curr_anim_id < len_anims:
+            load_animation_frame_properties(
+                context.scene.nusiq_mcblend_animations[curr_anim_id], context)
+        return {'FINISHED'}

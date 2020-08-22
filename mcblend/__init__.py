@@ -3,7 +3,9 @@ This module is used by Blender to register/unregister the plugin.
 '''
 # don't import future annotations Blender needs that
 import bpy
-from bpy.props import PointerProperty, BoolProperty, FloatVectorProperty
+from bpy.props import (
+    PointerProperty, BoolProperty, FloatVectorProperty, CollectionProperty,
+    IntProperty)
 import mathutils
 
 
@@ -16,10 +18,16 @@ from .operator import (
     menu_func_nusiq_mcblend_export_model, menu_func_nusiq_mcblend_export_animation,
     OBJECT_OT_NusiqMcblendRoundDimensionsOperator,
     OBJECT_OT_NusiqMcblendImport, menu_func_nusiq_mcblend_import,
+
+    OBJECT_OT_NusiqMcblendListAnimations,
+    OBJECT_OT_NusiqMcblendAddAnimation,
+    OBJECT_OT_NusiqMcblendRemoveAnimation,
 )
 from .panel import (
-    OBJECT_PT_NusiqMcblendExportPanel,
     OBJECT_NusiqMcblendExporterProperties,
+    OBJECT_NusiqMcblendAnimationProperties,
+
+    OBJECT_PT_NusiqMcblendExportPanel,
     OBJECT_PT_NusiqMcblendExportAnimationPanel,
     OBJECT_PT_NusiqMcblendSetUvsPanel,
     OBJECT_PT_NusiqMcblendOperatorsPanel,
@@ -40,11 +48,13 @@ bl_info = {
 
 
 classes = (
+    OBJECT_NusiqMcblendExporterProperties,
+    OBJECT_NusiqMcblendAnimationProperties,
+
     OBJECT_OT_NusiqMcblendExportModelOperator,
     OBJECT_OT_NusiqMcblendExportAnimationOperator,
     OBJECT_PT_NusiqMcblendExportAnimationPanel,
     OBJECT_PT_NusiqMcblendExportPanel,
-    OBJECT_NusiqMcblendExporterProperties,
     OBJECT_OT_NusiqMcblendMapUvOperator,
     OBJECT_PT_NusiqMcblendSetUvsPanel,
     OBJECT_OT_NusiqMcblendUvGroupOperator,
@@ -55,6 +65,10 @@ classes = (
     OBJECT_OT_NusiqMcblendRoundDimensionsOperator,
     OBJECT_OT_NusiqMcblendImport,
     OBJECT_PT_NusiqMcblendImportPanel,
+
+    OBJECT_OT_NusiqMcblendListAnimations,
+    OBJECT_OT_NusiqMcblendAddAnimation,
+    OBJECT_OT_NusiqMcblendRemoveAnimation,
 )
 
 def register():
@@ -62,9 +76,19 @@ def register():
     # pylint: disable=assignment-from-no-return, no-member
     for _class in classes:
         bpy.utils.register_class(_class)
+    
+    # Add properties to Scene
     bpy.types.Scene.nusiq_mcblend = PointerProperty(
         type=OBJECT_NusiqMcblendExporterProperties
     )
+    bpy.types.Scene.nusiq_mcblend_animations = CollectionProperty(
+        type=OBJECT_NusiqMcblendAnimationProperties)
+    bpy.types.Scene.nusiq_mcblend_active_animation = bpy.props.IntProperty(
+        default=0)
+
+    # Add properties to objects
+    # TODO - implement
+
     bpy.types.TOPBAR_MT_file_export.append(
         menu_func_nusiq_mcblend_export_model
     )

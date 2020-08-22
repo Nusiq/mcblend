@@ -9,12 +9,53 @@ from bpy.props import (
 )
 
 
+class OBJECT_NusiqMcblendAnimationProperties(bpy.types.PropertyGroup):
+    name: StringProperty(  # type: ignore
+        name="Name",
+        description="Name of the animation.", default="animation",
+        maxlen=1024
+    )
+    single_frame: BoolProperty(  # type: ignore
+        name="Single frame",
+        description="Exports current pose as single frame animation",
+        default=False,
+    )
+    anim_time_update: StringProperty(  # type: ignore
+        name="anim_time_update",
+        description="Adds anim_time_update value unless is left empty",
+        default="",
+        maxlen=1024
+    )
+    loop: BoolProperty(  # type: ignore
+        name="Loop",
+        description="Decides if animation should be looped",
+        default=True,
+    )
+    frame_start: IntProperty(  # type: ignore
+        name="Frame start",
+        description="The first frame of the animation.",
+        default=0,
+        min=0
+    )
+    frame_current: IntProperty(  # type: ignore
+        name="Frame current",
+        description="The current frame of the animation.",
+        default=100,
+        min=0
+    )
+    frame_end: IntProperty(  # type: ignore
+        name="Frame end",
+        description="The last frame of the animation.",
+        default=100,
+        min=0
+    )
+
 class OBJECT_NusiqMcblendExporterProperties(bpy.types.PropertyGroup):
     '''Global properties used by Mcblend for user settings configuration.'''
     model_name: StringProperty(  # type: ignore
         name="",
         description="Name of the model",
-        default="b_model",
+        default="model",
         maxlen=1024
     )
     visible_bounds_offset: FloatVectorProperty(  # type: ignore
@@ -32,30 +73,6 @@ class OBJECT_NusiqMcblendExporterProperties(bpy.types.PropertyGroup):
         description="visible_bounds_height of the model",
         default=1.0
     )
-
-    loop_animation: BoolProperty(  # type: ignore
-        name="",
-        description="Decides if animation should be looped.",
-        default=True,
-    )
-    single_frame_animation: BoolProperty(  # type: ignore
-        name="",
-        description="Exports current pose as single frame animation.",
-        default=False,
-    )
-    anim_time_update: StringProperty(  # type: ignore
-        name="",
-        description="Adds anim_time_update value unless is left empty.",
-        default="",
-        maxlen=1024
-    )
-    animation_name: StringProperty(  # type: ignore
-        name="",
-        description="Name of the animation.",
-        default="b_model_animation",
-        maxlen=1024
-    )
-
     texture_width: IntProperty(  # type: ignore
         name="",
         description="Minecraft UV parameter width.",
@@ -71,6 +88,7 @@ class OBJECT_NusiqMcblendExporterProperties(bpy.types.PropertyGroup):
         default=0,
         min=0
     )
+
     texture_template_resolution: IntProperty(  # type: ignore
         name="Template texture resolution",
         description=(
@@ -141,24 +159,37 @@ class OBJECT_PT_NusiqMcblendExportAnimationPanel(bpy.types.Panel):
 
     def draw(self, context):
         col = self.layout.column(align=True)
-        col.prop(context.scene.nusiq_mcblend, "path_animation", text="")
-        col.prop(
-            context.scene.nusiq_mcblend, "animation_name", text="Name"
+
+        row = col.row()
+        row.operator(
+            "object.nusiq_mcblend_add_animation", text="New animation"
         )
-        col.prop(
-            context.scene.nusiq_mcblend, "loop_animation", text="Loop"
-        )
-        col.prop(
-            context.scene.nusiq_mcblend, "single_frame_animation",
-            text="Current frame only"
-        )
-        col.prop(
-            context.scene.nusiq_mcblend, "anim_time_update",
-            text="anim_time_update"
-        )
-        self.layout.row().operator(
-            "object.nusiq_mcblend_export_animation_operator", text="Export animation"
-        )
+
+        active_anim_id = bpy.context.scene.nusiq_mcblend_active_animation
+        anims = bpy.context.scene.nusiq_mcblend_animations
+        if active_anim_id < len(anims):
+            row.operator(
+                "object.nusiq_mcblend_remove_animation", text="Remove this animation"
+            )
+            col.operator_menu_enum(
+                "object.nusiq_mcblend_list_animations", "animations_enum",
+                text="Select animation"
+            )
+
+            active_anim = anims[active_anim_id]
+            col.prop(active_anim, "name", text="Name")
+            col.prop(active_anim, "single_frame", text="Export as pose")
+            if active_anim.single_frame:
+                col.prop(bpy.context.scene, "frame_current", text="Frame")
+            else:
+                col.prop(active_anim, "loop", text="Loop")
+                col.prop(active_anim, "anim_time_update", text="anim_time_update")
+                col.prop(bpy.context.scene, "frame_start", text="Frame start")
+                col.prop(bpy.context.scene, "frame_end", text="Frame end")
+                
+            col.operator(
+                "object.nusiq_mcblend_export_animation_operator", text="Export animation"
+            )
 
 
 class OBJECT_PT_NusiqMcblendSetUvsPanel(bpy.types.Panel):
