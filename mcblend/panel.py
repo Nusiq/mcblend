@@ -8,6 +8,33 @@ from bpy.props import (
     FloatVectorProperty
 )
 
+class OBJECT_NusiqMcblendObjectProperties(bpy.types.PropertyGroup):
+    mirror: BoolProperty(  # type: ignore
+        name="Mirror",
+        description="Defines how to layout the UV during UV generation.",
+        default=False,
+    )
+    uv_group: StringProperty(  # type: ignore
+        name="UV group",
+        description=(
+            "Objects with the same UV group can be mapped to the same spot on "
+            "the texture if they have the same dimensions. Empty string means "
+            "that the object doesn't belong to any UV group."),
+        default="",
+        maxlen=1024
+    )
+    is_bone: BoolProperty(  # type: ignore
+        name="Export as bone",
+        description=(
+            "If true than this object will be exported as minecraft bone."),
+        default=False,
+    )
+    inflate: FloatProperty(  # type: ignore
+        name="Inflate",
+        description="The inflate value of this object.",
+        default=0.0
+    )
+
 
 class OBJECT_NusiqMcblendAnimationProperties(bpy.types.PropertyGroup):
     name: StringProperty(  # type: ignore
@@ -88,7 +115,6 @@ class OBJECT_NusiqMcblendExporterProperties(bpy.types.PropertyGroup):
         default=0,
         min=0
     )
-
     texture_template_resolution: IntProperty(  # type: ignore
         name="Template texture resolution",
         description=(
@@ -103,6 +129,38 @@ class OBJECT_NusiqMcblendExporterProperties(bpy.types.PropertyGroup):
         min=0,
         soft_max=5,
     )
+
+class OBJECT_PT_NusiqMcblendObjectPropertiesPanel(bpy.types.Panel):
+    '''Panel with custom object properties (for meshes and empties)'''
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = 'object'
+    bl_label = "Mcblend object properties"
+
+    @classmethod
+    def poll(cls, context):
+        if context.active_object:
+            return (
+                context.active_object.type == "MESH" or
+                context.active_object.type == "EMPTY")
+
+    def draw(self, context):
+        col = self.layout.column(align=True)
+
+        if context.mode == "OBJECT" and context.object != None:
+            col.prop(
+                context.object.nusiq_mcblend_object_properties, "is_bone",
+                text="Export as bone")
+            if context.object.type == 'MESH':
+                col.prop(
+                    context.object.nusiq_mcblend_object_properties, "mirror",
+                    text="Mirror")
+                col.prop(
+                    context.object.nusiq_mcblend_object_properties, "uv_group",
+                    text="UV group")
+                col.prop(
+                    context.object.nusiq_mcblend_object_properties, "inflate",
+                    text="Inflate")
 
 
 class OBJECT_PT_NusiqMcblendExportPanel(bpy.types.Panel):
@@ -231,20 +289,20 @@ class OBJECT_PT_NusiqMcblendOperatorsPanel(bpy.types.Panel):
 
     def draw(self, context):
         self.layout.row().operator(
-            "object.nusiq_mcblend_toggle_mc_mirror_operator",
-            text="Toggle mc_mirror"
+            "object.nusiq_mcblend_toggle_mirror_operator",
+            text="Toggle mirror for UV mapping"
         )
         self.layout.row().operator(
             "object.nusiq_mcblend_uv_group_operator",
-            text="Set mc_uv_group"
+            text="Set the UV group"
         )
         self.layout.row().operator(
-            "object.nusiq_mcblend_toggle_mc_is_bone_operator",
-            text="Toggle mc_is_bone"
+            "object.nusiq_mcblend_toggle_is_bone_operator",
+            text="Toggle export as bones"
         )
         self.layout.row().operator(
             "object.nusiq_mcblend_set_inflate_operator",
-            text="Set mc_inflate"
+            text="Inflate"
         )
         self.layout.row().operator(
             "object.nusiq_mcblend_round_dimensions_operator",

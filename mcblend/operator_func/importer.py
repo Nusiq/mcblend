@@ -967,7 +967,7 @@ class ImportGeometry:
             bone_obj = bone.blend_empty = context.object
             _mc_pivot(bone_obj, bone.pivot)  # 2. Apply translation
             bone_obj.name = bone.name  # 3. Apply custom properties
-            bone_obj['mc_is_bone'] = {}
+            bone_obj.nusiq_mcblend_object_properties.is_bone = True
             for cube in bone.cubes:
                 cube_obj: bpy_types.Object
                 # 1. Spawn cube
@@ -980,8 +980,7 @@ class ImportGeometry:
                 # warning! Moving this code below cube transformation would
                 # break it because bound_box is not getting updated properly
                 # before the end of running of the opperator.
-                if cube.mirror:
-                    cube_obj['mc_mirror'] = {}
+                cube_obj.nusiq_mcblend_object_properties.mirror = cube.mirror
                 _set_uv(
                     self.uv_converter,
                     CubePolygons.build(cube_obj, cube.mirror),

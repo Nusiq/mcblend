@@ -172,15 +172,15 @@ class BoneExport:
             )
             c_rot = cubeprop.get_mcrotation(thisobj)
 
-            if cubeprop.mc_inflate != 0:
-                c_size = c_size - cubeprop.mc_inflate*2
-                c_origin = c_origin + cubeprop.mc_inflate
+            if cubeprop.inflate != 0:
+                c_size = c_size - cubeprop.inflate*2
+                c_origin = c_origin + cubeprop.inflate
 
             uv = uv_factory.get_uv_export(cubeprop, c_size)
 
             cube = CubeExport(
                 size=c_size, pivot=c_pivot, origin=c_origin,
-                rotation=c_rot, inflate=cubeprop.mc_inflate, uv=uv)
+                rotation=c_rot, inflate=cubeprop.inflate, uv=uv)
             self.cubes.append(cube)
 
 

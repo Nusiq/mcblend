@@ -78,60 +78,45 @@ class McblendObject:
         return tuple(children)  # type: ignore
 
     @property
-    def mc_inflate(self) -> float:
-        '''Returns the value of mc_inflate property of the object'''
-        if 'mc_inflate' in self.thisobj:
-            return self.thisobj['mc_inflate']
-        return 0
+    def inflate(self) -> float:
+        '''Returns the value of inflate property of the object'''
+        return self.thisobj.nusiq_mcblend_object_properties.inflate
 
-    @mc_inflate.setter
-    def mc_inflate(self, mc_inflate: float):
-        '''Sets the mc_inflate property of the cube.'''
-        if mc_inflate != 0:
-            self.thisobj['mc_inflate'] = mc_inflate
-        elif 'mc_inflate' in self.thisobj:  # 0 is default value
-            del self.thisobj['mc_inflate']
+    @inflate.setter
+    def inflate(self, inflate: float):
+        '''Sets the inflate property of the cube.'''
+        self.thisobj.nusiq_mcblend_object_properties.inflate = inflate
 
     @property
-    def mc_mirror(self) -> bool:
-        '''Returns true if the object has mc_mirror object'''
-        return 'mc_mirror' in self.thisobj
+    def mirror(self) -> bool:
+        '''Returns true if the object has mirror object'''
+        return self.thisobj.nusiq_mcblend_object_properties.mirror
 
-    @mc_mirror.setter
-    def mc_mirror(self, mc_mirror: bool):
-        '''Sets the mc_mirror property of the cube.'''
-        if mc_mirror:
-            self.thisobj['mc_mirror'] = {}
-        elif 'mc_mirror' in self.thisobj:
-            del self.thisobj['mc_mirror']
+    @mirror.setter
+    def mirror(self, mirror: bool):
+        '''Sets the mirror property of the cube.'''
+        self.thisobj.nusiq_mcblend_object_properties.mirror = mirror
 
     @property
-    def mc_is_bone(self) -> bool:
-        '''Returns true if the object has mc_is_bone object'''
-        return 'mc_is_bone' in self.thisobj
+    def is_bone(self) -> bool:
+        '''Returns true if the object has is_bone object'''
+        return self.thisobj.nusiq_mcblend_object_properties.is_bone
 
-    @mc_is_bone.setter
-    def mc_is_bone(self, mc_is_bone: bool):
-        '''Sets the mc_is_bone property of the cube.'''
-        if mc_is_bone:
-            self.thisobj['mc_is_bone'] = {}
-        elif 'mc_is_bone' in self.thisobj:
-            del self.thisobj['mc_is_bone']
+    @is_bone.setter
+    def is_bone(self, is_bone: bool):
+        '''Sets the is_bone property of the cube.'''
+        self.thisobj.nusiq_mcblend_object_properties.is_bone = is_bone
 
     @property
-    def mc_uv_group(self) -> Optional[str]:
-        '''Returns the value of mc_uv_group property of the object'''
-        if 'mc_uv_group' in self.thisobj:
-            return self.thisobj['mc_uv_group']
-        return None
+    def uv_group(self) -> str:
+        '''Returns the value of uv_group property of the object'''
+        return self.thisobj.nusiq_mcblend_object_properties.uv_group
 
-    @mc_uv_group.setter
-    def mc_uv_group(self, mc_uv_group: Optional[str]):
-        '''Returns the value of mc_uv_group property of the object'''
-        if mc_uv_group is not None:
-            self.thisobj['mc_uv_group'] = mc_uv_group
-        elif 'mc_uv_group' in self.thisobj:
-            del self.thisobj['mc_uv_group']
+    @uv_group.setter
+    def uv_group(self, uv_group: str):
+        '''Returns the value of uv_group property of the object'''
+        self.thisobj.nusiq_mcblend_object_properties.uv_group = uv_group
+
 
     @property
     def obj_data(self) -> Any:
@@ -281,7 +266,7 @@ class McblendObject:
         '''
         Returns the polygons of the cube inside a CubePolygons object.
         '''
-        return CubePolygons.build(self.thisobj, self.mc_mirror)
+        return CubePolygons.build(self.thisobj, self.mirror)
 
 # key (side, is_mirrored) : value (names of the vertices)
 # Used in CubePolygons constructor
@@ -500,13 +485,14 @@ class McblendObjectGroup:
             if obj.type == 'EMPTY':
                 curr_obj_mc_type = MCObjType.BONE
                 if (obj.parent is not None and len(obj.children) == 0 and
-                        'mc_is_bone' not in obj):
+                        not obj.nusiq_mcblend_object_properties.is_bone):
                     curr_obj_mc_type = MCObjType.LOCATOR
 
                 if obj.parent is not None:
                     curr_obj_mc_parent = self._get_parent_mc_bone(obj)
             elif obj.type == 'MESH':
-                if obj.parent is None or 'mc_is_bone' in obj:
+                if (obj.parent is None or
+                        obj.nusiq_mcblend_object_properties.is_bone):
                     curr_obj_mc_type = MCObjType.BOTH
                 else:
                     curr_obj_mc_type = MCObjType.CUBE
@@ -599,7 +585,8 @@ class McblendObjectGroup:
             if obj.parent_type == 'OBJECT':
                 obj = obj.parent
                 obj_id = ObjectId(obj.name, '')
-                if obj.type == 'EMPTY' or 'mc_is_bone' in obj:
+                if (obj.type == 'EMPTY' or
+                        obj.nusiq_mcblend_object_properties.is_bone):
                     return obj_id
             else:
                 raise Exception(f'Unsuported parent type {obj.parent_type}')
@@ -633,7 +620,7 @@ def inflate_objets(
         context: bpy_types.Context, objects: List[bpy_types.Object],
         inflate: float, mode: str) -> int:
     '''
-    Adds mc_inflate property to objects and changes their dimensions. Returns
+    Adds inflate property to objects and changes their dimensions. Returns
     the number of edited objects.
     Returns the number of edited objects.
 
@@ -659,16 +646,19 @@ def inflate_objets(
     counter = 0
     for obj in objects:
         if obj.type == 'MESH':
-            if 'mc_inflate' in obj:
+            if obj.nusiq_mcblend_object_properties.inflate != 0.0:
                 if relative:
-                    effective_inflate = obj['mc_inflate'] + inflate
+                    effective_inflate = (
+                        obj.nusiq_mcblend_object_properties.inflate + inflate)
                 else:
                     effective_inflate = inflate
-                delta_inflate = effective_inflate - obj['mc_inflate']
-                obj['mc_inflate'] = effective_inflate
+                delta_inflate = (
+                    effective_inflate -
+                    obj.nusiq_mcblend_object_properties.inflate)
+                obj.nusiq_mcblend_object_properties.inflate = effective_inflate
             else:
                 delta_inflate = inflate
-                obj['mc_inflate'] = inflate
+                obj.nusiq_mcblend_object_properties.inflate = inflate
             # Clear parent from children for a moment
             children = obj.children
             for child in children:
@@ -691,10 +681,6 @@ def inflate_objets(
             for child in children:
                 child.parent = obj
                 child.matrix_parent_inverse = obj.matrix_world.inverted()
-
-            # Remove the property if it's equal to 0
-            if obj['mc_inflate'] == 0:
-                del obj['mc_inflate']
 
             counter += 1
     return counter

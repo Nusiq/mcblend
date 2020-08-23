@@ -12,8 +12,8 @@ import mathutils
 from .operator import (
     OBJECT_OT_NusiqMcblendExportModelOperator, OBJECT_OT_NusiqMcblendExportAnimationOperator,
     OBJECT_OT_NusiqMcblendMapUvOperator, OBJECT_OT_NusiqMcblendUvGroupOperator,
-    OBJECT_OT_NusiqMcblendToggleMcIsBoneOperator,
-    OBJECT_OT_NusiqMcblendToggleMcMirrorOperator,
+    OBJECT_OT_NusiqMcblendToggleIsBoneOperator,
+    OBJECT_OT_NusiqMcblendToggleMirrorOperator,
     OBJECT_OT_NusiqMcblendSetInflateOperator,
     menu_func_nusiq_mcblend_export_model, menu_func_nusiq_mcblend_export_animation,
     OBJECT_OT_NusiqMcblendRoundDimensionsOperator,
@@ -27,6 +27,9 @@ from .panel import (
     OBJECT_NusiqMcblendExporterProperties,
     OBJECT_NusiqMcblendAnimationProperties,
 
+    OBJECT_NusiqMcblendObjectProperties,
+
+    OBJECT_PT_NusiqMcblendObjectPropertiesPanel,
     OBJECT_PT_NusiqMcblendExportPanel,
     OBJECT_PT_NusiqMcblendExportAnimationPanel,
     OBJECT_PT_NusiqMcblendSetUvsPanel,
@@ -51,6 +54,7 @@ classes = (
     OBJECT_NusiqMcblendExporterProperties,
     OBJECT_NusiqMcblendAnimationProperties,
 
+    OBJECT_PT_NusiqMcblendObjectPropertiesPanel,
     OBJECT_OT_NusiqMcblendExportModelOperator,
     OBJECT_OT_NusiqMcblendExportAnimationOperator,
     OBJECT_PT_NusiqMcblendExportAnimationPanel,
@@ -58,8 +62,8 @@ classes = (
     OBJECT_OT_NusiqMcblendMapUvOperator,
     OBJECT_PT_NusiqMcblendSetUvsPanel,
     OBJECT_OT_NusiqMcblendUvGroupOperator,
-    OBJECT_OT_NusiqMcblendToggleMcIsBoneOperator,
-    OBJECT_OT_NusiqMcblendToggleMcMirrorOperator,
+    OBJECT_OT_NusiqMcblendToggleIsBoneOperator,
+    OBJECT_OT_NusiqMcblendToggleMirrorOperator,
     OBJECT_PT_NusiqMcblendOperatorsPanel,
     OBJECT_OT_NusiqMcblendSetInflateOperator,
     OBJECT_OT_NusiqMcblendRoundDimensionsOperator,
@@ -69,6 +73,8 @@ classes = (
     OBJECT_OT_NusiqMcblendListAnimations,
     OBJECT_OT_NusiqMcblendAddAnimation,
     OBJECT_OT_NusiqMcblendRemoveAnimation,
+
+    OBJECT_NusiqMcblendObjectProperties,
 )
 
 def register():
@@ -86,6 +92,9 @@ def register():
     bpy.types.Scene.nusiq_mcblend_active_animation = bpy.props.IntProperty(
         default=0)
 
+    bpy.types.Object.nusiq_mcblend_object_properties = PointerProperty(
+        type=OBJECT_NusiqMcblendObjectProperties
+    )
     # Add properties to objects
     # TODO - implement
 

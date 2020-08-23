@@ -175,16 +175,16 @@ class OBJECT_OT_NusiqMcblendMapUvOperator(bpy.types.Operator):
 # Uv group
 class OBJECT_OT_NusiqMcblendUvGroupOperator(bpy.types.Operator):
     '''
-    Operator used for setting custom property called mc_uv_group for selected
+    Operator used for setting custom property called uv_group for selected
     objects.
     '''
     # pylint: disable=C0116, W0613, no-member
     bl_idname = "object.nusiq_mcblend_uv_group_operator"
-    bl_label = "Set mc_uv_group for bedrock model."
+    bl_label = "Set uv_group for bedrock model."
     bl_options = {'REGISTER', 'UNDO'}
     bl_description = (
-        "Set mc_uv_group for bedrock model. Objects that have the same width, "
-        "depth and height and are in the same mc_uv_group are mapped to the "
+        "Set uv_group for bedrock model. Objects that have the same width, "
+        "depth and height and are in the same uv_group are mapped to the "
         "same spot on the texutre"
     )
 
@@ -205,32 +205,32 @@ class OBJECT_OT_NusiqMcblendUvGroupOperator(bpy.types.Operator):
         if self.group_name == "":
             for obj in context.selected_objects:
                 if obj.type == "MESH" or obj.type == "EMPTY":
-                    # Empty string clears the UV group
-                    if 'mc_uv_group' in obj:
-                        del obj['mc_uv_group']
-            self.report({'INFO'}, 'Cleared mc_uv_groups.')
+                        obj.nusiq_mcblend_object_properties.uv_group = (
+                            self.group_name)
+            self.report({'INFO'}, 'Cleared uv_groups.')
         else:
             for obj in context.selected_objects:
                 if obj.type == "MESH" or obj.type == "EMPTY":
-                    obj['mc_uv_group'] = self.group_name
-            self.report({'INFO'}, f'Set mc_uv_group to {self.group_name}.')
+                    obj.nusiq_mcblend_object_properties.uv_group = (
+                        self.group_name)
+            self.report({'INFO'}, f'Set uv_group to {self.group_name}.')
         self.group_name = ""
 
         return {'FINISHED'}
 
 
-# Toogle mc_mirror
-class OBJECT_OT_NusiqMcblendToggleMcMirrorOperator(bpy.types.Operator):
+# Toogle mirror
+class OBJECT_OT_NusiqMcblendToggleMirrorOperator(bpy.types.Operator):
     '''
-    Operator used for toggling custom property called mc_mirror for selected
+    Operator used for toggling custom property called mirror for selected
     objects
     '''
     # pylint: disable=C0116, W0613, no-member
-    bl_idname = "object.nusiq_mcblend_toggle_mc_mirror_operator"
-    bl_label = "Toggle mc_mirror for selected objects."
+    bl_idname = "object.nusiq_mcblend_toggle_mirror_operator"
+    bl_label = "Toggle mirror for selected objects."
     bl_options = {'REGISTER', 'UNDO'}
     bl_description = (
-        "Toggle mc_mirror for selected objects. Adds or removes mirror "
+        "Toggle mirror for selected objects. Adds or removes mirror "
         "property from a cube in minecraft model"
     )
 
@@ -246,36 +246,38 @@ class OBJECT_OT_NusiqMcblendToggleMcMirrorOperator(bpy.types.Operator):
         is_clearing = False
         for obj in context.selected_objects:
             if obj.type == "MESH":
-                if 'mc_mirror' in obj:
+                if obj.nusiq_mcblend_object_properties.mirror:
                     is_clearing = True
                     break
         if is_clearing:
             for obj in context.selected_objects:
                 if obj.type == "MESH":
-                    if 'mc_mirror' in obj:
-                        del obj['mc_mirror']
-            self.report({'INFO'}, 'Cleared mc_mirror.')
+                    (obj.nusiq_mcblend_object_properties
+                        ).mirror = False
+            self.report({'INFO'}, 'Disabled the mirror for generating UV for '
+                'selected objects.')
         else:
             for obj in context.selected_objects:
                 if obj.type == "MESH":
-                    obj['mc_mirror'] = {}
-            self.report({'INFO'}, 'Set mc_mirror to property 1.')
-
+                    (obj.nusiq_mcblend_object_properties
+                        ).mirror = True
+            self.report({'INFO'}, 'Enabled the mirror for generating UV for '
+                'selected objects.')
         return {'FINISHED'}
 
 
-# Toggle mc_is_bone
-class OBJECT_OT_NusiqMcblendToggleMcIsBoneOperator(bpy.types.Operator):
+# Toggle is_bone
+class OBJECT_OT_NusiqMcblendToggleIsBoneOperator(bpy.types.Operator):
     '''
-    Operator used for toggling custom property called mc_is_bone for selected
+    Operator used for toggling custom property called is_bone for selected
     objects.
     '''
     # pylint: disable=C0116, W0613, no-member
-    bl_idname = "object.nusiq_mcblend_toggle_mc_is_bone_operator"
-    bl_label = "Toggle mc_is_bone for selected objects."
+    bl_idname = "object.nusiq_mcblend_toggle_is_bone_operator"
+    bl_label = "Toggle is_bone for selected objects."
     bl_options = {'REGISTER', 'UNDO'}
     bl_description = (
-        "Toggles mc_is_bone for selected objects. Setting mc_is_bone property "
+        "Toggles is_bone for selected objects. Setting is_bone property "
         "to 1 ensures that the object will be converted to a bone in minecraft"
         " model"
     )
@@ -295,20 +297,20 @@ class OBJECT_OT_NusiqMcblendToggleMcIsBoneOperator(bpy.types.Operator):
         is_clearing = False
         for obj in context.selected_objects:
             if obj.type == "MESH":
-                if 'mc_is_bone' in obj:
+                if obj.nusiq_mcblend_object_properties.is_bone:
                     is_clearing = True
                     break
         if is_clearing:
             for obj in context.selected_objects:
                 if obj.type == "MESH" or obj.type == "EMPTY":
-                    if 'mc_is_bone' in obj:
-                        del obj['mc_is_bone']
-            self.report({'INFO'}, 'Cleared mc_is_bone.')
+                    obj.nusiq_mcblend_object_properties.is_bone = False
+            self.report(
+                {'INFO'}, 'Objects are not market to export as bones anymore.')
         else:
             for obj in context.selected_objects:
                 if obj.type == "MESH" or obj.type == "EMPTY":
-                    obj['mc_is_bone'] = {}
-            self.report({'INFO'}, 'Marked slected objects as mcbones.')
+                    obj.nusiq_mcblend_object_properties.is_bone = True
+            self.report({'INFO'}, 'Marked slected objects to export as bones')
 
         return {'FINISHED'}
 
@@ -317,15 +319,14 @@ class OBJECT_OT_NusiqMcblendToggleMcIsBoneOperator(bpy.types.Operator):
 class OBJECT_OT_NusiqMcblendSetInflateOperator(bpy.types.Operator):
     '''
     Operator used for setting the inflate value of selected objects. It changes
-    the dimensions of selected object and adds custom property called
-    mc_inflate.
+    the dimensions of selected object and adds custom property called inflate.
     '''
     # pylint: disable=C0116, W0613, no-member
     bl_idname = "object.nusiq_mcblend_set_inflate_operator"
-    bl_label = "Set mc_inflate"
+    bl_label = "Set inflate"
     bl_options = {'REGISTER', 'UNDO', 'BLOCKING', 'GRAB_CURSOR'}
     bl_description = (
-        "Set the mc_inflate vale for selected objects and change their "
+        "Set the inflate vale for selected objects and change their "
         "dimensions to fit the inflate values."
     )
 

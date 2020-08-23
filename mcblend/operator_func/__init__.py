@@ -69,8 +69,8 @@ def export_animation(
     '''
     # Check and create object properties
     object_properties = McblendObjectGroup(context)
-    
-    
+
+
     anim_data = context.scene.nusiq_mcblend_animations[
         context.scene.nusiq_mcblend_active_animation]
 
@@ -168,17 +168,18 @@ def round_dimensions(context: bpy_types.Context) -> int:
 
             # Set new dimensions
             dimensions = np.array(obj.dimensions)
-            if 'mc_inflate' in obj:
+
+            if obj.nusiq_mcblend_object_properties.inflate != 0.0:
                 dimensions -= (
-                    obj['mc_inflate'] * 2 /
+                    obj.nusiq_mcblend_object_properties.inflate * 2 /
                     MINECRAFT_SCALE_FACTOR
                 )
             dimensions = np.array(
                 dimensions * MINECRAFT_SCALE_FACTOR
             ).round() / MINECRAFT_SCALE_FACTOR
-            if 'mc_inflate' in obj:
+            if obj.nusiq_mcblend_object_properties.inflate != 0.0:
                 dimensions += (
-                    obj['mc_inflate'] * 2 /
+                    obj.nusiq_mcblend_object_properties.inflate * 2 /
                     MINECRAFT_SCALE_FACTOR
                 )
             obj.dimensions = dimensions

@@ -290,7 +290,7 @@ class UvMcCube(McblendObjUvBox):
 
         cube_polygons = self.thisobj.cube_polygons()
 
-        if self.thisobj.mc_mirror:
+        if self.thisobj.mirror:
             cp1, cp3 = cube_polygons.west, cube_polygons.east
         else:
             cp1, cp3 = cube_polygons.east, cube_polygons.west
@@ -529,13 +529,13 @@ class UvMapper:
                     MINECRAFT_SCALE_FACTOR
                 )
 
-                if objprop.mc_inflate != 0:
-                    scale = scale - objprop.mc_inflate * 2
+                if objprop.inflate != 0:
+                    scale = scale - objprop.inflate * 2
 
                 # width, height, depth
                 width, height, depth = tuple([round(i) for i in scale])
-                if objprop.mc_uv_group is not None:
-                    curr_key = (width, depth, height, objprop.mc_uv_group)
+                if objprop.uv_group != '':
+                    curr_key = (width, depth, height, objprop.uv_group)
                     if curr_key in cube_uv_groups:
                         cube_uv_groups[curr_key].append(
                             UvMcCube(width, depth, height, objprop)
