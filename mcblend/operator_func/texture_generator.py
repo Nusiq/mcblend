@@ -1,5 +1,6 @@
 '''
 Set of various image filters used for generating textures for models.
+Uses numpy arrays with colors with colors encoded with values in range 0-1.
 '''
 from __future__ import annotations
 

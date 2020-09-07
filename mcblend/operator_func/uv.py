@@ -18,7 +18,25 @@ import bpy_types
 from .exception import NotEnoughTextureSpace
 from .common import (
     MINECRAFT_SCALE_FACTOR, McblendObject, McblendObjectGroup, CubePolygon)
+from .texture_generator import Mask, ColorMask, ElipseMask
 
+class CubesMasks:
+    def __init__(self,
+            side1: List[Mask]=None, side2: List[Mask]=None,
+            side3: List[Mask]=None, side4: List[Mask]=None,
+            side5: List[Mask]=None, side6: List[Mask]=None):
+        self.side1: List[Mask] = (
+            [ElipseMask((0.4, 0.4), (0.6, 0.6), strength=(0.5, 1.0)), ColorMask((0, 1, 0))] if side1 is None else side1)
+        self.side2: List[Mask] = (
+            [ElipseMask((0.4, 0.4), (0.6, 0.6), strength=(0.5, 1.0)), ColorMask((1, 0, 1))] if side2 is None else side2)
+        self.side3: List[Mask] = (
+            [ElipseMask((0.4, 0.4), (0.6, 0.6), strength=(0.5, 1.0)), ColorMask((1, 0, 0))] if side3 is None else side3)
+        self.side4: List[Mask] = (
+            [ElipseMask((0.4, 0.4), (0.6, 0.6), strength=(0.5, 1.0)), ColorMask((0, 1, 1))] if side4 is None else side4)
+        self.side5: List[Mask] = (
+            [ElipseMask((0.4, 0.4), (0.6, 0.6), strength=(0.5, 1.0)), ColorMask((0, 0, 1))] if side5 is None else side5)
+        self.side6: List[Mask] = (
+            [ElipseMask((0.4, 0.4), (0.6, 0.6), strength=(0.5, 1.0)), ColorMask((1, 1, 0))] if side6 is None else side6)
 
 class CoordinatesConverter:
     '''
@@ -88,6 +106,7 @@ class UvBox:
 
         self.size: Tuple[int, int] = size
         self.uv: Tuple[int, int] = uv
+
 
     def collides(self, other: UvBox):
         '''
@@ -173,8 +192,7 @@ class UvBox:
             )
 
     def paint_texture(
-            self, arr: np.ndarray, resolution: int = 1,
-            color: Tuple[float, float, float, float] = None,
+            self, arr: np.ndarray, resolution: int = 1
         ):
         '''
         Paints the UvBox on the texture represented by the numpy array.
@@ -183,11 +201,7 @@ class UvBox:
         - `arr: np.ndarray` - the texture as an numpy array.
         - `resolution: int` - the resolution of the Minecraft texture. 1 is
           standard Minecrft texture resolution (16 pixels for one block).
-        - `color: Tuple[float, float, float, float]` - the color for the
-          painted space.
         '''
-        if color is None:
-            color = (1, 1, 1, 1)  # White by default
         min1 = int(arr.shape[0]/resolution)-int(self.uv[1]+self.size[1])
         max1 = int(arr.shape[0]/resolution)-int(self.uv[1])
         min2, max2 = int(self.uv[0]), int(self.uv[0]+self.size[0])
@@ -195,11 +209,11 @@ class UvBox:
         min2 = min2 * resolution
         max1 = max1 * resolution
         max2 = max2 * resolution
-        paint_bounds = arr[min1:max1, min2:max2]
-        paint_bounds[..., 0] = color[0]
-        paint_bounds[..., 1] = color[1]
-        paint_bounds[..., 2] = color[2]
-        paint_bounds[..., 3] = color[3]
+
+        # Alway paint white
+        texture_part = arr[min1:max1, min2:max2]
+        texture_part[...] = 1  # Set RGBA white
+
 
 class McblendObjUvBox(UvBox):
     '''
@@ -233,10 +247,12 @@ class UvMcCubeFace(UvBox):
     '''
     def __init__(
             self, cube: UvMcCube, cube_polygon: CubePolygon,
-            size, uv=None):
+            size: Tuple[int, int], masks: List[Mask],
+            uv: Tuple[int, int]=None):
         super().__init__(size, uv=uv)
         self.cube = cube
         self.cube_polygon = cube_polygon
+        self.masks = masks
 
     def set_blender_uv(self, converter: CoordinatesConverter):
         '''
@@ -268,6 +284,33 @@ class UvMcCubeFace(UvBox):
             (self.uv[0] + self.size[0], self.uv[1]))
         uv_data[left_up].uv = converter.convert(self.uv)
 
+    def paint_texture(
+            self, arr: np.ndarray, resolution: int = 1
+        ):
+        '''
+        Paints the UvBox on the texture represented by the numpy array.
+
+        # Arguments:
+        - `arr: np.ndarray` - the texture as an numpy array.
+        - `resolution: int` - the resolution of the Minecraft texture. 1 is
+          standard Minecrft texture resolution (16 pixels for one block).
+        '''
+        min1 = int(arr.shape[0]/resolution)-int(self.uv[1]+self.size[1])
+        max1 = int(arr.shape[0]/resolution)-int(self.uv[1])
+        min2, max2 = int(self.uv[0]), int(self.uv[0]+self.size[0])
+        min1 = min1 * resolution
+        min2 = min2 * resolution
+        max1 = max1 * resolution
+        max2 = max2 * resolution
+
+        # Alway paint white
+        texture_part = arr[min1:max1, min2:max2]
+        texture_part[...] = 1  # Set RGBA white
+
+        texture_part = texture_part[..., :3]  # No alpha channel filters yet
+        for mask in self.masks:
+            mask.apply(texture_part)
+
 class UvMcCube(McblendObjUvBox):
     '''
     Extends the McblendObjUvBox by combining Six UvMcCubeFaces grouped together
@@ -276,9 +319,10 @@ class UvMcCube(McblendObjUvBox):
     '''
     def __init__(
             self, width: int, depth: int, height: int,
-            thisobj: McblendObject,
-            uv: Tuple[int, int] = None
+            thisobj: McblendObject, *, cubes_masks: CubesMasks=None
         ):
+        if cubes_masks is None:
+            cubes_masks = CubesMasks()
         size = (
             2*depth + 2*width,
             height + depth
@@ -295,23 +339,30 @@ class UvMcCube(McblendObjUvBox):
         else:
             cp1, cp3 = cube_polygons.east, cube_polygons.west
         # right/left
-        self.side1 = UvMcCubeFace(self, cp1, (depth, height), (0, depth))
+        self.side1 = UvMcCubeFace(
+            self, cp1, (depth, height), cubes_masks.side1,
+            uv=(0, depth))
         # front
         self.side2 = UvMcCubeFace(
-            self, cube_polygons.north, (width, height), (depth, depth))
+            self, cube_polygons.north, (width, height), cubes_masks.side2,
+            uv=(depth, depth))
         # left/right
         self.side3 = UvMcCubeFace(
-            self, cp3, (depth, height), (depth + width, depth))
+            self, cp3, (depth, height), cubes_masks.side3,
+            uv=(depth + width, depth))
         # back
         self.side4 = UvMcCubeFace(
-            self, cube_polygons.south, (width, height), (2*depth + width, depth))
+            self, cube_polygons.south, (width, height), cubes_masks.side4,
+            uv=(2*depth + width, depth))
         # top
         self.side5 = UvMcCubeFace(
-            self, cube_polygons.up, (width, depth), (depth, 0))
+            self, cube_polygons.up, (width, depth), cubes_masks.side5,
+            uv=(depth, 0))
         # bottom
         self.side6 = UvMcCubeFace(
-            self, cube_polygons.down, (width, depth), (depth + width, 0))
-        super().__init__(size, uv)
+            self, cube_polygons.down, (width, depth), cubes_masks.side6,
+            uv=(depth + width, 0))
+        super().__init__(size, None)
 
     @property  # type: ignore
     def uv(self) -> Tuple[int, int]:  # type: ignore
@@ -383,27 +434,14 @@ class UvMcCube(McblendObjUvBox):
             )
 
     def paint_texture(
-            self, arr: np.ndarray, resolution: int = 1,
-            color: Tuple[float, float, float, float] = None,
+            self, arr: np.ndarray, resolution: int = 1
         ):
-        self.side1.paint_texture(
-            arr, resolution, color if color is not None else (0, 1, 0, 1)
-        )
-        self.side2.paint_texture(
-            arr, resolution, color if color is not None else (1, 0, 1, 1)
-        )
-        self.side3.paint_texture(
-            arr, resolution, color if color is not None else (1, 0, 0, 1)
-        )
-        self.side4.paint_texture(
-            arr, resolution, color if color is not None else (0, 1, 1, 1)
-        )
-        self.side5.paint_texture(
-            arr, resolution, color if color is not None else (0, 0, 1, 1)
-        )
-        self.side6.paint_texture(
-            arr, resolution, color if color is not None else (1, 1, 0, 1)
-        )
+        self.side1.paint_texture(arr, resolution)
+        self.side2.paint_texture(arr, resolution)
+        self.side3.paint_texture(arr, resolution)
+        self.side4.paint_texture(arr, resolution)
+        self.side5.paint_texture(arr, resolution)
+        self.side6.paint_texture(arr, resolution)
 
     def new_uv_layer(self):
         self.thisobj.obj_data.uv_layers.new()
@@ -478,11 +516,10 @@ class UvGroup(McblendObjUvBox):
             obj.clear_uv_layers()
 
     def paint_texture(
-            self, arr: np.ndarray, resolution: int = 1,
-            color: Tuple[float, float, float, float] = None,
+            self, arr: np.ndarray, resolution: int = 1, masks: List[Mask]=None
         ):
         for obj in self._objects:
-            obj.paint_texture(arr, resolution, color)
+            obj.paint_texture(arr, resolution, None)
 
     def new_uv_layer(self):
         for obj in self._objects:
