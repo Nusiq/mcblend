@@ -44,7 +44,7 @@ class Color(NamedTuple):
             int(color[4:], 16)/255.0
         )
 
-
+# TODO - add to gui
 class ColorPalletteMask(Mask):
     def __init__(
             self, colors: List[Color], *,
@@ -111,7 +111,7 @@ class MultiplicativeMask(Mask):
         '''
         pass
 
-
+# TODO - add to gui
 class Stripe(NamedTuple):
     width: float
     streangth: float
@@ -148,7 +148,7 @@ class TwoPointSurfaceMask(MultiplicativeMask):
         v1, v2 = min(v1, v2), max(v1, v2)
         return w, h, u1, u2, v1, v2
 
-
+# TODO - add to gui
 class GradientMask(TwoPointSurfaceMask):
     def __init__(
             self, p1: Tuple[float, float],
@@ -209,7 +209,7 @@ class GradientMask(TwoPointSurfaceMask):
 
         return mask[:, :, np.newaxis]
 
-
+# TODO - add to gui
 class ElipseMask(TwoPointSurfaceMask):
     def __init__(
             self, p1: Tuple[float, float],
@@ -252,7 +252,7 @@ class ElipseMask(TwoPointSurfaceMask):
         mask=mask**self.expotent
         return mask[:, :, np.newaxis]
 
-
+# TODO - add to gui
 class RectangleMask(TwoPointSurfaceMask):
     def __init__(
             self, p1: Tuple[float, float],
@@ -326,7 +326,7 @@ class RectangleMask(TwoPointSurfaceMask):
         mask = mask**self.expotent
         return mask[:, :, np.newaxis]
 
-
+# TODO - add to gui
 class StripesMask(MultiplicativeMask):
     def __init__(
             self, stripes: List[Stripe], *,
@@ -371,7 +371,7 @@ class StripesMask(MultiplicativeMask):
                 break
         return mask[:, :, np.newaxis]
 
-
+# TODO - add to gui
 class RandomMask(MultiplicativeMask):
     def __init__(
             self, *, strength: Tuple[float, float]=(0.0, 1.0),
@@ -389,7 +389,7 @@ class RandomMask(MultiplicativeMask):
         mask = mask**self.expotent
         return mask[:,:,np.newaxis]
 
-
+# TODO - add to gui
 class ColorMask(MultiplicativeMask):
     def __init__(self, rgb: Tuple[float, float, float]):
         self.r, self.g, self.b = rgb
@@ -403,7 +403,7 @@ class ColorMask(MultiplicativeMask):
         mask[:,:,2] = self.b
         return mask[:,:,:]
 
-
+# TODO - add to gui
 class MixMask(MultiplicativeMask):
     def __init__(
             self, masks: Iterable[MultiplicativeMask], *,

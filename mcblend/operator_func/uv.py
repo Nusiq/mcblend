@@ -518,8 +518,10 @@ class UvGroup(McblendObjUvBox):
     def paint_texture(
             self, arr: np.ndarray, resolution: int = 1, masks: List[Mask]=None
         ):
-        for obj in self._objects:
-            obj.paint_texture(arr, resolution, None)
+        # They mapped to one place (paint only one)
+        # for obj in self._objects:
+        if len(self._objects) > 0 :
+            self._objects[0].paint_texture(arr, resolution)
 
     def new_uv_layer(self):
         for obj in self._objects:

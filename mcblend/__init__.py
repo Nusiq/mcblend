@@ -22,6 +22,12 @@ from .operator import (
     OBJECT_OT_NusiqMcblendListAnimations,
     OBJECT_OT_NusiqMcblendAddAnimation,
     OBJECT_OT_NusiqMcblendRemoveAnimation,
+
+
+    OBJECT_OT_NusiqMcblendListUvGroups,
+    OBJECT_OT_NusiqMcblendAddUvGroup,
+    OBJECT_OT_NusiqMcblendRemoveUvGroup,
+    OBJECT_OT_NusiqMcblendRenameUvGroup,
 )
 from .panel import (
     OBJECT_NusiqMcblendExporterProperties,
@@ -35,6 +41,9 @@ from .panel import (
     OBJECT_PT_NusiqMcblendSetUvsPanel,
     OBJECT_PT_NusiqMcblendOperatorsPanel,
     OBJECT_PT_NusiqMcblendImportPanel,
+    OBJECT_PT_NusiqMcblendUVGroupPanel,
+
+    OBJECT_NusiqMcblendUvGroupProperties,
 )
 
 
@@ -69,12 +78,20 @@ classes = (
     OBJECT_OT_NusiqMcblendRoundDimensionsOperator,
     OBJECT_OT_NusiqMcblendImport,
     OBJECT_PT_NusiqMcblendImportPanel,
+    OBJECT_PT_NusiqMcblendUVGroupPanel,
 
     OBJECT_OT_NusiqMcblendListAnimations,
     OBJECT_OT_NusiqMcblendAddAnimation,
     OBJECT_OT_NusiqMcblendRemoveAnimation,
 
+    OBJECT_OT_NusiqMcblendListUvGroups,
+    OBJECT_OT_NusiqMcblendAddUvGroup,
+    OBJECT_OT_NusiqMcblendRemoveUvGroup,
+    OBJECT_OT_NusiqMcblendRenameUvGroup,
+
     OBJECT_NusiqMcblendObjectProperties,
+
+    OBJECT_NusiqMcblendUvGroupProperties
 )
 
 def register():
@@ -82,22 +99,28 @@ def register():
     # pylint: disable=assignment-from-no-return, no-member
     for _class in classes:
         bpy.utils.register_class(_class)
-    
-    # Add properties to Scene
+
+    # Model export properties (the scope is the whole scene)
     bpy.types.Scene.nusiq_mcblend = PointerProperty(
-        type=OBJECT_NusiqMcblendExporterProperties
-    )
+        type=OBJECT_NusiqMcblendExporterProperties)
+
+    # Animation properties
+    bpy.types.Scene.nusiq_mcblend_active_animation = IntProperty(
+        default=0)
     bpy.types.Scene.nusiq_mcblend_animations = CollectionProperty(
         type=OBJECT_NusiqMcblendAnimationProperties)
-    bpy.types.Scene.nusiq_mcblend_active_animation = bpy.props.IntProperty(
+
+    # UV Groups
+    bpy.types.Scene.nusiq_mcblend_active_uv_group = IntProperty(
         default=0)
+    bpy.types.Scene.nusiq_mcblend_uv_groups = CollectionProperty(
+        type=OBJECT_NusiqMcblendUvGroupProperties)
 
+    # Object properties
     bpy.types.Object.nusiq_mcblend_object_properties = PointerProperty(
-        type=OBJECT_NusiqMcblendObjectProperties
-    )
-    # Add properties to objects
-    # TODO - implement
+        type=OBJECT_NusiqMcblendObjectProperties)
 
+    # Append operators to the F3 menu
     bpy.types.TOPBAR_MT_file_export.append(
         menu_func_nusiq_mcblend_export_model
     )

@@ -5,8 +5,20 @@ This module contains all of the panels for mcblend GUI.
 import bpy
 from bpy.props import (
     StringProperty, IntProperty, BoolProperty, FloatProperty,
-    FloatVectorProperty
+    FloatVectorProperty, PointerProperty, CollectionProperty
 )
+
+class OBJECT_NusiqMcblendUvGroupProperties(bpy.types.PropertyGroup):
+    name: StringProperty(  # type: ignore
+        name="Name",
+        description='The name of the UV group.',
+        # The Add operator overwrites default value on creation to trigger the
+        # update function
+        default='',
+        maxlen=1024
+    )
+
+
 
 class OBJECT_NusiqMcblendObjectProperties(bpy.types.PropertyGroup):
     mirror: BoolProperty(  # type: ignore
@@ -34,7 +46,6 @@ class OBJECT_NusiqMcblendObjectProperties(bpy.types.PropertyGroup):
         description="The inflate value of this object.",
         default=0.0
     )
-
 
 class OBJECT_NusiqMcblendAnimationProperties(bpy.types.PropertyGroup):
     name: StringProperty(  # type: ignore
@@ -130,6 +141,40 @@ class OBJECT_NusiqMcblendExporterProperties(bpy.types.PropertyGroup):
         soft_max=5,
     )
 
+# Panels
+class OBJECT_PT_NusiqMcblendUVGroupPanel(bpy.types.Panel):
+    '''Panel that lets edit UV groups'''
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = 'scene'
+    bl_label = "Mcblend UV groups"
+
+
+    def draw(self, context):
+        col = self.layout.column(align=True)
+
+        row = col.row()
+        row.operator(
+            "object.nusiq_mcblend_add_uv_group", text="New UV group"
+        )
+        active_uv_group_id = bpy.context.scene.nusiq_mcblend_active_uv_group
+        uv_groups = bpy.context.scene.nusiq_mcblend_uv_groups
+        if active_uv_group_id < len(uv_groups):
+            row.operator(
+                "object.nusiq_mcblend_remove_uv_group",
+                text="Remove this UV group")
+            col.operator_menu_enum(
+                "object.nusiq_mcblend_list_uv_groups", "uv_groups_enum",
+                text="Select UV Group")
+
+            active_uv_group = uv_groups[active_uv_group_id]
+            row = col.row()
+            row.label(text=f'UV Group: {active_uv_group.name}')
+            row.operator(
+                "object.nusiq_mcblend_rename_uv_group",
+                text="Rename this UV group")
+
+
 class OBJECT_PT_NusiqMcblendObjectPropertiesPanel(bpy.types.Panel):
     '''Panel with custom object properties (for meshes and empties)'''
     bl_space_type = 'PROPERTIES'
@@ -148,19 +193,17 @@ class OBJECT_PT_NusiqMcblendObjectPropertiesPanel(bpy.types.Panel):
         col = self.layout.column(align=True)
 
         if context.mode == "OBJECT" and context.object != None:
-            col.prop(
-                context.object.nusiq_mcblend_object_properties, "is_bone",
-                text="Export as bone")
+            object_properties = context.object.nusiq_mcblend_object_properties
+            uv_groups = context.scene.nusiq_mcblend_uv_groups
+            col.prop(object_properties, "is_bone", text="Export as bone")
             if context.object.type == 'MESH':
-                col.prop(
-                    context.object.nusiq_mcblend_object_properties, "mirror",
-                    text="Mirror")
-                col.prop(
-                    context.object.nusiq_mcblend_object_properties, "uv_group",
-                    text="UV group")
-                col.prop(
-                    context.object.nusiq_mcblend_object_properties, "inflate",
-                    text="Inflate")
+                col.prop(object_properties, "mirror", text="Mirror")
+                # TODO - add button to add/remove UV group
+                if object_properties.uv_group != '':
+                    col.label(text=f'UV Group: {object_properties.uv_group}')
+                else:
+                    col.label(text=f"This object does't have a UV group")
+                col.prop(object_properties, "inflate", text="Inflate")
 
 
 class OBJECT_PT_NusiqMcblendExportPanel(bpy.types.Panel):

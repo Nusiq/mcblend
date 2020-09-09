@@ -181,20 +181,28 @@ class OBJECT_OT_NusiqMcblendUvGroupOperator(bpy.types.Operator):
     # pylint: disable=C0116, W0613, no-member
     bl_idname = "object.nusiq_mcblend_uv_group_operator"
     bl_label = "Set uv_group for bedrock model."
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'UNDO'}
     bl_description = (
         "Set uv_group for bedrock model. Objects that have the same width, "
         "depth and height and are in the same uv_group are mapped to the "
         "same spot on the texutre"
     )
 
-    group_name: StringProperty(default="", name="Name")  # type: ignore
+    def list_uv_groups(self, context):
+        items = [
+            (x.name, x.name, x.name)
+            for x in bpy.context.scene.nusiq_mcblend_uv_groups]
+        return items
+    uv_groups_enum: bpy.props.EnumProperty(  # type: ignore
+        items=list_uv_groups, name="UV Groups")
 
     @classmethod
     def poll(cls, context: bpy_types.Context):
         if context.mode != 'OBJECT':
             return False
-        if len(context.selected_objects) < 1:
+        if len(context.selected_objects) < 0:
+            return False
+        if len(bpy.context.scene.nusiq_mcblend_uv_groups) == 0:
             return False
         return True
 
@@ -202,20 +210,8 @@ class OBJECT_OT_NusiqMcblendUvGroupOperator(bpy.types.Operator):
         return context.window_manager.invoke_props_dialog(self)
 
     def execute(self, context):
-        if self.group_name == "":
-            for obj in context.selected_objects:
-                if obj.type == "MESH" or obj.type == "EMPTY":
-                        obj.nusiq_mcblend_object_properties.uv_group = (
-                            self.group_name)
-            self.report({'INFO'}, 'Cleared uv_groups.')
-        else:
-            for obj in context.selected_objects:
-                if obj.type == "MESH" or obj.type == "EMPTY":
-                    obj.nusiq_mcblend_object_properties.uv_group = (
-                        self.group_name)
-            self.report({'INFO'}, f'Set uv_group to {self.group_name}.')
-        self.group_name = ""
-
+        context.object.nusiq_mcblend_object_properties.uv_group = (
+            self.uv_groups_enum)
         return {'FINISHED'}
 
 
@@ -535,4 +531,156 @@ class OBJECT_OT_NusiqMcblendRemoveAnimation(bpy.types.Operator):
         if 0 >= curr_anim_id and curr_anim_id < len_anims:
             load_animation_frame_properties(
                 context.scene.nusiq_mcblend_animations[curr_anim_id], context)
+        return {'FINISHED'}
+
+# UV group GUI
+def get_unused_uv_group_name(base_name: str, i=1):
+    uv_groups = bpy.context.scene.nusiq_mcblend_uv_groups
+    name = base_name  # f'{base_name}.{i:04}'
+    while name in uv_groups.keys():
+        name = f'{base_name}.{i:04}'
+        i += 1
+    return name
+
+class OBJECT_OT_NusiqMcblendListUvGroups(bpy.types.Operator):
+    bl_idname = "object.nusiq_mcblend_list_uv_groups"
+    bl_label = "List UV groups and save them to Enum to display them in GUI"
+
+    def list_uv_groups(self, context):
+        items = [
+            (str(i), x.name, x.name)
+            for i, x in enumerate(bpy.context.scene.nusiq_mcblend_uv_groups)]
+        return items
+
+    uv_groups_enum: bpy.props.EnumProperty(  # type: ignore
+        items=list_uv_groups, name="UV Groups")
+
+    def execute(self, context):
+        '''
+        Runs when user picks an item from the dropdown menu in uv_groups
+        panel. Sets the active animation.
+        '''
+        # If OK than save old animation state
+        len_uv_groups = len(context.scene.nusiq_mcblend_uv_groups)
+        curr_uv_group_id = context.scene.nusiq_mcblend_active_uv_group
+
+
+        # TODO:
+        # if curr_uv_group_id >= 0 and curr_uv_group_id < len_uv_groups:
+        #     Save uv group properties
+
+        # Set new uv_group and load its state
+        new_uv_group_id=int(self.uv_groups_enum)
+        context.scene.nusiq_mcblend_active_uv_group=new_uv_group_id
+
+        # TODO - Load uv group properties
+        return {'FINISHED'}
+
+
+class OBJECT_OT_NusiqMcblendAddUvGroup(bpy.types.Operator):
+    bl_idname = "object.nusiq_mcblend_add_uv_group"
+    bl_label = '''Adds new uv_group to the list.'''
+
+    def execute(self, context):
+        # If OK save old uv_group
+        len_anims = len(context.scene.nusiq_mcblend_uv_groups)
+        curr_anim_id = context.scene.nusiq_mcblend_active_uv_group
+
+        # TODO:
+        # if 0 <= curr_anim_id and curr_anim_id < len_anims:
+        #     save uv group properties
+
+        # Add new uv_group and set its properties
+        uv_group_new = context.scene.nusiq_mcblend_uv_groups.add()
+        len_anims = len(context.scene.nusiq_mcblend_uv_groups)
+        context.scene.nusiq_mcblend_active_uv_group=len_anims-1
+
+        uv_group_new.name = get_unused_uv_group_name('uv_group')
+        return {'FINISHED'}
+
+class OBJECT_OT_NusiqMcblendRemoveUvGroup(bpy.types.Operator):
+    bl_idname = "object.nusiq_mcblend_remove_uv_group"
+    bl_label = "Remove current uv_group from the list."
+
+    @classmethod
+    def poll(cls, context):
+        return len(context.scene.nusiq_mcblend_uv_groups) > 0
+
+    def execute(self, context):
+        group_id = context.scene.nusiq_mcblend_active_uv_group
+        group_name = context.scene.nusiq_mcblend_uv_groups[group_id].name
+        # Remove uv_group
+        context.scene.nusiq_mcblend_uv_groups.remove(group_id)
+
+        # Update the names of all of the meshes
+        for obj in bpy.data.objects:
+            if obj.type == "MESH":
+                obj_props = obj.nusiq_mcblend_object_properties
+                if obj_props.uv_group == group_name:
+                    obj_props.uv_group = ''
+
+        # Set new active uv_group
+        len_uv_groups=len(context.scene.nusiq_mcblend_uv_groups)
+        if group_id > 0:
+            context.scene.nusiq_mcblend_active_uv_group=group_id-1
+
+        # Load data from new active uv_group
+        curr_uv_group_id=context.scene.nusiq_mcblend_active_uv_group
+        return {'FINISHED'}
+
+class OBJECT_OT_NusiqMcblendRenameUvGroup(bpy.types.Operator):
+    bl_idname = "object.nusiq_mcblend_rename_uv_group"
+    bl_label = "Rename current uv_group from the list."
+
+    new_name: bpy.props.StringProperty(  # type: ignore
+        name='Name', description='New name of the UV group', maxlen=1024
+    )
+
+    @classmethod
+    def poll(cls, context):
+        return len(context.scene.nusiq_mcblend_uv_groups) > 0
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self)
+
+    def update_uv_group_name(self, uv_group, new_name: str):
+        # Update the names of all of the meshes
+        for obj in bpy.data.objects:
+            if obj.type == "MESH":
+                obj_props = obj.nusiq_mcblend_object_properties
+                if obj_props.uv_group == uv_group.name:
+                    obj_props.uv_group = new_name
+        # Update the name of the UV group
+        uv_group.name = new_name
+
+    def execute(self, context):
+        groups = context.scene.nusiq_mcblend_uv_groups
+        this_group_index = context.scene.nusiq_mcblend_active_uv_group
+        this_group = groups[this_group_index]
+
+        
+        # Empty name is no allowed
+        if self.new_name == '':
+            self.report({'WARNING'}, "Invalid name (empty string).")
+            return {'CANCELLED'}
+
+        # If name already in use rename the other uv group
+        for other_group in groups:
+            if (  # Change the of the duplicate if there is one
+                    other_group.path_from_id() != this_group.path_from_id() and
+                    other_group.name == self.new_name):
+                # Get starting name index
+                i = 1
+                base_name = self.new_name
+                split_name = self.new_name.split('.')
+                try:
+                    prev_i = int(split_name[-1])
+                    i = i if prev_i <= 0 else prev_i
+                    base_name = '.'.join(split_name[:-1])
+                except ValueError:
+                    pass
+                other_new_name = get_unused_uv_group_name(base_name, i)
+                self.update_uv_group_name(other_group, other_new_name)
+                break
+        self.update_uv_group_name(this_group, self.new_name)
         return {'FINISHED'}
