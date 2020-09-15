@@ -5,7 +5,7 @@ This module is used by Blender to register/unregister the plugin.
 import bpy
 from bpy.props import (
     PointerProperty, BoolProperty, FloatVectorProperty, CollectionProperty,
-    IntProperty)
+    IntProperty, EnumProperty)
 import mathutils
 
 
@@ -27,7 +27,15 @@ from .operator import (
     OBJECT_OT_NusiqMcblendListUvGroups,
     OBJECT_OT_NusiqMcblendAddUvGroup,
     OBJECT_OT_NusiqMcblendRemoveUvGroup,
-    OBJECT_OT_NusiqMcblendRenameUvGroup,
+    OBJECT_OT_NusiqMcblendAddUvMask,
+    OBJECT_OT_NusiqMcblendRemoveUvMask,
+    OBJECT_OT_NusiqMcblendMoveUvMask,
+    OBJECT_OT_NusiqMcblendAddUvMaskColor,
+    OBJECT_OT_NusiqMcblendRemoveUvMaskColor,
+    OBJECT_OT_NusiqMcblendMoveUvMaskColor,
+    OBJECT_OT_NusiqMcblendAddUvMaskStripe,
+    OBJECT_OT_NusiqMcblendRemoveUvMaskStripe,
+    OBJECT_OT_NusiqMcblendMoveUvMaskStripe,
 )
 from .panel import (
     OBJECT_NusiqMcblendExporterProperties,
@@ -42,7 +50,11 @@ from .panel import (
     OBJECT_PT_NusiqMcblendOperatorsPanel,
     OBJECT_PT_NusiqMcblendImportPanel,
     OBJECT_PT_NusiqMcblendUVGroupPanel,
+    OBJECT_UL_NusiqMcblendUVGroupList,
 
+    OBJECT_NusiqMcblendStripeProperties,
+    OBJECT_NusiqMcblendColorProperties,
+    OBJECT_NusiqMcblendUvMaskProperties,
     OBJECT_NusiqMcblendUvGroupProperties,
 )
 
@@ -79,6 +91,7 @@ classes = (
     OBJECT_OT_NusiqMcblendImport,
     OBJECT_PT_NusiqMcblendImportPanel,
     OBJECT_PT_NusiqMcblendUVGroupPanel,
+    OBJECT_UL_NusiqMcblendUVGroupList,
 
     OBJECT_OT_NusiqMcblendListAnimations,
     OBJECT_OT_NusiqMcblendAddAnimation,
@@ -87,11 +100,22 @@ classes = (
     OBJECT_OT_NusiqMcblendListUvGroups,
     OBJECT_OT_NusiqMcblendAddUvGroup,
     OBJECT_OT_NusiqMcblendRemoveUvGroup,
-    OBJECT_OT_NusiqMcblendRenameUvGroup,
+    OBJECT_OT_NusiqMcblendAddUvMask,
+    OBJECT_OT_NusiqMcblendRemoveUvMask,
+    OBJECT_OT_NusiqMcblendMoveUvMask,
+    OBJECT_OT_NusiqMcblendAddUvMaskColor,
+    OBJECT_OT_NusiqMcblendRemoveUvMaskColor,
+    OBJECT_OT_NusiqMcblendMoveUvMaskColor,
+    OBJECT_OT_NusiqMcblendAddUvMaskStripe,
+    OBJECT_OT_NusiqMcblendRemoveUvMaskStripe,
+    OBJECT_OT_NusiqMcblendMoveUvMaskStripe,
 
     OBJECT_NusiqMcblendObjectProperties,
 
-    OBJECT_NusiqMcblendUvGroupProperties
+    OBJECT_NusiqMcblendStripeProperties,
+    OBJECT_NusiqMcblendColorProperties,
+    OBJECT_NusiqMcblendUvMaskProperties,  # must be before UvGroupProperties
+    OBJECT_NusiqMcblendUvGroupProperties,
 )
 
 def register():
@@ -115,6 +139,10 @@ def register():
         default=0)
     bpy.types.Scene.nusiq_mcblend_uv_groups = CollectionProperty(
         type=OBJECT_NusiqMcblendUvGroupProperties)
+
+    sides = [(str(i), f'side{i+1}', f'side{i+1}') for i in range(6)]
+    bpy.types.Scene.nusiq_mcblend_active_uv_groups_side = EnumProperty(
+        items=sides, name="Face")
 
     # Object properties
     bpy.types.Object.nusiq_mcblend_object_properties = PointerProperty(

@@ -5,8 +5,133 @@ This module contains all of the panels for mcblend GUI.
 import bpy
 from bpy.props import (
     StringProperty, IntProperty, BoolProperty, FloatProperty,
-    FloatVectorProperty, PointerProperty, CollectionProperty
+    FloatVectorProperty, PointerProperty, CollectionProperty,
+    EnumProperty, PointerProperty
 )
+from .operator_func.texture_generator import (
+    list_mask_types_as_blender_enum, UvMaskTypes)
+
+
+
+class OBJECT_NusiqMcblendStripeProperties(bpy.types.PropertyGroup):
+    width: FloatProperty(  # type: ignore
+        name='Width', soft_min=0.0, soft_max=1.0, default=1.0)
+    strength: FloatProperty(  # type: ignore
+        name='Strength', soft_min=0.0, soft_max=1.0, default=1.0)
+
+class OBJECT_NusiqMcblendColorProperties(bpy.types.PropertyGroup):
+    color: FloatVectorProperty(  # type: ignore
+        name='Color',  subtype='COLOR',
+        min=0, max=1, step=1000, default=(1.0, 1.0, 1.0))
+
+class OBJECT_NusiqMcblendUvMaskProperties(bpy.types.PropertyGroup):
+    mask_type: EnumProperty(  # type: ignore
+        items=list_mask_types_as_blender_enum,
+        name='Mask type'
+    )
+    # colors: List[Color]  # ColorPalletteMask
+    colors: CollectionProperty(  # type: ignore
+        type=OBJECT_NusiqMcblendColorProperties,
+        name='Colors')
+    # interpolate: bool  # ColorPalletteMask
+    interpolate: BoolProperty(  # type: ignore
+        name='Interpolate')
+    # normalize: bool  # ColorPalletteMask
+    normalize: BoolProperty(  # type: ignore
+        name='Normalize')
+    # p1: Tuple[float, float]  # GradientMask ElipseMask RectangleMask
+    p1: FloatVectorProperty(  # type: ignore
+        name='Point A', default=(0.0, 0.0), size=2)
+    # p2: Tuple[float, float]  # GradientMask ElipseMask RectangleMask
+    p2: FloatVectorProperty(  # type: ignore
+        name='Point B', default=(0.0, 0.0), size=2)
+    # stripes: List[Stripe]  # GradientMask StripesMask
+    stripes: CollectionProperty(  # type: ignore
+        type=OBJECT_NusiqMcblendStripeProperties,
+        name='Stripes')
+    # relative_boundries: bool  # GradientMask ElipseMask RectangleMask StripesMask
+    relative_boundries: BoolProperty(  # type: ignore
+        name='Relative boundries')
+    # expotent: float  # GradientMask ElipseMask RectangleMask RandomMask
+    expotent: FloatProperty(  # type: ignore
+        name='Expotent', default=1.0, soft_min=-10.0, soft_max=10.0)
+    # strength: Tuple[float, float]  # ElipseMask RectangleMask RandomMask
+    strength: FloatVectorProperty(  # type: ignore
+        min=0.0, max=1.0, default=(0.0, 1.0), size=2)
+    # hard_edge: bool  # ElipseMask RectangleMask
+    hard_edge: BoolProperty(  # type: ignore
+        name='Hard edge')
+    # horizontal: bool  # StripesMask
+    horizontal: BoolProperty(  # type: ignore
+        name='Horizontal')
+    # seed: Optional[int]  # RandomMask
+    use_seed: BoolProperty(  # type: ignore
+        name='Use seed')
+    seed: IntProperty(  # type: ignore
+        name='Seed')
+    # color: Tuple[float, float, float]  # ColorMask
+    color: PointerProperty(  # type: ignore
+        type=OBJECT_NusiqMcblendColorProperties,
+        name='Color')
+
+# There is no alternative for this ugly code :(
+OBJECT_NusiqMcblendUvMaskProperties.__annotations__[
+    'masks'] = CollectionProperty(
+        type=OBJECT_NusiqMcblendUvMaskProperties,
+        description='Child masks for the mix mask.')
+
+
+def get_unused_uv_group_name(base_name: str, i=1):
+    uv_groups = bpy.context.scene.nusiq_mcblend_uv_groups
+    name = base_name  # f'{base_name}.{i:04}'
+    while name in uv_groups.keys():
+        name = f'{base_name}.{i:04}'
+        i += 1
+    return name
+
+def update_uv_group_name(uv_group, new_name: str):
+    # Update the names of all of the meshes
+    for obj in bpy.data.objects:
+        if obj.type == "MESH":
+            obj_props = obj.nusiq_mcblend_object_properties
+            if obj_props.uv_group == uv_group.name:
+                obj_props.uv_group = new_name
+    # Update the name of the UV group
+    uv_group['name'] = new_name
+
+def set_uv_group_name(self, value):
+        old_name = self.name
+
+        groups = bpy.context.scene.nusiq_mcblend_uv_groups
+
+        
+        # Empty name is no allowed
+        if value == '':
+            return
+
+        # If name already in use rename the other uv group
+        for other_group in groups:
+            if (  # Change the of the duplicate if there is one
+                    other_group.path_from_id() != self.path_from_id() and
+                    other_group.name == value):
+                # Get starting name index
+                i = 1
+                base_name = value
+                split_name = value.split('.')
+                try:
+                    prev_i = int(split_name[-1])
+                    i = i if prev_i <= 0 else prev_i
+                    base_name = '.'.join(split_name[:-1])
+                except ValueError:
+                    pass
+                other_new_name = get_unused_uv_group_name(base_name, i)
+                update_uv_group_name(other_group, other_new_name)
+                break
+        update_uv_group_name(self, value)
+
+def get_uv_group_name(self):
+    return self['name']
+
 
 class OBJECT_NusiqMcblendUvGroupProperties(bpy.types.PropertyGroup):
     name: StringProperty(  # type: ignore
@@ -15,10 +140,25 @@ class OBJECT_NusiqMcblendUvGroupProperties(bpy.types.PropertyGroup):
         # The Add operator overwrites default value on creation to trigger the
         # update function
         default='',
-        maxlen=1024
-    )
-
-
+        maxlen=1024, set=set_uv_group_name, get=get_uv_group_name)
+    side1: CollectionProperty(  # type: ignore
+        type=OBJECT_NusiqMcblendUvMaskProperties,
+        description='Collection of the filters for side1 of the cuboid.')
+    side2: CollectionProperty(  # type: ignore
+        type=OBJECT_NusiqMcblendUvMaskProperties,
+        description='Collection of the filters for side2 of the cuboid.')
+    side3: CollectionProperty(  # type: ignore
+        type=OBJECT_NusiqMcblendUvMaskProperties,
+        description='Collection of the filters for side3 of the cuboid.')
+    side4: CollectionProperty(  # type: ignore
+        type=OBJECT_NusiqMcblendUvMaskProperties,
+        description='Collection of the filters for side4 of the cuboid.')
+    side5: CollectionProperty(  # type: ignore
+        type=OBJECT_NusiqMcblendUvMaskProperties,
+        description='Collection of the filters for side5 of the cuboid.')
+    side6: CollectionProperty(  # type: ignore
+        type=OBJECT_NusiqMcblendUvMaskProperties,
+        description='Collection of the filters for side6 of the cuboid.')
 
 class OBJECT_NusiqMcblendObjectProperties(bpy.types.PropertyGroup):
     mirror: BoolProperty(  # type: ignore
@@ -142,6 +282,32 @@ class OBJECT_NusiqMcblendExporterProperties(bpy.types.PropertyGroup):
     )
 
 # Panels
+class OBJECT_UL_NusiqMcblendUVGroupList(bpy.types.UIList):
+    def draw_item(
+            self, context, layout, data, item, icon, active_data,
+            active_propname):
+        '''
+        Drawing OBJECT_NusiqMcblendUvGroupProperties in a list.
+
+        - `context` - the contexto of operator
+        - `layout: bpy.types.UILayout` - layout in which the object is drawn
+        - `data` - the RNA object containing the collection
+        - `item` - the item currently drawn in the collection
+        - `icon` - not used - "the "computed" icon for the item" (?)
+        - `active_data` - the RNA object containing the active property for the
+          collection.
+        - `active_propname` - the name of the active property.
+
+        For more info see the UI Template called: "UI List Simple".
+        '''
+        if self.layout_type in {'DEFAULT', 'COMPACT', 'CENTER'}:
+            # No rename functionality:
+            # layout.label(text=item.name, translate=False)
+
+            # With rename functionality:
+            layout.prop(item, "name", text="", emboss=False)
+
+
 class OBJECT_PT_NusiqMcblendUVGroupPanel(bpy.types.Panel):
     '''Panel that lets edit UV groups'''
     bl_space_type = 'PROPERTIES'
@@ -149,31 +315,228 @@ class OBJECT_PT_NusiqMcblendUVGroupPanel(bpy.types.Panel):
     bl_context = 'scene'
     bl_label = "Mcblend UV groups"
 
+    #"object.nusiq_mcblend_add_uv_mask_color"
+    #"object.nusiq_mcblend_remove_uv_mask_color"
+    #"object.nusiq_mcblend_move_uv_mask_color"
+    #"object.nusiq_mcblend_add_uv_mask_stripe"
+    #"object.nusiq_mcblend_remove_uv_mask_stripe"
+    #"object.nusiq_mcblend_move_uv_mask_stripe"
+
+    def draw_colors(self, mask, mask_index: int, col: bpy.types.UILayout):
+        box = col.box()
+        row = box.row()
+        row.label(text='Colors')
+        op_props = row.operator(
+            "object.nusiq_mcblend_add_uv_mask_color", text="", icon='ADD')
+        op_props.mask_index = mask_index
+
+        colors_len = len(mask.colors)
+        for color_index, color in enumerate(mask.colors):
+            row = box.row()
+            row.prop(color, "color", text="")
+            up_down_row = row.row(align=True)
+            # Move down
+            if color_index - 1 >= 0:
+                op_props = up_down_row.operator(
+                    "object.nusiq_mcblend_move_uv_mask_color", icon='TRIA_UP', text='')
+                op_props.mask_index = mask_index
+                op_props.move_from = color_index
+                op_props.move_to = color_index - 1
+            # Move up
+            if color_index + 1 < colors_len:
+                op_props = up_down_row.operator(
+                    "object.nusiq_mcblend_move_uv_mask_color", icon='TRIA_DOWN', text='')
+                op_props.mask_index = mask_index
+                op_props.move_from = color_index
+                op_props.move_to = color_index + 1
+            # Delete button
+            op_props = row.operator(
+                "object.nusiq_mcblend_remove_uv_mask_color", icon='X', text='')
+            op_props.mask_index = mask_index
+            op_props.color_index = color_index
+
+    def draw_stripes(self, mask, mask_index: int, col: bpy.types.UILayout):
+        box = col.box()
+        row = box.row()
+        row.label(text='Stripes')
+        op_props = row.operator(
+            "object.nusiq_mcblend_add_uv_mask_stripe", text="", icon='ADD')
+        op_props.mask_index = mask_index
+
+        colors_len = len(mask.colors)
+        for stripe_index, stripe in enumerate(mask.stripes):
+            row = box.row()
+            row.prop(stripe, "width")
+            row.prop(stripe, "strength")
+            up_down_row = row.row(align=True)
+            # Move down
+            if stripe_index - 1 >= 0:
+                op_props = up_down_row.operator(
+                    "object.nusiq_mcblend_move_uv_mask_stripe", icon='TRIA_UP', text='')
+                op_props.mask_index = mask_index
+                op_props.move_from = stripe_index
+                op_props.move_to = stripe_index - 1
+            # Move up
+            if stripe_index + 1 < colors_len:
+                op_props = up_down_row.operator(
+                    "object.nusiq_mcblend_move_uv_mask_stripe", icon='TRIA_DOWN', text='')
+                op_props.mask_index = mask_index
+                op_props.move_from = stripe_index
+                op_props.move_to = stripe_index + 1
+            # Delete button
+            op_props = row.operator(
+                "object.nusiq_mcblend_remove_uv_mask_stripe", icon='X', text='')
+            op_props.mask_index = mask_index
+            op_props.stripe_index = stripe_index
+
+    def draw_mask_properties(
+            self, mask, index: int, col: bpy.types.UILayout, *,
+            colors=False, interpolate=False,
+            normalize=False, p1p2=False, stripes=False,
+            relative_boundries=False, expotent=False, strength=False,
+            hard_edge=False, horizontal=False, seed=False,color=False):
+        if colors:
+            self.draw_colors(mask, index, col)  # colors
+        if interpolate:
+            col.prop(mask, "interpolate")
+        if normalize:
+            col.prop(mask, "normalize")
+        if p1p2:
+            row = col.row()
+            row.prop(mask, "p1")
+            row.prop(mask, "p2")
+        if stripes:
+            self.draw_stripes(mask, index, col)  # stripes
+        if relative_boundries:
+            col.prop(mask, "relative_boundries")
+        if expotent:
+            col.prop(mask, "expotent")
+        if strength:
+            col.prop(mask, "strength")
+        if hard_edge:
+            col.prop(mask, "hard_edge")
+        if horizontal:
+            col.prop(mask, "horizontal")
+        if seed:
+            row = col.row()
+            row.prop(mask, "use_seed")
+            if mask.use_seed:
+                row.prop(mask, "seed")
+        if color:
+            col.prop(mask.color, "color")
+
+    def draw_mask(self, mask, index: int, masks_len, col: bpy.types.UILayout):
+        box = col.box()
+        col = box.column()
+        row = col.row()
+        row.label(text=f'{mask.mask_type}')
+        up_down_row = row.row(align=True)
+        # Move down
+        if index - 1 >= 0:
+            op_props = up_down_row.operator(
+                "object.nusiq_mcblend_move_uv_mask", icon='TRIA_UP', text='')
+            op_props.move_from = index
+            op_props.move_to = index - 1
+        # Move up
+        if index + 1 < masks_len:
+            op_props = up_down_row.operator(
+                "object.nusiq_mcblend_move_uv_mask", icon='TRIA_DOWN', text='')
+            op_props.move_from = index
+            op_props.move_to = index + 1
+        # Delete button
+        op_props = row.operator(
+            "object.nusiq_mcblend_remove_uv_mask", icon='X', text='')
+        op_props.target = index
+
+        # Drawing the mask itself
+        if mask.mask_type == UvMaskTypes.COLOR_PALLETTE_MASK.value:
+            self.draw_mask_properties(
+                mask, index, col,
+                colors=True, interpolate=True, normalize=True)
+        if mask.mask_type == UvMaskTypes.GRADIENT_MASK.value:
+            self.draw_mask_properties(
+                mask, index, col,
+                p1p2=True, stripes=True, relative_boundries=True,
+                expotent=True)
+        if mask.mask_type == UvMaskTypes.ELIPSE_MASK.value:
+            self.draw_mask_properties(
+                mask, index, col,
+                p1p2=True, relative_boundries=True, expotent=True,
+                strength=True, hard_edge=True)
+        if mask.mask_type == UvMaskTypes.RECTANGLE_MASK.value:
+            self.draw_mask_properties(
+                mask, index, col,
+                p1p2=True, relative_boundries=True, expotent=True,
+                strength=True, hard_edge=True)
+        if mask.mask_type == UvMaskTypes.STRIPES_MASK.value:
+            self.draw_mask_properties(
+                mask, index, col,
+                stripes=True, relative_boundries=True, horizontal=True)
+        if mask.mask_type == UvMaskTypes.RANDOM_MASK.value:
+            self.draw_mask_properties(
+                mask, index, col,
+                strength=True, expotent=True, seed=True)
+        if mask.mask_type == UvMaskTypes.COLOR_MASK.value:
+            self.draw_mask_properties(mask, index, col, color=True)
 
     def draw(self, context):
         col = self.layout.column(align=True)
 
         row = col.row()
+
+        # Add group
         row.operator(
-            "object.nusiq_mcblend_add_uv_group", text="New UV group"
+            "object.nusiq_mcblend_add_uv_group", text="New UV group",
+            icon='ADD'
         )
         active_uv_group_id = bpy.context.scene.nusiq_mcblend_active_uv_group
         uv_groups = bpy.context.scene.nusiq_mcblend_uv_groups
         if active_uv_group_id < len(uv_groups):
-            row.operator(
-                "object.nusiq_mcblend_remove_uv_group",
-                text="Remove this UV group")
-            col.operator_menu_enum(
-                "object.nusiq_mcblend_list_uv_groups", "uv_groups_enum",
-                text="Select UV Group")
-
             active_uv_group = uv_groups[active_uv_group_id]
-            row = col.row()
-            row.label(text=f'UV Group: {active_uv_group.name}')
-            row.operator(
-                "object.nusiq_mcblend_rename_uv_group",
-                text="Rename this UV group")
+            col.template_list(
+                listtype_name="OBJECT_UL_NusiqMcblendUVGroupList",
+                list_id="", dataptr=context.scene,
+                propname="nusiq_mcblend_uv_groups",
+                active_dataptr=context.scene,
+                active_propname="nusiq_mcblend_active_uv_group")
 
+            # Delete ggroup
+            operator_propeties = row.operator(
+                "object.nusiq_mcblend_remove_uv_group",
+                text="Delete this UV group", icon='X')
+            # # Rename group
+            # col.operator(
+            #     "object.nusiq_mcblend_rename_uv_group",
+            #     text="Rename")
+
+            # col.separator()
+            # # Select group
+            # row = col.row()
+            # row.label(text='UV Group:')
+            # row.operator_menu_enum(
+            #     "object.nusiq_mcblend_list_uv_groups", "uv_groups_enum",
+            #     text=active_uv_group.name)
+            # Select side
+            row = col.row()
+            row.label(text='Side:')
+            row.prop(
+                context.scene, "nusiq_mcblend_active_uv_groups_side",
+                text="")
+            col.separator()
+            # Add mask
+            col.operator_menu_enum(
+                "object.nusiq_mcblend_add_uv_mask", "mask_type",
+                text="Add mask", icon="ADD")
+            # Draw selected side
+            sides = [
+                active_uv_group.side1, active_uv_group.side2,
+                active_uv_group.side3, active_uv_group.side4,
+                active_uv_group.side5, active_uv_group.side6
+            ]
+            masks = sides[
+                int(context.scene.nusiq_mcblend_active_uv_groups_side)]
+            for i, mask in enumerate(masks):
+                self.draw_mask(mask, i, len(masks), col)
 
 class OBJECT_PT_NusiqMcblendObjectPropertiesPanel(bpy.types.Panel):
     '''Panel with custom object properties (for meshes and empties)'''
@@ -205,7 +568,6 @@ class OBJECT_PT_NusiqMcblendObjectPropertiesPanel(bpy.types.Panel):
                     col.label(text=f"This object does't have a UV group")
                 col.prop(object_properties, "inflate", text="Inflate")
 
-
 class OBJECT_PT_NusiqMcblendExportPanel(bpy.types.Panel):
     '''Panel used for configuration of exporting models'''
     # pylint: disable=C0116, W0613
@@ -233,7 +595,6 @@ class OBJECT_PT_NusiqMcblendExportPanel(bpy.types.Panel):
             "object.nusiq_mcblend_export_operator", text="Export model"
         )
 
-
 class OBJECT_PT_NusiqMcblendImportPanel(bpy.types.Panel):
     '''Panel used for configuration of importing models.'''
     # pylint: disable=C0116, W0613
@@ -248,7 +609,6 @@ class OBJECT_PT_NusiqMcblendImportPanel(bpy.types.Panel):
         self.layout.row().operator(
             "object.nusiq_mcblend_import_operator", text="Import model"
         )
-
 
 class OBJECT_PT_NusiqMcblendExportAnimationPanel(bpy.types.Panel):
     '''Panel used for configuration of exporting animations.'''
@@ -292,7 +652,6 @@ class OBJECT_PT_NusiqMcblendExportAnimationPanel(bpy.types.Panel):
                 "object.nusiq_mcblend_export_animation_operator", text="Export animation"
             )
 
-
 class OBJECT_PT_NusiqMcblendSetUvsPanel(bpy.types.Panel):
     '''Panel  used for Minecraft UV maping and its configuration.'''
     # pylint: disable=C0116, W0613
@@ -317,7 +676,6 @@ class OBJECT_PT_NusiqMcblendSetUvsPanel(bpy.types.Panel):
         self.layout.row().operator(
             "object.nusiq_mcblend_map_uv_operator", text="Set minecraft UVs"
         )
-
 
 class OBJECT_PT_NusiqMcblendOperatorsPanel(bpy.types.Panel):
     '''

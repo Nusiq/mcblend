@@ -7,9 +7,29 @@ from __future__ import annotations
 
 import numpy as np
 from itertools import repeat, cycle, accumulate, tee
-from typing import Tuple, Iterable, NamedTuple, List, Optional
+from typing import Tuple, Iterable, NamedTuple, List, Optional, Dict
 from abc import ABC, abstractmethod
+from enum import Enum
 
+
+class UvMaskTypes(Enum):
+    COLOR_PALLETTE_MASK='Color Pallette Mask'
+    GRADIENT_MASK='Gradient Mask'
+    ELIPSE_MASK='Elipse Mask'
+    RECTANGLE_MASK='Rectangle Mask'
+    STRIPES_MASK='Stripes Mask'
+    RANDOM_MASK='Random Mask'
+    COLOR_MASK='Color Mask'
+
+def list_mask_types_as_blender_enum(self, context):
+    '''
+    Passing list itself to some operators/panels didn't work.
+    This function is a workaround that uses alternative definition for
+    EnumProperty.
+
+    https://docs.blender.org/api/current/bpy.props.html#bpy.props.EnumProperty
+    '''
+    return [(i.value, i.value, i.value) for i in UvMaskTypes]
 
 class Mask(ABC):
     '''
@@ -44,7 +64,6 @@ class Color(NamedTuple):
             int(color[4:], 16)/255.0
         )
 
-# TODO - add to gui
 class ColorPalletteMask(Mask):
     def __init__(
             self, colors: List[Color], *,
@@ -111,11 +130,9 @@ class MultiplicativeMask(Mask):
         '''
         pass
 
-# TODO - add to gui
 class Stripe(NamedTuple):
     width: float
-    streangth: float
-
+    strength: float
 
 class TwoPointSurfaceMask(MultiplicativeMask):
     def __init__(
@@ -148,14 +165,13 @@ class TwoPointSurfaceMask(MultiplicativeMask):
         v1, v2 = min(v1, v2), max(v1, v2)
         return w, h, u1, u2, v1, v2
 
-# TODO - add to gui
 class GradientMask(TwoPointSurfaceMask):
     def __init__(
             self, p1: Tuple[float, float],
             p2: Tuple[float, float], *,
             stripes: Iterable[Stripe]=(
-                Stripe(0, 0.0),
-                Stripe(1, 1.0)
+                Stripe(0.0, 0.0),
+                Stripe(1.0, 1.0)
             ),
             relative_boundries: bool=True,
             expotent: float=1.0):
@@ -169,7 +185,7 @@ class GradientMask(TwoPointSurfaceMask):
                 raise Exception(
                     'All stripe width must be greater or equal 0')
             stripe_width.append(i.width)
-            self.stripe_strength.append(i.streangth)
+            self.stripe_strength.append(i.strength)
         self.stripe_width = np.array(stripe_width)/np.sum(stripe_width)
         self.expotent=expotent
 
@@ -209,7 +225,6 @@ class GradientMask(TwoPointSurfaceMask):
 
         return mask[:, :, np.newaxis]
 
-# TODO - add to gui
 class ElipseMask(TwoPointSurfaceMask):
     def __init__(
             self, p1: Tuple[float, float],
@@ -252,7 +267,6 @@ class ElipseMask(TwoPointSurfaceMask):
         mask=mask**self.expotent
         return mask[:, :, np.newaxis]
 
-# TODO - add to gui
 class RectangleMask(TwoPointSurfaceMask):
     def __init__(
             self, p1: Tuple[float, float],
@@ -326,7 +340,6 @@ class RectangleMask(TwoPointSurfaceMask):
         mask = mask**self.expotent
         return mask[:, :, np.newaxis]
 
-# TODO - add to gui
 class StripesMask(MultiplicativeMask):
     def __init__(
             self, stripes: List[Stripe], *,
@@ -339,7 +352,7 @@ class StripesMask(MultiplicativeMask):
             if i.width <= 0:
                 raise Exception('All stripe widths must be greater than 0')
             self.stripe_width.append(i.width)
-            self.stripe_strength.append(i.streangth)
+            self.stripe_strength.append(i.strength)
         self.horizontal = horizontal
         self.relative_boundries = relative_boundries
     
@@ -371,7 +384,6 @@ class StripesMask(MultiplicativeMask):
                 break
         return mask[:, :, np.newaxis]
 
-# TODO - add to gui
 class RandomMask(MultiplicativeMask):
     def __init__(
             self, *, strength: Tuple[float, float]=(0.0, 1.0),
@@ -389,10 +401,9 @@ class RandomMask(MultiplicativeMask):
         mask = mask**self.expotent
         return mask[:,:,np.newaxis]
 
-# TODO - add to gui
 class ColorMask(MultiplicativeMask):
-    def __init__(self, rgb: Tuple[float, float, float]):
-        self.r, self.g, self.b = rgb
+    def __init__(self, color: Tuple[float, float, float]):
+        self.r, self.g, self.b = color
 
     def get_mask(self, image):
         # Get the shape of the image
@@ -403,7 +414,6 @@ class ColorMask(MultiplicativeMask):
         mask[:,:,2] = self.b
         return mask[:,:,:]
 
-# TODO - add to gui
 class MixMask(MultiplicativeMask):
     def __init__(
             self, masks: Iterable[MultiplicativeMask], *,
@@ -447,3 +457,92 @@ class MixMask(MultiplicativeMask):
         mask = np.interp(mask, (0.0, 1.0), self.strength)
         mask = mask**self.expotent
         return mask
+
+
+class UvGroupMaks(NamedTuple):
+    side1: Tuple[Mask]
+    side2: Tuple[Mask]
+    side3: Tuple[Mask]
+    side4: Tuple[Mask]
+    side5: Tuple[Mask]
+    side6: Tuple[Mask]
+
+
+def _get_stripe_from_gui(stripe) -> Stripe:
+    '''
+    Returns Stripe object from definition created with the GUI.
+    (OBJECT_NusiqMcblendStripeProperties)
+    '''
+    return Stripe(stripe.width, stripe.strength)
+
+def _get_color_from_gui_color(color) -> Color:
+    '''
+    Returns Color object from definition created with the GUI.
+    (OBJECT_NusiqMcblendColorProperties)
+    '''
+    return Color(*tuple(color.color))
+
+def _get_masks_from_side(side) -> Tuple[Mask]:
+    '''
+    Returns tuple of Masks from one masks side definition creater in GUI.
+    '''
+    result: List[Mask] = []
+    mask: Mask
+    for mask_properties in side:
+        if mask_properties.mask_type == UvMaskTypes.COLOR_PALLETTE_MASK.value:
+            mask = ColorPalletteMask(
+                [_get_color_from_gui_color(c) for c in side.colors],
+                interpolate=side.interpolate, normalize=side.normalize)
+        if mask_properties.mask_type == UvMaskTypes.GRADIENT_MASK.value:
+            mask = GradientMask(
+                tuple(side.p1), tuple(side.p2),  # type: ignore
+                stripes=[Stripe(s.width, s.strength) for s in side.stripes],
+                relative_boundries=side.relative_boundries,
+                expotent=side.expotent)
+        if mask_properties.mask_type == UvMaskTypes.ELIPSE_MASK.value:
+            mask = ElipseMask(
+                tuple(side.p1), tuple(side.p2),  # type: ignore
+                strength=tuple(side.strength),  #type: ignore
+                relative_boundries=side.relative_boundries,
+                hard_edge=side.hard_edge, expotent=side.expotent)
+        if mask_properties.mask_type == UvMaskTypes.RECTANGLE_MASK.value:
+            mask = RectangleMask(
+                tuple(side.p1), tuple(side.p2),  # type: ignore
+                strength=tuple(side.strength),  #type: ignore
+                relative_boundries=side.relative_boundries,
+                hard_edge=side.hard_edge, expotent=side.expotent)
+        if mask_properties.mask_type == UvMaskTypes.STRIPES_MASK.value:
+            mask = StripesMask(
+                [Stripe(s.width, s.strength) for s in side.stripes],
+                horizontal=side.horizontal,
+                relative_boundries=side.relative_boundries)
+        if mask_properties.mask_type == UvMaskTypes.RANDOM_MASK.value:
+            seed: Optional[int] = None
+            if side.use_seed:
+                seed = side.seed
+            mask = RandomMask(
+                strength=tuple(side.strength),  # type: ignore
+                expotent=side.expotent, seed=seed)
+        if mask_properties.mask_type == UvMaskTypes.COLOR_MASK.value:
+            mask = ColorMask(_get_color_from_gui_color(side.color))
+        result.append(mask)
+
+    return tuple(result)  # type: ignore
+
+def get_uv_group_masks_from_gui(uv_groups) -> Dict[str, UvGroupMaks]:
+    '''
+    Returns dictionary of masks created with GUI 
+    (bpy.context.scene.nusiq_mcblend_uv_groups).
+    '''
+    result: Dict[str, UvGroupMaks] = {}
+    for uv_group in uv_groups:
+        side1 = _get_masks_from_side(uv_group.side1)
+        side2 = _get_masks_from_side(uv_group.side2)
+        side3 = _get_masks_from_side(uv_group.side3)
+        side4 = _get_masks_from_side(uv_group.side4)
+        side5 = _get_masks_from_side(uv_group.side5)
+        side6 = _get_masks_from_side(uv_group.side6)
+        result[uv_group.name] = UvGroupMaks(
+            side1, side2, side3, side4, side5, side6)
+    return result
+
