@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import numpy as np
 from itertools import repeat, cycle, accumulate, tee
-from typing import Tuple, Iterable, NamedTuple, List, Optional, Dict
+from typing import Tuple, Iterable, NamedTuple, List, Optional, Dict, Sequence
 from abc import ABC, abstractmethod
 from enum import Enum
 
@@ -459,15 +459,6 @@ class MixMask(MultiplicativeMask):
         return mask
 
 
-class UvGroupMaks(NamedTuple):
-    side1: Tuple[Mask]
-    side2: Tuple[Mask]
-    side3: Tuple[Mask]
-    side4: Tuple[Mask]
-    side5: Tuple[Mask]
-    side6: Tuple[Mask]
-
-
 def _get_stripe_from_gui(stripe) -> Stripe:
     '''
     Returns Stripe object from definition created with the GUI.
@@ -480,69 +471,56 @@ def _get_color_from_gui_color(color) -> Color:
     Returns Color object from definition created with the GUI.
     (OBJECT_NusiqMcblendColorProperties)
     '''
-    return Color(*tuple(color.color))
+    # convert linear rgb to srgb
+    rgb = np.array(color.color)
+    selector = rgb < 0.0031308
+    rgb[selector] *= 12.92
+    rgb[selector == False] = 1.055 * rgb[selector == False]**(1/2.4) - 0.055
+    return Color(*rgb)
 
-def _get_masks_from_side(side) -> Tuple[Mask]:
+def get_masks_from_side(side) -> Sequence[Mask]:
     '''
     Returns tuple of Masks from one masks side definition creater in GUI.
     '''
     result: List[Mask] = []
     mask: Mask
-    for mask_properties in side:
-        if mask_properties.mask_type == UvMaskTypes.COLOR_PALLETTE_MASK.value:
+    for s_props in side:
+        if s_props.mask_type == UvMaskTypes.COLOR_PALLETTE_MASK.value:
             mask = ColorPalletteMask(
-                [_get_color_from_gui_color(c) for c in side.colors],
-                interpolate=side.interpolate, normalize=side.normalize)
-        if mask_properties.mask_type == UvMaskTypes.GRADIENT_MASK.value:
+                [_get_color_from_gui_color(c) for c in s_props.colors],
+                interpolate=s_props.interpolate, normalize=s_props.normalize)
+        if s_props.mask_type == UvMaskTypes.GRADIENT_MASK.value:
             mask = GradientMask(
-                tuple(side.p1), tuple(side.p2),  # type: ignore
-                stripes=[Stripe(s.width, s.strength) for s in side.stripes],
-                relative_boundries=side.relative_boundries,
-                expotent=side.expotent)
-        if mask_properties.mask_type == UvMaskTypes.ELIPSE_MASK.value:
+                tuple(s_props.p1), tuple(s_props.p2),  # type: ignore
+                stripes=[Stripe(s.width, s.strength) for s in s_props.stripes],
+                relative_boundries=s_props.relative_boundries,
+                expotent=s_props.expotent)
+        if s_props.mask_type == UvMaskTypes.ELIPSE_MASK.value:
             mask = ElipseMask(
-                tuple(side.p1), tuple(side.p2),  # type: ignore
-                strength=tuple(side.strength),  #type: ignore
-                relative_boundries=side.relative_boundries,
-                hard_edge=side.hard_edge, expotent=side.expotent)
-        if mask_properties.mask_type == UvMaskTypes.RECTANGLE_MASK.value:
+                tuple(s_props.p1), tuple(s_props.p2),  # type: ignore
+                strength=tuple(s_props.strength),  #type: ignore
+                relative_boundries=s_props.relative_boundries,
+                hard_edge=s_props.hard_edge, expotent=s_props.expotent)
+        if s_props.mask_type == UvMaskTypes.RECTANGLE_MASK.value:
             mask = RectangleMask(
-                tuple(side.p1), tuple(side.p2),  # type: ignore
-                strength=tuple(side.strength),  #type: ignore
-                relative_boundries=side.relative_boundries,
-                hard_edge=side.hard_edge, expotent=side.expotent)
-        if mask_properties.mask_type == UvMaskTypes.STRIPES_MASK.value:
+                tuple(s_props.p1), tuple(s_props.p2),  # type: ignore
+                strength=tuple(s_props.strength),  #type: ignore
+                relative_boundries=s_props.relative_boundries,
+                hard_edge=s_props.hard_edge, expotent=s_props.expotent)
+        if s_props.mask_type == UvMaskTypes.STRIPES_MASK.value:
             mask = StripesMask(
-                [Stripe(s.width, s.strength) for s in side.stripes],
-                horizontal=side.horizontal,
-                relative_boundries=side.relative_boundries)
-        if mask_properties.mask_type == UvMaskTypes.RANDOM_MASK.value:
+                [Stripe(s.width, s.strength) for s in s_props.stripes],
+                horizontal=s_props.horizontal,
+                relative_boundries=s_props.relative_boundries)
+        if s_props.mask_type == UvMaskTypes.RANDOM_MASK.value:
             seed: Optional[int] = None
-            if side.use_seed:
-                seed = side.seed
+            if s_props.use_seed:
+                seed = s_props.seed
             mask = RandomMask(
-                strength=tuple(side.strength),  # type: ignore
-                expotent=side.expotent, seed=seed)
-        if mask_properties.mask_type == UvMaskTypes.COLOR_MASK.value:
-            mask = ColorMask(_get_color_from_gui_color(side.color))
+                strength=tuple(s_props.strength),  # type: ignore
+                expotent=s_props.expotent, seed=seed)
+        if s_props.mask_type == UvMaskTypes.COLOR_MASK.value:
+            mask = ColorMask(_get_color_from_gui_color(s_props.color))
         result.append(mask)
 
     return tuple(result)  # type: ignore
-
-def get_uv_group_masks_from_gui(uv_groups) -> Dict[str, UvGroupMaks]:
-    '''
-    Returns dictionary of masks created with GUI 
-    (bpy.context.scene.nusiq_mcblend_uv_groups).
-    '''
-    result: Dict[str, UvGroupMaks] = {}
-    for uv_group in uv_groups:
-        side1 = _get_masks_from_side(uv_group.side1)
-        side2 = _get_masks_from_side(uv_group.side2)
-        side3 = _get_masks_from_side(uv_group.side3)
-        side4 = _get_masks_from_side(uv_group.side4)
-        side5 = _get_masks_from_side(uv_group.side5)
-        side6 = _get_masks_from_side(uv_group.side6)
-        result[uv_group.name] = UvGroupMaks(
-            side1, side2, side3, side4, side5, side6)
-    return result
-

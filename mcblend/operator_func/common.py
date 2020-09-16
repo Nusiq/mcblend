@@ -5,7 +5,8 @@ from __future__ import annotations
 
 import math
 from enum import Enum
-from typing import Dict, NamedTuple, List, Optional, Tuple, Any, Iterable
+from typing import (
+    Dict, NamedTuple, List, Optional, Tuple, Any, Iterable, Sequence)
 
 import numpy as np
 
@@ -13,6 +14,7 @@ import bpy_types
 import bpy
 import mathutils
 
+from .texture_generator import Mask, ColorMask, get_masks_from_side
 from .exception import NameConflictException, NoCubePolygonsException
 
 MINECRAFT_SCALE_FACTOR = 16
@@ -267,6 +269,49 @@ class McblendObject:
         Returns the polygons of the cube inside a CubePolygons object.
         '''
         return CubePolygons.build(self.thisobj, self.mirror)
+
+    @property
+    def side1_uv_masks(self) -> Sequence[Mask]:
+        if self.uv_group == '':
+            return [ColorMask((0, 1, 0))]
+        uv_group = bpy.context.scene.nusiq_mcblend_uv_groups[self.uv_group]
+        return get_masks_from_side(uv_group.side1)
+
+    @property
+    def side2_uv_masks(self) -> Sequence[Mask]:
+        if self.uv_group == '':
+            return [ColorMask((1, 0, 1))]
+        uv_group = bpy.context.scene.nusiq_mcblend_uv_groups[self.uv_group]
+        return get_masks_from_side(uv_group.side2)
+
+    @property
+    def side3_uv_masks(self) -> Sequence[Mask]:
+        if self.uv_group == '':
+            return [ColorMask((1, 0, 0))]
+        uv_group = bpy.context.scene.nusiq_mcblend_uv_groups[self.uv_group]
+        return get_masks_from_side(uv_group.side3)
+
+    @property
+    def side4_uv_masks(self) -> Sequence[Mask]:
+        if self.uv_group == '':
+            return [ColorMask((0, 1, 1))]
+        uv_group = bpy.context.scene.nusiq_mcblend_uv_groups[self.uv_group]
+        return get_masks_from_side(uv_group.side4)
+
+    @property
+    def side5_uv_masks(self) -> Sequence[Mask]:
+        if self.uv_group == '':
+            return [ColorMask((0, 0, 1))]
+        uv_group = bpy.context.scene.nusiq_mcblend_uv_groups[self.uv_group]
+        return get_masks_from_side(uv_group.side5)
+
+    @property
+    def side6_uv_masks(self) -> Sequence[Mask]:
+        if self.uv_group == '':
+            return [ColorMask((1, 1, 0))]
+        uv_group = bpy.context.scene.nusiq_mcblend_uv_groups[self.uv_group]
+        masks = get_masks_from_side(uv_group.side6)
+        return masks
 
 # key (side, is_mirrored) : value (names of the vertices)
 # Used in CubePolygons constructor

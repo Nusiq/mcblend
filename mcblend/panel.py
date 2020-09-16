@@ -25,6 +25,8 @@ class OBJECT_NusiqMcblendColorProperties(bpy.types.PropertyGroup):
         min=0, max=1, step=1000, default=(1.0, 1.0, 1.0))
 
 class OBJECT_NusiqMcblendUvMaskProperties(bpy.types.PropertyGroup):
+    ui_collapsed: BoolProperty(  # type: ignore
+        name='Collapse', default=False)
     mask_type: EnumProperty(  # type: ignore
         items=list_mask_types_as_blender_enum,
         name='Mask type'
@@ -307,20 +309,12 @@ class OBJECT_UL_NusiqMcblendUVGroupList(bpy.types.UIList):
             # With rename functionality:
             layout.prop(item, "name", text="", emboss=False)
 
-
 class OBJECT_PT_NusiqMcblendUVGroupPanel(bpy.types.Panel):
     '''Panel that lets edit UV groups'''
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = 'scene'
     bl_label = "Mcblend UV groups"
-
-    #"object.nusiq_mcblend_add_uv_mask_color"
-    #"object.nusiq_mcblend_remove_uv_mask_color"
-    #"object.nusiq_mcblend_move_uv_mask_color"
-    #"object.nusiq_mcblend_add_uv_mask_stripe"
-    #"object.nusiq_mcblend_remove_uv_mask_stripe"
-    #"object.nusiq_mcblend_move_uv_mask_stripe"
 
     def draw_colors(self, mask, mask_index: int, col: bpy.types.UILayout):
         box = col.box()
@@ -363,7 +357,7 @@ class OBJECT_PT_NusiqMcblendUVGroupPanel(bpy.types.Panel):
             "object.nusiq_mcblend_add_uv_mask_stripe", text="", icon='ADD')
         op_props.mask_index = mask_index
 
-        colors_len = len(mask.colors)
+        stripes_len = len(mask.stripes)
         for stripe_index, stripe in enumerate(mask.stripes):
             row = box.row()
             row.prop(stripe, "width")
@@ -377,7 +371,7 @@ class OBJECT_PT_NusiqMcblendUVGroupPanel(bpy.types.Panel):
                 op_props.move_from = stripe_index
                 op_props.move_to = stripe_index - 1
             # Move up
-            if stripe_index + 1 < colors_len:
+            if stripe_index + 1 < stripes_len:
                 op_props = up_down_row.operator(
                     "object.nusiq_mcblend_move_uv_mask_stripe", icon='TRIA_DOWN', text='')
                 op_props.mask_index = mask_index
@@ -405,10 +399,10 @@ class OBJECT_PT_NusiqMcblendUVGroupPanel(bpy.types.Panel):
             row = col.row()
             row.prop(mask, "p1")
             row.prop(mask, "p2")
-        if stripes:
-            self.draw_stripes(mask, index, col)  # stripes
         if relative_boundries:
             col.prop(mask, "relative_boundries")
+        if stripes:
+            self.draw_stripes(mask, index, col)  # stripes
         if expotent:
             col.prop(mask, "expotent")
         if strength:
@@ -427,8 +421,17 @@ class OBJECT_PT_NusiqMcblendUVGroupPanel(bpy.types.Panel):
 
     def draw_mask(self, mask, index: int, masks_len, col: bpy.types.UILayout):
         box = col.box()
+        # box.scale_x = True
         col = box.column()
         row = col.row()
+        if mask.ui_collapsed:
+            row.prop(
+                mask, "ui_collapsed", text="", icon='DISCLOSURE_TRI_RIGHT',
+                emboss=False)
+        else:
+            row.prop(
+                mask, "ui_collapsed", text="", icon='DISCLOSURE_TRI_DOWN',
+                emboss=False)
         row.label(text=f'{mask.mask_type}')
         up_down_row = row.row(align=True)
         # Move down
@@ -447,6 +450,9 @@ class OBJECT_PT_NusiqMcblendUVGroupPanel(bpy.types.Panel):
         op_props = row.operator(
             "object.nusiq_mcblend_remove_uv_mask", icon='X', text='')
         op_props.target = index
+
+        if mask.ui_collapsed:
+            return  # don't draw anything (the gui is collapsed)
 
         # Drawing the mask itself
         if mask.mask_type == UvMaskTypes.COLOR_PALLETTE_MASK.value:
@@ -491,31 +497,19 @@ class OBJECT_PT_NusiqMcblendUVGroupPanel(bpy.types.Panel):
         )
         active_uv_group_id = bpy.context.scene.nusiq_mcblend_active_uv_group
         uv_groups = bpy.context.scene.nusiq_mcblend_uv_groups
+        col.template_list(
+            listtype_name="OBJECT_UL_NusiqMcblendUVGroupList",
+            list_id="", dataptr=context.scene,
+            propname="nusiq_mcblend_uv_groups",
+            active_dataptr=context.scene,
+            active_propname="nusiq_mcblend_active_uv_group")
         if active_uv_group_id < len(uv_groups):
             active_uv_group = uv_groups[active_uv_group_id]
-            col.template_list(
-                listtype_name="OBJECT_UL_NusiqMcblendUVGroupList",
-                list_id="", dataptr=context.scene,
-                propname="nusiq_mcblend_uv_groups",
-                active_dataptr=context.scene,
-                active_propname="nusiq_mcblend_active_uv_group")
 
-            # Delete ggroup
+            # Delete group
             operator_propeties = row.operator(
                 "object.nusiq_mcblend_remove_uv_group",
                 text="Delete this UV group", icon='X')
-            # # Rename group
-            # col.operator(
-            #     "object.nusiq_mcblend_rename_uv_group",
-            #     text="Rename")
-
-            # col.separator()
-            # # Select group
-            # row = col.row()
-            # row.label(text='UV Group:')
-            # row.operator_menu_enum(
-            #     "object.nusiq_mcblend_list_uv_groups", "uv_groups_enum",
-            #     text=active_uv_group.name)
             # Select side
             row = col.row()
             row.label(text='Side:')
@@ -523,6 +517,10 @@ class OBJECT_PT_NusiqMcblendUVGroupPanel(bpy.types.Panel):
                 context.scene, "nusiq_mcblend_active_uv_groups_side",
                 text="")
             col.separator()
+            col.operator(
+                'object.nusiq_mcblend_copy_uv_group_side',
+                text='Copy current UV face', icon='DUPLICATE')
+            
             # Add mask
             col.operator_menu_enum(
                 "object.nusiq_mcblend_add_uv_mask", "mask_type",
@@ -536,6 +534,7 @@ class OBJECT_PT_NusiqMcblendUVGroupPanel(bpy.types.Panel):
             masks = sides[
                 int(context.scene.nusiq_mcblend_active_uv_groups_side)]
             for i, mask in enumerate(masks):
+                col.separator(factor=0.5)
                 self.draw_mask(mask, i, len(masks), col)
 
 class OBJECT_PT_NusiqMcblendObjectPropertiesPanel(bpy.types.Panel):
@@ -689,23 +688,28 @@ class OBJECT_PT_NusiqMcblendOperatorsPanel(bpy.types.Panel):
 
 
     def draw(self, context):
-        self.layout.row().operator(
+        col = self.layout.column()
+        col.operator(
             "object.nusiq_mcblend_toggle_mirror_operator",
             text="Toggle mirror for UV mapping"
         )
-        self.layout.row().operator(
+        col.operator(
             "object.nusiq_mcblend_uv_group_operator",
             text="Set the UV group"
         )
-        self.layout.row().operator(
+        col.operator(
+            "object.nusiq_mcblend_clear_uv_group_operator",
+            text="Clear UV group"
+        )
+        col.operator(
             "object.nusiq_mcblend_toggle_is_bone_operator",
             text="Toggle export as bones"
         )
-        self.layout.row().operator(
+        col.operator(
             "object.nusiq_mcblend_set_inflate_operator",
             text="Inflate"
         )
-        self.layout.row().operator(
+        col.operator(
             "object.nusiq_mcblend_round_dimensions_operator",
             text="Round dimensions"
         )

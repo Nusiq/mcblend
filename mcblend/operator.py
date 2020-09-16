@@ -184,7 +184,7 @@ class OBJECT_OT_NusiqMcblendUvGroupOperator(bpy.types.Operator):
     '''
     # pylint: disable=C0116, W0613, no-member
     bl_idname = "object.nusiq_mcblend_uv_group_operator"
-    bl_label = "Set uv_group for bedrock model."
+    bl_label = "Set uv_group for object."
     bl_options = {'UNDO'}
     bl_description = (
         "Set uv_group for bedrock model. Objects that have the same width, "
@@ -204,7 +204,7 @@ class OBJECT_OT_NusiqMcblendUvGroupOperator(bpy.types.Operator):
     def poll(cls, context: bpy_types.Context):
         if context.mode != 'OBJECT':
             return False
-        if len(context.selected_objects) < 0:
+        if len(context.selected_objects) < 1:
             return False
         if len(bpy.context.scene.nusiq_mcblend_uv_groups) == 0:
             return False
@@ -214,8 +214,42 @@ class OBJECT_OT_NusiqMcblendUvGroupOperator(bpy.types.Operator):
         return context.window_manager.invoke_props_dialog(self)
 
     def execute(self, context):
-        context.object.nusiq_mcblend_object_properties.uv_group = (
-            self.uv_groups_enum)
+        for obj in context.selected_objects:
+            if obj.type == 'MESH':
+                obj.nusiq_mcblend_object_properties.uv_group = (
+                    self.uv_groups_enum)
+        self.report(
+            {'INFO'},
+            f'Set UV group of selected objects to {self.uv_groups_enum}.')
+        return {'FINISHED'}
+
+
+class OBJECT_OT_NusiqMcblendClearUvGroupOperator(bpy.types.Operator):
+    '''
+    Operator used for setting custom property called uv_group for selected
+    objects.
+    '''
+    # pylint: disable=C0116, W0613, no-member
+    bl_idname = "object.nusiq_mcblend_clear_uv_group_operator"
+    bl_label = "Clear uv_group for object."
+    bl_options = {'UNDO'}
+    bl_description = 'Clears the UV group from an object.'
+
+    @classmethod
+    def poll(cls, context: bpy_types.Context):
+        if context.mode != 'OBJECT':
+            return False
+        if len(context.selected_objects) < 1:
+            return False
+        if len(bpy.context.scene.nusiq_mcblend_uv_groups) == 0:
+            return False
+        return True
+
+    def execute(self, context):
+        for obj in context.selected_objects:
+            if obj.type == 'MESH':
+                obj.nusiq_mcblend_object_properties.uv_group = ''
+        self.report({'INFO'}, 'Cleared UV group of selected objects.')
         return {'FINISHED'}
 
 
@@ -470,7 +504,7 @@ class OBJECT_OT_NusiqMcblendListAnimations(bpy.types.Operator):
     # @classmethod
     # def poll(cls, context):
     #     return context.mode == 'OBJECT'
-    
+
     def execute(self, context):
         '''
         Runs when user picks an item from the dropdown menu in animations
@@ -556,17 +590,12 @@ class OBJECT_OT_NusiqMcblendListUvGroups(bpy.types.Operator):
     def execute(self, context):
         '''
         Runs when user picks an item from the dropdown menu in uv_groups
-        panel. Sets the active animation.
+        panel. Sets the active uv_group.
         '''
-        # If OK than save old animation state
-        len_uv_groups = len(context.scene.nusiq_mcblend_uv_groups)
-        curr_uv_group_id = context.scene.nusiq_mcblend_active_uv_group
-
         # Set new uv_group and load its state
         new_uv_group_id=int(self.uv_groups_enum)
         context.scene.nusiq_mcblend_active_uv_group=new_uv_group_id
 
-        # TODO - Load uv group properties
         return {'FINISHED'}
 
 class OBJECT_OT_NusiqMcblendAddUvGroup(bpy.types.Operator):
@@ -600,7 +629,7 @@ class OBJECT_OT_NusiqMcblendRemoveUvGroup(bpy.types.Operator):
         group_name = context.scene.nusiq_mcblend_uv_groups[group_id].name
         # Remove uv_group
         context.scene.nusiq_mcblend_uv_groups.remove(group_id)
-        
+
 
         # Update the names of all of the meshes
         for obj in bpy.data.objects:
@@ -618,66 +647,114 @@ class OBJECT_OT_NusiqMcblendRemoveUvGroup(bpy.types.Operator):
         curr_uv_group_id=context.scene.nusiq_mcblend_active_uv_group
         return {'FINISHED'}
 
-# class OBJECT_OT_NusiqMcblendRenameUvGroup(bpy.types.Operator):
-#     bl_idname = "object.nusiq_mcblend_rename_uv_group"
-#     bl_label = "Rename current uv_group from the list."
-#     bl_options = {'UNDO'}
 
-#     new_name: bpy.props.StringProperty(  # type: ignore
-#         name='Name', description='New name of the UV group', maxlen=1024
-#     )
+class OBJECT_OT_NusiqMcblendCopyUvGroupSide(bpy.types.Operator):
+    bl_idname = "object.nusiq_mcblend_copy_uv_group_side"
+    bl_label = 'Copy active UV group side other to UV group'
+    bl_options = {'UNDO'}
 
-#     @classmethod
-#     def poll(cls, context):
-#         return len(context.scene.nusiq_mcblend_uv_groups) > 0
+    def list_uv_groups(self, context):
+        items = [
+            (str(i), x.name, x.name)
+            for i, x in enumerate(bpy.context.scene.nusiq_mcblend_uv_groups)]
+        return items
 
-#     def invoke(self, context, event):
-#         return context.window_manager.invoke_props_dialog(self)
+    uv_groups_enum: bpy.props.EnumProperty(  # type: ignore
+        items=list_uv_groups, name="UV Groups")
+    side1: BoolProperty(name='side1')  # type: ignore
+    side2: BoolProperty(name='side2')  # type: ignore
+    side3: BoolProperty(name='side3')  # type: ignore
+    side4: BoolProperty(name='side4')  # type: ignore
+    side5: BoolProperty(name='side5')  # type: ignore
+    side6: BoolProperty(name='side6')  # type: ignore
 
-#     def update_uv_group_name(self, uv_group, new_name: str):
-#         # Update the names of all of the meshes
-#         for obj in bpy.data.objects:
-#             if obj.type == "MESH":
-#                 obj_props = obj.nusiq_mcblend_object_properties
-#                 if obj_props.uv_group == uv_group.name:
-#                     obj_props.uv_group = new_name
-#         # Update the name of the UV group
-#         uv_group.name = new_name
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self)
 
-#     def execute(self, context):
-#         groups = context.scene.nusiq_mcblend_uv_groups
-#         this_group_index = context.scene.nusiq_mcblend_active_uv_group
-#         this_group = groups[this_group_index]
+    @classmethod
+    def poll(cls, context):
+        return len(context.scene.nusiq_mcblend_uv_groups) >= 1
 
-        
-#         # Empty name is no allowed
-#         if self.new_name == '':
-#             self.report({'WARNING'}, "Invalid name (empty string).")
-#             return {'CANCELLED'}
+    def copy_side(
+            self, context,
+            source_group_id: int, source_side_id: int,
+            target_group_id: int, target_side_id: int):
+        if (
+            source_group_id == target_group_id and
+            source_side_id == target_side_id
+        ):
+            return  # If source and target is the same don't do anything
+        # Get source
+        source_group = context.scene.nusiq_mcblend_uv_groups[source_group_id]
+        source_sides = [
+            source_group.side1, source_group.side2,
+            source_group.side3, source_group.side4,
+            source_group.side5, source_group.side6]
+        source_masks = source_sides[source_side_id]
+        # Get target
+        target_group = context.scene.nusiq_mcblend_uv_groups[target_group_id]
+        target_sides = [
+            target_group.side1, target_group.side2,
+            target_group.side3, target_group.side4,
+            target_group.side5, target_group.side6]
+        target_masks = target_sides[target_side_id]
+        # Clear target
+        target_masks.clear()
+        # Copy from source from target
+        for mask in source_masks:
+            new_mask = target_masks.add()
+            new_mask.mask_type = mask.mask_type
+            for color in mask.colors:
+                new_color = new_mask.colors.add()
+                new_color.color = color.color
+            new_mask.interpolate = mask.interpolate
+            new_mask.normalize = mask.normalize
+            new_mask.p1 = mask.p1
+            new_mask.p2 = mask.p2
+            for stripe in mask.stripes:
+                new_stripe = new_mask.stripes.add()
+                new_stripe.width = stripe.width
+                new_stripe.strength = stripe.strength
+            new_mask.relative_boundries = mask.relative_boundries
+            new_mask.expotent = mask.expotent
+            new_mask.strength = mask.strength
+            new_mask.hard_edge = mask.hard_edge
+            new_mask.horizontal = mask.horizontal
+            new_mask.use_seed = mask.use_seed
+            new_mask.seed = mask.seed
+            new_mask.color.color = mask.color.color  # pointer property
 
-#         # If name already in use rename the other uv group
-#         for other_group in groups:
-#             if (  # Change the of the duplicate if there is one
-#                     other_group.path_from_id() != this_group.path_from_id() and
-#                     other_group.name == self.new_name):
-#                 # Get starting name index
-#                 i = 1
-#                 base_name = self.new_name
-#                 split_name = self.new_name.split('.')
-#                 try:
-#                     prev_i = int(split_name[-1])
-#                     i = i if prev_i <= 0 else prev_i
-#                     base_name = '.'.join(split_name[:-1])
-#                 except ValueError:
-#                     pass
-#                 other_new_name = get_unused_uv_group_name(base_name, i)
-#                 self.update_uv_group_name(other_group, other_new_name)
-#                 break
-#         self.update_uv_group_name(this_group, self.new_name)
-#         return {'FINISHED'}
+    def execute(self, context):
+        # Get source masks
+        source_group_id = context.scene.nusiq_mcblend_active_uv_group
+        source_side_id = int(context.scene.nusiq_mcblend_active_uv_groups_side)
+
+        # Get target UV group
+        target_group_id = int(self.uv_groups_enum)
+        target_group = context.scene.nusiq_mcblend_uv_groups[target_group_id]
+
+        if self.side1:
+            self.copy_side(
+                context, source_group_id, source_side_id, target_group_id, 0)
+        if self.side2:
+            self.copy_side(
+                context, source_group_id, source_side_id, target_group_id, 1)
+        if self.side3:
+            self.copy_side(
+                context, source_group_id, source_side_id, target_group_id, 2)
+        if self.side4:
+            self.copy_side(
+                context, source_group_id, source_side_id, target_group_id, 3)
+        if self.side5:
+            self.copy_side(
+                context, source_group_id, source_side_id, target_group_id, 4)
+        if self.side6:
+            self.copy_side(
+                context, source_group_id, source_side_id, target_group_id, 5)
+        self.report({'INFO'}, f'Successfuly copied UV face.')
+        return {'FINISHED'}
 
 # UV Group -> UV Mask (GUI)
-
 def get_active_masks(context):
     '''
     Helper function for getting access to active UV Group -> Masks
@@ -817,6 +894,7 @@ class OBJECT_OT_NusiqMcblendMoveUvMaskColor(bpy.types.Operator):
         mask = masks[self.mask_index]
         mask.colors.move(self.move_from, self.move_to)
         return {'FINISHED'}
+
 
 # UV Group -> UV Mask -> side -> stripes (GUI)
 class OBJECT_OT_NusiqMcblendAddUvMaskStripe(bpy.types.Operator):

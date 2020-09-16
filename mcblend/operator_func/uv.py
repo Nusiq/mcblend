@@ -4,7 +4,8 @@ Functions related to creating UV map.
 from __future__ import annotations
 
 from typing import (
-    Dict, Tuple, List, Optional, Iterator, Collection, NamedTuple
+    Dict, Tuple, List, Optional, Iterator, Collection, NamedTuple, Iterable,
+    Sequence
 )
 from enum import Enum
 from dataclasses import dataclass, field
@@ -15,28 +16,13 @@ import numpy as np
 import bpy
 import bpy_types
 
+from .texture_generator import Mask
 from .exception import NotEnoughTextureSpace
 from .common import (
     MINECRAFT_SCALE_FACTOR, McblendObject, McblendObjectGroup, CubePolygon)
-from .texture_generator import Mask, ColorMask, ElipseMask
 
-class CubesMasks:
-    def __init__(self,
-            side1: List[Mask]=None, side2: List[Mask]=None,
-            side3: List[Mask]=None, side4: List[Mask]=None,
-            side5: List[Mask]=None, side6: List[Mask]=None):
-        self.side1: List[Mask] = (
-            [ElipseMask((0.4, 0.4), (0.6, 0.6), strength=(0.5, 1.0)), ColorMask((0, 1, 0))] if side1 is None else side1)
-        self.side2: List[Mask] = (
-            [ElipseMask((0.4, 0.4), (0.6, 0.6), strength=(0.5, 1.0)), ColorMask((1, 0, 1))] if side2 is None else side2)
-        self.side3: List[Mask] = (
-            [ElipseMask((0.4, 0.4), (0.6, 0.6), strength=(0.5, 1.0)), ColorMask((1, 0, 0))] if side3 is None else side3)
-        self.side4: List[Mask] = (
-            [ElipseMask((0.4, 0.4), (0.6, 0.6), strength=(0.5, 1.0)), ColorMask((0, 1, 1))] if side4 is None else side4)
-        self.side5: List[Mask] = (
-            [ElipseMask((0.4, 0.4), (0.6, 0.6), strength=(0.5, 1.0)), ColorMask((0, 0, 1))] if side5 is None else side5)
-        self.side6: List[Mask] = (
-            [ElipseMask((0.4, 0.4), (0.6, 0.6), strength=(0.5, 1.0)), ColorMask((1, 1, 0))] if side6 is None else side6)
+
+
 
 class CoordinatesConverter:
     '''
@@ -247,7 +233,7 @@ class UvMcCubeFace(UvBox):
     '''
     def __init__(
             self, cube: UvMcCube, cube_polygon: CubePolygon,
-            size: Tuple[int, int], masks: List[Mask],
+            size: Tuple[int, int], masks: Sequence[Mask],
             uv: Tuple[int, int]=None):
         super().__init__(size, uv=uv)
         self.cube = cube
@@ -305,7 +291,7 @@ class UvMcCubeFace(UvBox):
 
         # Alway paint white
         texture_part = arr[min1:max1, min2:max2]
-        texture_part[...] = 1  # Set RGBA white
+        texture_part[...] = 1.0  # Set RGBA white
 
         texture_part = texture_part[..., :3]  # No alpha channel filters yet
         for mask in self.masks:
@@ -319,10 +305,7 @@ class UvMcCube(McblendObjUvBox):
     '''
     def __init__(
             self, width: int, depth: int, height: int,
-            thisobj: McblendObject, *, cubes_masks: CubesMasks=None
-        ):
-        if cubes_masks is None:
-            cubes_masks = CubesMasks()
+            thisobj: McblendObject):
         size = (
             2*depth + 2*width,
             height + depth
@@ -340,28 +323,28 @@ class UvMcCube(McblendObjUvBox):
             cp1, cp3 = cube_polygons.east, cube_polygons.west
         # right/left
         self.side1 = UvMcCubeFace(
-            self, cp1, (depth, height), cubes_masks.side1,
-            uv=(0, depth))
+            self, cp1, (depth, height),
+            thisobj.side1_uv_masks, uv=(0, depth))
         # front
         self.side2 = UvMcCubeFace(
-            self, cube_polygons.north, (width, height), cubes_masks.side2,
-            uv=(depth, depth))
+            self, cube_polygons.north, (width, height),
+            thisobj.side2_uv_masks, uv=(depth, depth))
         # left/right
         self.side3 = UvMcCubeFace(
-            self, cp3, (depth, height), cubes_masks.side3,
-            uv=(depth + width, depth))
+            self, cp3, (depth, height),
+            thisobj.side3_uv_masks, uv=(depth + width, depth))
         # back
         self.side4 = UvMcCubeFace(
-            self, cube_polygons.south, (width, height), cubes_masks.side4,
-            uv=(2*depth + width, depth))
+            self, cube_polygons.south, (width, height),
+            thisobj.side4_uv_masks, uv=(2*depth + width, depth))
         # top
         self.side5 = UvMcCubeFace(
-            self, cube_polygons.up, (width, depth), cubes_masks.side5,
-            uv=(depth, 0))
+            self, cube_polygons.up, (width, depth),
+            thisobj.side5_uv_masks, uv=(depth, 0))
         # bottom
         self.side6 = UvMcCubeFace(
-            self, cube_polygons.down, (width, depth), cubes_masks.side6,
-            uv=(depth + width, 0))
+            self, cube_polygons.down, (width, depth),
+            thisobj.side6_uv_masks, uv=(depth + width, 0))
         super().__init__(size, None)
 
     @property  # type: ignore

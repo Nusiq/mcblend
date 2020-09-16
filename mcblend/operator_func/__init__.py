@@ -119,9 +119,18 @@ def set_uvs(context: bpy_types.Context):
     context.scene.nusiq_mcblend.texture_height = new_height
 
     if resolution >= 1:
+        old_image = None
+        if "template" in bpy.data.images:
+            old_image = bpy.data.images['template']
         image = bpy.data.images.new(
             "template", width*resolution, new_height*resolution, alpha=True
         )
+        if old_image is not None:
+            # If exists remap users of old image and remove it
+            old_image.user_remap(image)
+            bpy.data.images.remove(old_image)
+            image.name = "template"
+
 
         # This array represents new texture
         # DIM0:up axis DIM1:right axis DIM2:rgba axis
