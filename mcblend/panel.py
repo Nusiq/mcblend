@@ -2,6 +2,9 @@
 This module contains all of the panels for mcblend GUI.
 '''
 # don't import future annotations Blender needs that
+from typing import Tuple, List, Optional
+from dataclasses import dataclass
+
 import bpy
 from bpy.props import (
     StringProperty, IntProperty, BoolProperty, FloatProperty,
@@ -9,8 +12,8 @@ from bpy.props import (
     EnumProperty, PointerProperty
 )
 from .operator_func.texture_generator import (
-    list_mask_types_as_blender_enum, UvMaskTypes)
-
+    list_mask_types_as_blender_enum, UvMaskTypes,
+    list_mix_mask_modes_as_blender_enum, MixMaskMode)
 
 
 class OBJECT_NusiqMcblendStripeProperties(bpy.types.PropertyGroup):
@@ -29,8 +32,15 @@ class OBJECT_NusiqMcblendUvMaskProperties(bpy.types.PropertyGroup):
         name='Collapse', default=False)
     mask_type: EnumProperty(  # type: ignore
         items=list_mask_types_as_blender_enum,
-        name='Mask type'
-    )
+        name='Mask type')
+
+    # mode: str  # MixMask
+    mode: EnumProperty(  # type: ignore
+        items=list_mix_mask_modes_as_blender_enum,
+        name='Mix mode')
+    # MixMask
+    children: IntProperty(  # type: ignore
+        name='Number of children', min=1, default=2)
     # colors: List[Color]  # ColorPalletteMask
     colors: CollectionProperty(  # type: ignore
         type=OBJECT_NusiqMcblendColorProperties,
@@ -55,9 +65,11 @@ class OBJECT_NusiqMcblendUvMaskProperties(bpy.types.PropertyGroup):
     relative_boundries: BoolProperty(  # type: ignore
         name='Relative boundries')
     # expotent: float  # GradientMask ElipseMask RectangleMask RandomMask
+    #  MixMask
     expotent: FloatProperty(  # type: ignore
         name='Expotent', default=1.0, soft_min=-10.0, soft_max=10.0)
     # strength: Tuple[float, float]  # ElipseMask RectangleMask RandomMask
+    #  MixMask
     strength: FloatVectorProperty(  # type: ignore
         min=0.0, max=1.0, default=(0.0, 1.0), size=2)
     # hard_edge: bool  # ElipseMask RectangleMask
@@ -309,6 +321,12 @@ class OBJECT_UL_NusiqMcblendUVGroupList(bpy.types.UIList):
             # With rename functionality:
             layout.prop(item, "name", text="", emboss=False)
 
+@dataclass
+class _UIStackItem():
+    '''Used for drawing some items in UVGroupPanel'''
+    ui: Optional[bpy.types.UILayout]  # None if parent is collapsed
+    depth: int
+
 class OBJECT_PT_NusiqMcblendUVGroupPanel(bpy.types.Panel):
     '''Panel that lets edit UV groups'''
     bl_space_type = 'PROPERTIES'
@@ -388,7 +406,8 @@ class OBJECT_PT_NusiqMcblendUVGroupPanel(bpy.types.Panel):
             colors=False, interpolate=False,
             normalize=False, p1p2=False, stripes=False,
             relative_boundries=False, expotent=False, strength=False,
-            hard_edge=False, horizontal=False, seed=False,color=False):
+            hard_edge=False, horizontal=False, seed=False,color=False,
+            children=False, mode=False):
         if colors:
             self.draw_colors(mask, index, col)  # colors
         if interpolate:
@@ -406,7 +425,7 @@ class OBJECT_PT_NusiqMcblendUVGroupPanel(bpy.types.Panel):
         if expotent:
             col.prop(mask, "expotent")
         if strength:
-            col.prop(mask, "strength")
+            col.row().prop(mask, "strength")
         if hard_edge:
             col.prop(mask, "hard_edge")
         if horizontal:
@@ -418,72 +437,98 @@ class OBJECT_PT_NusiqMcblendUVGroupPanel(bpy.types.Panel):
                 row.prop(mask, "seed")
         if color:
             col.prop(mask.color, "color")
+        if mode:
+            col.prop(mask, "mode")
+        if children:
+            col.prop(mask, "children")
 
-    def draw_mask(self, mask, index: int, masks_len, col: bpy.types.UILayout):
-        box = col.box()
-        # box.scale_x = True
-        col = box.column()
-        row = col.row()
-        if mask.ui_collapsed:
-            row.prop(
-                mask, "ui_collapsed", text="", icon='DISCLOSURE_TRI_RIGHT',
-                emboss=False)
-        else:
-            row.prop(
-                mask, "ui_collapsed", text="", icon='DISCLOSURE_TRI_DOWN',
-                emboss=False)
-        row.label(text=f'{mask.mask_type}')
-        up_down_row = row.row(align=True)
-        # Move down
-        if index - 1 >= 0:
-            op_props = up_down_row.operator(
-                "object.nusiq_mcblend_move_uv_mask", icon='TRIA_UP', text='')
-            op_props.move_from = index
-            op_props.move_to = index - 1
-        # Move up
-        if index + 1 < masks_len:
-            op_props = up_down_row.operator(
-                "object.nusiq_mcblend_move_uv_mask", icon='TRIA_DOWN', text='')
-            op_props.move_from = index
-            op_props.move_to = index + 1
-        # Delete button
-        op_props = row.operator(
-            "object.nusiq_mcblend_remove_uv_mask", icon='X', text='')
-        op_props.target = index
+    def draw_mask(
+            self, mask, index: int, masks_len: int,
+            ui_stack: List[_UIStackItem]):
 
-        if mask.ui_collapsed:
-            return  # don't draw anything (the gui is collapsed)
+        # If parent is collapsed dont draw anyghing
+        if ui_stack[-1].ui is not None:
+            col = ui_stack[-1].ui
+            box = col.box()
+            # box.scale_x = True
+            col = box.column()
+            row = col.row()
+            if mask.ui_collapsed:
+                row.prop(
+                    mask, "ui_collapsed", text="", icon='DISCLOSURE_TRI_RIGHT',
+                    emboss=False)
+            else:
+                row.prop(
+                    mask, "ui_collapsed", text="", icon='DISCLOSURE_TRI_DOWN',
+                    emboss=False)
+            row.label(text=f'{mask.mask_type}')
+            up_down_row = row.row(align=True)
+            # Move down
+            if index - 1 >= 0:
+                op_props = up_down_row.operator(
+                    "object.nusiq_mcblend_move_uv_mask", icon='TRIA_UP', text='')
+                op_props.move_from = index
+                op_props.move_to = index - 1
+            # Move up
+            if index + 1 < masks_len:
+                op_props = up_down_row.operator(
+                    "object.nusiq_mcblend_move_uv_mask", icon='TRIA_DOWN', text='')
+                op_props.move_from = index
+                op_props.move_to = index + 1
+            # Delete button
+            op_props = row.operator(
+                "object.nusiq_mcblend_remove_uv_mask", icon='X', text='')
+            op_props.target = index
 
-        # Drawing the mask itself
-        if mask.mask_type == UvMaskTypes.COLOR_PALLETTE_MASK.value:
-            self.draw_mask_properties(
-                mask, index, col,
-                colors=True, interpolate=True, normalize=True)
-        if mask.mask_type == UvMaskTypes.GRADIENT_MASK.value:
-            self.draw_mask_properties(
-                mask, index, col,
-                p1p2=True, stripes=True, relative_boundries=True,
-                expotent=True)
-        if mask.mask_type == UvMaskTypes.ELIPSE_MASK.value:
-            self.draw_mask_properties(
-                mask, index, col,
-                p1p2=True, relative_boundries=True, expotent=True,
-                strength=True, hard_edge=True)
-        if mask.mask_type == UvMaskTypes.RECTANGLE_MASK.value:
-            self.draw_mask_properties(
-                mask, index, col,
-                p1p2=True, relative_boundries=True, expotent=True,
-                strength=True, hard_edge=True)
-        if mask.mask_type == UvMaskTypes.STRIPES_MASK.value:
-            self.draw_mask_properties(
-                mask, index, col,
-                stripes=True, relative_boundries=True, horizontal=True)
-        if mask.mask_type == UvMaskTypes.RANDOM_MASK.value:
-            self.draw_mask_properties(
-                mask, index, col,
-                strength=True, expotent=True, seed=True)
-        if mask.mask_type == UvMaskTypes.COLOR_MASK.value:
-            self.draw_mask_properties(mask, index, col, color=True)
+            # Drawing the mask itself unless collapsed
+            if not mask.ui_collapsed:
+                if mask.mask_type == UvMaskTypes.COLOR_PALLETTE_MASK.value:
+                    if len(ui_stack) > 1:
+                        col.label(
+                            text="This mask can't be put inside mix mask",
+                            icon='ERROR')
+                    else:
+                        self.draw_mask_properties(
+                            mask, index, col,
+                            colors=True, interpolate=True, normalize=True)
+                if mask.mask_type == UvMaskTypes.GRADIENT_MASK.value:
+                    self.draw_mask_properties(
+                        mask, index, col,
+                        p1p2=True, stripes=True, relative_boundries=True,
+                        expotent=True)
+                if mask.mask_type == UvMaskTypes.ELIPSE_MASK.value:
+                    self.draw_mask_properties(
+                        mask, index, col,
+                        p1p2=True, relative_boundries=True, expotent=True,
+                        strength=True, hard_edge=True)
+                if mask.mask_type == UvMaskTypes.RECTANGLE_MASK.value:
+                    self.draw_mask_properties(
+                        mask, index, col,
+                        p1p2=True, relative_boundries=True, expotent=True,
+                        strength=True, hard_edge=True)
+                if mask.mask_type == UvMaskTypes.STRIPES_MASK.value:
+                    self.draw_mask_properties(
+                        mask, index, col,
+                        stripes=True, relative_boundries=True, horizontal=True)
+                if mask.mask_type == UvMaskTypes.RANDOM_MASK.value:
+                    self.draw_mask_properties(
+                        mask, index, col,
+                        strength=True, expotent=True, seed=True)
+                if mask.mask_type == UvMaskTypes.COLOR_MASK.value:
+                    self.draw_mask_properties(mask, index, col, color=True)
+                if mask.mask_type == UvMaskTypes.MIX_MASK.value:
+                    self.draw_mask_properties(
+                        mask, index, col,
+                        children=True, strength=True, expotent=True)
+
+        if mask.mask_type == UvMaskTypes.MIX_MASK.value:
+            # mask.children+1 because it counts itself as a member
+            if not mask.ui_collapsed:
+                ui_stack.append(_UIStackItem(
+                    col.box(), mask.children+1))
+            else:
+                ui_stack.append(_UIStackItem(
+                    None, mask.children+1))
 
     def draw(self, context):
         col = self.layout.column(align=True)
@@ -533,9 +578,19 @@ class OBJECT_PT_NusiqMcblendUVGroupPanel(bpy.types.Panel):
             ]
             masks = sides[
                 int(context.scene.nusiq_mcblend_active_uv_groups_side)]
+            # Stack of UI items to draw in
+            ui_stack: List[_UIStackItem] = [
+                _UIStackItem(col, 0)]
             for i, mask in enumerate(masks):
                 col.separator(factor=0.5)
-                self.draw_mask(mask, i, len(masks), col)
+                self.draw_mask(mask, i, len(masks), ui_stack)
+                # Remove empty ui containers from top of ui_stack
+                while len(ui_stack) > 1:  # Except the first one
+                    ui_stack[-1].depth -= 1
+                    if ui_stack[-1].depth <= 0:
+                        ui_stack.pop()
+                    else:
+                        break
 
 class OBJECT_PT_NusiqMcblendObjectPropertiesPanel(bpy.types.Panel):
     '''Panel with custom object properties (for meshes and empties)'''

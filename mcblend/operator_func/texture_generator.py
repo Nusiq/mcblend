@@ -20,6 +20,7 @@ class UvMaskTypes(Enum):
     STRIPES_MASK='Stripes Mask'
     RANDOM_MASK='Random Mask'
     COLOR_MASK='Color Mask'
+    MIX_MASK='Mix Mask'
 
 def list_mask_types_as_blender_enum(self, context):
     '''
@@ -30,6 +31,18 @@ def list_mask_types_as_blender_enum(self, context):
     https://docs.blender.org/api/current/bpy.props.html#bpy.props.EnumProperty
     '''
     return [(i.value, i.value, i.value) for i in UvMaskTypes]
+
+class MixMaskMode(Enum):
+    mean='mean'
+    min='min'
+    max='max'
+    median='median'
+
+def list_mix_mask_modes_as_blender_enum(self, context):
+    '''
+    Returns list of tuples for creating EnumProperties with MixMaskMode enum.
+    '''
+    return [(i.value, i.value, i.value) for i in MixMaskMode]
 
 class Mask(ABC):
     '''
@@ -427,8 +440,12 @@ class MixMask(MultiplicativeMask):
     def get_mask(self, image):
         # Get the shape of the image
         w, h, _ = image.shape
-        wh = np.array([w, h])
-        
+
+        # If there is no masks on the list than return blank mask
+        if len(self.masks) == 0:
+            mask = np.ones((w, h))
+            return mask[:,:,np.newaxis]
+
         is_rgb = False
         for m in self.masks:
             if len(m.get_mask(image).shape) == 3:
@@ -452,7 +469,7 @@ class MixMask(MultiplicativeMask):
         elif self.mode == 'median':
             mask = np.median(mask_arrays, axis=0)
         else:
-            raise Exception("Unknown mode!")
+            raise Exception(f"Unknown mix mode! {self.mode}")
 
         mask = np.interp(mask, (0.0, 1.0), self.strength)
         mask = mask**self.expotent
@@ -482,45 +499,58 @@ def get_masks_from_side(side) -> Sequence[Mask]:
     '''
     Returns tuple of Masks from one masks side definition creater in GUI.
     '''
-    result: List[Mask] = []
-    mask: Mask
-    for s_props in side:
-        if s_props.mask_type == UvMaskTypes.COLOR_PALLETTE_MASK.value:
-            mask = ColorPalletteMask(
-                [_get_color_from_gui_color(c) for c in s_props.colors],
-                interpolate=s_props.interpolate, normalize=s_props.normalize)
-        if s_props.mask_type == UvMaskTypes.GRADIENT_MASK.value:
-            mask = GradientMask(
-                tuple(s_props.p1), tuple(s_props.p2),  # type: ignore
-                stripes=[Stripe(s.width, s.strength) for s in s_props.stripes],
-                relative_boundries=s_props.relative_boundries,
-                expotent=s_props.expotent)
-        if s_props.mask_type == UvMaskTypes.ELIPSE_MASK.value:
-            mask = ElipseMask(
-                tuple(s_props.p1), tuple(s_props.p2),  # type: ignore
-                strength=tuple(s_props.strength),  #type: ignore
-                relative_boundries=s_props.relative_boundries,
-                hard_edge=s_props.hard_edge, expotent=s_props.expotent)
-        if s_props.mask_type == UvMaskTypes.RECTANGLE_MASK.value:
-            mask = RectangleMask(
-                tuple(s_props.p1), tuple(s_props.p2),  # type: ignore
-                strength=tuple(s_props.strength),  #type: ignore
-                relative_boundries=s_props.relative_boundries,
-                hard_edge=s_props.hard_edge, expotent=s_props.expotent)
-        if s_props.mask_type == UvMaskTypes.STRIPES_MASK.value:
-            mask = StripesMask(
-                [Stripe(s.width, s.strength) for s in s_props.stripes],
-                horizontal=s_props.horizontal,
-                relative_boundries=s_props.relative_boundries)
-        if s_props.mask_type == UvMaskTypes.RANDOM_MASK.value:
-            seed: Optional[int] = None
-            if s_props.use_seed:
-                seed = s_props.seed
-            mask = RandomMask(
-                strength=tuple(s_props.strength),  # type: ignore
-                expotent=s_props.expotent, seed=seed)
-        if s_props.mask_type == UvMaskTypes.COLOR_MASK.value:
-            mask = ColorMask(_get_color_from_gui_color(s_props.color))
-        result.append(mask)
 
-    return tuple(result)  # type: ignore
+    def _get_masks_from_side(side: Iterable, n_steps: int) -> Sequence[Mask]:
+        result: List[Mask] = []
+        mask: Mask
+        # n_steps limits maximal number of consumed items
+        # side is an iterator shared by all nested iterations
+        for _, s_props in zip(range(n_steps), side):
+            if s_props.mask_type == UvMaskTypes.COLOR_PALLETTE_MASK.value:
+                mask = ColorPalletteMask(
+                    [_get_color_from_gui_color(c) for c in s_props.colors],
+                    interpolate=s_props.interpolate, normalize=s_props.normalize)
+            if s_props.mask_type == UvMaskTypes.GRADIENT_MASK.value:
+                mask = GradientMask(
+                    tuple(s_props.p1), tuple(s_props.p2),  # type: ignore
+                    stripes=[Stripe(s.width, s.strength) for s in s_props.stripes],
+                    relative_boundries=s_props.relative_boundries,
+                    expotent=s_props.expotent)
+            if s_props.mask_type == UvMaskTypes.ELIPSE_MASK.value:
+                mask = ElipseMask(
+                    tuple(s_props.p1), tuple(s_props.p2),  # type: ignore
+                    strength=tuple(s_props.strength),  #type: ignore
+                    relative_boundries=s_props.relative_boundries,
+                    hard_edge=s_props.hard_edge, expotent=s_props.expotent)
+            if s_props.mask_type == UvMaskTypes.RECTANGLE_MASK.value:
+                mask = RectangleMask(
+                    tuple(s_props.p1), tuple(s_props.p2),  # type: ignore
+                    strength=tuple(s_props.strength),  #type: ignore
+                    relative_boundries=s_props.relative_boundries,
+                    hard_edge=s_props.hard_edge, expotent=s_props.expotent)
+            if s_props.mask_type == UvMaskTypes.STRIPES_MASK.value:
+                mask = StripesMask(
+                    [Stripe(s.width, s.strength) for s in s_props.stripes],
+                    horizontal=s_props.horizontal,
+                    relative_boundries=s_props.relative_boundries)
+            if s_props.mask_type == UvMaskTypes.RANDOM_MASK.value:
+                seed: Optional[int] = None
+                if s_props.use_seed:
+                    seed = s_props.seed
+                mask = RandomMask(
+                    strength=tuple(s_props.strength),  # type: ignore
+                    expotent=s_props.expotent, seed=seed)
+            if s_props.mask_type == UvMaskTypes.COLOR_MASK.value:
+                mask = ColorMask(_get_color_from_gui_color(s_props.color))
+            if s_props.mask_type == UvMaskTypes.MIX_MASK.value:
+                mask = MixMask(
+                    masks=[  # Non multiplicative masks are ignored
+                        submask for submask in
+                        _get_masks_from_side(side, n_steps=s_props.children)
+                        if isinstance(submask, MultiplicativeMask)
+                    ], strength=s_props.strength, expotent=s_props.expotent,
+                    mode=s_props.mode)
+            result.append(mask)
+        return tuple(result)
+
+    return  _get_masks_from_side(iter(side), n_steps=len(side))
