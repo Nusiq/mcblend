@@ -723,6 +723,8 @@ class OBJECT_OT_NusiqMcblendCopyUvGroupSide(bpy.types.Operator):
             new_mask.use_seed = mask.use_seed
             new_mask.seed = mask.seed
             new_mask.color.color = mask.color.color  # pointer property
+            new_mask.mode = mask.mode
+            new_mask.children = mask.children
 
     def execute(self, context):
         # Get source masks
@@ -959,3 +961,20 @@ class OBJECT_OT_NusiqMcblendMoveUvMaskStripe(bpy.types.Operator):
         mask = masks[self.mask_index]
         mask.stripes.move(self.move_from, self.move_to)
         return {'FINISHED'}
+
+# TODO - create operators for importing/exporting texture generation masks
+# to JSON
+# {
+#     "version": 1,
+#     "focused_side": "side1",
+#     "sides": {
+#         "side1": {
+#             "masks": [...]
+#         },
+#         "side2": {...},
+#         "side3": {...},
+#         "side4": {...},
+#         "side5": {...},
+#         "side6": {...},
+#     }
+# }

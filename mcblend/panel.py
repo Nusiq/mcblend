@@ -519,7 +519,8 @@ class OBJECT_PT_NusiqMcblendUVGroupPanel(bpy.types.Panel):
                 if mask.mask_type == UvMaskTypes.MIX_MASK.value:
                     self.draw_mask_properties(
                         mask, index, col,
-                        children=True, strength=True, expotent=True)
+                        children=True, strength=True, expotent=True,
+                        mode=True)
 
         if mask.mask_type == UvMaskTypes.MIX_MASK.value:
             # mask.children+1 because it counts itself as a member
