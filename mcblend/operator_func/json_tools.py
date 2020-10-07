@@ -140,7 +140,7 @@ class CompactEncoder(json.JSONEncoder):
             else:
                 yield f'{ind}{str(obj).lower()}'
         elif obj is None:
-            yield 'null'
+            yield f'{ind}null'
         else:
             raise TypeError('Object of type set is not JSON serializable')
         self.indent -= 1
