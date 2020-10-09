@@ -990,6 +990,9 @@ class ImportGeometry:
                 _mc_pivot(cube_obj, cube.pivot)  # 4. Move pivot
                 # 5. Apply translation
                 _mc_translate(cube_obj, cube.origin, cube.size, cube.pivot)
+                # 6. Inflate cubes
+                inflate_objets(
+                    bpy.context, [cube.blend_cube], cube.inflate, 'ABSOLUTE')
 
             for locator in bone.locators:
                 # 1. Spawn locator (empty)
@@ -1039,11 +1042,6 @@ class ImportGeometry:
                 cube_obj = cube.blend_cube
                 _mc_rotate(cube_obj, cube.rotation)
 
-        # Inflate objects
-        for bone in self.bones.values():
-            for cube in bone.cubes:
-                inflate_objets(
-                    bpy.context, [cube.blend_cube], cube.inflate, 'ABSOLUTE')
 
 
     def build_with_armature(self, context: bpy_types.Context):
