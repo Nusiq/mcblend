@@ -243,7 +243,7 @@ class CubeExport:
             ]
         }
         if self.inflate != 0:
-            cube_dict['inflate'] = self.inflate
+            cube_dict['inflate'] = round(self.inflate, 3)
         if self.uv.mirror:
             cube_dict['mirror'] = True
         return cube_dict
