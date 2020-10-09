@@ -96,13 +96,6 @@ class OBJECT_NusiqMcblendUvMaskProperties(bpy.types.PropertyGroup):
         type=OBJECT_NusiqMcblendColorProperties,
         name='Color')
 
-# There is no alternative for this ugly code :(
-OBJECT_NusiqMcblendUvMaskProperties.__annotations__[
-    'masks'] = CollectionProperty(
-        type=OBJECT_NusiqMcblendUvMaskProperties,
-        description='Child masks for the mix mask.')
-
-
 def get_unused_uv_group_name(base_name: str, i=1):
     uv_groups = bpy.context.scene.nusiq_mcblend_uv_groups
     name = base_name  # f'{base_name}.{i:04}'
@@ -276,7 +269,7 @@ class OBJECT_NusiqMcblendExporterProperties(bpy.types.PropertyGroup):
     texture_width: IntProperty(  # type: ignore
         name="",
         description="Minecraft UV parameter width.",
-        default=512,
+        default=64,
         min=1
     )
     texture_height: IntProperty(  # type: ignore
@@ -285,22 +278,31 @@ class OBJECT_NusiqMcblendExporterProperties(bpy.types.PropertyGroup):
             "Minecraft UV parameter height. If you set it to 0 than the height"
             " of the texture will be picked automatically for you."
         ),
-        default=0,
-        min=0
+        default=64,
+        min=1
     )
     texture_template_resolution: IntProperty(  # type: ignore
         name="Template texture resolution",
         description=(
-            'Sets the resolution of the template texture. Setting this to 0 '
-            'prevents the creation of the template texture. This value '
+            'Sets the resolution of the template texture.'
             'describes how many pixels on the image is represented by one '
             'texture_widht or texture_height unit in model definition. '
             'The value of 1 gives the standard minecraft texture '
             'resolution.'
         ),
-        default=0,
-        min=0,
+        default=1,
+        min=1,
         soft_max=5,
+    )
+    allow_expanding: BoolProperty(  # type: ignore
+        name="Allow Texture Expanding",
+        description="Allows expanding texture during texture generation.",
+        default=True,
+    )
+    generate_texture: BoolProperty(  # type: ignore
+        name="Generate texture",
+        description="Generates texture during UV mapping.",
+        default=True,
     )
 
 # Panels
@@ -745,9 +747,18 @@ class OBJECT_PT_NusiqMcblendSetUvsPanel(bpy.types.Panel):
             context.scene.nusiq_mcblend, "texture_height", text="Texture height"
         )
         col.prop(
-            context.scene.nusiq_mcblend, "texture_template_resolution",
-            text="Template resolution"
+            context.scene.nusiq_mcblend, "allow_expanding",
+            text="Allow texture expanding"
         )
+        col.prop(
+            context.scene.nusiq_mcblend, "generate_texture",
+            text="Generate Texture"
+        )
+        if context.scene.nusiq_mcblend.generate_texture:
+            col.prop(
+                context.scene.nusiq_mcblend, "texture_template_resolution",
+                text="Template resolution"
+            )
         self.layout.row().operator(
             "object.nusiq_mcblend_map_uv_operator", text="Set minecraft UVs"
         )

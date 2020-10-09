@@ -516,7 +516,7 @@ class UvMapper:
     A class that helps with UV-mapping.
     '''
     width: int
-    height: Optional[int] = None
+    height: int
     uv_boxes: List[McblendObjUvBox] = field(default_factory=list)
 
     def load_uv_boxes(
@@ -574,7 +574,7 @@ class UvMapper:
         finally:
             context.scene.frame_set(original_frame)
 
-    def plan_uv(self):
+    def plan_uv(self, allow_expanding: bool):
         '''
         Plans UVs for all of the boxes on the list. The size of the texture is
         limited by width and optionally by height. Returns success result.
@@ -582,6 +582,9 @@ class UvMapper:
         enough to map all of the boxes.
         '''
         self.uv_boxes.sort(key=lambda box: box.size[0], reverse=True)
+        
+        if allow_expanding and len(self.uv_boxes) > 0:
+            self.width = max([self.width, self.uv_boxes[0].size[0]])
 
         suggestions: List[Suggestion] = [Suggestion((0, 0), UvCorner.TOP_LEFT)]
 
@@ -597,7 +600,7 @@ class UvMapper:
         def _is_out_of_bounds(uv, size=(0, 0)):
             return (
                 uv[0] < 0 or uv[1] < 0 or uv[0] + size[0] > self.width or
-                (self.height is not None and uv[1] + size[1] > self.height)
+                (not allow_expanding and uv[1] + size[1] > self.height)
             )
 
         # pylint: disable=too-many-nested-blocks

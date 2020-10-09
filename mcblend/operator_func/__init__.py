@@ -98,32 +98,39 @@ def set_uvs(context: bpy_types.Context):
     '''
     width = context.scene.nusiq_mcblend.texture_width
     height = context.scene.nusiq_mcblend.texture_height
-
+    allow_expanding = context.scene.nusiq_mcblend.allow_expanding
+    generate_texture = context.scene.nusiq_mcblend.generate_texture
     resolution = context.scene.nusiq_mcblend.texture_template_resolution
-    if height <= 0:
-        height = None
 
     object_properties = McblendObjectGroup(context)
     mapper = UvMapper(width, height)
     mapper.load_uv_boxes(object_properties, context)
-    mapper.plan_uv()
+    mapper.plan_uv(allow_expanding)
 
     # Replace old mappings
     for objprop in mapper:
         objprop.clear_uv_layers()
 
-    if height is None:
-        new_height = max([i.uv[1] + i.size[1] for i in mapper.uv_boxes])
-    else:
-        new_height = height
-    context.scene.nusiq_mcblend.texture_height = new_height
 
-    if resolution >= 1:
+    # Update height and width
+    if allow_expanding:
+        widths = [width]
+        heights = [height]
+        for box in mapper.uv_boxes:
+            widths.append(box.uv[0] + box.size[0])
+            heights.append(box.uv[1] + box.size[1])
+        height = max(heights)
+        width = max(widths)
+
+        context.scene.nusiq_mcblend.texture_height = height
+        context.scene.nusiq_mcblend.texture_width = width
+
+    if generate_texture:
         old_image = None
         if "template" in bpy.data.images:
             old_image = bpy.data.images['template']
         image = bpy.data.images.new(
-            "template", width*resolution, new_height*resolution, alpha=True
+            "template", width*resolution, height*resolution, alpha=True
         )
         if old_image is not None:
             # If exists remap users of old image and remove it
@@ -142,7 +149,7 @@ def set_uvs(context: bpy_types.Context):
 
     # Set blender UVs
     converter = CoordinatesConverter(
-        np.array([[0, width], [0, new_height]]),
+        np.array([[0, width], [0, height]]),
         np.array([[0, 1], [1, 0]])
     )
     for curr_uv in mapper.uv_boxes:
