@@ -543,7 +543,7 @@ class ModelLoader:
         Creates default UV dictionary based on some other properties of a cube.
         '''
         # pylint: disable=no-self-use
-        width, height, depth = size
+        width, height, depth = (int(i) for i in size)
 
         def _face(size: Tuple[float, float], uv: Tuple[float, float]):
             return {"uv_size": size, "uv": uv, "material_instance": ""}
