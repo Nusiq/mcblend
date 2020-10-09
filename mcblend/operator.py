@@ -20,7 +20,8 @@ from .operator_func.exception import (
     NameConflictException, NotEnoughTextureSpace,
 )
 from .operator_func.jsonc_decoder import JSONCDecoder
-from .operator_func.texture_generator import list_mask_types_as_blender_enum
+from .operator_func.texture_generator import (
+    list_mask_types_as_blender_enum, UvMaskTypes)
 
 # TODO - move this somewhere else
 from .panel import get_unused_uv_group_name
@@ -613,6 +614,19 @@ class OBJECT_OT_NusiqMcblendAddUvGroup(bpy.types.Operator):
         context.scene.nusiq_mcblend_active_uv_group=len_groups-1
 
         uv_group_new.name = get_unused_uv_group_name('uv_group')
+        sides = [
+            uv_group_new.side1, uv_group_new.side2, uv_group_new.side3,
+            uv_group_new.side4, uv_group_new.side5, uv_group_new.side6]
+        colors = [
+            (0, 0.15, 0), (0.15, 0, 0.15), (0.15, 0, 0),
+            (0, 0.15, 0.15), (0, 0, 0.15), (0.15, 0.15, 0)]
+        for color, side in zip(colors, sides):
+            mask = side.add()
+            mask.mask_type = UvMaskTypes.COLOR_MASK.value
+            mask.color.color = color
+            mask.colors.add()
+            mask.stripes.add()
+
         return {'FINISHED'}
 
 class OBJECT_OT_NusiqMcblendRemoveUvGroup(bpy.types.Operator):
