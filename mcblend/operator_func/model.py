@@ -234,7 +234,7 @@ class CubeExport:
         '''Returns json representation of this object'''
         cube_dict = {
             'uv': self.uv.json(),
-            'size': [round(i) for i in get_vect_json(self.size)],
+            'size': get_vect_json(self.size),
             'origin': get_vect_json(self.origin),
             'pivot': get_vect_json(self.pivot),
             'rotation': [  # Change -180 in rotations to 180
