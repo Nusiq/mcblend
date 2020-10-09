@@ -157,25 +157,35 @@ class TwoPointSurfaceMask(MultiplicativeMask):
         self.relative_boundries = relative_boundries
 
     def get_surface_properties(
-            self, image: np.ndarray) -> Tuple[int, int, int, int, int, int]:
+            self, image: np.ndarray,
+            sorted=True) -> Tuple[int, int, int, int, int, int]:
         w, h, _ = image.shape
         wh = np.array([w, h])
 
         # Get highlighted area indices
         if self.relative_boundries:
-            p1 = np.array(
-                np.array(self.p1)*wh, dtype=int)
-            p2 = np.array(
-                np.array(self.p2)*wh, dtype=int)
+            # The values from relative boundries should always be between
+            # 0 and 1.
+
+            # The result values are cliped to range 0 to size-1
+            p1 = np.clip(
+                np.array(np.array(self.p1)*wh, dtype=int),
+                (0, 0), (max(0, w-1), max(0, h-1))
+            )
+            p2 = np.clip(
+                np.array(np.array(self.p2)*wh, dtype=int),
+                (0, 0), (max(0, w-1), max(0, h-1))
+            )
         else:
             p1 = np.array(
                 self.p1, dtype=int)
             p2 = np.array(
                 self.p2, dtype=int)
-        u1, v1 = np.sort(p1%wh)
-        u2, v2 = np.sort(p2%wh)
-        u1, u2 = min(u1, u2), max(u1, u2)
-        v1, v2 = min(v1, v2), max(v1, v2)
+        v1, u1 = p1%wh
+        v2, u2 = p2%wh
+        if sorted:
+            u1, u2 = min(u1, u2), max(u1, u2)
+            v1, v2 = min(v1, v2), max(v1, v2)
         return w, h, u1, u2, v1, v2
 
 class GradientMask(TwoPointSurfaceMask):
@@ -188,9 +198,7 @@ class GradientMask(TwoPointSurfaceMask):
             ),
             relative_boundries: bool=True,
             expotent: float=1.0):
-        super().__init__(
-            p1, p2, relative_boundries=relative_boundries)
-        
+        super().__init__(p1, p2, relative_boundries=relative_boundries)
         self.stripe_strength: List[float] = []
         stripe_width = []
         for i in stripes:
@@ -203,16 +211,16 @@ class GradientMask(TwoPointSurfaceMask):
         self.expotent=expotent
 
     def get_mask(self, image):
-        w, h, u1, u2, v1, v2 = self.get_surface_properties(image)
+        w, h, u1, u2, v1, v2 = self.get_surface_properties(image, sorted=False)
         def split_complex(c):
             return (c.real, c.imag)
+
         a = np.array((u1, v1))
         b = np.array((u2, v2))
         # Rotate b around a 90 degrees
         b_prime = np.array(split_complex(complex(*b-a)*1j))+a
-
         # Get the line that connects a and b_prime
-        if a[0] == b[0]:
+        if a[0] == b_prime[0]:
             abc = np.array([1, 0, -a[0]])
         else:
             slope = (a[1]-b_prime[1])/(a[0]-b_prime[0])
@@ -268,11 +276,12 @@ class ElipseMask(TwoPointSurfaceMask):
         inside = mask <= 1
         outside = mask > 1
 
-        mask[inside] = self.strength[1]
 
         if self.hard_edge:
-            mask[outside] = self.strength[0]
+            mask[outside] = self.strength[1]
+            mask[inside] = self.strength[0]
         else:
+            mask[inside] = self.strength[1]
             mask = np.interp(mask,
                 [np.min(mask[outside]), np.max(mask[outside])],
                 self.strength
@@ -300,49 +309,49 @@ class RectangleMask(TwoPointSurfaceMask):
         # Create basic mask array
         mask = np.zeros((w, h))
 
-        if self.hard_edge:
-            mask[:,:] = self.strength[0]
-            mask[u1:u2, v1:v2] = self.strength[1]
+        if self.hard_edge or (u1 == 0 and v1 == 0 and w == u2+1 and h == v2+1):
+            mask[:,:] = self.strength[1]
+            mask[u1:u2+1, v1:v2+1] = self.strength[0]
             return mask[:, :, np.newaxis]
         # Else:
         # Set values of 9 segments
         # Left top
-        segment_shape = mask[:u1,:v1].shape
+        segment_shape = mask[:u1+1,:v1+1].shape
         idx1, idx2 = np.indices(segment_shape)
         dist = np.array([np.flipud(idx1), np.fliplr(idx2)])
-        mask[:u1,:v1] = np.linalg.norm(dist, axis=0)
+        mask[:u1+1,:v1+1] = np.linalg.norm(dist, axis=0)
         # Top
-        segment_shape = mask[:u1,v1:v2].shape
+        segment_shape = mask[:u1+1,v1:v2+1].shape
         idx1, idx2 = np.indices(segment_shape)
         dist = np.array([np.flipud(idx1), np.zeros(segment_shape)])
-        mask[:u1,v1:v2] = np.linalg.norm(dist, axis=0)
+        mask[:u1+1,v1:v2+1] = np.linalg.norm(dist, axis=0)
         # Right top
-        segment_shape = mask[:u1,v2:].shape
+        segment_shape = mask[:u1+1,v2:].shape
         idx1, idx2 = np.indices(segment_shape)
         dist = np.array([np.flipud(idx1), idx2])
-        mask[:u1,v2:] = np.linalg.norm(dist, axis=0)
+        mask[:u1+1,v2:] = np.linalg.norm(dist, axis=0)
         # # Left mid
-        segment_shape = mask[u1:u2,:v1].shape
+        segment_shape = mask[u1:u2+1,:v1+1].shape
         idx1, idx2 = np.indices(segment_shape)
         dist = np.array([np.zeros(segment_shape), np.fliplr(idx2)])
-        mask[u1:u2,:v1] = np.linalg.norm(dist, axis=0)
+        mask[u1:u2+1,:v1+1] = np.linalg.norm(dist, axis=0)
         # # Mid
         # # Alread filled with zeros
         # Right mid
-        segment_shape = mask[u1:u2,v2:].shape
+        segment_shape = mask[u1:u2+1,v2:].shape
         idx1, idx2 = np.indices(segment_shape)
         dist = np.array([np.zeros(segment_shape), idx2])
-        mask[u1:u2,v2:] = np.linalg.norm(dist, axis=0)
+        mask[u1:u2+1,v2:] = np.linalg.norm(dist, axis=0)
         # Left bottom
-        segment_shape = mask[u2:,:v1].shape
+        segment_shape = mask[u2:,:v1+1].shape
         idx1, idx2 = np.indices(segment_shape)
         dist = np.array([idx1, np.fliplr(idx2)])
-        mask[u2:,:v1] = np.linalg.norm(dist, axis=0)
+        mask[u2:,:v1+1] = np.linalg.norm(dist, axis=0)
         # Bottom
-        segment_shape = mask[u2:,v1:v2].shape
+        segment_shape = mask[u2:,v1:v2+1].shape
         idx1, idx2 = np.indices(segment_shape)
         dist = np.array([idx1, np.zeros(segment_shape)])
-        mask[u2:,v1:v2] = np.linalg.norm(dist, axis=0)
+        mask[u2:,v1:v2+1] = np.linalg.norm(dist, axis=0)
         # Right bottom
         segment_shape = mask[u2:,v2:].shape
         idx1, idx2 = np.indices(segment_shape)
@@ -497,7 +506,7 @@ def _get_color_from_gui_color(color) -> Color:
 
 def get_masks_from_side(side) -> Sequence[Mask]:
     '''
-    Returns tuple of Masks from one masks side definition creater in GUI.
+    Returns tuple of Masks from one masks side definition created in GUI.
     '''
 
     def _get_masks_from_side(side: Iterable, n_steps: int) -> Sequence[Mask]:
@@ -510,39 +519,65 @@ def get_masks_from_side(side) -> Sequence[Mask]:
                 mask = ColorPalletteMask(
                     [_get_color_from_gui_color(c) for c in s_props.colors],
                     interpolate=s_props.interpolate, normalize=s_props.normalize)
-            if s_props.mask_type == UvMaskTypes.GRADIENT_MASK.value:
+            elif s_props.mask_type == UvMaskTypes.GRADIENT_MASK.value:
+                if s_props.relative_boundries:
+                    p1 = tuple(s_props.p1_relative)
+                    p2 = tuple(s_props.p2_relative)
+                else:
+                    p1 = tuple(s_props.p1)
+                    p2 = tuple(s_props.p2)
                 mask = GradientMask(
-                    tuple(s_props.p1), tuple(s_props.p2),  # type: ignore
+                    p1, p2,  # type: ignore
+                    # Gradient mask never uses relative with for stripes
                     stripes=[Stripe(s.width, s.strength) for s in s_props.stripes],
                     relative_boundries=s_props.relative_boundries,
                     expotent=s_props.expotent)
-            if s_props.mask_type == UvMaskTypes.ELIPSE_MASK.value:
+            elif s_props.mask_type == UvMaskTypes.ELIPSE_MASK.value:
+                if s_props.relative_boundries:
+                    p1 = tuple(s_props.p1_relative)
+                    p2 = tuple(s_props.p2_relative)
+                else:
+                    p1 = tuple(s_props.p1)
+                    p2 = tuple(s_props.p2)
                 mask = ElipseMask(
-                    tuple(s_props.p1), tuple(s_props.p2),  # type: ignore
+                    p1, p2,  # type: ignore
                     strength=tuple(s_props.strength),  #type: ignore
                     relative_boundries=s_props.relative_boundries,
                     hard_edge=s_props.hard_edge, expotent=s_props.expotent)
-            if s_props.mask_type == UvMaskTypes.RECTANGLE_MASK.value:
+            elif s_props.mask_type == UvMaskTypes.RECTANGLE_MASK.value:
+                if s_props.relative_boundries:
+                    p1 = tuple(s_props.p1_relative)
+                    p2 = tuple(s_props.p2_relative)
+                else:
+                    p1 = tuple(s_props.p1)
+                    p2 = tuple(s_props.p2)
                 mask = RectangleMask(
-                    tuple(s_props.p1), tuple(s_props.p2),  # type: ignore
+                    p1, p2,  # type: ignore
                     strength=tuple(s_props.strength),  #type: ignore
                     relative_boundries=s_props.relative_boundries,
                     hard_edge=s_props.hard_edge, expotent=s_props.expotent)
-            if s_props.mask_type == UvMaskTypes.STRIPES_MASK.value:
+            elif s_props.mask_type == UvMaskTypes.STRIPES_MASK.value:
+                if s_props.relative_boundries:
+                    stripes = [
+                        Stripe(s.width_relative, s.strength)
+                        for s in s_props.stripes]
+                else:
+                    stripes = [
+                        Stripe(s.width, s.strength)
+                        for s in s_props.stripes]
                 mask = StripesMask(
-                    [Stripe(s.width, s.strength) for s in s_props.stripes],
-                    horizontal=s_props.horizontal,
+                    stripes, horizontal=s_props.horizontal,
                     relative_boundries=s_props.relative_boundries)
-            if s_props.mask_type == UvMaskTypes.RANDOM_MASK.value:
+            elif s_props.mask_type == UvMaskTypes.RANDOM_MASK.value:
                 seed: Optional[int] = None
                 if s_props.use_seed:
                     seed = s_props.seed
                 mask = RandomMask(
                     strength=tuple(s_props.strength),  # type: ignore
                     expotent=s_props.expotent, seed=seed)
-            if s_props.mask_type == UvMaskTypes.COLOR_MASK.value:
+            elif s_props.mask_type == UvMaskTypes.COLOR_MASK.value:
                 mask = ColorMask(_get_color_from_gui_color(s_props.color))
-            if s_props.mask_type == UvMaskTypes.MIX_MASK.value:
+            elif s_props.mask_type == UvMaskTypes.MIX_MASK.value:
                 mask = MixMask(
                     masks=[  # Non multiplicative masks are ignored
                         submask for submask in
@@ -550,6 +585,8 @@ def get_masks_from_side(side) -> Sequence[Mask]:
                         if isinstance(submask, MultiplicativeMask)
                     ], strength=s_props.strength, expotent=s_props.expotent,
                     mode=s_props.mode)
+            else:
+                raise ValueError('Unknown mask type')
             result.append(mask)
         return tuple(result)
 

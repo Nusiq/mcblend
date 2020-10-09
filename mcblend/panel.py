@@ -9,18 +9,20 @@ import bpy
 from bpy.props import (
     StringProperty, IntProperty, BoolProperty, FloatProperty,
     FloatVectorProperty, PointerProperty, CollectionProperty,
-    EnumProperty, PointerProperty
+    EnumProperty, PointerProperty, IntVectorProperty
 )
 from .operator_func.texture_generator import (
     list_mask_types_as_blender_enum, UvMaskTypes,
-    list_mix_mask_modes_as_blender_enum, MixMaskMode)
+    list_mix_mask_modes_as_blender_enum)
 
 
 class OBJECT_NusiqMcblendStripeProperties(bpy.types.PropertyGroup):
-    width: FloatProperty(  # type: ignore
-        name='Width', soft_min=0.0, soft_max=1.0, default=1.0)
+    width: IntProperty(  # type: ignore
+        name='Width', default=1)
+    width_relative: FloatProperty(  # type: ignore
+        name='Width', min=0.0, max=1.0, default=0.1)
     strength: FloatProperty(  # type: ignore
-        name='Strength', soft_min=0.0, soft_max=1.0, default=1.0)
+        name='Strength', min=0.0, max=1.0, default=1.0)
 
 class OBJECT_NusiqMcblendColorProperties(bpy.types.PropertyGroup):
     color: FloatVectorProperty(  # type: ignore
@@ -52,11 +54,17 @@ class OBJECT_NusiqMcblendUvMaskProperties(bpy.types.PropertyGroup):
     normalize: BoolProperty(  # type: ignore
         name='Normalize')
     # p1: Tuple[float, float]  # GradientMask ElipseMask RectangleMask
-    p1: FloatVectorProperty(  # type: ignore
-        name='Point A', default=(0.0, 0.0), size=2)
+    p1_relative: FloatVectorProperty(  # type: ignore
+        name='Point A', min=0.0, max=1.0, default=(0.0, 0.0), size=2)
     # p2: Tuple[float, float]  # GradientMask ElipseMask RectangleMask
-    p2: FloatVectorProperty(  # type: ignore
-        name='Point B', default=(0.0, 0.0), size=2)
+    p2_relative: FloatVectorProperty(  # type: ignore
+        name='Point B', min=0.0, max=1.0, default=(0.0, 0.0), size=2)
+    # p1: Tuple[float, float]  # GradientMask ElipseMask RectangleMask
+    p1: IntVectorProperty(  # type: ignore
+        name='Point A', default=(0.1, 0.1), size=2)
+    # p2: Tuple[float, float]  # GradientMask ElipseMask RectangleMask
+    p2: IntVectorProperty(  # type: ignore
+        name='Point B', default=(0.9, 0.9), size=2)
     # stripes: List[Stripe]  # GradientMask StripesMask
     stripes: CollectionProperty(  # type: ignore
         type=OBJECT_NusiqMcblendStripeProperties,
@@ -378,7 +386,13 @@ class OBJECT_PT_NusiqMcblendUVGroupPanel(bpy.types.Panel):
         stripes_len = len(mask.stripes)
         for stripe_index, stripe in enumerate(mask.stripes):
             row = box.row()
-            row.prop(stripe, "width")
+            if (
+                    mask.relative_boundries and
+                    mask.mask_type != UvMaskTypes.GRADIENT_MASK.value):
+                    # Gradient mask always uses absolute values
+                row.prop(stripe, "width_relative")
+            else:
+                row.prop(stripe, "width")
             row.prop(stripe, "strength")
             up_down_row = row.row(align=True)
             # Move down
@@ -416,8 +430,14 @@ class OBJECT_PT_NusiqMcblendUVGroupPanel(bpy.types.Panel):
             col.prop(mask, "normalize")
         if p1p2:
             row = col.row()
-            row.prop(mask, "p1")
-            row.prop(mask, "p2")
+            if mask.relative_boundries:
+                row.prop(mask, "p1_relative")
+                row = col.row()
+                row.prop(mask, "p2_relative")
+            else:
+                row.prop(mask, "p1")
+                row = col.row()
+                row.prop(mask, "p2")
         if relative_boundries:
             col.prop(mask, "relative_boundries")
         if stripes:
@@ -633,7 +653,7 @@ class OBJECT_PT_NusiqMcblendExportPanel(bpy.types.Panel):
 
     def draw(self, context):
         col = self.layout.column(align=True)
-        col.prop(context.scene.nusiq_mcblend, "path", text="")
+        # col.prop(context.scene.nusiq_mcblend, "path", text="")
         col.prop(
             context.scene.nusiq_mcblend, "model_name", text="Name"
         )
@@ -660,7 +680,7 @@ class OBJECT_PT_NusiqMcblendImportPanel(bpy.types.Panel):
 
     def draw(self, context):
         col = self.layout.column(align=True)
-        col.prop(context.scene.nusiq_mcblend, "path", text="")
+        # col.prop(context.scene.nusiq_mcblend, "path", text="")
         self.layout.row().operator(
             "object.nusiq_mcblend_import_operator", text="Import model"
         )

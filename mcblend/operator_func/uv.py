@@ -600,7 +600,6 @@ class UvMapper:
                 (self.height is not None and uv[1] + size[1] > self.height)
             )
 
-        # TODO - simplify
         # pylint: disable=too-many-nested-blocks
         for box in unmapped_boxes:
             suggestion_i = -1
