@@ -986,13 +986,13 @@ class ImportGeometry:
                     CubePolygons.build(cube_obj, cube.mirror),
                     cube.uv, cube_obj.data.uv_layers.active)
 
-                _mc_set_size(cube_obj, cube.size)  # 3. Set size
+                # 3. Set size & inflate
+                cube.blend_cube.nusiq_mcblend_object_properties.inflate = (
+                    cube.inflate)
+                _mc_set_size(cube_obj, cube.size, inflate=cube.inflate)
                 _mc_pivot(cube_obj, cube.pivot)  # 4. Move pivot
                 # 5. Apply translation
                 _mc_translate(cube_obj, cube.origin, cube.size, cube.pivot)
-                # 6. Inflate cubes
-                inflate_objets(
-                    bpy.context, [cube.blend_cube], cube.inflate, 'ABSOLUTE')
 
             for locator in bone.locators:
                 # 1. Spawn locator (empty)
@@ -1168,7 +1168,9 @@ def _mc_translate(
         vertex.co += (translation - pivot_offset + size_offset)
 
 
-def _mc_set_size(obj: bpy_types.Object, mcsize: Tuple[float, float, float]):
+def _mc_set_size(
+        obj: bpy_types.Object, mcsize: Tuple[float, float, float],
+        inflate: Optional[float]=None):
     '''
     Scales a blender object using scale vector written in minecraft coordinates
     system.
@@ -1177,9 +1179,18 @@ def _mc_set_size(obj: bpy_types.Object, mcsize: Tuple[float, float, float]):
     - `obj: bpy_types.Object` - Blender object
     - `mcsize: Tuple[float, float, float]` - Minecraft object size.
     '''
+    # cube_obj.dimensions = (
+    #     np.array(cube_obj.dimensions) +
+    #     (2*-cube.inflate/MINECRAFT_SCALE_FACTOR)
+    # )
+    effective_inflate: float = 0.0
+    if inflate is not None:
+        effective_inflate = inflate/MINECRAFT_SCALE_FACTOR
+
     pos_delta = (
         (np.array(mcsize)[[0, 2, 1]] / 2) / MINECRAFT_SCALE_FACTOR
     )
+    pos_delta += effective_inflate
     data = obj.data
     # 0. ---; 1. --+; 2. -+-; 3. -++; 4. +--; 5. +-+; 6. ++- 7. +++
     data.vertices[0].co = mathutils.Vector(pos_delta * np.array([-1, -1, -1]))

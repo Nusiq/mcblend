@@ -10,7 +10,6 @@ from typing import (
 from enum import Enum
 from dataclasses import dataclass, field
 from itertools import filterfalse
-
 import numpy as np
 
 import bpy
@@ -18,6 +17,7 @@ import bpy_types
 
 from .texture_generator import Mask
 from .exception import NotEnoughTextureSpace
+from .json_tools import get_vect_json
 from .common import (
     MINECRAFT_SCALE_FACTOR, McblendObject, McblendObjectGroup, CubePolygon)
 
@@ -554,8 +554,11 @@ class UvMapper:
                 if objprop.inflate != 0:
                     scale = scale - objprop.inflate * 2
 
-                # width, height, depth
-                width, height, depth = tuple([round(i) for i in scale])
+                # width, height, depth - rounded down to int
+                # first round with get_json_vect to avoid numerical errors and
+                # than round down to int (like minecraft does).
+                width, height, depth = [
+                    int(i) for i in get_vect_json(scale)]
                 if objprop.uv_group != '':
                     curr_key = (width, depth, height, objprop.uv_group)
                     if curr_key in cube_uv_groups:

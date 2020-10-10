@@ -379,7 +379,11 @@ class StandardCubeUvExport(UvExport):
         # max_loop_crds = loop_crds_arr.max(0)
 
         # Depth width height
-        w, h, d = list(self.cube_size)  # pylint: disable=invalid-name
+        # first round with get_json_vect to avoid numerical errors and than
+        # round down to int (like minecraft does).
+        w, h, d = [
+            int(i) for i in
+            get_vect_json(self.cube_size)]
         expected_shape = np.array([
             [d, d + h],  # north/front LD 0
             [d + w, d + h],  # north/front RD 1
@@ -405,7 +409,7 @@ class StandardCubeUvExport(UvExport):
             [d + 2 * w, d],  # down/down RD 21
             [d + 2 * w, 0],  # down/down RU 22
             [d + w, 0],  # down/down LU 23
-        ])
+        ], dtype=np.float64)
         # Shift the expected values so they start from the minimal point
         # instead of 0
         expected_shape += min_loop_crds
@@ -444,7 +448,7 @@ class StandardCubeUvExport(UvExport):
             self._uv_from_name(self.cube_polygons.down, '+--'),  # down/down RD
             self._uv_from_name(self.cube_polygons.down, '++-'),  # down/down RU
             self._uv_from_name(self.cube_polygons.down, '-+-'),  # down/down LU
-        ])
+        ], dtype=np.float64)
 
         if not np.isclose(expected_shape, real_shape).all():
             if not np.isclose(expected_shape_mirror, real_shape).all():
