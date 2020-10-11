@@ -6,7 +6,6 @@ import bpy
 from bpy.props import (
     PointerProperty, BoolProperty, FloatVectorProperty, CollectionProperty,
     IntProperty, EnumProperty)
-import mathutils
 
 
 from .operator import (
@@ -123,7 +122,7 @@ classes = (
 )
 
 def register():
-    '''Register the plugin'''
+    '''Registers the plugin'''
     # pylint: disable=assignment-from-no-return, no-member
     for _class in classes:
         bpy.utils.register_class(_class)
@@ -165,7 +164,7 @@ def register():
 
 
 def unregister():
-    '''Unregister the plugin'''
+    '''Unregisters the plugin'''
     # pylint: disable=no-member
     for _class in reversed(classes):
         bpy.utils.unregister_class(_class)

@@ -661,7 +661,7 @@ class OBJECT_PT_NusiqMcblendObjectPropertiesPanel(bpy.types.Panel):
 
 class OBJECT_PT_NusiqMcblendExportPanel(bpy.types.Panel):
     '''Panel used for configuration of exporting models'''
-    # pylint: disable=C0116, W0613
+    # pylint: disable=unused-argument
     bl_label = "Export bedrock model"
     bl_category = "Mcblend"
     bl_space_type = "VIEW_3D"
@@ -688,7 +688,7 @@ class OBJECT_PT_NusiqMcblendExportPanel(bpy.types.Panel):
 
 class OBJECT_PT_NusiqMcblendImportPanel(bpy.types.Panel):
     '''Panel used for configuration of importing models.'''
-    # pylint: disable=C0116, W0613
+    # pylint: disable=unused-argument
     bl_label = "Import bedrock model"
     bl_category = "Mcblend"
     bl_space_type = "VIEW_3D"
@@ -701,7 +701,7 @@ class OBJECT_PT_NusiqMcblendImportPanel(bpy.types.Panel):
 
 class OBJECT_PT_NusiqMcblendExportAnimationPanel(bpy.types.Panel):
     '''Panel used for configuration of exporting animations.'''
-    # pylint: disable=C0116, W0613
+    # pylint: disable=unused-argument
     bl_label = "Export bedrock animation"
     bl_category = "Mcblend"
     bl_space_type = "VIEW_3D"
@@ -743,7 +743,7 @@ class OBJECT_PT_NusiqMcblendExportAnimationPanel(bpy.types.Panel):
 
 class OBJECT_PT_NusiqMcblendSetUvsPanel(bpy.types.Panel):
     '''Panel  used for Minecraft UV maping and its configuration.'''
-    # pylint: disable=C0116, W0613
+    # pylint: disable=unused-argument
     bl_label = "Set bedrock UVs"
     bl_category = "Mcblend"
     bl_space_type = "VIEW_3D"
@@ -779,7 +779,7 @@ class OBJECT_PT_NusiqMcblendOperatorsPanel(bpy.types.Panel):
     '''
     Panel that gives the user access to various operators used by Mcblend.
     '''
-    # pylint: disable=C0116, W0613
+    # pylint: disable=unused-argument
     bl_label = "Operators"
     bl_category = "Mcblend"
     bl_space_type = "VIEW_3D"
