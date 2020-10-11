@@ -18,34 +18,43 @@ from .texture_generator import Mask, ColorMask, get_masks_from_side
 from .exception import NameConflictException, NoCubePolygonsException
 
 MINECRAFT_SCALE_FACTOR = 16
-
+'''The scale convertion from blender to minecraft (16 units == 1 meter).'''
 
 class MCObjType(Enum):
-    '''
-    Used to mark what type of Minecraft object should be created from an object
-    in blender.
-    '''
+    '''The types of Minecraft objects created from blender objects.'''
     CUBE = 'CUBE'
     BONE = 'BONE'
     BOTH = 'BOTH'
     LOCATOR = 'LOCATOR'
 
-
 class ObjectId(NamedTuple):
     '''
-    Unique ID of a mesh, empty or a bone. For meshes and empties it's bone_name
-    is just an empty string and the name is the name of the object. For bones
-    the ID uses both the name (armature name) and bone name.
+    Object that represents Unique ID of blender object (bone, empty or mesh).
+
+    For meshes and empties:
+        - :code:`bone_name` is just an empty string.
+        - :code:`name` is the name of the object.
+    For bones:
+        - :code:`bone_name` is the name of the bone.
+        - :code:`name` is the name of the armature that owns the bone.
     '''
     name: str
     bone_name: str
 
-
 class McblendObject:
     '''
-    A class that wraps around Blender objects (meshes, empties and bones) and
-    gives access to some data necesary to export the model into Minecraft
-    format.
+    A class that wraps Blender objects (meshes, empties and bones) and
+    provides access to various properties used by Mcblend.
+
+
+    :param thisobj_id: The :class:`ObjectId` that identifies this object.
+    :param thisobj: Blender object wrapped inside this object.
+    :param parentobj_id: The :class:`ObjectId` of the parent of this object.
+    :param children_ids: The list of :class:`ObjectId`s of the children of this
+        object.
+    :param mctype: The :class:`MCObjType` of of this object.
+    :param group: The :class:`McblendObjectGroup` that stores all of the
+        :class:`McblendObject`s being processed with this object.
     '''
     def __init__(
             self, thisobj_id: ObjectId, thisobj: bpy.types.Object,
@@ -60,7 +69,7 @@ class McblendObject:
 
     @property
     def parent(self) -> Optional[McblendObject]:
-        '''Return parent McBlendObject or None.'''
+        '''Parent of this object.'''
         try:
             if self.parentobj_id is None:
                 return None
@@ -71,7 +80,8 @@ class McblendObject:
     @property
     def children(self) -> Tuple[McblendObject]:
         '''
-        Return list of children of this object accessible via self.group.
+        Children of this object from the :class:`McblendObjectGroup` of this
+        object.
         '''
         children: List[McblendObject] = []
         for child_id in self.children_ids:
@@ -81,53 +91,50 @@ class McblendObject:
 
     @property
     def inflate(self) -> float:
-        '''Returns the value of inflate property of the object'''
+        '''Inflate value of this object'''
         return self.thisobj.nusiq_mcblend_object_properties.inflate
 
     @inflate.setter
     def inflate(self, inflate: float):
-        '''Sets the inflate property of the cube.'''
         self.thisobj.nusiq_mcblend_object_properties.inflate = inflate
 
     @property
     def mirror(self) -> bool:
-        '''Returns true if the object has mirror object'''
+        '''Whether the objects UV is mirrored.'''
         return self.thisobj.nusiq_mcblend_object_properties.mirror
 
     @mirror.setter
     def mirror(self, mirror: bool):
-        '''Sets the mirror property of the cube.'''
         self.thisobj.nusiq_mcblend_object_properties.mirror = mirror
 
     @property
     def is_bone(self) -> bool:
-        '''Returns true if the object has is_bone object'''
+        '''Whether the object should be exported as bone to Minecraft model.'''
         return self.thisobj.nusiq_mcblend_object_properties.is_bone
 
     @is_bone.setter
     def is_bone(self, is_bone: bool):
-        '''Sets the is_bone property of the cube.'''
         self.thisobj.nusiq_mcblend_object_properties.is_bone = is_bone
 
     @property
     def uv_group(self) -> str:
-        '''Returns the value of uv_group property of the object'''
+        '''The name of the UV-group of this object.'''
         return self.thisobj.nusiq_mcblend_object_properties.uv_group
 
     @uv_group.setter
     def uv_group(self, uv_group: str):
-        '''Returns the value of uv_group property of the object'''
         self.thisobj.nusiq_mcblend_object_properties.uv_group = uv_group
-
 
     @property
     def obj_data(self) -> Any:
-        '''Returns thisobj.data.'''
+        '''
+        The "data" property of the blender object wraped inside this object.
+        '''
         return self.thisobj.data
 
     @property
     def obj_name(self) -> str:
-        '''Returns the name of the object'''
+        '''The name of this object used for exporting to Minecraft model.'''
         if self.thisobj.type == 'ARMATURE':
             return self.thisobj.pose.bones[
                 self.thisobj_id.bone_name
@@ -136,18 +143,22 @@ class McblendObject:
 
     @property
     def obj_type(self) -> str:
-        '''Returns the type of the object (ARMATURE, MESH or EMPTY).'''
+        '''
+        The type of the blender object wraped inside this
+        object (ARMATURE, MESH or EMPTY).
+        '''
         return self.thisobj.type
 
     @property
     def obj_bound_box(self) -> Any:
-        '''Returns the bound box of the object'''
+        '''The bound_box of the blender object wraped inside this object.'''
         return self.thisobj.bound_box
 
     @property
     def obj_matrix_world(self) -> mathutils.Matrix:
         '''
-        Return the copy of translation matrix (matrix_world) of the object.
+        The copy of the translation matrix (matrix_world) of the blender
+        wraped inside this object.
         '''
         if self.thisobj.type == 'ARMATURE':
             return self.thisobj.matrix_world.copy() @ self.thisobj.pose.bones[
@@ -158,8 +169,8 @@ class McblendObject:
     @property
     def mcube_size(self) -> np.ndarray:
         '''
-        The cube size in Minecraft format based on the bounding box of an
-        object.
+        The cube size in Minecraft format based on the bounding box of the
+        blender object wrapped inside this object.
         '''
         # 0. ---; 1. --+; 2. -++; 3. -+-; 4. +--; 5. +-+; 6. +++; 7. ++-
         bound_box = self.obj_bound_box
@@ -169,14 +180,14 @@ class McblendObject:
     def mccube_position(self) -> np.ndarray:
         '''
         The cube position in Minecraft format based on the bounding box of
-        an object.
+        the blender object wraped inside this object.
         '''
         return np.array(self.obj_bound_box[0])[[0, 2, 1]]
 
     @property
     def mcpivot(self) -> np.ndarray:
         '''
-        The pivot point of Minecraft object.
+        The pivot point of Minecraft object exported using this object.
         '''
         def local_crds(
                 parent: McblendObject, child: McblendObject
@@ -203,17 +214,15 @@ class McblendObject:
             self, other: Optional[McblendObject] = None, normlize: bool = False
         ) -> mathutils.Matrix:
         '''
-        Returns translation matrix of this object in relation the other object.
-        In space defined by the other translation matrix.
+        Returns translation matrix of this object optionally in translation
+        space of the other :class:`McblendObject`.
 
-        # Arguments:
-        - `other: McblendObject` - the other object
-        # Returns:
-        - `mathutils.Matrix` - translation matrix for child object in other
-        object space.
-        - `normlize: bool=False` - normalizes parent and child matrixes which
-          can remove some problems related to different scales of parent and
-          child transfomtions (see issue #62)
+        :param other: Optional - the other :class:`McblendObject`
+        :param normalize: Whether to normalizes parent and child matrixes
+            before calculating the relative matrix. This solves problems
+            related to different scales of parent and child transfomtions
+            (see github issue #62)
+        :returns: translation matrix of this object.
         '''
         if other is not None:
             p_matrix = other.obj_matrix_world
@@ -232,14 +241,13 @@ class McblendObject:
             self, other: Optional[McblendObject] = None
         ) -> np.ndarray:
         '''
-        Returns the rotation of this object in relation to the other object.
+        Returns the Minecraft rotation of this object optionally in relation
+        to the other :class:`McblendObject`.
 
         # Arguments:
-        - `other: Optional[McblendObject]` - the the other object
-        object (optional).
-
-        # Returns:
-        `np.ndarray` - numpy array with the rotation in Minecraft format.
+        :param other: Optional - the the other :class:`McblendObject`.
+        :returns: numpy array with the rotation of this object in Minecraft
+            format.
         '''
         def local_rotation(
                 child_matrix: mathutils.Matrix, parent_matrix: mathutils.Matrix
@@ -266,13 +274,17 @@ class McblendObject:
 
     def cube_polygons(self) -> CubePolygons:
         '''
-        Returns the polygons of the cube inside a CubePolygons object.
+        Returns the :class:`CubePolygons` of this object (always new copy of
+        the object).
         '''
         return CubePolygons.build(self.thisobj, self.mirror)
 
     @property
     def side1_uv_masks(self) -> Sequence[Mask]:
-        '''Returns the sequence of masks affecting side 1 of the cube'''
+        '''
+        Sequence of masks affecting the texture of side 1 of the cube of this
+        object.
+        '''
         if self.uv_group == '':
             return [ColorMask((0, 1, 0))]
         uv_group = bpy.context.scene.nusiq_mcblend_uv_groups[self.uv_group]
@@ -280,7 +292,10 @@ class McblendObject:
 
     @property
     def side2_uv_masks(self) -> Sequence[Mask]:
-        '''Returns the sequence of masks affecting side 2 of the cube'''
+        '''
+        Sequence of masks affecting the texture of side 2 of the cube of this
+        object.
+        '''
         if self.uv_group == '':
             return [ColorMask((1, 0, 1))]
         uv_group = bpy.context.scene.nusiq_mcblend_uv_groups[self.uv_group]
@@ -288,7 +303,10 @@ class McblendObject:
 
     @property
     def side3_uv_masks(self) -> Sequence[Mask]:
-        '''Returns the sequence of masks affecting side 3 of the cube'''
+        '''
+        Sequence of masks affecting the texture of side 3 of the cube of this
+        object.
+        '''
         if self.uv_group == '':
             return [ColorMask((1, 0, 0))]
         uv_group = bpy.context.scene.nusiq_mcblend_uv_groups[self.uv_group]
@@ -296,7 +314,10 @@ class McblendObject:
 
     @property
     def side4_uv_masks(self) -> Sequence[Mask]:
-        '''Returns the sequence of masks affecting side 4 of the cube'''
+        '''
+        Sequence of masks affecting the texture of side 4 of the cube of this
+        object.
+        '''
         if self.uv_group == '':
             return [ColorMask((0, 1, 1))]
         uv_group = bpy.context.scene.nusiq_mcblend_uv_groups[self.uv_group]
@@ -304,7 +325,10 @@ class McblendObject:
 
     @property
     def side5_uv_masks(self) -> Sequence[Mask]:
-        '''Returns the sequence of masks affecting side 5 of the cube'''
+        '''
+        Sequence of masks affecting the texture of side 5 of the cube of this
+        object.
+        '''
         if self.uv_group == '':
             return [ColorMask((0, 0, 1))]
         uv_group = bpy.context.scene.nusiq_mcblend_uv_groups[self.uv_group]
@@ -312,7 +336,10 @@ class McblendObject:
 
     @property
     def side6_uv_masks(self) -> Sequence[Mask]:
-        '''Returns the sequence of masks affecting side 6 of the cube'''
+        '''
+        Sequence of masks affecting the texture of side 6 of the cube of this
+        object.
+        '''
         if self.uv_group == '':
             return [ColorMask((1, 1, 0))]
         uv_group = bpy.context.scene.nusiq_mcblend_uv_groups[self.uv_group]
@@ -338,7 +365,7 @@ _MC_MAPPING_UV_ORDERS = {
 
 class CubePolygons(NamedTuple):
     '''
-    A polygons of a cube that correspond to Minecraft cube faces.
+    Polygons of blender cube object that correspond to Minecraft cube faces.
     '''
     east: CubePolygon  # Cube Right
     north: CubePolygon  # Cube Front
@@ -350,12 +377,12 @@ class CubePolygons(NamedTuple):
     @staticmethod
     def build(cube: bpy.types.Object, mirror: bool) -> CubePolygons:
         '''
-        Creates a CubePolygons object for given blender cube.
+        Creates :class:`CubePolygons` object for given blender object cube.
 
-        - `cube: bpy.types.Object` - blender mesh with cube shape
-        - `mirror: bool` - if set to true than the order of vertices in
-          CubePolygon is changed to change the positons of verices during
-          UV-mapping.
+        :param cube: blender cube mesh.
+        :param mirror: Whether the order of veritces in returned
+            :class:`CubePolygons` should match Minecrft mirrored mapping format
+            or not.
         '''
         def get_order(
             name: str, mirror: bool,
@@ -463,36 +490,35 @@ class CubePolygons(NamedTuple):
 
 class CubePolygon(NamedTuple):
     '''
-    Single face in CubePolygons.
+    Single face in :class:`CubePolygons`.
 
-    # Arguments:
-    - `side: bpy_types.MeshPolygon` - MeshPolygon object from blender mesh
-    - `orientation: Tuple[str, str, str, str]` - the names of the vertices of
-      the Mesh polygon. Every name should be a 3-character string with + and -
-      characters to show on which side of the cube is corresponding vertex.
-      Example: '++-' should correspond to a vertex which is at increasing X and
-    Y but decreasing Z coordinate (in local cube space).
-    - `order: Tuple[int, int, int, int]` - stores the order (values from 0 to
-      4) in which the 4 loops of the face should be rearranged to be in this
-      order: 0. left bottom corner; 1. right bottom corner; 2. right top
-      corner; 3. left top corner
+    :param side: :class:`bpy_types.MeshPolygon` object from blender mesh.
+    :param orientation: The names of the vertices of the Mesh polygon. Vertices
+        are named with 3-character-string (using only '+' and '-'). Where each
+        character symbolizes whether the vertex is on increasing (+) or
+        decreasing (-) side of the corresponding axis (XYZ) in local space of
+        the object.
+    :param order: Stores the order (values from 0 to 4) in which the loops of
+        the face should be rearranged to this order 0 left bottom corner,
+        1 right bottom corner, 2 right top corner, 3 left top corner.
     '''
     side: bpy_types.MeshPolygon
     orientation: Tuple[str, str, str, str]
     order: Tuple[int, int, int, int]
 
-
 class McblendObjectGroup:
     '''
-    A group of McblendObjects often that supplies easy access to many utility
-    functions used by mcblend. McblendObjects can be accessed with ObjectId
-    with __getitem__ method.
+    A group of :class:`McblendObject`s often used as a main datasource for
+    operations executed by Mcblend.
+    The objects can be accessed with ObjectId with __getitem__ method like
+    from a dict.
 
-    # Properties:
-    - `data: Dict[ObjectId, McblendObject]` - the content of the group.
+    :param context: the context of runing an operator.
     '''
     def __init__(self, context: bpy_types.Context):
         self.data: Dict[ObjectId, McblendObject] = {}
+        '''the content of the group.'''
+
         self._load_objects(context)
         self._check_name_conflicts()
 
@@ -509,24 +535,23 @@ class McblendObjectGroup:
         return self.data.__iter__()
 
     def values(self):
-        '''Same as values in dict.'''
+        '''Lists values of this group (the :class:`McblendObject`s).'''
         return self.data.values()
 
     def keys(self):
-        '''Same as keys in dict.'''
+        '''Lists valid keys to use in this object.'''
         return self.data.keys()
 
     def items(self):
-        '''Same as items in dict.'''
+        '''Iterator going through pairs of keys and values of this group.'''
         return self.data.items()
 
     def _load_objects(self, context: bpy_types.Context):
         '''
-        Loops through context.selected_objects and and creates McblendObjects
+        Loops through selected objects and and creates :class:`McblendObjects`
         for this group. Used by constructor.
 
-        # Arguments:
-        - `context: bpy_types.Context` - the context of running the operator.
+        :param context: the context of running an operator.
         '''
         for obj_id, obj in self._loop_objects(context.selected_objects):
             curr_obj_mc_type: MCObjType
@@ -574,9 +599,11 @@ class McblendObjectGroup:
 
     def _check_name_conflicts(self):
         '''
-        Looks through the object_properties dictionary and tries to find name
-        conflicts. Raises NameConflictException if name conflicts in some bones
-        are detected. Used in constructor.
+        Looks through the dictionary of :class:`McblendObject`s of this object
+        and tries to find the names conflicts in the names of the objects.
+
+        Raises NameConflictException if name conflicts in some bones are
+        detected. Used in constructor.
         '''
         names: List[str] = []
         for objprop in self.values():
@@ -591,18 +618,13 @@ class McblendObjectGroup:
     @staticmethod
     def _loop_objects(objects: List) -> Iterable[Tuple[ObjectId, Any]]:
         '''
-        Loops over the empties, meshes and armature objects and yields them and
-        their ids. If object is an armatre than it loops over every bone and
-        yields the armature and the id of the bone.
+        Loops over the empties, meshes and armature objects from the list and
+        yields them and their ids. If object is an armatre than it also loops
+        over every bone and yields the pair of armature and the id of the bone.
+        Used in the constructor.
 
-        Used in constructor of McblendObjectGroup.
-
-        # Arguments:
-        - `objects: List` - the list of blender objects
-
-        # Returns:
-        `Iterable[Tuple[ObjectId, Any]]` - iterable that goes throug objects and
-        bones.
+        :param objects: The list of blender objects.
+        :returns: Iterable that goes through objects and bones.
         '''
         for obj in objects:
             if obj.type in ['MESH', 'EMPTY']:
@@ -614,17 +636,13 @@ class McblendObjectGroup:
     @staticmethod
     def _get_parent_mc_bone(obj: bpy.types.Object) -> Optional[ObjectId]:
         '''
-        Goes up through the ancesstors of an bpy.types.Object and tries to find
-        the object that represents its parent bone in Minecraft model.
+        Goes up through the ancesstors of an :class:`bpy.types.Object` and
+        tries to find the object that represents its parent bone in Minecraft
+        model. Used in constructor.
 
-        Used in constructor of McblendObjectGroup.
-
-        # Arguments:
-        - `obj: bpy.types.Object` - a Blender object which will be truned into
-        Minecraft bone
-
-        # Returns:
-        `Optional[ObjectId]` - parent Minecraft bone of the object or None.
+        :param obj: Blender object which will be a bone in Minecraft model.
+        :returns: Id of the object that represents a parent bone in Minecraft
+            model.
         '''
         obj_id = None
         while obj.parent is not None:
@@ -641,12 +659,12 @@ class McblendObjectGroup:
                 raise Exception(f'Unsuported parent type {obj.parent_type}')
         return obj_id
 
-
 def cyclic_equiv(u: List, v: List) -> bool:
     '''
     Compare cyclic equivalency of two lists.
 
     Source:
+
     https://stackoverflow.com/questions/31000591/
     '''
     n, i, j = len(u), 0, 0
@@ -664,26 +682,22 @@ def cyclic_equiv(u: List, v: List) -> bool:
             j += k
     return False
 
-
 def inflate_objets(
         context: bpy_types.Context, objects: List[bpy.types.Object],
         inflate: float, mode: str) -> int:
     '''
     Adds inflate property to objects and changes their dimensions. Returns
     the number of edited objects.
-    Returns the number of edited objects.
 
-    # Arguments:
-    - `context: bpy_types.Context` - the context of running the operator.
-    - `objects List[bpy.types.Object]` - list of objects to inflate.
-    - `inflate: float` - the inflation value.
-    - `mode: str` - Can be either "RELATIVE" or "ABSOLUTE". If "RELATIVE" than
-      the value before appying the operator is taken as a base (0 means that
-      no changes should be applied). If "ABSOLUTE" than the inflate value passed
-      by the user is passed directly to the inflate value in Minecraft model.
-
-    # Returns:
-    `int` - number of edited objects
+    :param context: Context of running the operator.
+    :param objects: List of objects to inflate.
+    :param inflate: The inflation value.
+    :param mode: Either "RELATIVE" or "ABSOLUTE". If "RELATIVE" than
+        the value before appying the operator is taken as a base (0 means that
+        no changes should be applied). If "ABSOLUTE" than the inflate value
+        passed by the user is passed directly to the inflate value of
+        Minecraft model.
+    :returns: number of edited objects
     '''
     if mode == 'RELATIVE':
         relative = True
