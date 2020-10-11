@@ -62,8 +62,11 @@ def _assert_is_type(
 
 def pick_version_parser(parsers: Tuple[str, ...], version: str):
     '''
-    Out of known list of parser names for different format versions picks the
-    earliest possible format_version greater or equal to the version.
+    Picks the earliest possible format_version greater or equal to the known
+    version ot of list of parser names for different format versions.
+
+    :param parsers: The list of format_versions that identify the parser to
+        use for parsing an object.
     '''
     def to_tuple(version: str) -> Tuple[int]:
         try:
@@ -90,8 +93,11 @@ def pick_version_parser(parsers: Tuple[str, ...], version: str):
 
 class ModelLoader:
     '''
-    Interface loads model from a dictionary that represents the model.
-    Fills missing/optional data with default values.
+    Interface loads model from a JSON dict with Minecraft model.
+    Fills missing, optional data with default values.
+
+    :param data: The JSON dict with models file.
+    :param geometry_name: Optional - the name of the geometry to load.
     '''
     def __init__(self, data: Dict, geometry_name: str = ""):
         self.data = data
@@ -108,7 +114,7 @@ class ModelLoader:
         '''
         Returns the version of the model from JSON file loaded into data.
 
-        - `data: Dict` - loaded JSON file into model.
+        :param data: JSON dict with model file.
         '''
         # pylint: disable=no-self-use
         _assert_has_required_keys(
@@ -148,11 +154,12 @@ class ModelLoader:
             self, geometry_name: str, data: Any) -> Tuple[Dict, List]:
         '''
         Finds and returns geometry with specific name from list of gemoeties
-        from JSON file with models. Returns the geometry dictionary with added
-        all of the missing values and the JSON path to the geometry.
+        from JSON dict with models. Returns the geometry dict with
+        all of the missing default values added and the JSON path to the
+        geometry.
 
-        - `geometry_name: str` - the name of geometry
-        - `data: Any` - root object of the json
+        :param geometry_name: The name of geometry
+        :param data: Root object of the JSON.
         '''
         parser_version = pick_version_parser(
             ('1.12.0', '1.8.0'), self.format_version)
@@ -204,9 +211,9 @@ class ModelLoader:
         '''
         Returns the description of the geometry.
 
-        - `geometry: Any` - the geometry with description
-        - `geometry_path: List` - the JSON path to the geometry (for error
-          messages)
+        :param geometry: The geometry with description.
+        :param geometry_path: The JSON path to the geometry (used for error
+            messages)
         '''
         result = {
             "texture_width" : 64,
@@ -313,10 +320,10 @@ class ModelLoader:
     def _load_bones(
             self, bones: Any, bones_path: List) -> List[Dict[str, Any]]:
         '''
-        Returns the bones from a list of bones with added missing values.
+        Returns the bones from a list of bones, adds missing default values.
 
-        - `bones: Any` - list of bones
-        - `bones_path: List` - path to the bones list (for error messages)
+        :param bones: List of bones.
+        :param bones_path: Path to the bones list (used for error messages).
         '''
         result: List = []
         parser_version = pick_version_parser(
@@ -331,12 +338,12 @@ class ModelLoader:
 
     def _load_bone(self, bone: Any, bone_path: List) -> Dict[str, Any]:
         '''
-        Returns a bone with added all of the missing default values of the
+        Returns a bone, adds all of the missing default values of the
         properties.
 
-        - `bone: Any` - part of the json file that has the inforation about the
-          bone
-        - `bone_path: List` - path to the bone (for error messages)
+        :param bone: Part of the json file that has the inforation about the
+            bone.
+        :param bone_path: Path to the bone (used for error messages).
         '''
         result: Dict[str, Any] = {
             "parent": None,  # str
@@ -514,12 +521,12 @@ class ModelLoader:
             self, cubes: Any, cubes_path: List[Any], default_mirror: bool,
             default_inflate: float) -> List[Dict[str, Any]]:
         '''
-        Returns the cubes from the list of cubes with added missing values.
+        Returns the cubes from the list of cubes, add missing default values.
 
-        - `cubes: Any` - list of cubes
-        - `cubes_path: List[Any]` - path to the cubes list (for error messages)
-        - `default_mirror: bool` - mirror value of a bone that owns this list
-          of cubes.
+        :param cubes: List of cubes.
+        :param cubes_path: Path to the cubes list (used for error messages).
+        :param default_mirror: Mirror value of a bone that owns this list
+            of cubes.
         '''
         result = []
         parser_version = pick_version_parser(
@@ -539,7 +546,13 @@ class ModelLoader:
             self, size: Tuple[float, float, float], mirror: bool,
             uv: Tuple[float, float] = (0.0, 0.0)) -> Dict:
         '''
-        Creates default UV dictionary based on some other properties of a cube.
+        Creates default UV dictionary (in per-face UV-mapping format) based on
+        some other properties of a cube.
+
+        :param size: The size of the cube.
+        :param mirror: The mirror property of the cube.
+        :param uv: Optional - the UV property of the cube (if the cube uses the
+            standard Minecraft UV-mapping format).
         '''
         # pylint: disable=no-self-use
         width, height, depth = (int(i) for i in size)
@@ -572,10 +585,10 @@ class ModelLoader:
         Returns a cube with added all of the missing default values of the
         properties.
 
-        - `cube: Any` - part of the json file that has the inforation about the
-          cube
-        - `cube_path: List` - path to the cube (for error messages)
-        - `default_mirror: bool` - mirror value of a bone that owns this cube
+        :param cube: Part of the JSON dict that has the inforation about the
+            cube.
+        :param cube_path: JSON path to the cube (used for error messages).
+        :param default_mirror: Mirror value of a bone that owns this cube.
         '''
         result = {
             "origin" : (0, 0, 0),  # Listfloat] len=3
@@ -697,14 +710,13 @@ class ModelLoader:
             self, uv: Any, uv_path: List,
             cube_size: Tuple[float, float, float]) -> Dict[str, Any]:
         '''
-        Returns UV with added all of the missing default values of the
+        Returns UV and adds all of the missing default values of its
         properties.
 
-        - `uv: Any` - part of the json file that has the inforation about the
-          uv
-        - `uv_path: List` - path to the uv (for error messages)
-        - `cube_size: Tuple[float, float, float]` - size of the cube which is
-          being mapped (for default values).
+        :param uv: Part of the JSON dict that has the inforation about the uv.
+        :param uv_path: Path to the UV (used for error messages).
+        :param cube_size: Size of the cube which is being mapped (used for
+            getting default UV values).
         '''
         width, height, depth = cube_size
         def _face(size: Tuple[float, float], uv: Tuple[float, float]):
@@ -765,13 +777,13 @@ class ModelLoader:
             self, uv_face: Any, uv_face_path: List,
             default_size: Tuple[float, float]) -> Dict[str, Any]:
         '''
-        Returns UV with added all of the missing default values of the
+        Returns UV and adds all of the missing default values of its
         properties.
 
-        - `uv_face: Any` - part of the json file that has the inforation about the
-          uv face
-        - `uv_face_path: List` - path to the uv face (for error messages)
-        - `default_size: Tuple[float, float]` - default size of the UV face
+        :param uv_face: Part of the JSON dict that has the inforation about the
+          uv face.
+        :param uv_face_path: Path to the uv face (used for error messages).
+        :param default_size: Default size of the UV face.
         '''
         result = {
             "uv_size": default_size, "uv": [0, 0], "material_instance": ""
@@ -809,11 +821,11 @@ class ModelLoader:
             self, locators: Any, locators_path: List) -> Dict[str, Any]:
         '''
         Returns the locators from the list of locators with added missing
-        values.
+        default values.
 
-        - `locators: Any` - list of locators
-        - `locators_path: List[Any]` - path to the locators list (for error
-          messages)
+        :param locators: List of the locators.
+        :param locators_path: Path to the locators list (used for error
+            messages)
         '''
         result = {}
         parser_version = pick_version_parser(
@@ -829,11 +841,10 @@ class ModelLoader:
 
     def _load_locator(self, locator: Any, locator_path: List) -> Any:
         '''
-        Returns the locators from the list of locators with added missing
-        values.
+        Returns the locator with added missing default values.
 
-        - `locator: Any` - the locator
-        - `locator_path: List[Any]` - path to the locator
+        :param locator: The locator
+        :param locator_path: Path to the locator
         '''
         parser_version = pick_version_parser(
             ('1.12.0', '1.8.0'), self.format_version)
@@ -854,7 +865,12 @@ class ModelLoader:
         raise FileIsNotAModelException('Unsuported format version')
 
 class ImportLocator:
-    '''Represents Minecraft locator during import operation.'''
+    '''
+    Represents Minecraft locator during import operation.
+
+    :param name: Name of the locator.
+    :param position: The position of the locator.
+    '''
     def __init__(self, name: str, position: Tuple[float, float, float]):
         self.name = name
         self.position = position
@@ -863,7 +879,12 @@ class ImportLocator:
 
 
 class ImportCube:
-    '''Represents minecraft cube during import operation.'''
+    '''
+    Represents minecraft cube during import operation.
+
+    :param data: The part of the Minecraft model JSON dict that represents this
+        cube.
+    '''
     def __init__(
             self, data: Dict):
         '''
@@ -890,16 +911,13 @@ class ImportCube:
 
 
 class ImportBone:
-    '''Represents minecraft bone during import operation.'''
-    def __init__(self, data: Dict):
-        '''
-        Creates ImportBone object created from a dictinary (part of the JSON)
-        file in the model.
+    '''
+    Represents Minecraft bone during import operation.
 
-        # Arguments:
-        - `data: Dict` - the part of the Minecraft model JSON file that represents
-        the bone.
-        '''
+    :param data: The part of the Minecraft model JSON dict that represents the
+        bone.
+    '''
+    def __init__(self, data: Dict):
         self.blend_empty: Optional[bpy.types.Object] = None
 
         # Locators
@@ -923,14 +941,12 @@ class ImportBone:
 
 
 class ImportGeometry:
-    '''Represents whole minecraft geometry during import operation.'''
-    def __init__(self, loader: ModelLoader):
-        '''
-        Creates ImportGeometry object.
+    '''
+    Represents whole Minecraft geometry during import operation.
 
-        - `loader: ModelLoader` - a loader object with all of the required
-          model properties.
-        '''
+    :param loader: Loader object with all of the required model properties.
+    '''
+    def __init__(self, loader: ModelLoader):
         # Set the values
         self.identifier = loader.description['identifier']
         self.texture_width = int(loader.description['texture_width'])
@@ -949,14 +965,12 @@ class ImportGeometry:
             import_bone = ImportBone(bone)
             self.bones[import_bone.name] = import_bone
 
-
     def build_with_empties(self, context: bpy_types.Context):
         '''
-        Builds the geometry in Blender based on ImportGeometry object.
-        Uses empties to represent minecraft bones.
+        Builds the geometry in Blender. Uses empties to represent Minecraft
+        bones.
 
-        # Arguments:
-        `context: bpy_types.Context` - the context of running the operator.
+        :param context: The context of running the operator.
         '''
         # Create objects - and set their pivots
         for bone in self.bones.values():
@@ -1041,21 +1055,22 @@ class ImportGeometry:
                 cube_obj = cube.blend_cube
                 _mc_rotate(cube_obj, cube.rotation)
 
-
-
     def build_with_armature(self, context: bpy_types.Context):
         '''
-        Builds the geometry in Blender based on ImportGeometry object.
-        Uses armature and bones to represent the bones from minecraft.
+        Builds the geometry in Blender. Uses armature and bones to represent
+        the Minecraft bones.
 
-        # Arguments:
-        `context: bpy_types.Context` - the context of running the operator.
+        :param context: The context of running the operator.
         '''
         # Build everything using empties
         self.build_with_empties(context)
 
         # Build armature
-        start_building_armature()
+        # Create empty armature and enter edit mode:
+        bpy.ops.object.armature_add(enter_editmode=True, align='WORLD', location=(0, 0, 0))
+        bpy.ops.armature.select_all(action='SELECT')
+        bpy.ops.armature.delete()
+        # Save the armature
         armature = context.object
         edit_bones = armature.data.edit_bones
         # Create bones
@@ -1145,14 +1160,13 @@ def _mc_translate(
         mcpivot: Tuple[float, float, float]
     ):
     '''
-    Translates a blender object using a translation vector written in Minecraft
+    Translates a Blender object using a translation vector written in Minecraft
     coordinates system.
 
-    # Arguments:
-    - `obj: bpy.types.Object` - blender object to transform..
-    - `mctranslation: Tuple[float, float, float]` - minecraft translation.
-    - `mcsize: Tuple[float, float, float]` - minecraft size.
-    - `mcpivot: Tuple[float, float, float]` - minecraft pivot.
+    :param obj: Blender object to transform..
+    :param mctranslation: Minecraft translation.
+    :param mcsize: Minecraft size.
+    :param mcpivot: Minecraft pivot.
     '''
     pivot_offset = mathutils.Vector(
         np.array(mcpivot)[[0, 2, 1]] / MINECRAFT_SCALE_FACTOR
@@ -1166,17 +1180,15 @@ def _mc_translate(
     for vertex in obj.data.vertices:
         vertex.co += (translation - pivot_offset + size_offset)
 
-
 def _mc_set_size(
         obj: bpy.types.Object, mcsize: Tuple[float, float, float],
         inflate: Optional[float]=None):
     '''
-    Scales a blender object using scale vector written in minecraft coordinates
+    Scales a Blender object using scale vector written in Minecraft coordinates
     system.
 
-    # Arguments:
-    - `obj: bpy.types.Object` - Blender object
-    - `mcsize: Tuple[float, float, float]` - Minecraft object size.
+    :param obj: Blender object
+    :param mcsize: Minecraft object size.
     '''
     # cube_obj.dimensions = (
     #     np.array(cube_obj.dimensions) +
@@ -1201,32 +1213,28 @@ def _mc_set_size(
     data.vertices[6].co = mathutils.Vector(pos_delta * np.array([1, 1, -1]))
     data.vertices[7].co = mathutils.Vector(pos_delta * np.array([1, 1, 1]))
 
-
 def _mc_pivot(obj: bpy.types.Object, mcpivot: Tuple[float, float, float]):
     '''
-    Moves a pivot of an blender object using coordinates written in minecraft
+    Moves a pivot of an Blender object using pivot value in Minecraft
     coordinates system.
 
-    # Arguments:
-    - `obj: bpy.types.Object` - Blender object
-    - `mcpivot: Tuple[float, float, float]` - Minecraft object pivot point.
+    :param obj: Blender object
+    :param mcpivot: Minecraft object pivot point.
     '''
     translation = mathutils.Vector(
         np.array(mcpivot)[[0, 2, 1]] / MINECRAFT_SCALE_FACTOR
     )
     obj.location += translation
 
-
 def _mc_rotate(
         obj: bpy.types.Object, mcrotation: Tuple[float, float, float]
     ):
     '''
-    Rotates a blender object using minecraft coordinates system for rotation
-    vector.
+    Rotates a Blender object using rotation written in Minecraft coordinates
+    system.
 
-    # Arguments:
-    - `obj: bpy.types.Object` - Blender object
-    - `mcrotation: Tuple[float, float, float]` - Minecraft object rotation.
+    :param obj: Blender object
+    :param mcrotation: Minecraft object rotation.
     '''
 
     rotation = mathutils.Euler(  # pylint: disable=too-many-function-args
@@ -1239,14 +1247,15 @@ def _set_uv(
         uv_converter: CoordinatesConverter, cube_polygons: CubePolygons,
         uv: Dict, uv_layer: bpy.types.MeshUVLoopLayer):
     '''
-    Sets the uv of a face of a blender cube mesh based on some minecraft
+    Sets the UV of a face of a Blender cube mesh based on some Minecraft
     properties.
 
-    - `uv_converter: CoordinatesConverter` - converter used for converting from
-      minecraft uv coordinates to blender uv coordinates
-    - `cube_polygons: CubePolygons` - CybePolygons object created from the mesh
-    - `uv: Dict[float, float]` - uv mapping for each face
-    - `uv_layer: bpy.types.MeshUVLoopLayer` - uv layer of the mesh
+    :param uv_converter: converter used for converting from Minecraft UV
+        coordinates (dependent on the scale of the texture) to Blender UV
+        coordinates (values from 0 to 1).
+    :param cube_polygons: CybePolygons object created from the mesh.
+    :param uv: UV mapping for each face.
+    :param uv_layer: UV layer of the mesh.
     '''
     uv_data = uv_layer.data
 
@@ -1280,23 +1289,15 @@ def _set_uv(
     # bottom
     set_uv(cube_polygons.down, uv["down"]["uv_size"], uv["down"]["uv"])
 
-
-
-def start_building_armature():
-    '''Creates new empty armature and enters edit mode'''
-    bpy.ops.object.armature_add(enter_editmode=True, align='WORLD', location=(0, 0, 0))
-    bpy.ops.armature.select_all(action='SELECT')
-    bpy.ops.armature.delete()
-
 def add_bone(
         edit_bones: bpy.types.bpy_prop_collection,
         length: float, import_bone: ImportBone):
     '''
-    - `edit_bones: bpy.types.bpy_prop_collection` - edit bones of the armature
-      (from armature.data.edit_bones)
-    - `length: float` - lenght of the bone
-    - `import_bone: ImportBone` - import bone with all of the minecraft data
-      and the reference to empty object that currently represents the bone.
+    :param edit_bones: edit bones of the armature (from
+        armature.data.edit_bones).
+    :param length: lenght of the bone.
+    :param import_bone: import bone with all of the Minecraft data
+        and the reference to empty object that currently represents the bone.
     '''
     matrix_world: mathutils.Matrix = (
         import_bone.blend_empty.matrix_world  # type: ignore
