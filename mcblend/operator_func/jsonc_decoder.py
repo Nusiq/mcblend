@@ -219,7 +219,7 @@ def parse_array(
 class JSONCDecoder(json.JSONDecoder):
     '''
     JSONDecoder with support for C-style comments. Similar to JSONC files from
-    Visual Studio code but without support for trailing commas.
+    Visual Studio Code but without support for trailing commas.
     '''
     def __init__(self, *args, **kwargs):
         json.JSONDecoder.__init__(self, *args, **kwargs)

@@ -25,10 +25,17 @@ class ModelExport:
     '''
     Object that represents model during export.
 
-    # Properties:
-    - `model_name: str` - name of the model
-    - `texture_width: int` - texture width Minecraft property
-    - `texture_height: int` - texture height Minecraft property
+    :param model_name: name of the model
+    :param texture_width: Minecraft model prperty - texture_width.
+    :param texture_height: Minecraft model prperty - texture_height.
+    :param visible_bounds_offset: Minecraft model property -
+        visible_bounds_offset.
+    :param visible_bounds_width: Minecraft model property -
+        visible_bounds_width.
+    :param visible_bounds_height: Minecraft model property -
+        visible_bounds_height.
+    :param bones: Optional - list of :class:`BoneExport` objects that represent
+        the bones of this model.
     '''
     model_name: str
     texture_width: int
@@ -43,12 +50,10 @@ class ModelExport:
             context: bpy_types.Context
         ):
         '''
-        Populates the self.poses dictionary.
+        Populates the self.bones dictionary.
 
-        # Properties:
-        - `object_properties: McblendObjectGroup` - the
-        properties of all of the Minecraft cubes and bones.
-        - `context: bpy_types.Context` - the context of running the operator.
+        :param object_properties: Group of mcblend objects.
+        :param context: The context of running the operator.
         '''
         bpy.ops.screen.animation_cancel()
         original_frame = context.scene.frame_current
@@ -62,10 +67,9 @@ class ModelExport:
 
     def json(self) -> Dict:
         '''
-        Creates a dictionary that represents the Minecraft model JSON file.
+        Creates a dict that represents the Minecraft model JSON file.
 
-        # Returns:
-        `Dict` - Minecraft model.
+        :returns: Minecraft model JSON dict.
         '''
         result: Dict = {
             "format_version": "1.12.0",
@@ -88,7 +92,6 @@ class ModelExport:
             result["minecraft:geometry"][0]["description"][
                 "texture_height"] = self.texture_height
         return result
-
 
 class BoneExport:
     '''
@@ -217,7 +220,7 @@ class LocatorExport:
     origin: np.ndarray
 
     def json(self):
-        '''Returns json representation of this object'''
+        '''Returns JSON representation of this object'''
         return get_vect_json(self.origin)
 
 @dataclass
@@ -231,7 +234,7 @@ class CubeExport:
     uv: UvExport
 
     def json(self):
-        '''Returns json representation of this object'''
+        '''Returns JSON representation of this object.'''
         cube_dict = {
             'uv': self.uv.json(),
             'size': get_vect_json(self.size),
@@ -250,7 +253,7 @@ class CubeExport:
 
 class UvExport:
     '''
-    Base class for creating the UV part of exported cube.
+    Base class for objects that represent the UV of exported cube.
     '''
     def __init__(self):
         # Mirror is used only for StandardCubeUvExport but any other UV has to
@@ -258,17 +261,14 @@ class UvExport:
         self.mirror = False
 
     def json(self) -> Any:
-        '''
-        Returns josonable object that represents a single uv of a cube in
-        Minecraft model.
-        '''
+        '''Returns JSON representation of this object.'''
         # pylint: disable=no-self-use
         return [0, 0]
 
 class PerFaceUvExport(UvExport):
     '''
-    UvExport for per face UV-mapping (the uv mapping of a cube which maps
-    every UV face separately).
+    Object that represents the UV of a cube during export in per-face
+    UV-mapping style.
     '''
     def __init__(
             self, cube_polygons: CubePolygons,
@@ -335,9 +335,9 @@ class PerFaceUvExport(UvExport):
 
 class StandardCubeUvExport(UvExport):
     '''
-    Class for standard Minecraft UV-mapping:
-    Single vector with UV-values (the shape of the faces is implicitly
-    determined by the dimensions of the cuboid)
+    Object that represents the UV of a cube during export in default Minecraft
+    UV-mapping style - defined by a vector with two values (the shape of the
+    faces is implicitly determined by the dimensions of the cube).
     '''
     def __init__(
             self, cube_polygons: CubePolygons,
@@ -367,7 +367,11 @@ class StandardCubeUvExport(UvExport):
         )
 
     def assert_standard_uv_shape(self):
-        '''Asserts that this object has cubic shape'''
+        '''
+        Asserts that this object has a UV-shape that conforms to standard
+        Minecraft UV-mapping shape. If not than NotAStandardUvException
+        is risen.
+        '''
         # Get min and max value of he loop coordinates
         loop_crds_list: List[np.array] = []
         for loop in self.uv_layer.data:
@@ -467,7 +471,7 @@ class StandardCubeUvExport(UvExport):
 
 class UvExportFactory:
     '''
-    Used for creating the UvExport objects. Decides which subtype of the
+    Object used for creating the UvExport objects. Decides which subtype of the
     UvExport object should be used.
     '''
     def __init__(self, texture_size: Tuple[int, int]):
@@ -485,9 +489,9 @@ class UvExportFactory:
         '''
         Creates UvExport object for given MclbendObject.
 
-        - `mcobj: McblendObject` - object that needs UvExport
-        - `cube_size: np.ndarray` - size of the cube in minecraft coordinates
-          system
+        :param mcobj: Object that needs UvExport.
+        :param cube_size: Size of the cube expressed in Minecraft coordinates
+            system.
         '''
         layer: Optional[bpy.types.MeshUVLoopLayer] = (
             mcobj.obj_data.uv_layers.active)

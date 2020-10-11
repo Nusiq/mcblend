@@ -11,12 +11,11 @@ from .exception import InvalidDictPathException
 
 def get_vect_json(arr: Iterable) -> List[float]:
     '''
-    Changes the iterable whith numbers into basic python list of floats.
+    Changes the iterable of numbers into basic python list of floats.
     Values from the original iterable are rounded to the 3rd deimal
     digit.
 
-    # Arguments:
-    - `arr: Iterable` - an iterable with numbers.
+    :param arr: an iterable of numbers.
     '''
     result = [round(i, 3) for i in arr]
     for i, _ in enumerate(result):
@@ -26,24 +25,21 @@ def get_vect_json(arr: Iterable) -> List[float]:
 
 
 def get_path(
-        jsonable: Dict, path: List[Union[str, int]]
+        jsonable: Optional[Union[Dict, List, str, float, int, bool]],
+        path: List[Union[str, int]]
     ) -> Optional[Any]:
     '''
-    Goes through a dictionary and checks its structure. Returns the object
-    from given JSON path and success value. Raises InvalidDictPathException
-    when path is invalid.
+    Returns the object from given JSON path.
+    Raises InvalidDictPathException when path is invalid.
 
-    # Arguments:
-    - `jsonable: Dict` - a dictionary
-    - `path: List[Union[str, int]]` - a path to target object
-
-    # Returns:
-    `Optional[Any]` - the target object.
+    :param jsonable: An object which can be saved in JSON format
+    :param path: a path to target object
+    :returns: the target object.
     '''
     curr_obj = jsonable
     for path_item in path:
         try:
-            curr_obj = curr_obj[path_item]
+            curr_obj = curr_obj[path_item]  # type: ignore
         except (LookupError, TypeError) as e:
             raise InvalidDictPathException() from e
     return curr_obj
@@ -51,10 +47,8 @@ def get_path(
 
 class CompactEncoder(json.JSONEncoder):
     '''
-    JSONEncoder which tries to find a compromise between compact and multiline
-    formatting from standard python json module. Creates relatively compact
-    file which is also easy to read. Additionaly it can encode UserDict and
-    UserList from collections.
+    JSONEncoder which can encode JSON in compact yet still readable form.
+    Additionaly it can encode UserDict and UserList from collections.
     '''
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -66,14 +60,15 @@ class CompactEncoder(json.JSONEncoder):
         return isinstance(obj, (int, bool, str, float))
 
     def encode(self, obj):
-        # pylint: disable=W0221
         '''
         Return a JSON string representation of a Python data structure.
 
-        Example:
+        .. code-block:: python
+
             >>> CompactEncoder().encode({"foo": ["bar", "baz"]})
             '{\\n\\t"foo": ["bar", "baz"]\\n}'
         '''
+        # pylint: disable=arguments-differ
         return ''.join(self.iterencode(obj))
 
     def iterencode(self, obj):
@@ -82,7 +77,8 @@ class CompactEncoder(json.JSONEncoder):
         Encode the given object and yield each string representation line by
         line.
 
-        Example:
+        .. code-block:: python
+
             >>> item = {"foo": ["bar", "baz"]}
             >>> ''.join(list(CompactEncoder().iterencode(item))) == \\
             ... CompactEncoder().encode(item)
