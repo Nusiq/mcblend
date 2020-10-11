@@ -49,8 +49,8 @@ def _pick_closest_rotation(
 
     def _pick_closet_location(
             modify: np.ndarray, close_to: np.ndarray
-        ) -> Tuple[float, np.ndarray]:
-        choice = modify
+    ) -> Tuple[float, np.ndarray]:
+        choice: np.ndarray = modify
         distance = np.linalg.norm(choice - close_to)
 
         for i in range(3):  # Adds removes 360 to all 3 axis (picks the best)
@@ -72,7 +72,6 @@ def _pick_closest_rotation(
 
     distance1, choice1 = _pick_closet_location(modify, close_to)
     distance2, choice2 = _pick_closet_location(  # Counterintuitive but works
-        # pylint: disable=C0330
         (
             modify +
             np.array([180, 180 + original_rotation[1] * 2, 180])) *

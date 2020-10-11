@@ -7,8 +7,7 @@ standard for a reason so use it only if you have to.
 
 Source: https://gist.github.com/Nusiq/4d6cc83a6acc8b373b5e56801d273ba3
 '''
-# pylint: disable=no-else-return, no-else-break, no-else-break,
-# pylint: disable=too-many-branches
+# pylint: disable=no-else-return, no-else-break, no-else-break
 import json
 from json import scanner, JSONDecodeError  # type: ignore
 from json.decoder import WHITESPACE, WHITESPACE_STR, scanstring  # type: ignore
@@ -30,7 +29,6 @@ def parse_object(
     Modified json.decoder.JSONObject function from standard json module
     (python 3.7.7).
     '''
-    # pylint: disable=too-many-branches, too-many-statements
     # pylint: disable=invalid-name
     s, end = s_and_end
     pairs = []

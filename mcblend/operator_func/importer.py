@@ -1,7 +1,6 @@
 '''
 Functions and objects related to importing Minecraft models to Blender.
 '''
-# pylint: disable=too-many-branches, too-many-statements
 from __future__ import annotations
 
 import math
@@ -14,7 +13,7 @@ import mathutils
 import bpy
 
 from .common import (
-    MINECRAFT_SCALE_FACTOR, CubePolygons, CubePolygon, inflate_objets)
+    MINECRAFT_SCALE_FACTOR, CubePolygons, CubePolygon)
 from .uv import CoordinatesConverter
 from .exception import FileIsNotAModelException, ImportingNotImplementedError
 
@@ -70,9 +69,9 @@ def pick_version_parser(parsers: Tuple[str, ...], version: str):
         try:
             return tuple(  # type: ignore
                 map(int, version.split('.')))
-        except:
+        except Exception as e:
             raise FileIsNotAModelException(
-                f'Unable to parse format version number: {version}')
+                f'Unable to parse format version number: {version}') from e
 
     t_parsers = [to_tuple(parser) for parser in parsers]
     t_parsers.sort(reverse=True)
@@ -860,7 +859,7 @@ class ImportLocator:
         self.name = name
         self.position = position
 
-        self.blend_empty: Optional[bpy_types.Object] = None
+        self.blend_empty: Optional[bpy.types.Object] = None
 
 
 class ImportCube:
@@ -875,7 +874,7 @@ class ImportCube:
         - `data: Dict` - the part of the Minecraft model JSON file that represents
         the cube.
         '''
-        self.blend_cube: Optional[bpy_types.Object] = None
+        self.blend_cube: Optional[bpy.types.Object] = None
 
         self.uv: Dict = data['uv']
         self.mirror: bool = data['mirror']
@@ -901,7 +900,7 @@ class ImportBone:
         - `data: Dict` - the part of the Minecraft model JSON file that represents
         the bone.
         '''
-        self.blend_empty: Optional[bpy_types.Object] = None
+        self.blend_empty: Optional[bpy.types.Object] = None
 
         # Locators
         locators: List[ImportLocator] = []
@@ -963,13 +962,13 @@ class ImportGeometry:
         for bone in self.bones.values():
             # 1. Spawn bone (empty)
             bpy.ops.object.empty_add(type='SPHERE', location=(0, 0, 0), radius=0.2)
-            bone_obj: bpy_types.Object
+            bone_obj: bpy.types.Object
             bone_obj = bone.blend_empty = context.object
             _mc_pivot(bone_obj, bone.pivot)  # 2. Apply translation
             bone_obj.name = bone.name  # 3. Apply custom properties
             bone_obj.nusiq_mcblend_object_properties.is_bone = True
             for cube in bone.cubes:
-                cube_obj: bpy_types.Object
+                cube_obj: bpy.types.Object
                 # 1. Spawn cube
                 bpy.ops.mesh.primitive_cube_add(
                     size=1, enter_editmode=False, location=(0, 0, 0)
@@ -996,7 +995,7 @@ class ImportGeometry:
 
             for locator in bone.locators:
                 # 1. Spawn locator (empty)
-                locator_obj: bpy_types.Object
+                locator_obj: bpy.types.Object
                 bpy.ops.object.empty_add(type='SPHERE', location=(0, 0, 0), radius=0.1)
                 locator_obj = locator.blend_empty = context.object
                 _mc_pivot(locator_obj, locator.position)  # 2. Apply translation
@@ -1008,7 +1007,7 @@ class ImportGeometry:
             bone_obj = bone.blend_empty
             # 1. Parent bone keep transform
             if bone.parent is not None and bone.parent in self.bones:
-                parent_obj: bpy_types.Object = self.bones[
+                parent_obj: bpy.types.Object = self.bones[
                     bone.parent
                 ].blend_empty
                 context.view_layer.update()
@@ -1067,7 +1066,7 @@ class ImportGeometry:
         for bone in self.bones.values():
             # 1. Parent bone keep transform
             if bone.parent is not None and bone.parent in self.bones:
-                parent_obj: bpy_types.Object = self.bones[
+                parent_obj: bpy.types.Object = self.bones[
                     bone.parent
                 ]
                 # context.view_layer.update()
@@ -1141,7 +1140,7 @@ class ImportGeometry:
             bpy.data.objects.remove(bone_obj)
 
 def _mc_translate(
-        obj: bpy_types.Object, mctranslation: Tuple[float, float, float],
+        obj: bpy.types.Object, mctranslation: Tuple[float, float, float],
         mcsize: Tuple[float, float, float],
         mcpivot: Tuple[float, float, float]
     ):
@@ -1150,7 +1149,7 @@ def _mc_translate(
     coordinates system.
 
     # Arguments:
-    - `obj: bpy_types.Object` - blender object to transform..
+    - `obj: bpy.types.Object` - blender object to transform..
     - `mctranslation: Tuple[float, float, float]` - minecraft translation.
     - `mcsize: Tuple[float, float, float]` - minecraft size.
     - `mcpivot: Tuple[float, float, float]` - minecraft pivot.
@@ -1169,14 +1168,14 @@ def _mc_translate(
 
 
 def _mc_set_size(
-        obj: bpy_types.Object, mcsize: Tuple[float, float, float],
+        obj: bpy.types.Object, mcsize: Tuple[float, float, float],
         inflate: Optional[float]=None):
     '''
     Scales a blender object using scale vector written in minecraft coordinates
     system.
 
     # Arguments:
-    - `obj: bpy_types.Object` - Blender object
+    - `obj: bpy.types.Object` - Blender object
     - `mcsize: Tuple[float, float, float]` - Minecraft object size.
     '''
     # cube_obj.dimensions = (
@@ -1203,13 +1202,13 @@ def _mc_set_size(
     data.vertices[7].co = mathutils.Vector(pos_delta * np.array([1, 1, 1]))
 
 
-def _mc_pivot(obj: bpy_types.Object, mcpivot: Tuple[float, float, float]):
+def _mc_pivot(obj: bpy.types.Object, mcpivot: Tuple[float, float, float]):
     '''
     Moves a pivot of an blender object using coordinates written in minecraft
     coordinates system.
 
     # Arguments:
-    - `obj: bpy_types.Object` - Blender object
+    - `obj: bpy.types.Object` - Blender object
     - `mcpivot: Tuple[float, float, float]` - Minecraft object pivot point.
     '''
     translation = mathutils.Vector(
@@ -1219,14 +1218,14 @@ def _mc_pivot(obj: bpy_types.Object, mcpivot: Tuple[float, float, float]):
 
 
 def _mc_rotate(
-        obj: bpy_types.Object, mcrotation: Tuple[float, float, float]
+        obj: bpy.types.Object, mcrotation: Tuple[float, float, float]
     ):
     '''
     Rotates a blender object using minecraft coordinates system for rotation
     vector.
 
     # Arguments:
-    - `obj: bpy_types.Object` - Blender object
+    - `obj: bpy.types.Object` - Blender object
     - `mcrotation: Tuple[float, float, float]` - Minecraft object rotation.
     '''
 

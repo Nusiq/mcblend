@@ -142,9 +142,13 @@ disable=print-statement,
 
         too-few-public-methods,
         too-many-arguments,
+        too-many-public-methods,
+        no-self-use,
+        too-many-statements,
         too-many-instance-attributes,
         too-many-locals,
         too-many-lines,
+        too-many-branches,
         fixme,
         duplicate-code
 
@@ -260,7 +264,9 @@ good-names=i,j,k,
            Run,
            _,
            uv, u, v,
+           w, d, h,
            n,
+           ui,
            up
 
 # Good variable names regexes, separated by a comma. If names match any regex,

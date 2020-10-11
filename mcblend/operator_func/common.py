@@ -48,11 +48,11 @@ class McblendObject:
     format.
     '''
     def __init__(
-            self, thisobj_id: ObjectId, thisobj: bpy_types.Object,
+            self, thisobj_id: ObjectId, thisobj: bpy.types.Object,
             parentobj_id: Optional[ObjectId], children_ids: List[ObjectId],
             mctype: MCObjType, group: McblendObjectGroup):
         self.thisobj_id = thisobj_id
-        self.thisobj: bpy_types.Object = thisobj
+        self.thisobj: bpy.types.Object = thisobj
         self.parentobj_id: Optional[ObjectId] = parentobj_id
         self.children_ids: List[ObjectId] = children_ids
         self.mctype: MCObjType = mctype
@@ -272,6 +272,7 @@ class McblendObject:
 
     @property
     def side1_uv_masks(self) -> Sequence[Mask]:
+        '''Returns the sequence of masks affecting side 1 of the cube'''
         if self.uv_group == '':
             return [ColorMask((0, 1, 0))]
         uv_group = bpy.context.scene.nusiq_mcblend_uv_groups[self.uv_group]
@@ -279,6 +280,7 @@ class McblendObject:
 
     @property
     def side2_uv_masks(self) -> Sequence[Mask]:
+        '''Returns the sequence of masks affecting side 2 of the cube'''
         if self.uv_group == '':
             return [ColorMask((1, 0, 1))]
         uv_group = bpy.context.scene.nusiq_mcblend_uv_groups[self.uv_group]
@@ -286,6 +288,7 @@ class McblendObject:
 
     @property
     def side3_uv_masks(self) -> Sequence[Mask]:
+        '''Returns the sequence of masks affecting side 3 of the cube'''
         if self.uv_group == '':
             return [ColorMask((1, 0, 0))]
         uv_group = bpy.context.scene.nusiq_mcblend_uv_groups[self.uv_group]
@@ -293,6 +296,7 @@ class McblendObject:
 
     @property
     def side4_uv_masks(self) -> Sequence[Mask]:
+        '''Returns the sequence of masks affecting side 4 of the cube'''
         if self.uv_group == '':
             return [ColorMask((0, 1, 1))]
         uv_group = bpy.context.scene.nusiq_mcblend_uv_groups[self.uv_group]
@@ -300,6 +304,7 @@ class McblendObject:
 
     @property
     def side5_uv_masks(self) -> Sequence[Mask]:
+        '''Returns the sequence of masks affecting side 5 of the cube'''
         if self.uv_group == '':
             return [ColorMask((0, 0, 1))]
         uv_group = bpy.context.scene.nusiq_mcblend_uv_groups[self.uv_group]
@@ -307,6 +312,7 @@ class McblendObject:
 
     @property
     def side6_uv_masks(self) -> Sequence[Mask]:
+        '''Returns the sequence of masks affecting side 6 of the cube'''
         if self.uv_group == '':
             return [ColorMask((1, 1, 0))]
         uv_group = bpy.context.scene.nusiq_mcblend_uv_groups[self.uv_group]
@@ -351,11 +357,10 @@ class CubePolygons(NamedTuple):
           CubePolygon is changed to change the positons of verices during
           UV-mapping.
         '''
-        # pylint: disable=too-many-branches, too-many-statements
         def get_order(
-                name: str, mirror: bool,
-                bount_box_vertices: Tuple[str, str, str, str]
-                ) -> Tuple[int, int, int, int]:
+            name: str, mirror: bool,
+            bount_box_vertices: Tuple[str, str, str, str]
+        ) -> Tuple[int, int, int, int]:
             '''Gets the order of verices for given cube polygon'''
             mc_mapping_uv_order = _MC_MAPPING_UV_ORDERS[(name, mirror)]
             result = []
@@ -450,11 +455,11 @@ class CubePolygons(NamedTuple):
                 )
         try:
             return CubePolygons(**cube_polygon_builder)
-        except TypeError:  # Missing argument
+        except TypeError as e:  # Missing argument
             raise NoCubePolygonsException(
                 f"Object {cube.name.split('.')} is not filling a bounding box "
                 "good enough to aproximate its shape to a cube."
-            )
+            ) from e
 
 class CubePolygon(NamedTuple):
     '''
@@ -523,7 +528,6 @@ class McblendObjectGroup:
         # Arguments:
         - `context: bpy_types.Context` - the context of running the operator.
         '''
-        # pylint: disable=too-many-branches
         for obj_id, obj in self._loop_objects(context.selected_objects):
             curr_obj_mc_type: MCObjType
             curr_obj_mc_parent: Optional[ObjectId] = None
@@ -608,15 +612,15 @@ class McblendObjectGroup:
                     yield ObjectId(obj.name, bone.name), obj
 
     @staticmethod
-    def _get_parent_mc_bone(obj: bpy_types.Object) -> Optional[ObjectId]:
+    def _get_parent_mc_bone(obj: bpy.types.Object) -> Optional[ObjectId]:
         '''
-        Goes up through the ancesstors of an bpy_types.Object and tries to find
+        Goes up through the ancesstors of an bpy.types.Object and tries to find
         the object that represents its parent bone in Minecraft model.
 
         Used in constructor of McblendObjectGroup.
 
         # Arguments:
-        - `obj: bpy_types.Object` - a Blender object which will be truned into
+        - `obj: bpy.types.Object` - a Blender object which will be truned into
         Minecraft bone
 
         # Returns:
@@ -662,7 +666,7 @@ def cyclic_equiv(u: List, v: List) -> bool:
 
 
 def inflate_objets(
-        context: bpy_types.Context, objects: List[bpy_types.Object],
+        context: bpy_types.Context, objects: List[bpy.types.Object],
         inflate: float, mode: str) -> int:
     '''
     Adds inflate property to objects and changes their dimensions. Returns
@@ -671,7 +675,7 @@ def inflate_objets(
 
     # Arguments:
     - `context: bpy_types.Context` - the context of running the operator.
-    - `objects List[bpy_types.Object]` - list of objects to inflate.
+    - `objects List[bpy.types.Object]` - list of objects to inflate.
     - `inflate: float` - the inflation value.
     - `mode: str` - Can be either "RELATIVE" or "ABSOLUTE". If "RELATIVE" than
       the value before appying the operator is taken as a base (0 means that

@@ -44,8 +44,8 @@ def get_path(
     for path_item in path:
         try:
             curr_obj = curr_obj[path_item]
-        except (LookupError, TypeError):
-            raise InvalidDictPathException()
+        except (LookupError, TypeError) as e:
+            raise InvalidDictPathException() from e
     return curr_obj
 
 

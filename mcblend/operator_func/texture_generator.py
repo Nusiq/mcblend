@@ -2,17 +2,21 @@
 Set of various image filters used for generating textures for models.
 Uses numpy arrays with colors with colors encoded with values in range 0-1.
 '''
+# pylint: disable=invalid-name
 from __future__ import annotations
 
-
-import numpy as np
-from itertools import repeat, cycle, accumulate, tee
-from typing import Tuple, Iterable, NamedTuple, List, Optional, Dict, Sequence
+from itertools import cycle, accumulate
+from typing import Tuple, Iterable, NamedTuple, List, Optional, Sequence
 from abc import ABC, abstractmethod
 from enum import Enum
 
+import numpy as np
 
 class UvMaskTypes(Enum):
+    '''
+    UvMaskTypes are used for selecting one of the avaliable masks types in
+    dropdown lists.
+    '''
     COLOR_PALLETTE_MASK='Color Pallette Mask'
     GRADIENT_MASK='Gradient Mask'
     ELIPSE_MASK='Elipse Mask'
@@ -30,9 +34,11 @@ def list_mask_types_as_blender_enum(self, context):
 
     https://docs.blender.org/api/current/bpy.props.html#bpy.props.EnumProperty
     '''
+    # pylint: disable=unused-argument
     return [(i.value, i.value, i.value) for i in UvMaskTypes]
 
 class MixMaskMode(Enum):
+    '''MixMaskMode is used to define the behavior of the MixMask'''
     mean='mean'
     min='min'
     max='max'
@@ -42,30 +48,25 @@ def list_mix_mask_modes_as_blender_enum(self, context):
     '''
     Returns list of tuples for creating EnumProperties with MixMaskMode enum.
     '''
+    # pylint: disable=unused-argument
     return [(i.value, i.value, i.value) for i in MixMaskMode]
 
 class Mask(ABC):
-    '''
-    Abstract class parent of all Filters.
-    '''
+    '''Abstract class parent of all Filters.'''
     @abstractmethod
     def apply(self, image: np.ndarray):
-        '''
-        Applies the image to the image.
-        '''
-        pass
+        '''Applies the image to the image.'''
 
 
 class Color(NamedTuple):
-    '''
-    Color palette color.
-    '''
+    '''Color palette color.'''
     r: float
     g: float
     b: float
 
     @staticmethod
-    def FromHex(color: str):
+    def create_from_hex(color: str):
+        '''Creates color object from hex string e.g. "ffffff"'''
         if len(color) != 6:
             raise Exception(
                 'The color should be passed as 6 digit a hex number with '
@@ -77,7 +78,11 @@ class Color(NamedTuple):
             int(color[4:], 16)/255.0
         )
 
-class ColorPalletteMask(Mask):
+class ColorPaletteMask(Mask):
+    '''
+    ColorPaletteMask is a mask that maps values (0 to 1) from the image to
+    colors from the color palette.
+    '''
     def __init__(
             self, colors: List[Color], *,
             interpolate: bool = False,
@@ -87,16 +92,13 @@ class ColorPalletteMask(Mask):
         self.normalize = normalize
 
     def apply(self, image: np.ndarray):
-        '''
-        Applies the image to the image.
-        '''
-        
+        '''Applies the image to the image.'''
         # xp and fp for np.interp
         if self.interpolate:
             fp_r = [c.r for c in self.colors]
             fp_g = [c.g for c in self.colors]
             fp_b = [c.b for c in self.colors]
-            xp = np.array([i for i in range(len(self.colors))])
+            xp = np.array(list(range(len(self.colors))))
             xp = xp/(len(self.colors)-1)
         else:
             def repeated_list(iterable):
@@ -106,14 +108,14 @@ class ColorPalletteMask(Mask):
             fp_r = [c.r for c in repeated_list(self.colors)]
             fp_g = [c.g for c in repeated_list(self.colors)]
             fp_b = [c.b for c in repeated_list(self.colors)]
-            xp = np.array([i for i in range(len(self.colors))])
+            xp = np.array(list(range(len(self.colors))))
             xp = xp/len(self.colors)
             unpacked_xp = [0.0]
             for xpi in repeated_list(xp[1:]):
                 unpacked_xp.append(xpi)
             unpacked_xp.append(1.0)
             xp = np.array(unpacked_xp)
-        
+
         # Input image must be converted to grayscale
         gray = np.mean(image, axis=2)
         if self.normalize:
@@ -138,16 +140,21 @@ class MultiplicativeMask(Mask):
 
     @abstractmethod
     def get_mask(self, image: np.array) -> np.array:
-        '''
-        Returns 2D matrix with the filter array
-        '''
-        pass
+        '''Returns 2D matrix with the filter array'''
 
 class Stripe(NamedTuple):
+    '''
+    Stripes are used in StripesMask and ColorPaletteMask mask in a collection
+    to define width and the value of the items that compose the mask.
+    '''
     width: float
     strength: float
 
 class TwoPointSurfaceMask(MultiplicativeMask):
+    '''
+    Abstract class for masks that require two points on the textures to define
+    which area should be affected.
+    '''
     def __init__(
             self, p1: Tuple[float, float],
             p2: Tuple[float, float], *,
@@ -158,10 +165,17 @@ class TwoPointSurfaceMask(MultiplicativeMask):
 
     def get_surface_properties(
             self, image: np.ndarray,
-            sorted=True) -> Tuple[int, int, int, int, int, int]:
+            sort_points=False) -> Tuple[int, int, int, int, int, int]:
+        '''
+        Uses points passed in the constructor and the image to return the
+        coordinates of the points that define which area of the texture
+        should be affected by the mask.
+
+        - sort_points - decides if the returned points should be sorted by the
+          coordinats.
+        '''
         w, h, _ = image.shape
         wh = np.array([w, h])
-
         # Get highlighted area indices
         if self.relative_boundries:
             # The values from relative boundries should always be between
@@ -183,12 +197,16 @@ class TwoPointSurfaceMask(MultiplicativeMask):
                 self.p2, dtype=int)
         v1, u1 = p1%wh
         v2, u2 = p2%wh
-        if sorted:
+        if sort_points:
             u1, u2 = min(u1, u2), max(u1, u2)
             v1, v2 = min(v1, v2), max(v1, v2)
         return w, h, u1, u2, v1, v2
 
 class GradientMask(TwoPointSurfaceMask):
+    '''
+    Uses stripes with different widths and strenghts to create a grayscale
+    gradient between two points.
+    '''
     def __init__(
             self, p1: Tuple[float, float],
             p2: Tuple[float, float], *,
@@ -211,7 +229,8 @@ class GradientMask(TwoPointSurfaceMask):
         self.expotent=expotent
 
     def get_mask(self, image):
-        w, h, u1, u2, v1, v2 = self.get_surface_properties(image, sorted=False)
+        w, h, u1, u2, v1, v2 = self.get_surface_properties(
+            image, sort_points=False)
         def split_complex(c):
             return (c.real, c.imag)
 
@@ -247,6 +266,9 @@ class GradientMask(TwoPointSurfaceMask):
         return mask[:, :, np.newaxis]
 
 class ElipseMask(TwoPointSurfaceMask):
+    '''
+    Creates elipse inbetween two points.
+    '''
     def __init__(
             self, p1: Tuple[float, float],
             p2: Tuple[float, float], *,
@@ -261,8 +283,7 @@ class ElipseMask(TwoPointSurfaceMask):
 
     def get_mask(self, image):
         w, h, u1, u2, v1, v2 = self.get_surface_properties(image)
-
-        img = np.ones((w, h, 3), dtype=np.float)
+        # img = np.ones((w, h, 3), dtype=np.float)
         a = (u2-u1)/2
         b = (v2-v1)/2
         a = a if a >= 1 else 1
@@ -290,6 +311,9 @@ class ElipseMask(TwoPointSurfaceMask):
         return mask[:, :, np.newaxis]
 
 class RectangleMask(TwoPointSurfaceMask):
+    '''
+    Creates a rectangle inbetween two points.
+    '''
     def __init__(
             self, p1: Tuple[float, float],
             p2: Tuple[float, float], *,
@@ -363,6 +387,9 @@ class RectangleMask(TwoPointSurfaceMask):
         return mask[:, :, np.newaxis]
 
 class StripesMask(MultiplicativeMask):
+    '''
+    Creates horizontal or vertical grayscale stripes.
+    '''
     def __init__(
             self, stripes: List[Stripe], *,
             horizontal: bool=True,
@@ -377,7 +404,7 @@ class StripesMask(MultiplicativeMask):
             self.stripe_strength.append(i.strength)
         self.horizontal = horizontal
         self.relative_boundries = relative_boundries
-    
+
     def get_mask(self, image: np.array) -> np.array:
         w, h, _ = image.shape
         mask = np.ones((w, h))
@@ -407,6 +434,9 @@ class StripesMask(MultiplicativeMask):
         return mask[:, :, np.newaxis]
 
 class RandomMask(MultiplicativeMask):
+    '''
+    Creates randomly colored grayscale pixels.
+    '''
     def __init__(
             self, *, strength: Tuple[float, float]=(0.0, 1.0),
             expotent: float=1.0, seed: Optional[int]=None):
@@ -424,6 +454,9 @@ class RandomMask(MultiplicativeMask):
         return mask[:,:,np.newaxis]
 
 class ColorMask(MultiplicativeMask):
+    '''
+    Fileters the image with a color.
+    '''
     def __init__(self, color: Tuple[float, float, float]):
         self.r, self.g, self.b = color
 
@@ -437,6 +470,10 @@ class ColorMask(MultiplicativeMask):
         return mask[:,:,:]
 
 class MixMask(MultiplicativeMask):
+    '''
+    Mixes multiple masks by calculating their pixelwise mean
+    min, max or median values.
+    '''
     def __init__(
             self, masks: Iterable[MultiplicativeMask], *,
             strength: Tuple[float, float]=(0.0, 1.0),
@@ -501,7 +538,7 @@ def _get_color_from_gui_color(color) -> Color:
     rgb = np.array(color.color)
     selector = rgb < 0.0031308
     rgb[selector] *= 12.92
-    rgb[selector == False] = 1.055 * rgb[selector == False]**(1/2.4) - 0.055
+    rgb[not selector] = 1.055 * rgb[not selector]**(1/2.4) - 0.055
     return Color(*rgb)
 
 def get_masks_from_side(side) -> Sequence[Mask]:
@@ -516,7 +553,7 @@ def get_masks_from_side(side) -> Sequence[Mask]:
         # side is an iterator shared by all nested iterations
         for _, s_props in zip(range(n_steps), side):
             if s_props.mask_type == UvMaskTypes.COLOR_PALLETTE_MASK.value:
-                mask = ColorPalletteMask(
+                mask = ColorPaletteMask(
                     [_get_color_from_gui_color(c) for c in s_props.colors],
                     interpolate=s_props.interpolate, normalize=s_props.normalize)
             elif s_props.mask_type == UvMaskTypes.GRADIENT_MASK.value:

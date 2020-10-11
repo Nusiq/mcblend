@@ -4,9 +4,7 @@ Functions related to creating UV map.
 from __future__ import annotations
 
 from typing import (
-    Dict, Tuple, List, Optional, Iterator, Collection, NamedTuple, Iterable,
-    Sequence
-)
+    Dict, Tuple, List, Iterator, Collection, NamedTuple, Sequence)
 from enum import Enum
 from dataclasses import dataclass, field
 from itertools import filterfalse
@@ -498,9 +496,7 @@ class UvGroup(McblendObjUvBox):
         for obj in self._objects:
             obj.clear_uv_layers()
 
-    def paint_texture(
-            self, arr: np.ndarray, resolution: int = 1, masks: List[Mask]=None
-        ):
+    def paint_texture(self, arr: np.ndarray, resolution: int = 1):
         # They mapped to one place (paint only one)
         # for obj in self._objects:
         if len(self._objects) > 0 :
@@ -585,7 +581,7 @@ class UvMapper:
         enough to map all of the boxes.
         '''
         self.uv_boxes.sort(key=lambda box: box.size[0], reverse=True)
-        
+
         if allow_expanding and len(self.uv_boxes) > 0:
             self.width = max([self.width, self.uv_boxes[0].size[0]])
 

@@ -23,7 +23,6 @@ from .operator_func.jsonc_decoder import JSONCDecoder
 from .operator_func.texture_generator import (
     list_mask_types_as_blender_enum, UvMaskTypes)
 
-# TODO - move this somewhere else
 from .panel import get_unused_uv_group_name
 
 
@@ -104,7 +103,7 @@ class OBJECT_OT_NusiqMcblendExportAnimationOperator(
             return False
         len_anims = len(context.scene.nusiq_mcblend_animations)
         curr_anim_id = context.scene.nusiq_mcblend_active_animation
-        if 0 < curr_anim_id or curr_anim_id >= len_anims:
+        if 0 > curr_anim_id >= len_anims:
             return False
         return True
 
@@ -193,13 +192,13 @@ class OBJECT_OT_NusiqMcblendUvGroupOperator(bpy.types.Operator):
         "same spot on the texutre"
     )
 
-    def list_uv_groups(self, context):
+    def _list_uv_groups(self, context):
         items = [
             (x.name, x.name, x.name)
             for x in bpy.context.scene.nusiq_mcblend_uv_groups]
         return items
     uv_groups_enum: bpy.props.EnumProperty(  # type: ignore
-        items=list_uv_groups, name="UV Groups")
+        items=_list_uv_groups, name="UV Groups")
 
     @classmethod
     def poll(cls, context: bpy_types.Context):
@@ -490,17 +489,22 @@ def load_animation_frame_properties(animation, context):
     context.scene.frame_current = animation.frame_current
 
 class OBJECT_OT_NusiqMcblendListAnimations(bpy.types.Operator):
+    '''
+    The operator that lists the animations (used to list the animations in
+    GUI).
+    '''
     bl_idname = "object.nusiq_mcblend_list_animations"
     bl_label = "List animations and save them to Enum to display them in GUI"
 
-    def list_animations(self, context):
+    def _list_animations(self, context):
+        # pylint: disable=unused-argument
         items = [
             (str(i), x.name, x.name)
             for i, x in enumerate(bpy.context.scene.nusiq_mcblend_animations)]
         return items
 
     animations_enum: bpy.props.EnumProperty(  # type: ignore
-        items=list_animations, name="Animations")
+        items=_list_animations, name="Animations")
 
     # @classmethod
     # def poll(cls, context):
@@ -514,7 +518,7 @@ class OBJECT_OT_NusiqMcblendListAnimations(bpy.types.Operator):
         # If OK than save old animation state
         len_anims = len(context.scene.nusiq_mcblend_animations)
         curr_anim_id = context.scene.nusiq_mcblend_active_animation
-        if curr_anim_id >= 0 and curr_anim_id < len_anims:
+        if 0 <= curr_anim_id < len_anims:
             save_animation_frame_properties(
                 context.scene.nusiq_mcblend_animations[curr_anim_id], context)
 
@@ -527,6 +531,10 @@ class OBJECT_OT_NusiqMcblendListAnimations(bpy.types.Operator):
 
 
 class OBJECT_OT_NusiqMcblendAddAnimation(bpy.types.Operator):
+    '''
+    The operator that adds an animation to the list of saved animation
+    settings.
+    '''
     bl_idname = "object.nusiq_mcblend_add_animation"
     bl_label = '''Adds new animation to the list.'''
     bl_options = {'UNDO'}
@@ -535,7 +543,7 @@ class OBJECT_OT_NusiqMcblendAddAnimation(bpy.types.Operator):
         # If OK save old animation
         len_anims = len(context.scene.nusiq_mcblend_animations)
         curr_anim_id = context.scene.nusiq_mcblend_active_animation
-        if 0 <= curr_anim_id and curr_anim_id < len_anims:
+        if 0 <= curr_anim_id < len_anims:
             save_animation_frame_properties(
                 context.scene.nusiq_mcblend_animations[curr_anim_id], context)
 
@@ -548,6 +556,10 @@ class OBJECT_OT_NusiqMcblendAddAnimation(bpy.types.Operator):
         return {'FINISHED'}
 
 class OBJECT_OT_NusiqMcblendRemoveAnimation(bpy.types.Operator):
+    '''
+    The operatpr that removes animation settings from the list of saved
+    animation settings.
+    '''
     bl_idname = "object.nusiq_mcblend_remove_animation"
     bl_label = "Remove current animation from the list."
     bl_options = {'UNDO'}
@@ -569,24 +581,26 @@ class OBJECT_OT_NusiqMcblendRemoveAnimation(bpy.types.Operator):
 
         # Load data from new active animation
         curr_anim_id=context.scene.nusiq_mcblend_active_animation
-        if 0 >= curr_anim_id and curr_anim_id < len_anims:
+        if 0 <= curr_anim_id < len_anims:
             load_animation_frame_properties(
                 context.scene.nusiq_mcblend_animations[curr_anim_id], context)
         return {'FINISHED'}
 
 # UV group GUI
 class OBJECT_OT_NusiqMcblendListUvGroups(bpy.types.Operator):
+    '''The operator that returns a list of UV-groups (used for the GUI).'''
     bl_idname = "object.nusiq_mcblend_list_uv_groups"
     bl_label = "List UV groups and save them to Enum to display them in GUI"
 
-    def list_uv_groups(self, context):
+    def _list_uv_groups(self, context):
+        # pylint: disable=unused-argument
         items = [
             (str(i), x.name, x.name)
             for i, x in enumerate(bpy.context.scene.nusiq_mcblend_uv_groups)]
         return items
 
     uv_groups_enum: bpy.props.EnumProperty(  # type: ignore
-        items=list_uv_groups, name="UV Groups")
+        items=_list_uv_groups, name="UV Groups")
 
     def execute(self, context):
         '''
@@ -600,6 +614,7 @@ class OBJECT_OT_NusiqMcblendListUvGroups(bpy.types.Operator):
         return {'FINISHED'}
 
 class OBJECT_OT_NusiqMcblendAddUvGroup(bpy.types.Operator):
+    '''The operator that creates new UV-grop'''
     bl_idname = "object.nusiq_mcblend_add_uv_group"
     bl_label = '''Adds new uv_group to the list.'''
     bl_options = {'UNDO'}
@@ -630,6 +645,7 @@ class OBJECT_OT_NusiqMcblendAddUvGroup(bpy.types.Operator):
         return {'FINISHED'}
 
 class OBJECT_OT_NusiqMcblendRemoveUvGroup(bpy.types.Operator):
+    '''The operator that removes UV-grup.'''
     bl_idname = "object.nusiq_mcblend_remove_uv_group"
     bl_label = "Remove current uv_group from the list."
     bl_options = {'UNDO'}
@@ -644,7 +660,6 @@ class OBJECT_OT_NusiqMcblendRemoveUvGroup(bpy.types.Operator):
         # Remove uv_group
         context.scene.nusiq_mcblend_uv_groups.remove(group_id)
 
-
         # Update the names of all of the meshes
         for obj in bpy.data.objects:
             if obj.type == "MESH":
@@ -653,28 +668,29 @@ class OBJECT_OT_NusiqMcblendRemoveUvGroup(bpy.types.Operator):
                     obj_props.uv_group = ''
 
         # Set new active uv_group
-        len_uv_groups=len(context.scene.nusiq_mcblend_uv_groups)
         if group_id > 0:
             context.scene.nusiq_mcblend_active_uv_group=group_id-1
-
-        # Load data from new active uv_group
-        curr_uv_group_id=context.scene.nusiq_mcblend_active_uv_group
         return {'FINISHED'}
 
 
 class OBJECT_OT_NusiqMcblendCopyUvGroupSide(bpy.types.Operator):
+    '''
+    An operator that copies one side of a UV-group to other sides in other (
+    or the same) UV-group.
+    '''
     bl_idname = "object.nusiq_mcblend_copy_uv_group_side"
     bl_label = 'Copy active UV group side other to UV group'
     bl_options = {'UNDO'}
 
-    def list_uv_groups(self, context):
+    def _list_uv_groups(self, context):
+        # pylint: disable=unused-argument
         items = [
             (str(i), x.name, x.name)
             for i, x in enumerate(bpy.context.scene.nusiq_mcblend_uv_groups)]
         return items
 
     uv_groups_enum: bpy.props.EnumProperty(  # type: ignore
-        items=list_uv_groups, name="UV Groups")
+        items=_list_uv_groups, name="UV Groups")
     side1: BoolProperty(name='side1')  # type: ignore
     side2: BoolProperty(name='side2')  # type: ignore
     side3: BoolProperty(name='side3')  # type: ignore
@@ -689,7 +705,7 @@ class OBJECT_OT_NusiqMcblendCopyUvGroupSide(bpy.types.Operator):
     def poll(cls, context):
         return len(context.scene.nusiq_mcblend_uv_groups) >= 1
 
-    def copy_side(
+    def _copy_side(
             self, context,
             source_group_id: int, source_side_id: int,
             target_group_id: int, target_side_id: int):
@@ -747,27 +763,26 @@ class OBJECT_OT_NusiqMcblendCopyUvGroupSide(bpy.types.Operator):
 
         # Get target UV group
         target_group_id = int(self.uv_groups_enum)
-        target_group = context.scene.nusiq_mcblend_uv_groups[target_group_id]
 
         if self.side1:
-            self.copy_side(
+            self._copy_side(
                 context, source_group_id, source_side_id, target_group_id, 0)
         if self.side2:
-            self.copy_side(
+            self._copy_side(
                 context, source_group_id, source_side_id, target_group_id, 1)
         if self.side3:
-            self.copy_side(
+            self._copy_side(
                 context, source_group_id, source_side_id, target_group_id, 2)
         if self.side4:
-            self.copy_side(
+            self._copy_side(
                 context, source_group_id, source_side_id, target_group_id, 3)
         if self.side5:
-            self.copy_side(
+            self._copy_side(
                 context, source_group_id, source_side_id, target_group_id, 4)
         if self.side6:
-            self.copy_side(
+            self._copy_side(
                 context, source_group_id, source_side_id, target_group_id, 5)
-        self.report({'INFO'}, f'Successfuly copied UV face.')
+        self.report({'INFO'}, 'Successfuly copied UV face.')
         return {'FINISHED'}
 
 # UV Group -> UV Mask (GUI)
@@ -786,6 +801,9 @@ def get_active_masks(context):
     return masks
 
 class OBJECT_OT_NusiqMcblendAddUvMask(bpy.types.Operator):
+    '''
+    The operator that adds UV-mask to the UV-group.
+    '''
     bl_idname = "object.nusiq_mcblend_add_uv_mask"
     bl_label = '''Adds new mask to active uv group at active face.'''
     bl_options = {'UNDO'}
@@ -809,6 +827,9 @@ class OBJECT_OT_NusiqMcblendAddUvMask(bpy.types.Operator):
         return {'FINISHED'}
 
 class OBJECT_OT_NusiqMcblendRemoveUvMask(bpy.types.Operator):
+    '''
+    The operator that removes UV-mask from UV-group.
+    '''
     bl_idname = "object.nusiq_mcblend_remove_uv_mask"
     bl_label = '''Removes mask from active face of active uv group.'''
     bl_options = {'UNDO'}
@@ -827,6 +848,10 @@ class OBJECT_OT_NusiqMcblendRemoveUvMask(bpy.types.Operator):
         return {'FINISHED'}
 
 class OBJECT_OT_NusiqMcblendMoveUvMask(bpy.types.Operator):
+    '''
+    The operator that moves UV-mask up or down on the list of UV-masks
+    in the UV group in GUI.
+    '''
     bl_idname = "object.nusiq_mcblend_move_uv_mask"
     bl_label = (
         'Moves mask in active face of active uv group to different place on '
@@ -849,6 +874,9 @@ class OBJECT_OT_NusiqMcblendMoveUvMask(bpy.types.Operator):
 
 # UV Group -> UV Mask -> side -> colors (GUI)
 class OBJECT_OT_NusiqMcblendAddUvMaskColor(bpy.types.Operator):
+    '''
+    The operator that adds colors to the list of UV-mask colors.
+    '''
     bl_idname = "object.nusiq_mcblend_add_uv_mask_color"
     bl_label = '''Adds new color to a mask.'''
     bl_options = {'UNDO'}
@@ -868,6 +896,9 @@ class OBJECT_OT_NusiqMcblendAddUvMaskColor(bpy.types.Operator):
         return {'FINISHED'}
 
 class OBJECT_OT_NusiqMcblendRemoveUvMaskColor(bpy.types.Operator):
+    '''
+    The operator that removes a color from list of UV-mask colors in GUI
+    '''
     bl_idname = "object.nusiq_mcblend_remove_uv_mask_color"
     bl_label = 'Removes color from colors of active face of active uv group.'
     bl_options = {'UNDO'}
@@ -889,6 +920,10 @@ class OBJECT_OT_NusiqMcblendRemoveUvMaskColor(bpy.types.Operator):
         return {'FINISHED'}
 
 class OBJECT_OT_NusiqMcblendMoveUvMaskColor(bpy.types.Operator):
+    '''
+    The operator that moves the color property up or down on the list
+    in UV-mask in GUI.
+    '''
     bl_idname = "object.nusiq_mcblend_move_uv_mask_color"
     bl_label = (
         'Moves color in active mask of active face  of active uv group to'
@@ -914,6 +949,9 @@ class OBJECT_OT_NusiqMcblendMoveUvMaskColor(bpy.types.Operator):
 
 # UV Group -> UV Mask -> side -> stripes (GUI)
 class OBJECT_OT_NusiqMcblendAddUvMaskStripe(bpy.types.Operator):
+    '''
+    The operator that adds stripe to the UV-mask properties.
+    '''
     bl_idname = "object.nusiq_mcblend_add_uv_mask_stripe"
     bl_label = '''Adds new color to a mask.'''
     bl_options = {'UNDO'}
@@ -933,6 +971,9 @@ class OBJECT_OT_NusiqMcblendAddUvMaskStripe(bpy.types.Operator):
         return {'FINISHED'}
 
 class OBJECT_OT_NusiqMcblendRemoveUvMaskStripe(bpy.types.Operator):
+    '''
+    The operator that removes UV mask from UV-group properties.
+    '''
     bl_idname = "object.nusiq_mcblend_remove_uv_mask_stripe"
     bl_label = 'Removes color from colors of active face of active uv group.'
     bl_options = {'UNDO'}
@@ -954,6 +995,10 @@ class OBJECT_OT_NusiqMcblendRemoveUvMaskStripe(bpy.types.Operator):
         return {'FINISHED'}
 
 class OBJECT_OT_NusiqMcblendMoveUvMaskStripe(bpy.types.Operator):
+    '''
+    The operator which moves stripe property ov UV group up or down on the
+    list in GUI.
+    '''
     bl_idname = "object.nusiq_mcblend_move_uv_mask_stripe"
     bl_label = (
         'Moves color in active mask of active face  of active uv group to'
