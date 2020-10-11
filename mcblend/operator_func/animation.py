@@ -19,38 +19,34 @@ from .common import (
 
 
 def _pick_closest_rotation(
-        modify: np.ndarray, close_to: np.ndarray,
+        base: np.ndarray, close_to: np.ndarray,
         original_rotation: Optional[np.ndarray] = None
     ) -> np.ndarray:
     '''
-    Takes two numpy.arrays that represent euler rotation in (using degrees).
-    Modifies the values of 'modify' vector to get different representations
-    of the same rotation. Picks the vector which is the
-    closest to 'close_to' vector (using euclidean distance).
+    Takes two arrays with euler rotations in degrees. Looks for rotations
+    that result in same orientation ad the base rotation. Picks the vector
+    which is the closest to the :code:`close_to` using euclidean distance.
 
-    *Original_rotation is added specificly to fix some issues with bones
-    which were rotated before the animation. Issue #25 on Github describes
-    the problem in detail.
+    *The :code:`original_rotation` is added specificly to fix some issues with
+    bones rotated before the animation. Issue #25 on Github describes the
+    problem in detail.
 
-    # Arguments:
-    - `modify: np.ndarray` - a vector that represents rotation. The function
-      looks for equivalents of this rotation.
-    - `close_to: np.ndarray` - a vector that represents other rotation. The
-      function tries to pick rotation as close as possible to this one.
-    - `original_rotation: Optional[np.ndarray]` - the original rotation of
-      the object (befor any animation starts).
-
-    # Returns:
-    `np.ndarray` - rotation vector (a different representation of the modify
-    vector)
+    :base: np.ndarray: the base rotation. Function is looking for different
+        representations of this orientation.
+    :param close_to: target rotation. Function returns the result as close
+        as possible to this vector.
+    :param original_rotation: optional - the original rotation of the object
+        before the start of the animation.
+    :returns: another euler angle that represents the same rotation as the base
+        rotation.
     '''
     if original_rotation is None:
         original_rotation = np.array([0.0, 0.0, 0.0])
 
     def _pick_closet_location(
-            modify: np.ndarray, close_to: np.ndarray
+            base: np.ndarray, close_to: np.ndarray
     ) -> Tuple[float, np.ndarray]:
-        choice: np.ndarray = modify
+        choice: np.ndarray = base
         distance = np.linalg.norm(choice - close_to)
 
         for i in range(3):  # Adds removes 360 to all 3 axis (picks the best)
@@ -70,10 +66,10 @@ def _pick_closest_rotation(
                 distance, choice = new_distance, new_choice
         return distance, choice
 
-    distance1, choice1 = _pick_closet_location(modify, close_to)
+    distance1, choice1 = _pick_closet_location(base, close_to)
     distance2, choice2 = _pick_closet_location(  # Counterintuitive but works
         (
-            modify +
+            base +
             np.array([180, 180 + original_rotation[1] * 2, 180])) *
             np.array([1, -1, 1]
         ),
@@ -83,17 +79,13 @@ def _pick_closest_rotation(
         return choice2
     return choice1
 
-
 def _get_next_keyframe(context: bpy_types.Context) -> Optional[int]:
     '''
-    Returns the index of next keyframe from all of selected objects.
-    Returns None if there is no more keyframes to chose.
+    Returns the next keyframe index from selected objects or None if there is
+    no more keyframes to chose from until the entd of animation.
 
-    # Arguments:
-    - `context: bpy_types.Context` - the context of running the operator.
-
-    # Returns:
-    `Optional[int]` - index of the next keyframe or None
+    :param context: the context of running the operator.
+    :returns: index of the next keyframe or None.
     '''
     curr = context.scene.frame_current
     next_keyframe = None
@@ -119,12 +111,8 @@ def _get_next_keyframe(context: bpy_types.Context) -> Optional[int]:
         return None
     return next_keyframe
 
-
 class PoseBone(NamedTuple):
-    '''
-    Represents a pose of a single bone (its location, rotation, scale and the
-    name).
-    '''
+    '''Properties of a pose of single bone.'''
     name: str
     location: np.array
     rotation: np.array
@@ -132,11 +120,10 @@ class PoseBone(NamedTuple):
 
     def relative(self, original: PoseBone) -> PoseBone:
         '''
-        Returns pose bone object as translation from the original pose.
-        Relative to the original pose.
+        Returns :class:`PoseBone` object with properties of the bone
+        relative to the original pose.
 
-        # Properties
-        - `original: PoseBone` - the original pose.
+        :param original: the original pose.
         '''
         return PoseBone(
             name=self.name, scale=self.scale / original.scale,
@@ -144,28 +131,19 @@ class PoseBone(NamedTuple):
             rotation=self.rotation - original.rotation,
         )
 
-
 class Pose:
-    '''
-    Represents a single pose in a frame of animation.
-
-    # Properties
-    - `pose_bones: List[PoseBone]` - dict of bones in a pose that uses bone
-      names as keys.
-    '''
-
+    '''A pose in a frame of animation.'''
     def __init__(self):
         self.pose_bones: Dict[str, PoseBone] = {}
+        '''dict of bones in a pose keyd by the name of the bones'''
 
     def load_poses(
             self, object_properties: McblendObjectGroup
         ):
         '''
-        Builds pose object from object properties.
+        Builds :class:`Pose` object from object properties.
 
-        # Arguments:
-        - `object_properties: McblendObjectGroup` - the
-          properties of all of the Minecraft cubes and bones.
+        :param object_properties: group of mcblend objects.
         '''
         for objprop in object_properties.values():
             if objprop.mctype in [MCObjType.BONE, MCObjType.BOTH]:
@@ -186,20 +164,25 @@ class Pose:
                     rotation=rotation
                 )
 
-
 @dataclass
 class AnimationExport:
     '''
     Object that represents animation during export.
 
-    # Properties:
-    - `name: str` - name of the animation.
-    - `length: float` - the length of animation in seconds.
-    - `loop_animation: bool` - value of loop property of Minecraft animation.
-    - `anim_time_update: str` - value of anim_time_update property of Minecraft
-      animation.
-    - `poses: Dict[int, Pose]` - poses of the animation (keyframes). Key is
-      the frame number and value is the pose.
+    :param name: Name of the animation.
+    :param length: Length of animation in seconds.
+    :param loop_animation: Whether the Minecraft animation shuold be exported
+        with loop property set to true.
+    :param anim_time_update: Value of anim_time_update property of Minecraft
+        animation.
+    :param fps: The FPS setting of the scene.
+    :param original_pose: Optional - the base pose of the animated object.
+        The pose is empty by default after object creation until it's loaded.
+    :param single_frame: Optional - whether the animation should be exported as
+        a single frame pose (True) or as whole animation. False by default.
+    :param poses: Opational - poses of the animation (keyframes) keyed by the
+        number of the frame. This dictionary is empty by default after the
+        creation and it gets populated on loading the poses.
     '''
     name: str
     length: float
@@ -215,12 +198,10 @@ class AnimationExport:
             context: bpy_types.Context
         ):
         '''
-        Populates the self.poses dictionary.
+        Populates the poses dictoionary of this object.
 
-        # Properties:
-        - `object_properties: McblendObjectGroup` - the
-        properties of all of the Minecraft cubes and bones.
-        - `context: bpy_types.Context` - the context of running the operator.
+        :param object_properties: group of mcblend objects.
+        :param context: the context of running the operator.
         '''
         original_frame = context.scene.frame_current
         bpy.ops.screen.animation_cancel()
@@ -248,17 +229,12 @@ class AnimationExport:
 
     def json(self, old_json: Optional[Dict] = None) -> Dict:
         '''
-        Returns the JSON representation of the animation (Minecraft format).
-        Tries to populate old_json if its a valid animation file.
-        Additionaly removes the unnecessary keyframes to optimise the
-        animation.
+        Returns the JSON dict with Minecraft animation. If JSON dict with
+        valid animation file is passed to the function the function
+        modifies it's content.
 
-        # Properties
-        - `old_json: Optional[Dict]` - the original animation file to write
-          into.
-
-        # Returns:
-        `Dict` - a dictionary with JSON file with animation.
+        :param old_json: The original animation file to write into.
+        :returns: JSON dict with Minecraft animation.
         '''
         # Create result dict
         result: Dict = {"format_version": "1.8.0", "animations": {}}
@@ -294,13 +270,10 @@ class AnimationExport:
                 self, bone_name: str
         ) -> Dict:
         '''
-        Returns optimised JSON representation of an animation of single bone.
+        Returns optimised JSON dict with an animation of single bone.
 
-        # Properties
-        `bone_name: str` - the name of the bone.
-
-        # Returns
-        `Dict` - the animation of a bone.
+        :param bone_name: the name of the bone.
+        :returns: the part of animation with animation of a single bone.
         '''
         # t, rot, loc, scale
         poses: List[Dict] = []
