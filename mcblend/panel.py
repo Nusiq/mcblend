@@ -15,9 +15,10 @@ from .operator_func.texture_generator import (
     list_mask_types_as_blender_enum, UvMaskTypes,
     list_mix_mask_modes_as_blender_enum)
 
-
+# Custom properties
+# UV-mask stripe properties
 class OBJECT_NusiqMcblendStripeProperties(bpy.types.PropertyGroup):
-    '''The properties of a stripe in UV mask'''
+    '''Properties of a UV-mask stripe.'''
     width: IntProperty(  # type: ignore
         name='Width', default=1)
     width_relative: FloatProperty(  # type: ignore
@@ -25,14 +26,16 @@ class OBJECT_NusiqMcblendStripeProperties(bpy.types.PropertyGroup):
     strength: FloatProperty(  # type: ignore
         name='Strength', min=0.0, max=1.0, default=1.0)
 
+# UV-mask color properties
 class OBJECT_NusiqMcblendColorProperties(bpy.types.PropertyGroup):
-    '''The properties of a color in UV mask.'''
+    '''Properties of a UV-mask color.'''
     color: FloatVectorProperty(  # type: ignore
         name='Color',  subtype='COLOR',
         min=0, max=1, step=1000, default=(1.0, 1.0, 1.0))
 
+# UV-mask properties
 class OBJECT_NusiqMcblendUvMaskProperties(bpy.types.PropertyGroup):
-    '''The porpeties of UV mask.'''
+    '''Properties of UV-mask.'''
     ui_collapsed: BoolProperty(  # type: ignore
         name='Collapse', default=False)
     mask_type: EnumProperty(  # type: ignore
@@ -72,7 +75,8 @@ class OBJECT_NusiqMcblendUvMaskProperties(bpy.types.PropertyGroup):
     stripes: CollectionProperty(  # type: ignore
         type=OBJECT_NusiqMcblendStripeProperties,
         name='Stripes')
-    # relative_boundries: bool  # GradientMask ElipseMask RectangleMask StripesMask
+    # relative_boundries: bool  # GradientMask ElipseMask RectangleMask
+    # StripesMask
     relative_boundries: BoolProperty(  # type: ignore
         name='Relative boundries')
     # expotent: float  # GradientMask ElipseMask RectangleMask RandomMask
@@ -99,10 +103,12 @@ class OBJECT_NusiqMcblendUvMaskProperties(bpy.types.PropertyGroup):
         type=OBJECT_NusiqMcblendColorProperties,
         name='Color')
 
+# UV-group properties
 def get_unused_uv_group_name(base_name: str, i=1):
     '''
-    Gets the name of UV group which is not used by any other UV goup by
-    adding index number at the end of the base name.
+    Gets the name of UV-group which is not used by any other UV-goup. Uses
+    the base name and adds number at the end of it to find unique name with
+    pattern :code:`{base_name}.{number:04}`.
     '''
     uv_groups = bpy.context.scene.nusiq_mcblend_uv_groups
     name = base_name  # f'{base_name}.{i:04}'
@@ -121,8 +127,7 @@ def _update_uv_group_name(uv_group, new_name: str):
     # Update the name of the UV group
     uv_group['name'] = new_name
 
-def set_uv_group_name(self, value):
-    '''Renaming UV-groups'''
+def _set_uv_group_name(self, value):
     groups = bpy.context.scene.nusiq_mcblend_uv_groups
 
     # Empty name is no allowed
@@ -152,16 +157,15 @@ def set_uv_group_name(self, value):
 def _get_uv_group_name(self):
     return self['name']
 
-
 class OBJECT_NusiqMcblendUvGroupProperties(bpy.types.PropertyGroup):
-    '''Properties of the UV-group'''
+    '''Properties of UV-group.'''
     name: StringProperty(  # type: ignore
         name="Name",
         description='The name of the UV group.',
         # The Add operator overwrites default value on creation to trigger the
         # update function
         default='',
-        maxlen=1024, set=set_uv_group_name, get=_get_uv_group_name)
+        maxlen=1024, set=_set_uv_group_name, get=_get_uv_group_name)
     side1: CollectionProperty(  # type: ignore
         type=OBJECT_NusiqMcblendUvMaskProperties,
         description='Collection of the filters for side1 of the cuboid.')
@@ -181,8 +185,9 @@ class OBJECT_NusiqMcblendUvGroupProperties(bpy.types.PropertyGroup):
         type=OBJECT_NusiqMcblendUvMaskProperties,
         description='Collection of the filters for side6 of the cuboid.')
 
+# Model object properties
 class OBJECT_NusiqMcblendObjectProperties(bpy.types.PropertyGroup):
-    '''Additional propertis for the object (mesh, empty etc.).'''
+    '''Custom properties of an object.'''
     mirror: BoolProperty(  # type: ignore
         name="Mirror",
         description="Defines how to layout the UV during UV generation.",
@@ -209,8 +214,9 @@ class OBJECT_NusiqMcblendObjectProperties(bpy.types.PropertyGroup):
         default=0.0
     )
 
+# Animation properties
 class OBJECT_NusiqMcblendAnimationProperties(bpy.types.PropertyGroup):
-    '''Properties of the animation.'''
+    '''Properties of an animation template.'''
     name: StringProperty(  # type: ignore
         name="Name",
         description="Name of the animation.", default="animation",
@@ -251,8 +257,9 @@ class OBJECT_NusiqMcblendAnimationProperties(bpy.types.PropertyGroup):
         min=0
     )
 
+# Mcblend properties
 class OBJECT_NusiqMcblendExporterProperties(bpy.types.PropertyGroup):
-    '''Global properties used by Mcblend for user settings configuration.'''
+    '''Gobal properties of Mcblend.'''
     model_name: StringProperty(  # type: ignore
         name="",
         description="Name of the model",
@@ -313,9 +320,10 @@ class OBJECT_NusiqMcblendExporterProperties(bpy.types.PropertyGroup):
         default=True,
     )
 
-# Panels
+# GUI
+# UV-groups names list
 class OBJECT_UL_NusiqMcblendUVGroupList(bpy.types.UIList):
-    '''Draws list of UV-groups.'''
+    '''GUI item used for drawing list of names of UV-groups.'''
     def draw_item(
             self, context, layout, data, item, icon, active_data,
             active_propname):
@@ -341,21 +349,25 @@ class OBJECT_UL_NusiqMcblendUVGroupList(bpy.types.UIList):
             # With rename functionality:
             layout.prop(item, "name", text="", emboss=False)
 
+# UV-group panel
 @dataclass
 class _UIStackItem():
-    '''Used for drawing some items in UVGroupPanel'''
+    '''
+    Object used in OBJECT_PT_NusiqMcblendUVGroupPanel for saving the
+    information about nested UV-groups in stack data structure.
+    '''
     ui: Optional[bpy.types.UILayout]  # None if parent is collapsed
     depth: int
 
 class OBJECT_PT_NusiqMcblendUVGroupPanel(bpy.types.Panel):
-    '''Panel that lets edit UV groups'''
+    '''Panel used for editing UV-groups.'''
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = 'scene'
     bl_label = "Mcblend UV groups"
 
     def draw_colors(self, mask, mask_index: int, col: bpy.types.UILayout):
-        '''Draws list of the colors inside the mask that uses this property'''
+        '''Draws colors of UV-mask.'''
         box = col.box()
         row = box.row()
         row.label(text='Colors')
@@ -371,14 +383,16 @@ class OBJECT_PT_NusiqMcblendUVGroupPanel(bpy.types.Panel):
             # Move down
             if color_index - 1 >= 0:
                 op_props = up_down_row.operator(
-                    "object.nusiq_mcblend_move_uv_mask_color", icon='TRIA_UP', text='')
+                    "object.nusiq_mcblend_move_uv_mask_color", icon='TRIA_UP',
+                    text='')
                 op_props.mask_index = mask_index
                 op_props.move_from = color_index
                 op_props.move_to = color_index - 1
             # Move up
             if color_index + 1 < colors_len:
                 op_props = up_down_row.operator(
-                    "object.nusiq_mcblend_move_uv_mask_color", icon='TRIA_DOWN', text='')
+                    "object.nusiq_mcblend_move_uv_mask_color", icon='TRIA_DOWN',
+                    text='')
                 op_props.mask_index = mask_index
                 op_props.move_from = color_index
                 op_props.move_to = color_index + 1
@@ -389,7 +403,7 @@ class OBJECT_PT_NusiqMcblendUVGroupPanel(bpy.types.Panel):
             op_props.color_index = color_index
 
     def draw_stripes(self, mask, mask_index: int, col: bpy.types.UILayout):
-        '''Draws list of the stripes inside a mask that uses this property'''
+        '''Draws stripes of UV-mask.'''
         box = col.box()
         row = box.row()
         row.label(text='Stripes')
@@ -412,20 +426,23 @@ class OBJECT_PT_NusiqMcblendUVGroupPanel(bpy.types.Panel):
             # Move down
             if stripe_index - 1 >= 0:
                 op_props = up_down_row.operator(
-                    "object.nusiq_mcblend_move_uv_mask_stripe", icon='TRIA_UP', text='')
+                    "object.nusiq_mcblend_move_uv_mask_stripe", icon='TRIA_UP',
+                    text='')
                 op_props.mask_index = mask_index
                 op_props.move_from = stripe_index
                 op_props.move_to = stripe_index - 1
             # Move up
             if stripe_index + 1 < stripes_len:
                 op_props = up_down_row.operator(
-                    "object.nusiq_mcblend_move_uv_mask_stripe", icon='TRIA_DOWN', text='')
+                    "object.nusiq_mcblend_move_uv_mask_stripe", icon='TRIA_DOWN',
+                    text='')
                 op_props.mask_index = mask_index
                 op_props.move_from = stripe_index
                 op_props.move_to = stripe_index + 1
             # Delete button
             op_props = row.operator(
-                "object.nusiq_mcblend_remove_uv_mask_stripe", icon='X', text='')
+                "object.nusiq_mcblend_remove_uv_mask_stripe", icon='X',
+                text='')
             op_props.mask_index = mask_index
             op_props.stripe_index = stripe_index
 
@@ -436,7 +453,7 @@ class OBJECT_PT_NusiqMcblendUVGroupPanel(bpy.types.Panel):
             relative_boundries=False, expotent=False, strength=False,
             hard_edge=False, horizontal=False, seed=False,color=False,
             children=False, mode=False):
-        '''Draws properties of the mask in GUI'''
+        '''Draws properties of UV-mask.'''
         if colors:
             self.draw_colors(mask, index, col)  # colors
         if interpolate:
@@ -480,7 +497,10 @@ class OBJECT_PT_NusiqMcblendUVGroupPanel(bpy.types.Panel):
     def draw_mask(
             self, mask, index: int, masks_len: int,
             ui_stack: List[_UIStackItem]):
-        '''Draws a mask in  GUI'''
+        '''
+        Draws whole UV-mask gui with additional GUI items for navigation
+        between masks like buttons for moving and removing masks.
+        '''
         col = None
         # If parent is collapsed dont draw anyghing
         if ui_stack[-1].ui is not None:
@@ -502,13 +522,15 @@ class OBJECT_PT_NusiqMcblendUVGroupPanel(bpy.types.Panel):
             # Move down
             if index - 1 >= 0:
                 op_props = up_down_row.operator(
-                    "object.nusiq_mcblend_move_uv_mask", icon='TRIA_UP', text='')
+                    "object.nusiq_mcblend_move_uv_mask", icon='TRIA_UP',
+                    text='')
                 op_props.move_from = index
                 op_props.move_to = index - 1
             # Move up
             if index + 1 < masks_len:
                 op_props = up_down_row.operator(
-                    "object.nusiq_mcblend_move_uv_mask", icon='TRIA_DOWN', text='')
+                    "object.nusiq_mcblend_move_uv_mask", icon='TRIA_DOWN',
+                    text='')
                 op_props.move_from = index
                 op_props.move_to = index + 1
             # Delete button
@@ -568,6 +590,7 @@ class OBJECT_PT_NusiqMcblendUVGroupPanel(bpy.types.Panel):
                     None, mask.children+1))
 
     def draw(self, context):
+        '''Draws whole UV-group panel.'''
         col = self.layout.column(align=True)
 
         row = col.row()
@@ -629,8 +652,9 @@ class OBJECT_PT_NusiqMcblendUVGroupPanel(bpy.types.Panel):
                     else:
                         break
 
+# Custom object properties panel
 class OBJECT_PT_NusiqMcblendObjectPropertiesPanel(bpy.types.Panel):
-    '''Panel with custom object properties (for meshes and empties)'''
+    '''Panel used for editing custom model object properties.'''
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = 'object'
@@ -659,8 +683,12 @@ class OBJECT_PT_NusiqMcblendObjectPropertiesPanel(bpy.types.Panel):
                     col.label(text="This object does't have a UV group")
                 col.prop(object_properties, "inflate", text="Inflate")
 
+# Model export panel
 class OBJECT_PT_NusiqMcblendExportPanel(bpy.types.Panel):
-    '''Panel used for configuration of exporting models'''
+    '''
+    Panel used for launching the model export operator and changing its
+    settings.
+    '''
     # pylint: disable=unused-argument
     bl_label = "Export bedrock model"
     bl_category = "Mcblend"
@@ -674,20 +702,24 @@ class OBJECT_PT_NusiqMcblendExportPanel(bpy.types.Panel):
             context.scene.nusiq_mcblend, "model_name", text="Name"
         )
         col.prop(
-            context.scene.nusiq_mcblend, "visible_bounds_width", text="Visible bounds width"
+            context.scene.nusiq_mcblend, "visible_bounds_width",
+            text="Visible bounds width"
         )
         col.prop(
-            context.scene.nusiq_mcblend, "visible_bounds_height", text="Visible bounds height"
+            context.scene.nusiq_mcblend, "visible_bounds_height",
+            text="Visible bounds height"
         )
         col.prop(
-            context.scene.nusiq_mcblend, "visible_bounds_offset", text="Visible bounds offset"
+            context.scene.nusiq_mcblend, "visible_bounds_offset",
+            text="Visible bounds offset"
         )
         self.layout.row().operator(
             "object.nusiq_mcblend_export_operator", text="Export model"
         )
 
+# Model import panel
 class OBJECT_PT_NusiqMcblendImportPanel(bpy.types.Panel):
-    '''Panel used for configuration of importing models.'''
+    '''Panel used for launching the model import operator.'''
     # pylint: disable=unused-argument
     bl_label = "Import bedrock model"
     bl_category = "Mcblend"
@@ -699,8 +731,12 @@ class OBJECT_PT_NusiqMcblendImportPanel(bpy.types.Panel):
             "object.nusiq_mcblend_import_operator", text="Import model"
         )
 
+# Animation export panel
 class OBJECT_PT_NusiqMcblendExportAnimationPanel(bpy.types.Panel):
-    '''Panel used for configuration of exporting animations.'''
+    '''
+    Panel used launching the animation export operator and changing its
+    settings.
+    '''
     # pylint: disable=unused-argument
     bl_label = "Export bedrock animation"
     bl_category = "Mcblend"
@@ -719,7 +755,8 @@ class OBJECT_PT_NusiqMcblendExportAnimationPanel(bpy.types.Panel):
         anims = bpy.context.scene.nusiq_mcblend_animations
         if active_anim_id < len(anims):
             row.operator(
-                "object.nusiq_mcblend_remove_animation", text="Remove this animation"
+                "object.nusiq_mcblend_remove_animation",
+                text="Remove this animation"
             )
             col.operator_menu_enum(
                 "object.nusiq_mcblend_list_animations", "animations_enum",
@@ -733,16 +770,20 @@ class OBJECT_PT_NusiqMcblendExportAnimationPanel(bpy.types.Panel):
                 col.prop(bpy.context.scene, "frame_current", text="Frame")
             else:
                 col.prop(active_anim, "loop", text="Loop")
-                col.prop(active_anim, "anim_time_update", text="anim_time_update")
+                col.prop(active_anim, "anim_time_update",
+                    text="anim_time_update")
                 col.prop(bpy.context.scene, "frame_start", text="Frame start")
                 col.prop(bpy.context.scene, "frame_end", text="Frame end")
 
             col.operator(
-                "object.nusiq_mcblend_export_animation_operator", text="Export animation"
-            )
+                "object.nusiq_mcblend_export_animation_operator",
+                text="Export animation")
 
+# UV-mapper panel
 class OBJECT_PT_NusiqMcblendSetUvsPanel(bpy.types.Panel):
-    '''Panel  used for Minecraft UV maping and its configuration.'''
+    '''
+    Panel used for launching the UV-mapping operator and changing its settings.
+    '''
     # pylint: disable=unused-argument
     bl_label = "Set bedrock UVs"
     bl_category = "Mcblend"
@@ -753,28 +794,24 @@ class OBJECT_PT_NusiqMcblendSetUvsPanel(bpy.types.Panel):
     def draw(self, context):
         col = self.layout.column(align=True)
         col.prop(
-            context.scene.nusiq_mcblend, "texture_width", text="Texture width"
-        )
+            context.scene.nusiq_mcblend, "texture_width", text="Texture width")
         col.prop(
-            context.scene.nusiq_mcblend, "texture_height", text="Texture height"
-        )
+            context.scene.nusiq_mcblend, "texture_height",
+            text="Texture height")
         col.prop(
             context.scene.nusiq_mcblend, "allow_expanding",
-            text="Allow texture expanding"
-        )
+            text="Allow texture expanding")
         col.prop(
             context.scene.nusiq_mcblend, "generate_texture",
-            text="Generate Texture"
-        )
+            text="Generate Texture")
         if context.scene.nusiq_mcblend.generate_texture:
             col.prop(
                 context.scene.nusiq_mcblend, "texture_template_resolution",
-                text="Template resolution"
-            )
+                text="Template resolution")
         self.layout.row().operator(
-            "object.nusiq_mcblend_map_uv_operator", text="Set minecraft UVs"
-        )
+            "object.nusiq_mcblend_map_uv_operator", text="Set minecraft UVs")
 
+# "Other" operators panel
 class OBJECT_PT_NusiqMcblendOperatorsPanel(bpy.types.Panel):
     '''
     Panel that gives the user access to various operators used by Mcblend.
