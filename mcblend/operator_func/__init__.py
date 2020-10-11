@@ -3,39 +3,28 @@ Functions used directly by the blender operators.
 '''
 from __future__ import annotations
 
-from collections import defaultdict
-from typing import Dict, List, Optional
-import math
-from enum import Enum
+from typing import Dict, Optional
 
 import numpy as np
 
 import bpy
-import mathutils
 import bpy_types
 
-from .uv import UvMcCube, UvMapper, UvGroup, CoordinatesConverter
+from .uv import UvMapper, CoordinatesConverter
 from .animation import AnimationExport
 from .model import ModelExport
-from .json_tools import get_vect_json
-from .common import (
-    MCObjType, ObjectId, McblendObject, MINECRAFT_SCALE_FACTOR,
-    McblendObjectGroup, inflate_objets
-)
+from .common import MINECRAFT_SCALE_FACTOR, McblendObjectGroup
 from .importer import ImportGeometry, ModelLoader
-from .exception import NameConflictException
 
 
 def export_model(context: bpy_types.Context) -> Dict:
     '''
-    Creates a Minecraft model (dictionary) from selected objects.
-    Raises NameConflictException if name conflicts in some bones are detected.
+    Creates a Minecraft model JSON dict from selected objects.
+    Raises NameConflictException if name conflicts in some bones
+    are detected.
 
-    # Arguments:
-    - `context: bpy_types.Context` - the context of running the operator.
-
-    # Returns:
-    `Dict` - a dictionary with the model..
+    :param context: the context of running the operator.
+    :returns: JSON dict with Minecraft model.
     '''
     object_properties = McblendObjectGroup(context)
 
@@ -51,25 +40,20 @@ def export_model(context: bpy_types.Context) -> Dict:
     model.load(object_properties, context)
     return model.json()
 
-
 def export_animation(
         context: bpy_types.Context, old_dict: Optional[Dict]
     ) -> Dict:
     '''
     Creates a Minecraft animation (dictionary) from selected objects.
-    Raises NameConflictException if name conflicts in some bones are detected.
+    Raises NameConflictException if name conflicts in some bones are
+    duplicated.
 
-    # Arguments:
-    - `context: bpy_types.Context` - the context of running the operator.
-    - `old_dict: Optional[Dict]` - optional argument dictionary that represents
-      the JSON file with animations.
-
-    # Returns:
-    `Dict` - a dictionary with the animation.
+    :param context: the context of running the operator.
+    :param old_dict: optional - JSON dict with animation to write into.
+    :returns: JSON dict of Minecraft animations.
     '''
     # Check and create object properties
     object_properties = McblendObjectGroup(context)
-
 
     anim_data = context.scene.nusiq_mcblend_animations[
         context.scene.nusiq_mcblend_active_animation]
@@ -85,16 +69,16 @@ def export_animation(
     animation.load_poses(object_properties, context)
     return animation.json(old_json=old_dict)
 
-
 def set_uvs(context: bpy_types.Context):
     '''
-    Used by the operator that sets UV. Calculates the UV-map for selected
-    objects. Raises NotEnoughTextureSpace when the texture width and height
-    wasn't big enough. Raises NameConflictException if name conflicts in some
+    Maps the UV for selected objects.
+
+    Raises NotEnoughTextureSpace when the texture width and height
+    wasn't big enough.
+    Raises NameConflictException if name conflicts in some
     bones are detected.
 
-    # Arguments:
-    - `context: bpy_types.Context` - the context of running the operator.
+    :param context: the execution context.
     '''
     width = context.scene.nusiq_mcblend.texture_width
     height = context.scene.nusiq_mcblend.texture_height
@@ -156,21 +140,13 @@ def set_uvs(context: bpy_types.Context):
         curr_uv.new_uv_layer()
         curr_uv.set_blender_uv(converter)
 
-def set_inflate(context: bpy_types.Context, inflate: float, mode: str) -> int:
-    '''Run common.inflate_objets function.'''
-    return inflate_objets(context, context.selected_objects, inflate, mode)
-
-
 def round_dimensions(context: bpy_types.Context) -> int:
     '''
-    Rounds dimensions of selected objects so they are whole numbers in
-    Minecraft model. Returns the number of edited objects.
+    Rounds dimensions of selected objects in such way that they'll be integers
+    in exported Minecraft model.
 
-    # Arguments:
-    - `context: bpy_types.Context` - the context of running the operator.
-
-    # Returns:
-    `int` - the number of edited objects.
+    :param context: the context of running the operator.
+    :returns: the number of edited objects.
     '''
     counter = 0
     for obj in context.selected_objects:
@@ -209,23 +185,19 @@ def round_dimensions(context: bpy_types.Context) -> int:
             counter += 1
     return counter
 
-
 def import_model(
         data: Dict, geometry_name: str, replace_bones_with_empties: bool,
         context: bpy_types.Context
     ):
     '''
-    Import and build model from JSON file.
+    Import and build model from JSON dict.
 
-    # Arguments:
-    - `data: Dict` - a dictionary with data loaded from JSON file.
-    - `geometry_name: str` - the name of the geometry that should be loaded
-       into Blender.
-    - `replace_bones_with_empties: bool` - imports model bones as empties
-      instead of armatrue and bones
-    - `context: bpy_types.Context` - the context of running the operator.
+    :param data: JSON dict with minecraft model.
+    :param geometry_name: the name of the geometry to load from the model.
+    :param replace_bones_with_empties: Whether to import bones as empties
+        (True) or as armature and bones (False).
+    :param context: the context of running the operator.
     '''
-
     geometry = ImportGeometry(ModelLoader(data, geometry_name))
     if replace_bones_with_empties:
         geometry.build_with_empties(context)

@@ -10,15 +10,13 @@ import bpy
 from bpy.props import (
     StringProperty, FloatProperty, EnumProperty, BoolProperty, IntProperty)
 from bpy_extras.io_utils import ExportHelper, ImportHelper
+from mcblend.operator_func.common import inflate_objets
 
 from .operator_func import (
-    export_model, export_animation, set_uvs, set_inflate,
-    round_dimensions, import_model
-)
+    export_model, export_animation, set_uvs, round_dimensions, import_model)
 from .operator_func.json_tools import CompactEncoder
 from .operator_func.exception import (
-    NameConflictException, NotEnoughTextureSpace,
-)
+    NameConflictException, NotEnoughTextureSpace,)
 from .operator_func.jsonc_decoder import JSONCDecoder
 from .operator_func.texture_generator import (
     list_mask_types_as_blender_enum, UvMaskTypes)
@@ -375,9 +373,8 @@ class OBJECT_OT_NusiqMcblendSetInflateOperator(bpy.types.Operator):
         return {'FINISHED'}
 
     def execute(self, context):
-        set_inflate(  # Returns number of inflated objects
-            context, self.inflate_value, self.mode
-        )
+        inflate_objets(
+            context, context.selected_objects, self.inflate_value, self.mode)
         return {'FINISHED'}
 
 # Rounding dimensions
