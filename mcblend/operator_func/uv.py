@@ -26,9 +26,13 @@ class CoordinatesConverter:
     '''
     An object which allows conversion of coordinates defined by space_a to
     space_b (passed in the constructor).
+
     Example: [[1, 2], [3, 4], [5, 6]] is a 3D space first dimension in range
     from 1 to 2, second from 3 to 4 and third from 5 to 6. Both spaces should
     have the same number of dimensions.
+
+    :param space_a: The spce to convert from.
+    :param space_b: The space to convert to.
     '''
     def __init__(self, space_a: np.ndarray, space_b: np.ndarray):
         self.space_a = np.copy(space_a.T)
@@ -41,11 +45,8 @@ class CoordinatesConverter:
         Performs a converison on coordinates passed to the function with
         x argument (from space_a to space_b).
 
-        # Arguments:
-        - `x: Collection[float]` - the vector with coordinates.
-
-        # Returns:
-        `Collection[float]` - converted vector.
+        :param x: the vector with coordinates.
+        :returns: converted vector.
         '''
         x = np.array(x).T
         return tuple(  # type: ignore
@@ -66,12 +67,11 @@ class UvCorner(Enum):
 
 class Suggestion(NamedTuple):
     '''
-    sed by UvBoxes to suggest free spaces on the texture during UV-mapping.
+    A class used by UvBoxes to suggest free spaces on the texture during
+    UV-mapping.
 
-    # Fields:
-    - `position: Tuple[int, int]` - position that other UvBox should touch with
-      its corener.
-    - `corner: UvCorner` - which corner should touch the position.
+    :prop position: Position that other UvBox should touch with its corener.
+    :prop corner: Which corner should touch the position.
     '''
     position: Tuple[int, int]
     corner: UvCorner
@@ -91,17 +91,13 @@ class UvBox:
         self.size: Tuple[int, int] = size
         self.uv: Tuple[int, int] = uv
 
-
     def collides(self, other: UvBox):
         '''
-        Returns True if this UvBox is colliding with another. Otherwise returns
-        False.
+        Returns True if this UvBox is colliding with other UvBox. Otherwise
+        returns False.
 
-        # Arguments:
-        - `other: UvBox` - the other UvBox to test the collision.
-
-        # Returns:
-        `bool` - True if there is a collision.
+        :param other: The other UvBox to test the collision.
+        :returns: True if there is a collision.
         '''
         # min max
         self_x = (self.uv[0], self.uv[0] + self.size[0])
@@ -120,9 +116,8 @@ class UvBox:
         Returns list of positions touching this UvBox for other UvBox without
         overlappnig.
 
-        # Returns:
-        `List[Suggestion]` - list of suggestions for
-        other UV-box to try while looking for empty space on the texture.
+        :returns: list of suggestions for other UV-box to try while looking
+            for empty space on the texture.
         '''
         size = (self.size[0]-1, self.size[1]-1)
         uv = self.uv
@@ -152,11 +147,9 @@ class UvBox:
 
     def apply_suggestion(self, suggestion: Suggestion):
         '''
-        Uses a suggestion (pair of coordinates and UvCorner) to set the UV for
-        this UvBox.
+        Uses a suggestion to set the UV for this UvBox.
 
-        # Arguments:
-        - `suggestion: Suggestion` - the suggestion.
+        :param suggestion: the suggestion.
         '''
         size = (self.size[0]-1, self.size[1]-1)
         if suggestion.corner == UvCorner.TOP_LEFT:
@@ -181,10 +174,9 @@ class UvBox:
         '''
         Paints the UvBox on the texture represented by the numpy array.
 
-        # Arguments:
-        - `arr: np.ndarray` - the texture as an numpy array.
-        - `resolution: int` - the resolution of the Minecraft texture. 1 is
-          standard Minecrft texture resolution (16 pixels for one block).
+        :param arr: the texture array.
+        :param resolution: the resolution of the Minecraft texture. Where 1 is
+            standard Minecrft texture resolution (16 pixels for one block).
         '''
         min1 = int(arr.shape[0]/resolution)-int(self.uv[1]+self.size[1])
         max1 = int(arr.shape[0]/resolution)-int(self.uv[1])
@@ -197,7 +189,6 @@ class UvBox:
         # Alway paint white
         texture_part = arr[min1:max1, min2:max2]
         texture_part[...] = 1  # Set RGBA white
-
 
 class McblendObjUvBox(UvBox):
     '''
@@ -212,10 +203,9 @@ class McblendObjUvBox(UvBox):
         '''
         Sets the UV of a blender object.
 
-        # Arguments:
-        - `converter: CoordinatesConverter` - the coordinates converter used to
-          convert from Minecraft UV coordinates (used internally by this
-          object) to Blender UV coordinates.
+        :param converter: The coordinates converter used to convert from
+            Minecraft UV coordinates (used internally by this object) to
+            Blender UV coordinates.
         '''
         raise NotImplementedError()
 
@@ -242,10 +232,9 @@ class UvMcCubeFace(UvBox):
         '''
         Sets the UV of a blender object.
 
-        # Arguments:
-        - `converter: CoordinatesConverter` - the coordinates converter used to
-          convert from Minecraft UV coordinates (used internally by this
-          object) to Blender UV coordinates.
+        :param converter: the coordinates converter used to convert from
+            Minecraft UV coordinates (used internally by this object) to
+            Blender UV coordinates.
         '''
         # Order of the faces for: left_down, right_down, right_up, left_up
 
@@ -272,12 +261,11 @@ class UvMcCubeFace(UvBox):
             self, arr: np.ndarray, resolution: int = 1
         ):
         '''
-        Paints the UvBox on the texture represented by the numpy array.
+        Paints the UvBox on the texture.
 
-        # Arguments:
-        - `arr: np.ndarray` - the texture as an numpy array.
-        - `resolution: int` - the resolution of the Minecraft texture. 1 is
-          standard Minecrft texture resolution (16 pixels for one block).
+        :param arr: the texture array.
+        :param resolution: the resolution of the Minecraft texture. Where 1 is
+            standard Minecrft texture resolution (16 pixels for one block).
         '''
         min1 = int(arr.shape[0]/resolution)-int(self.uv[1]+self.size[1])
         max1 = int(arr.shape[0]/resolution)-int(self.uv[1])
@@ -297,9 +285,8 @@ class UvMcCubeFace(UvBox):
 
 class UvMcCube(McblendObjUvBox):
     '''
-    Extends the McblendObjUvBox by combining Six UvMcCubeFaces grouped together
-    to represent space on the texture needed for UV mapping of single cube in
-    Minecraft model.
+    Class that Combiens Six UvMcCubeFaces grouped together to represent space
+    on the texture needed for UV mapping of single cube in Minecraft model.
     '''
     def __init__(
             self, width: int, depth: int, height: int,
@@ -372,12 +359,11 @@ class UvMcCube(McblendObjUvBox):
 
     def suggest_positions(self) -> List[Suggestion]:
         '''
-        Returns list of positions touching this UvBox for other UvBox without
-        overlappnig.
+        Returns list of positions next to this UV box that can be used
+        by other UV box to set the UV that doesn't overlap this object.
 
-        # Returns:
-        `List[Suggestion]` - list of suggestions for
-        other UV-box to try while looking for empty space on the texture.
+        :returns: list of suggestions for other UV-box to try while looking for
+            empty space on the texture.
         '''
         # 0. (top left) 1. (top right) 2. (right top) 3. (right bottom)
         # 4. (bottom right) 5. (bottom left) 6. (left bottom) 7. (left top)
@@ -429,9 +415,10 @@ class UvMcCube(McblendObjUvBox):
 
 class UvGroup(McblendObjUvBox):
     '''
-    A colleciton of McblendObjUvBoxes that have the same UV mapping. All of the
-    properties is read from the first box on the list. The set_blender_uv
-    function applies changes to all of the objects.
+    A colleciton of McblendObjUvBoxes that have the same UV mapping.
+
+    Internally all of the properties are read from the first box on the list.
+    The set_blender_uv function applies changes to all of the objects.
     '''
     def __init__(self, main_object: McblendObjUvBox):
         # pylint: disable=super-init-not-called
@@ -466,7 +453,7 @@ class UvGroup(McblendObjUvBox):
 
     @property  # type: ignore
     def is_mapped(self) -> bool:  # type: ignore
-        '''Returns if the object has assigned UV-mapping'''
+        '''Returns whether the object has assigned UV-mapping.'''
         return self._objects[0].is_mapped
 
     @is_mapped.setter
@@ -524,9 +511,9 @@ class UvMapper:
         Populates the uv_boxes dictionary.
 
         # Properties:
-        - `object_properties: McblendObjectGroup` - the properties of all of
-          the Minecraft cubes and bones.
-        - `context: bpy_types.Context` - the context of running the operator.
+        :prop object_properties: The properties of all of the Minecraft cubes
+            and bones.
+        :prop context: The context of running the operator.
         '''
         bpy.ops.screen.animation_cancel()
         original_frame = context.scene.frame_current
@@ -575,10 +562,13 @@ class UvMapper:
 
     def plan_uv(self, allow_expanding: bool):
         '''
-        Plans UVs for all of the boxes on the list. The size of the texture is
-        limited by width and optionally by height. Returns success result.
-        Raises NotEnoughTextureSpace when the texture width and height wasn't big
-        enough to map all of the boxes.
+        Plans UVs for all of the boxes on the list. Uses self.width and
+        self.height to limit the area unless the anllow_expanding is set to
+        True. Raises NotEnoughTextureSpace when the texture width and height
+        wasn't big enough to map all of the boxes.
+
+        :param allow_expanding: Whether the texture space can be expanded to
+            fit all of the objects in it.
         '''
         self.uv_boxes.sort(key=lambda box: box.size[0], reverse=True)
 

@@ -52,10 +52,14 @@ def list_mix_mask_modes_as_blender_enum(self, context):
     return [(i.value, i.value, i.value) for i in MixMaskMode]
 
 class Mask(ABC):
-    '''Abstract class parent of all Filters.'''
+    '''Abstract class, parent of all Filters.'''
     @abstractmethod
     def apply(self, image: np.ndarray):
-        '''Applies the image to the image.'''
+        '''
+        Applies the image to the image.
+
+        :param image: The image filtered by the mask.
+        '''
 
 
 class Color(NamedTuple):
@@ -92,7 +96,6 @@ class ColorPaletteMask(Mask):
         self.normalize = normalize
 
     def apply(self, image: np.ndarray):
-        '''Applies the image to the image.'''
         # xp and fp for np.interp
         if self.interpolate:
             fp_r = [c.r for c in self.colors]
@@ -131,8 +134,8 @@ class ColorPaletteMask(Mask):
 
 class MultiplicativeMask(Mask):
     '''
-    A mask which can return a matrix which can be multiplied
-    by the image to get the result of applying the maks.
+    A mask which can return a matrix which can be multiplied element-wise
+    by the image matrix to get the result of applying the maks.
     '''
     def apply(self, image: np.ndarray):
         mask = self.get_mask(image)
@@ -140,7 +143,7 @@ class MultiplicativeMask(Mask):
 
     @abstractmethod
     def get_mask(self, image: np.array) -> np.array:
-        '''Returns 2D matrix with the filter array'''
+        '''Returns 2D matrix with the filter array.'''
 
 class Stripe(NamedTuple):
     '''
@@ -171,8 +174,8 @@ class TwoPointSurfaceMask(MultiplicativeMask):
         coordinates of the points that define which area of the texture
         should be affected by the mask.
 
-        - sort_points - decides if the returned points should be sorted by the
-          coordinats.
+        :param sort_points: whether the returned points should be sorted by the
+            coordinats (minx, miny), (maxx, maxy)/
         '''
         w, h, _ = image.shape
         wh = np.array([w, h])
@@ -520,14 +523,6 @@ class MixMask(MultiplicativeMask):
         mask = np.interp(mask, (0.0, 1.0), self.strength)
         mask = mask**self.expotent
         return mask
-
-
-def _get_stripe_from_gui(stripe) -> Stripe:
-    '''
-    Returns Stripe object from definition created with the GUI.
-    (OBJECT_NusiqMcblendStripeProperties)
-    '''
-    return Stripe(stripe.width, stripe.strength)
 
 def _get_color_from_gui_color(color) -> Color:
     '''
