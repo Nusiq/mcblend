@@ -529,11 +529,12 @@ def _get_color_from_gui_color(color) -> Color:
     Returns Color object from definition created with the GUI.
     (OBJECT_NusiqMcblendColorProperties)
     '''
+    #pylint: disable=singleton-comparison
     # convert linear rgb to srgb
     rgb = np.array(color.color)
     selector = rgb < 0.0031308
     rgb[selector] *= 12.92
-    rgb[not selector] = 1.055 * rgb[not selector]**(1/2.4) - 0.055
+    rgb[selector == False] = 1.055 * rgb[selector == False]**(1/2.4) - 0.055
     return Color(*rgb)
 
 def get_masks_from_side(side) -> Sequence[Mask]:
