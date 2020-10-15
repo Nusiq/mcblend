@@ -1,6 +1,6 @@
 # Texture customization (advanced)
 
-![](../../../img/customized_uv_groups.png)
+![](../img/customized_uv_groups.png)
 
 You can customize the appearance of a UV-group by applying masks to its faces
 in new custom panel in [Scene Properties](../gui_changes/#scene-properties).
@@ -10,13 +10,13 @@ Each UV-group has 6 faces. You can switch between faces to edit with
 "Side:" dropdown menu. The image below shows how the names of the
 sides (side1-6) are corelated to their placement on the texture.
 
-![](../../../img/faces.png)
+![](../img/faces.png)
 
 New masks are added with "Add mask" dropdown menu. There are 8 different types
 of masks.
 
 ## Color Palette Mask
-![](../../../img/color_palette_mask.png)
+![](../img/color_palette_mask.png)
 
 This mask takes the grayscale image as an input and maps its brightness values
 to a color image with a palette defined as a list of colors.
@@ -42,7 +42,7 @@ Properties:
 
 
 ## Gradient Mask
-![](../../../img/gradient_mask.png)
+![](../img/gradient_mask.png)
 
 The Gradient mask creates a grayscale gradient with stripes of varying darkness
 and width. The direction in which the stripes are drawn is defined with two
@@ -64,7 +64,7 @@ Properties:
 - Exponent - the filter image is raised to the power of this value before it
     is multiplied by the image.
 ## Ellipse Mask
-![](../../../img/ellipse_mask.png)
+![](../img/ellipse_mask.png)
 
 Ellipse mask creates a grayscale image of ellipse that fits between Point A and
 Point B. The grayscale image is than multiplied by the input image.
@@ -87,7 +87,7 @@ Properties:
 
 
 ## Rectangle Mask
-![](../../../img/rectangle_mask.png)
+![](../img/rectangle_mask.png)
 
 Rectangle mask creates a grayscale image of rectangle between Point A and
 Point B. The grayscale image is than multiplied by the input image.
@@ -111,7 +111,7 @@ Properties:
 
 
 ## Stripes Mask
-![](../../../img/stripes_mask.png)
+![](../img/stripes_mask.png)
 
 Rectangle mask creates a grayscale image with repeating stripes of certain
 width and brightness. The grayscale image is than multiplied by the input
@@ -128,7 +128,7 @@ Properties:
 
 
 ## Random Mask
-![](../../../img/random_mask.png)
+![](../img/random_mask.png)
 
 Random mask creates a grayscale image with randomly bright pixels. The
 grayscale image is than multiplied by the input image.
@@ -142,7 +142,7 @@ grayscale image is than multiplied by the input image.
 
 
 ## Color Mask
-![](../../../img/color_mask.png)
+![](../img/color_mask.png)
 
 Color mask multiplies the input mask by a color.
 
@@ -150,7 +150,7 @@ Color mask multiplies the input mask by a color.
 
 
 ## Mix Mask
-![](../../../img/mix_mask.png)
+![](../img/mix_mask.png)
 
 Mix mask lets you mix multiple masks in different way than just default
 multiplication. 

@@ -12,7 +12,7 @@ animation file.
 
 You can find the framerate setting in `Output Properties -> Frame Rate`.
 
-![](../../img/framerate_setting.png)
+![](../img/framerate_setting.png)
 
 ## World unit scale
 By default 1 meter in your model is equal to one block in Minecraft. One meter
@@ -22,7 +22,7 @@ you can find under `Scene properties -> Unit scale`. Changing the value
 of this property to 16 will cause that one meter of your Blender model will be
 converted into 1 pixel in Minecraft.
 
-![](../../img/unit_scale_setting.png)
+![](../img/unit_scale_setting.png)
 
 ## Creating materials
 Currently the addon doesn't create materials for your model during UV mapping
@@ -34,11 +34,11 @@ model.
 1. Generate texture template using the [Set bedrock UV panel](../gui).
 2. Go to the shading tab and create new material. Based on the image below:
 
-    ![](../../img/simple_shader.png)
+    ![](../img/simple_shader.png)
 
 3. Enable the transparency in material properties.
 
-    ![](../../img/transparency_setting.png)
+    ![](../img/transparency_setting.png)
 
 4. Assign the material to other objects in your model.
     Select all of your objects and make sure that the object that uses your
