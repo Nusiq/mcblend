@@ -31,7 +31,7 @@ class CoordinatesConverter:
     from 1 to 2, second from 3 to 4 and third from 5 to 6. Both spaces should
     have the same number of dimensions.
 
-    :param space_a: The spce to convert from.
+    :param space_a: The space to convert from.
     :param space_b: The space to convert to.
     '''
     def __init__(self, space_a: np.ndarray, space_b: np.ndarray):
@@ -42,7 +42,7 @@ class CoordinatesConverter:
 
     def convert(self, x: Collection[float]) -> Collection[float]:
         '''
-        Performs a converison on coordinates passed to the function with
+        Performs a conversion on coordinates passed to the function with
         x argument (from space_a to space_b).
 
         :param x: the vector with coordinates.
@@ -70,7 +70,7 @@ class Suggestion(NamedTuple):
     A class used by UvBoxes to suggest free spaces on the texture during
     UV-mapping.
 
-    :prop position: Position that other UvBox should touch with its corener.
+    :prop position: Position that other UvBox should touch with its coroner.
     :prop corner: Which corner should touch the position.
     '''
     position: Tuple[int, int]
@@ -114,7 +114,7 @@ class UvBox:
     def suggest_positions(self) -> List[Suggestion]:
         '''
         Returns list of positions touching this UvBox for other UvBox without
-        overlappnig.
+        overlapping.
 
         :returns: list of suggestions for other UV-box to try while looking
             for empty space on the texture.
@@ -176,7 +176,7 @@ class UvBox:
 
         :param arr: the texture array.
         :param resolution: the resolution of the Minecraft texture. Where 1 is
-            standard Minecrft texture resolution (16 pixels for one block).
+            standard Minecraft texture resolution (16 pixels for one block).
         '''
         min1 = int(arr.shape[0]/resolution)-int(self.uv[1]+self.size[1])
         max1 = int(arr.shape[0]/resolution)-int(self.uv[1])
@@ -265,7 +265,7 @@ class UvMcCubeFace(UvBox):
 
         :param arr: the texture array.
         :param resolution: the resolution of the Minecraft texture. Where 1 is
-            standard Minecrft texture resolution (16 pixels for one block).
+            standard Minecraft texture resolution (16 pixels for one block).
         '''
         min1 = int(arr.shape[0]/resolution)-int(self.uv[1]+self.size[1])
         max1 = int(arr.shape[0]/resolution)-int(self.uv[1])
@@ -415,7 +415,7 @@ class UvMcCube(McblendObjUvBox):
 
 class UvGroup(McblendObjUvBox):
     '''
-    A colleciton of McblendObjUvBoxes that have the same UV mapping.
+    A collection of McblendObjUvBoxes that have the same UV mapping.
 
     Internally all of the properties are read from the first box on the list.
     The set_blender_uv function applies changes to all of the objects.
@@ -425,7 +425,7 @@ class UvGroup(McblendObjUvBox):
         self._objects: List[McblendObjUvBox] = [main_object]
 
     def append(self, obj: McblendObjUvBox):
-        '''Adds another McblendObjjUvBox to this group.'''
+        '''Adds another McblendObjUvBox to this group.'''
         obj.uv = self.uv  # type: ignore
         obj.is_mapped = self.is_mapped  # type: ignore
         obj.size = self.size
@@ -520,7 +520,7 @@ class UvMapper:
         try:
             context.scene.frame_set(0)
 
-            # Dictionary identifed by width, depth, height, group name
+            # Dictionary identified by width, depth, height, group name
             cube_uv_groups: Dict[Tuple[int, int, int, str], UvGroup] = {}
 
             objprop: McblendObject
@@ -563,7 +563,7 @@ class UvMapper:
     def plan_uv(self, allow_expanding: bool):
         '''
         Plans UVs for all of the boxes on the list. Uses self.width and
-        self.height to limit the area unless the anllow_expanding is set to
+        self.height to limit the area unless the allow_expanding is set to
         True. Raises NotEnoughTextureSpace when the texture width and height
         wasn't big enough to map all of the boxes.
 

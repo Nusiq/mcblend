@@ -10,7 +10,7 @@ import bpy
 from bpy.props import (
     StringProperty, FloatProperty, EnumProperty, BoolProperty, IntProperty)
 from bpy_extras.io_utils import ExportHelper, ImportHelper
-from mcblend.operator_func.common import inflate_objets
+from mcblend.operator_func.common import inflate_objects
 
 from .operator_func import (
     export_model, export_animation, set_uvs, round_dimensions, import_model)
@@ -23,8 +23,7 @@ from .operator_func.texture_generator import (
 
 from .panel import get_unused_uv_group_name
 
-
-# Model impoerter
+# Model importer
 class OBJECT_OT_NusiqMcblendExportModelOperator(
         bpy.types.Operator, ExportHelper):
     '''Operator used for exporting minecraft models from blender.'''
@@ -169,7 +168,7 @@ class OBJECT_OT_NusiqMcblendMapUvOperator(bpy.types.Operator):
         height = context.scene.nusiq_mcblend.texture_height
         self.report(
             {'INFO'},
-            f'UV map created successfuly for {width}x{height} texture.'
+            f'UV map created successfully for {width}x{height} texture.'
         )
 
         return {'FINISHED'}
@@ -184,7 +183,7 @@ class OBJECT_OT_NusiqMcblendUvGroupOperator(bpy.types.Operator):
     bl_description = (
         "Set uv_group for bedrock model. Objects that have the same width, "
         "depth and height and are in the same uv_group are mapped to the "
-        "same spot on the texutre"
+        "same spot on the texture"
     )
 
     def _list_uv_groups(self, context):
@@ -331,7 +330,7 @@ class OBJECT_OT_NusiqMcblendToggleIsBoneOperator(bpy.types.Operator):
             for obj in context.selected_objects:
                 if obj.type == "MESH" or obj.type == "EMPTY":
                     obj.nusiq_mcblend_object_properties.is_bone = True
-            self.report({'INFO'}, 'Marked slected objects to export as bones')
+            self.report({'INFO'}, 'Marked selected objects to export as bones')
 
         return {'FINISHED'}
 
@@ -373,7 +372,7 @@ class OBJECT_OT_NusiqMcblendSetInflateOperator(bpy.types.Operator):
         return {'FINISHED'}
 
     def execute(self, context):
-        inflate_objets(
+        inflate_objects(
             context, context.selected_objects, self.inflate_value, self.mode)
         return {'FINISHED'}
 
@@ -406,9 +405,9 @@ class OBJECT_OT_NusiqMcblendRoundDimensionsOperator(bpy.types.Operator):
         )
         return {'FINISHED'}
 
-# Model Impoerter
+# Model Importer
 class OBJECT_OT_NusiqMcblendImport(bpy.types.Operator, ImportHelper):
-    '''Operator used for importiong Minecraft models to Blender.'''
+    '''Operator used for importing Minecraft models to Blender.'''
     # pylint: disable=unused-argument, no-member
     bl_idname = "object.nusiq_mcblend_import_operator"
     bl_label = "Import model"
@@ -600,7 +599,7 @@ class OBJECT_OT_NusiqMcblendListUvGroups(bpy.types.Operator):
         return {'FINISHED'}
 
 class OBJECT_OT_NusiqMcblendAddUvGroup(bpy.types.Operator):
-    '''Operator used for creating new UV-grops.'''
+    '''Operator used for creating new UV-groups.'''
     bl_idname = "object.nusiq_mcblend_add_uv_group"
     bl_label = '''Adds new uv_group to the list.'''
     bl_options = {'UNDO'}
@@ -631,7 +630,7 @@ class OBJECT_OT_NusiqMcblendAddUvGroup(bpy.types.Operator):
         return {'FINISHED'}
 
 class OBJECT_OT_NusiqMcblendRemoveUvGroup(bpy.types.Operator):
-    '''Operator usef for removing UV-grups.'''
+    '''Operator useful for removing UV-groups.'''
     bl_idname = "object.nusiq_mcblend_remove_uv_group"
     bl_label = "Remove current uv_group from the list."
     bl_options = {'UNDO'}
@@ -721,13 +720,16 @@ class OBJECT_OT_NusiqMcblendCopyUvGroupSide(bpy.types.Operator):
                 new_color.color = color.color
             new_mask.interpolate = mask.interpolate
             new_mask.normalize = mask.normalize
+
+            new_mask.p1_relative = mask.p1_relative
+            new_mask.p2_relative = mask.p2_relative
             new_mask.p1 = mask.p1
             new_mask.p2 = mask.p2
             for stripe in mask.stripes:
                 new_stripe = new_mask.stripes.add()
                 new_stripe.width = stripe.width
                 new_stripe.strength = stripe.strength
-            new_mask.relative_boundries = mask.relative_boundries
+            new_mask.relative_boundaries = mask.relative_boundaries
             new_mask.expotent = mask.expotent
             new_mask.strength = mask.strength
             new_mask.hard_edge = mask.hard_edge
@@ -764,7 +766,7 @@ class OBJECT_OT_NusiqMcblendCopyUvGroupSide(bpy.types.Operator):
         if self.side6:
             self._copy_side(
                 context, source_group_id, source_side_id, target_group_id, 5)
-        self.report({'INFO'}, 'Successfuly copied UV face.')
+        self.report({'INFO'}, 'Successfully copied UV face.')
         return {'FINISHED'}
 
 # UV Mask (GUI)
@@ -824,7 +826,7 @@ class OBJECT_OT_NusiqMcblendRemoveUvMask(bpy.types.Operator):
         return {'FINISHED'}
 
 class OBJECT_OT_NusiqMcblendMoveUvMask(bpy.types.Operator):
-    '''Operator used for changing the order of UV-massks in UV groups.'''
+    '''Operator used for changing the order of UV-masks in UV groups.'''
     bl_idname = "object.nusiq_mcblend_move_uv_mask"
     bl_label = (
         'Moves mask in active face of active uv group to different place on '

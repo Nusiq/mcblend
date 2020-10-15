@@ -48,7 +48,7 @@ def get_path(
 class CompactEncoder(json.JSONEncoder):
     '''
     JSONEncoder which can encode JSON in compact yet still readable form.
-    Additionaly it can encode UserDict and UserList from collections.
+    Additionally it can encode UserDict and UserList from collections.
     '''
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

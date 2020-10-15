@@ -128,7 +128,7 @@ class McblendObject:
     @property
     def obj_data(self) -> Any:
         '''
-        The "data" property of the blender object wraped inside this object.
+        The "data" property of the blender object wrapped inside this object.
         '''
         return self.thisobj.data
 
@@ -144,21 +144,21 @@ class McblendObject:
     @property
     def obj_type(self) -> str:
         '''
-        The type of the blender object wraped inside this
+        The type of the blender object wrapped inside this
         object (ARMATURE, MESH or EMPTY).
         '''
         return self.thisobj.type
 
     @property
     def obj_bound_box(self) -> Any:
-        '''The bound_box of the blender object wraped inside this object.'''
+        '''The bound_box of the blender object wrapped inside this object.'''
         return self.thisobj.bound_box
 
     @property
     def obj_matrix_world(self) -> mathutils.Matrix:
         '''
         The copy of the translation matrix (matrix_world) of the blender
-        wraped inside this object.
+        wrapped inside this object.
         '''
         if self.thisobj.type == 'ARMATURE':
             return self.thisobj.matrix_world.copy() @ self.thisobj.pose.bones[
@@ -180,7 +180,7 @@ class McblendObject:
     def mccube_position(self) -> np.ndarray:
         '''
         The cube position in Minecraft format based on the bounding box of
-        the blender object wraped inside this object.
+        the blender object wrapped inside this object.
         '''
         return np.array(self.obj_bound_box[0])[[0, 2, 1]]
 
@@ -196,9 +196,9 @@ class McblendObject:
             # Applying normalize() function to matrix world of parent and child
             # suppose to fix some errors with scaling but tests doesn't show any
             # difference.
-            # It does fix the issue #62 so PLEASE dont change it again!
+            # It does fix the issue #62 so PLEASE don't change it again!
             return child.get_local_matrix(
-                parent, normlize=True).to_translation()
+                parent, normalize=True).to_translation()
 
         def _get_mcpivot(objprop: McblendObject) -> mathutils.Vector:
             if objprop.parent is not None:
@@ -211,7 +211,7 @@ class McblendObject:
         return np.array(_get_mcpivot(self).xzy)
 
     def get_local_matrix(
-            self, other: Optional[McblendObject] = None, normlize: bool = False
+            self, other: Optional[McblendObject] = None, normalize: bool = False
         ) -> mathutils.Matrix:
         '''
         Returns translation matrix of this object optionally in translation
@@ -220,7 +220,7 @@ class McblendObject:
         :param other: Optional - the other :class:`McblendObject`
         :param normalize: Whether to normalizes parent and child matrixes
             before calculating the relative matrix. This solves problems
-            related to different scales of parent and child transfomtions
+            related to different scales of parent and child transformations
             (see github issue #62)
         :returns: translation matrix of this object.
         '''
@@ -232,7 +232,7 @@ class McblendObject:
                 mathutils.Matrix()
             )
         c_matrix = self.obj_matrix_world
-        if normlize:
+        if normalize:
             p_matrix.normalize()
             c_matrix.normalize()
         return p_matrix.inverted() @ c_matrix
@@ -253,7 +253,7 @@ class McblendObject:
                 child_matrix: mathutils.Matrix, parent_matrix: mathutils.Matrix
             ) -> mathutils.Euler:
             '''
-            Reuturns Euler rotation of a child matrix in relation to parent matrix
+            Returns Euler rotation of a child matrix in relation to parent matrix
             '''
             child_matrix = child_matrix.normalized()
             parent_matrix = parent_matrix.normalized()
@@ -380,20 +380,20 @@ class CubePolygons(NamedTuple):
         Creates :class:`CubePolygons` object for given blender object cube.
 
         :param cube: blender cube mesh.
-        :param mirror: Whether the order of veritces in returned
-            :class:`CubePolygons` should match Minecrft mirrored mapping format
+        :param mirror: Whether the order of vertices in returned
+            :class:`CubePolygons` should match Minecraft mirrored mapping format
             or not.
         '''
         def get_order(
             name: str, mirror: bool,
-            bount_box_vertices: Tuple[str, str, str, str]
+            bound_box_vertices: Tuple[str, str, str, str]
         ) -> Tuple[int, int, int, int]:
-            '''Gets the order of verices for given cube polygon'''
+            '''Gets the order of vertices for given cube polygon'''
             mc_mapping_uv_order = _MC_MAPPING_UV_ORDERS[(name, mirror)]
             result = []
             for vertex_name in mc_mapping_uv_order:
                 # Throws ValueError
-                index = bount_box_vertices.index(vertex_name)
+                index = bound_box_vertices.index(vertex_name)
                 result.append(index)
             return tuple(result)  # type: ignore
 
@@ -485,7 +485,7 @@ class CubePolygons(NamedTuple):
         except TypeError as e:  # Missing argument
             raise NoCubePolygonsException(
                 f"Object {cube.name.split('.')} is not filling a bounding box "
-                "good enough to aproximate its shape to a cube."
+                "good enough to approximate its shape to a cube."
             ) from e
 
 class CubePolygon(NamedTuple):
@@ -619,7 +619,7 @@ class McblendObjectGroup:
     def _loop_objects(objects: List) -> Iterable[Tuple[ObjectId, Any]]:
         '''
         Loops over the empties, meshes and armature objects from the list and
-        yields them and their ids. If object is an armatre than it also loops
+        yields them and their ids. If object is an armature than it also loops
         over every bone and yields the pair of armature and the id of the bone.
         Used in the constructor.
 
@@ -636,7 +636,7 @@ class McblendObjectGroup:
     @staticmethod
     def _get_parent_mc_bone(obj: bpy.types.Object) -> Optional[ObjectId]:
         '''
-        Goes up through the ancesstors of an :class:`bpy.types.Object` and
+        Goes up through the ancestors of an :class:`bpy.types.Object` and
         tries to find the object that represents its parent bone in Minecraft
         model. Used in constructor.
 
@@ -656,7 +656,7 @@ class McblendObjectGroup:
                         obj.nusiq_mcblend_object_properties.is_bone):
                     return obj_id
             else:
-                raise Exception(f'Unsuported parent type {obj.parent_type}')
+                raise Exception(f'Unsupported parent type {obj.parent_type}')
         return obj_id
 
 def cyclic_equiv(u: List, v: List) -> bool:
@@ -682,7 +682,7 @@ def cyclic_equiv(u: List, v: List) -> bool:
             j += k
     return False
 
-def inflate_objets(
+def inflate_objects(
         context: bpy_types.Context, objects: List[bpy.types.Object],
         inflate: float, mode: str) -> int:
     '''
@@ -693,7 +693,7 @@ def inflate_objets(
     :param objects: List of objects to inflate.
     :param inflate: The inflation value.
     :param mode: Either "RELATIVE" or "ABSOLUTE". If "RELATIVE" than
-        the value before appying the operator is taken as a base (0 means that
+        the value before applying the operator is taken as a base (0 means that
         no changes should be applied). If "ABSOLUTE" than the inflate value
         passed by the user is passed directly to the inflate value of
         Minecraft model.

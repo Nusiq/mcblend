@@ -27,7 +27,7 @@ def _pick_closest_rotation(
     that result in same orientation ad the base rotation. Picks the vector
     which is the closest to the :code:`close_to` using euclidean distance.
 
-    *The :code:`original_rotation` is added specificly to fix some issues with
+    *The :code:`original_rotation` is added specifically to fix some issues with
     bones rotated before the animation. Issue #25 on Github describes the
     problem in detail.
 
@@ -82,7 +82,7 @@ def _pick_closest_rotation(
 def _get_next_keyframe(context: bpy_types.Context) -> Optional[int]:
     '''
     Returns the next keyframe index from selected objects or None if there is
-    no more keyframes to chose from until the entd of animation.
+    no more keyframes to chose from until the end of animation.
 
     :param context: the context of running the operator.
     :returns: index of the next keyframe or None.
@@ -135,7 +135,7 @@ class Pose:
     '''A pose in a frame of animation.'''
     def __init__(self):
         self.pose_bones: Dict[str, PoseBone] = {}
-        '''dict of bones in a pose keyd by the name of the bones'''
+        '''dict of bones in a pose keyed by the name of the bones'''
 
     def load_poses(
             self, object_properties: McblendObjectGroup
@@ -153,7 +153,7 @@ class Pose:
                     # pylint: disable=no-value-for-parameter
                     np.array(mathutils.Matrix().to_scale())
                 )[[0, 2, 1]]
-                # Locatin
+                # Location
                 local_matrix = objprop.get_local_matrix(objprop.parent)
                 location = np.array(local_matrix.to_translation())
                 location = location[[0, 2, 1]] * MINECRAFT_SCALE_FACTOR
@@ -171,7 +171,7 @@ class AnimationExport:
 
     :param name: Name of the animation.
     :param length: Length of animation in seconds.
-    :param loop_animation: Whether the Minecraft animation shuold be exported
+    :param loop_animation: Whether the Minecraft animation should be exported
         with loop property set to true.
     :param anim_time_update: Value of anim_time_update property of Minecraft
         animation.
@@ -180,7 +180,7 @@ class AnimationExport:
         The pose is empty by default after object creation until it's loaded.
     :param single_frame: Optional - whether the animation should be exported as
         a single frame pose (True) or as whole animation. False by default.
-    :param poses: Opational - poses of the animation (keyframes) keyed by the
+    :param poses: Optional - poses of the animation (keyframes) keyed by the
         number of the frame. This dictionary is empty by default after the
         creation and it gets populated on loading the poses.
     '''
@@ -198,7 +198,7 @@ class AnimationExport:
             context: bpy_types.Context
         ):
         '''
-        Populates the poses dictoionary of this object.
+        Populates the poses dictionary of this object.
 
         :param object_properties: group of mcblend objects.
         :param context: the context of running the operator.
@@ -270,7 +270,7 @@ class AnimationExport:
                 self, bone_name: str
         ) -> Dict:
         '''
-        Returns optimised JSON dict with an animation of single bone.
+        Returns optimized JSON dict with an animation of single bone.
 
         :param bone_name: the name of the bone.
         :returns: the part of animation with animation of a single bone.
@@ -282,7 +282,7 @@ class AnimationExport:
             rotation=np.zeros(3),
         )
         for key_frame in self.poses:
-            # Get relative PoseBone with minimised rotation
+            # Get relative PoseBone with minimized rotation
             pose_bone = self.poses[key_frame].pose_bones[bone_name].relative(
                 self.original_pose.pose_bones[bone_name]
             )

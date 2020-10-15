@@ -26,7 +26,7 @@ def _assert_is_vector(
         name: str, obj: Any, length: int, types: Tuple, json_path: List
     ) -> None:
     '''
-    Asserts that object is an aray of specific length with specyfic type of
+    Asserts that object is an array of specific length with specific type of
     items.
     '''
     _assert(isinstance(obj, list), f'{json_path}::{name} is not a list')
@@ -55,7 +55,7 @@ def _assert_has_accepted_keys_only(
 
 def _assert_is_type(
         name: str, obj: Any, types: Tuple, json_path: List):
-    '''Asserts that object is instance of specyfic type'''
+    '''Asserts that object is instance of specific type'''
     if not isinstance(obj, types):
         raise FileIsNotAModelException(
             f'{json_path}::{name} is not an instance of {types}')
@@ -87,7 +87,7 @@ def pick_version_parser(parsers: Tuple[str, ...], version: str):
             break
     if best_choice is None:
         raise FileIsNotAModelException(
-            f'Unsuported format version: {version}')
+            f'Unsupported format version: {version}')
     return '.'.join([str(i) for i in best_choice])
 
 
@@ -148,12 +148,12 @@ class ModelLoader:
             if 'debug' in data.keys():
                 raise ImportingNotImplementedError('debug', [])
             return data['format_version']
-        raise FileIsNotAModelException('Unsuported format version')
+        raise FileIsNotAModelException('Unsupported format version')
 
     def _load_geometry(
             self, geometry_name: str, data: Any) -> Tuple[Dict, List]:
         '''
-        Finds and returns geometry with specific name from list of gemoeties
+        Finds and returns geometry with specific name from list of geometries
         from JSON dict with models. Returns the geometry dict with
         all of the missing default values added and the JSON path to the
         geometry.
@@ -169,7 +169,7 @@ class ModelLoader:
             _assert_is_type('geometries', geometries, (list,), path)
             for i, geometry in enumerate(geometries):
                 path = ['minecraft:geometry', i]
-                _assert_is_type('gometry', geometry, (dict,), path)
+                _assert_is_type('geometry', geometry, (dict,), path)
                 _assert_has_required_keys(
                     'geometry', set(geometry.keys()), {'description', 'bones'},
                     path)
@@ -193,7 +193,7 @@ class ModelLoader:
                 if k in ['format_version', 'debug']:
                     continue
                 path = [k]
-                _assert_is_type('gometry', geometry, (dict,), path)
+                _assert_is_type('geometry', geometry, (dict,), path)
                 _assert_has_accepted_keys_only(
                     'geometry', set(geometry.keys()),
                     {
@@ -205,7 +205,7 @@ class ModelLoader:
                 if geometry_name in (identifier, ''):
                     return geometry, path
             raise ValueError(f'Unable to find geometry called geometry.{geometry_name}')
-        raise FileIsNotAModelException(f'Unsuported format version: {self.format_version}')
+        raise FileIsNotAModelException(f'Unsupported format version: {self.format_version}')
 
     def _load_description(self, geometry: Any, geometry_path: List) -> Dict:
         '''
@@ -315,7 +315,7 @@ class ModelLoader:
                     (int, float), geometry_path + ['visible_bounds_height'])
                 result['visible_bounds_height'] = desc['visible_bounds_height']
             return result
-        raise FileIsNotAModelException('Unsuported format version')
+        raise FileIsNotAModelException('Unsupported format version')
 
     def _load_bones(
             self, bones: Any, bones_path: List) -> List[Dict[str, Any]]:
@@ -334,7 +334,7 @@ class ModelLoader:
                 bone_path = bones_path + [i]
                 result.append(self._load_bone(bone, bone_path))
             return result
-        raise FileIsNotAModelException('Unsuported format version')
+        raise FileIsNotAModelException('Unsupported format version')
 
     def _load_bone(self, bone: Any, bone_path: List) -> Dict[str, Any]:
         '''
@@ -405,13 +405,13 @@ class ModelLoader:
                     'debug', bone['debug'], (bool,), bone_path + ['debug'])
                 raise ImportingNotImplementedError(
                     'debug', bone_path + ['debug'])
-            if 'redner_group_id' in bone:
+            if 'render_group_id' in bone:
                 _assert_is_type(
-                    'redner_group_id', bone['redner_group_id'], (int, float),
-                    bone_path + ['redner_group_id'])
+                    'render_group_id', bone['render_group_id'], (int, float),
+                    bone_path + ['render_group_id'])
                 # int >= 0
                 raise ImportingNotImplementedError(
-                    'redner_group_id', bone_path + ['redner_group_id'])
+                    'render_group_id', bone_path + ['render_group_id'])
             if 'cubes' in bone:
                 # default mirror for cube is the bones mirror property
                 result['cubes'] = self._load_cubes(
@@ -491,13 +491,13 @@ class ModelLoader:
                     'debug', bone['debug'], (bool,), bone_path + ['debug'])
                 raise ImportingNotImplementedError(
                     'debug', bone_path + ['debug'])
-            if 'redner_group_id' in bone:
+            if 'render_group_id' in bone:
                 _assert_is_type(
-                    'redner_group_id', bone['redner_group_id'], (int, float),
-                    bone_path + ['redner_group_id'])
+                    'render_group_id', bone['render_group_id'], (int, float),
+                    bone_path + ['render_group_id'])
                 # int >= 0
                 raise ImportingNotImplementedError(
-                    'redner_group_id', bone_path + ['redner_group_id'])
+                    'render_group_id', bone_path + ['render_group_id'])
             if 'cubes' in bone:
                 # default mirror for cube is the bones mirror property
                 result['cubes'] = self._load_cubes(
@@ -515,7 +515,7 @@ class ModelLoader:
                 raise ImportingNotImplementedError(
                     'texture_meshes', bone_path + ['texture_meshes'])
             return result
-        raise FileIsNotAModelException('Unsuported format version')
+        raise FileIsNotAModelException('Unsupported format version')
 
     def _load_cubes(
             self, cubes: Any, cubes_path: List[Any], default_mirror: bool,
@@ -540,7 +540,7 @@ class ModelLoader:
                         cube, cube_path, default_mirror,
                         default_inflate))
             return result
-        raise FileIsNotAModelException('Unsuported format version')
+        raise FileIsNotAModelException('Unsupported format version')
 
     def _create_default_uv(
             self, size: Tuple[float, float, float], mirror: bool,
@@ -704,7 +704,7 @@ class ModelLoader:
                     tuple(result['size']),  # type: ignore
                     result['mirror'])  # type: ignore
             return result
-        raise FileIsNotAModelException('Unsuported format version')
+        raise FileIsNotAModelException('Unsupported format version')
 
     def _load_uv(
             self, uv: Any, uv_path: List,
@@ -771,7 +771,7 @@ class ModelLoader:
                 result["down"] = self._load_uv_face(
                     uv["down"], uv_path + ["down"], (width, depth))
             return result
-        raise FileIsNotAModelException('Unsuported format version')
+        raise FileIsNotAModelException('Unsupported format version')
 
     def _load_uv_face(
             self, uv_face: Any, uv_face_path: List,
@@ -815,7 +815,7 @@ class ModelLoader:
                 raise ImportingNotImplementedError(
                     'material_instance', uv_face_path + ['material_instance'])
             return result
-        raise FileIsNotAModelException('Unsuported format version')
+        raise FileIsNotAModelException('Unsupported format version')
 
     def _load_locators(
             self, locators: Any, locators_path: List) -> Dict[str, Any]:
@@ -837,7 +837,7 @@ class ModelLoader:
                 locator_path = locators_path + [i]
                 result[i] = self._load_locator(locator, locator_path)
             return result
-        raise FileIsNotAModelException('Unsuported format version')
+        raise FileIsNotAModelException('Unsupported format version')
 
     def _load_locator(self, locator: Any, locator_path: List) -> Any:
         '''
@@ -862,7 +862,7 @@ class ModelLoader:
             _assert_is_type('locator', locator, (list,), locator_path)
             _assert_is_vector('locator', locator, 3, (int, float), locator_path)
             return locator
-        raise FileIsNotAModelException('Unsuported format version')
+        raise FileIsNotAModelException('Unsupported format version')
 
 class ImportLocator:
     '''
@@ -888,7 +888,7 @@ class ImportCube:
     def __init__(
             self, data: Dict):
         '''
-        Creates ImportCube object created from a dictinary (part of the JSON)
+        Creates ImportCube object created from a dictionary (part of the JSON)
         file in the model.
 
         # Arguments:
@@ -1253,7 +1253,7 @@ def _set_uv(
     :param uv_converter: converter used for converting from Minecraft UV
         coordinates (dependent on the scale of the texture) to Blender UV
         coordinates (values from 0 to 1).
-    :param cube_polygons: CybePolygons object created from the mesh.
+    :param cube_polygons: CubePolygons object created from the mesh.
     :param uv: UV mapping for each face.
     :param uv_layer: UV layer of the mesh.
     '''
@@ -1295,7 +1295,7 @@ def add_bone(
     '''
     :param edit_bones: edit bones of the armature (from
         armature.data.edit_bones).
-    :param length: lenght of the bone.
+    :param length: length of the bone.
     :param import_bone: import bone with all of the Minecraft data
         and the reference to empty object that currently represents the bone.
     '''

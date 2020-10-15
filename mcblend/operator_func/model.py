@@ -26,8 +26,8 @@ class ModelExport:
     Object that represents model during export.
 
     :param model_name: name of the model
-    :param texture_width: Minecraft model prperty - texture_width.
-    :param texture_height: Minecraft model prperty - texture_height.
+    :param texture_width: Minecraft model property - texture_width.
+    :param texture_height: Minecraft model property - texture_height.
     :param visible_bounds_offset: Minecraft model property -
         visible_bounds_offset.
     :param visible_bounds_width: Minecraft model property -
@@ -85,10 +85,10 @@ class ModelExport:
                 }
             ]
         }
-        if self.texture_width > 0:  # Dont't export invalid values
+        if self.texture_width > 0:  # Don't export invalid values
             result["minecraft:geometry"][0]["description"][
                 "texture_width"] = self.texture_width
-        if self.texture_height > 0:  # Dont't export invalid values
+        if self.texture_height > 0:  # Don't export invalid values
             result["minecraft:geometry"][0]["description"][
                 "texture_height"] = self.texture_height
         return result
@@ -304,7 +304,7 @@ class PerFaceUvExport(UvExport):
         return result
 
     def _is_face_uv_outside(self, cube_polygon):
-        '''Tests if UV face is completly outside of the texture'''
+        '''Tests if UV face is completely outside of the texture'''
         face: bpy_types.MeshPolygon = cube_polygon.side
         for loop_index in face.loop_indices:
             curr_loop = np.array(self.uv_layer.data[loop_index].uv)
@@ -487,7 +487,7 @@ class UvExportFactory:
     def get_uv_export(
             self, mcobj: McblendObject, cube_size: np.ndarray) -> UvExport:
         '''
-        Creates UvExport object for given MclbendObject.
+        Creates UvExport object for given McblendObject.
 
         :param mcobj: Object that needs UvExport.
         :param cube_size: Size of the cube expressed in Minecraft coordinates

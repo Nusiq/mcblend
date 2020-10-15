@@ -1,5 +1,5 @@
 '''
-Custom mcblend xceptions.
+Custom mcblend exceptions.
 '''
 from __future__ import annotations
 from typing import List
@@ -12,7 +12,7 @@ class NotEnoughTextureSpace(Exception):
 
 class InvalidDictPathException(LookupError):
     '''
-    Raise when using using function for quick access to dictonary path fails.
+    Raise when using using function for quick access to dictionary path fails.
     '''
 
 class NoCubePolygonsException(Exception):

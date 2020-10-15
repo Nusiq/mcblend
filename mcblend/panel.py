@@ -59,35 +59,35 @@ class OBJECT_NusiqMcblendUvMaskProperties(bpy.types.PropertyGroup):
     # normalize: bool  # ColorPaletteMask
     normalize: BoolProperty(  # type: ignore
         name='Normalize')
-    # p1: Tuple[float, float]  # GradientMask ElipseMask RectangleMask
+    # p1: Tuple[float, float]  # GradientMask EllipseMask RectangleMask
     p1_relative: FloatVectorProperty(  # type: ignore
         name='Point A', min=0.0, max=1.0, default=(0.0, 0.0), size=2)
-    # p2: Tuple[float, float]  # GradientMask ElipseMask RectangleMask
+    # p2: Tuple[float, float]  # GradientMask EllipseMask RectangleMask
     p2_relative: FloatVectorProperty(  # type: ignore
         name='Point B', min=0.0, max=1.0, default=(0.0, 0.0), size=2)
-    # p1: Tuple[float, float]  # GradientMask ElipseMask RectangleMask
+    # p1: Tuple[float, float]  # GradientMask EllipseMask RectangleMask
     p1: IntVectorProperty(  # type: ignore
         name='Point A', default=(0.1, 0.1), size=2)
-    # p2: Tuple[float, float]  # GradientMask ElipseMask RectangleMask
+    # p2: Tuple[float, float]  # GradientMask EllipseMask RectangleMask
     p2: IntVectorProperty(  # type: ignore
         name='Point B', default=(0.9, 0.9), size=2)
     # stripes: List[Stripe]  # GradientMask StripesMask
     stripes: CollectionProperty(  # type: ignore
         type=OBJECT_NusiqMcblendStripeProperties,
         name='Stripes')
-    # relative_boundries: bool  # GradientMask ElipseMask RectangleMask
+    # relative_boundaries: bool  # GradientMask EllipseMask RectangleMask
     # StripesMask
-    relative_boundries: BoolProperty(  # type: ignore
-        name='Relative boundries')
-    # expotent: float  # GradientMask ElipseMask RectangleMask RandomMask
+    relative_boundaries: BoolProperty(  # type: ignore
+        name='Relative boundaries')
+    # expotent: float  # GradientMask EllipseMask RectangleMask RandomMask
     #  MixMask
     expotent: FloatProperty(  # type: ignore
         name='Expotent', default=1.0, soft_min=-10.0, soft_max=10.0)
-    # strength: Tuple[float, float]  # ElipseMask RectangleMask RandomMask
+    # strength: Tuple[float, float]  # EllipseMask RectangleMask RandomMask
     #  MixMask
     strength: FloatVectorProperty(  # type: ignore
         min=0.0, max=1.0, default=(0.0, 1.0), size=2)
-    # hard_edge: bool  # ElipseMask RectangleMask
+    # hard_edge: bool  # EllipseMask RectangleMask
     hard_edge: BoolProperty(  # type: ignore
         name='Hard edge')
     # horizontal: bool  # StripesMask
@@ -106,7 +106,7 @@ class OBJECT_NusiqMcblendUvMaskProperties(bpy.types.PropertyGroup):
 # UV-group properties
 def get_unused_uv_group_name(base_name: str, i=1):
     '''
-    Gets the name of UV-group which is not used by any other UV-goup. Uses
+    Gets the name of UV-group which is not used by any other UV-group. Uses
     the base name and adds number at the end of it to find unique name with
     pattern :code:`{base_name}.{number:04}`.
     '''
@@ -155,6 +155,8 @@ def _set_uv_group_name(self, value):
     _update_uv_group_name(self, value)
 
 def _get_uv_group_name(self):
+    if 'name' not in self:
+        return ''
     return self['name']
 
 class OBJECT_NusiqMcblendUvGroupProperties(bpy.types.PropertyGroup):
@@ -259,7 +261,7 @@ class OBJECT_NusiqMcblendAnimationProperties(bpy.types.PropertyGroup):
 
 # Mcblend properties
 class OBJECT_NusiqMcblendExporterProperties(bpy.types.PropertyGroup):
-    '''Gobal properties of Mcblend.'''
+    '''Global properties of Mcblend.'''
     model_name: StringProperty(  # type: ignore
         name="",
         description="Name of the model",
@@ -267,7 +269,7 @@ class OBJECT_NusiqMcblendExporterProperties(bpy.types.PropertyGroup):
         maxlen=1024
     )
     visible_bounds_offset: FloatVectorProperty(  # type: ignore
-        name="Visible bounts offset",
+        name="Visible bounds offset",
         description="visible_bounds_offset of the model",
         default=(0.0, 0.0, 0.0)
     )
@@ -301,7 +303,7 @@ class OBJECT_NusiqMcblendExporterProperties(bpy.types.PropertyGroup):
         description=(
             'Sets the resolution of the template texture.'
             'describes how many pixels on the image is represented by one '
-            'texture_widht or texture_height unit in model definition. '
+            'texture_width or texture_height unit in model definition. '
             'The value of 1 gives the standard minecraft texture '
             'resolution.'
         ),
@@ -330,7 +332,7 @@ class OBJECT_UL_NusiqMcblendUVGroupList(bpy.types.UIList):
         '''
         Drawing OBJECT_NusiqMcblendUvGroupProperties in a list.
 
-        - `context` - the contexto of operator
+        - `context` - the contexts of operator
         - `layout: bpy.types.UILayout` - layout in which the object is drawn
         - `data` - the RNA object containing the collection
         - `item` - the item currently drawn in the collection
@@ -415,7 +417,7 @@ class OBJECT_PT_NusiqMcblendUVGroupPanel(bpy.types.Panel):
         for stripe_index, stripe in enumerate(mask.stripes):
             row = box.row()
             if (
-                    mask.relative_boundries and
+                    mask.relative_boundaries and
                     mask.mask_type != UvMaskTypes.GRADIENT_MASK.value):
                     # Gradient mask always uses absolute values
                 row.prop(stripe, "width_relative")
@@ -450,7 +452,7 @@ class OBJECT_PT_NusiqMcblendUVGroupPanel(bpy.types.Panel):
             self, mask, index: int, col: bpy.types.UILayout, *,
             colors=False, interpolate=False,
             normalize=False, p1p2=False, stripes=False,
-            relative_boundries=False, expotent=False, strength=False,
+            relative_boundaries=False, expotent=False, strength=False,
             hard_edge=False, horizontal=False, seed=False,color=False,
             children=False, mode=False):
         '''Draws properties of UV-mask.'''
@@ -462,7 +464,7 @@ class OBJECT_PT_NusiqMcblendUVGroupPanel(bpy.types.Panel):
             col.prop(mask, "normalize")
         if p1p2:
             row = col.row()
-            if mask.relative_boundries:
+            if mask.relative_boundaries:
                 row.prop(mask, "p1_relative")
                 row = col.row()
                 row.prop(mask, "p2_relative")
@@ -470,8 +472,8 @@ class OBJECT_PT_NusiqMcblendUVGroupPanel(bpy.types.Panel):
                 row.prop(mask, "p1")
                 row = col.row()
                 row.prop(mask, "p2")
-        if relative_boundries:
-            col.prop(mask, "relative_boundries")
+        if relative_boundaries:
+            col.prop(mask, "relative_boundaries")
         if stripes:
             self.draw_stripes(mask, index, col)  # stripes
         if expotent:
@@ -502,7 +504,7 @@ class OBJECT_PT_NusiqMcblendUVGroupPanel(bpy.types.Panel):
         between masks like buttons for moving and removing masks.
         '''
         col = None
-        # If parent is collapsed dont draw anyghing
+        # If parent is collapsed don't draw anything
         if ui_stack[-1].ui is not None:
             col = ui_stack[-1].ui
             box = col.box()
@@ -552,22 +554,22 @@ class OBJECT_PT_NusiqMcblendUVGroupPanel(bpy.types.Panel):
                 if mask.mask_type == UvMaskTypes.GRADIENT_MASK.value:
                     self.draw_mask_properties(
                         mask, index, col,
-                        p1p2=True, stripes=True, relative_boundries=True,
+                        p1p2=True, stripes=True, relative_boundaries=True,
                         expotent=True)
-                if mask.mask_type == UvMaskTypes.ELIPSE_MASK.value:
+                if mask.mask_type == UvMaskTypes.ELLIPSE_MASK.value:
                     self.draw_mask_properties(
                         mask, index, col,
-                        p1p2=True, relative_boundries=True, expotent=True,
+                        p1p2=True, relative_boundaries=True, expotent=True,
                         strength=True, hard_edge=True)
                 if mask.mask_type == UvMaskTypes.RECTANGLE_MASK.value:
                     self.draw_mask_properties(
                         mask, index, col,
-                        p1p2=True, relative_boundries=True, expotent=True,
+                        p1p2=True, relative_boundaries=True, expotent=True,
                         strength=True, hard_edge=True)
                 if mask.mask_type == UvMaskTypes.STRIPES_MASK.value:
                     self.draw_mask_properties(
                         mask, index, col,
-                        stripes=True, relative_boundries=True, horizontal=True)
+                        stripes=True, relative_boundaries=True, horizontal=True)
                 if mask.mask_type == UvMaskTypes.RANDOM_MASK.value:
                     self.draw_mask_properties(
                         mask, index, col,
@@ -680,7 +682,7 @@ class OBJECT_PT_NusiqMcblendObjectPropertiesPanel(bpy.types.Panel):
                 if object_properties.uv_group != '':
                     col.label(text=f'UV Group: {object_properties.uv_group}')
                 else:
-                    col.label(text="This object does't have a UV group")
+                    col.label(text="This object doesn't have a UV group")
                 col.prop(object_properties, "inflate", text="Inflate")
 
 # Model export panel
