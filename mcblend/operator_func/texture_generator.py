@@ -145,6 +145,16 @@ class MultiplicativeMask(Mask):
     def get_mask(self, image: np.array) -> np.array:
         '''Returns 2D matrix with the filter array.'''
 
+
+class DummyMask(MultiplicativeMask):
+    '''
+    A multiplicative mask that always return a white image.
+    '''
+    def get_mask(self, image):
+        w, h, _ = image.shape
+        return np.ones((w, h))[:,:, np.newaxis]
+    
+
 class Stripe(NamedTuple):
     '''
     Stripes are used in StripesMask and ColorPaletteMask mask in a collection
@@ -620,7 +630,10 @@ def get_masks_from_side(side) -> Sequence[Mask]:
                     mode=s_props.mode)
             else:
                 raise ValueError('Unknown mask type')
-            result.append(mask)
+            if s_props.ui_hidden:
+                result.append(DummyMask())
+            else:
+                result.append(mask)
         return tuple(result)
 
     return  _get_masks_from_side(iter(side), n_steps=len(side))

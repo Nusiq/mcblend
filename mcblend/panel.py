@@ -36,6 +36,8 @@ class OBJECT_NusiqMcblendColorProperties(bpy.types.PropertyGroup):
 # UV-mask properties
 class OBJECT_NusiqMcblendUvMaskProperties(bpy.types.PropertyGroup):
     '''Properties of UV-mask.'''
+    ui_hidden: BoolProperty(  # type: ignore
+        name='Hide', default=False)
     ui_collapsed: BoolProperty(  # type: ignore
         name='Collapse', default=False)
     mask_type: EnumProperty(  # type: ignore
@@ -511,6 +513,7 @@ class OBJECT_PT_NusiqMcblendUVGroupPanel(bpy.types.Panel):
             # box.scale_x = True
             col = box.column()
             row = col.row()
+
             if mask.ui_collapsed:
                 row.prop(
                     mask, "ui_collapsed", text="", icon='DISCLOSURE_TRI_RIGHT',
@@ -535,6 +538,15 @@ class OBJECT_PT_NusiqMcblendUVGroupPanel(bpy.types.Panel):
                     text='')
                 op_props.move_from = index
                 op_props.move_to = index + 1
+            # Hide button
+            if mask.ui_hidden:
+                row.prop(
+                    mask, "ui_hidden", text="", icon='HIDE_ON',
+                    emboss=False)
+            else:
+                row.prop(
+                    mask, "ui_hidden", text="", icon='HIDE_OFF',
+                    emboss=False)
             # Delete button
             op_props = row.operator(
                 "object.nusiq_mcblend_remove_uv_mask", icon='X', text='')

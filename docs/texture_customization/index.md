@@ -15,6 +15,12 @@ sides (side1-6) are corelated to their placement on the texture.
 New masks are added with "Add mask" dropdown menu. There are 8 different types
 of masks.
 
+
+!!! note
+
+    All masks have an eye icon in the upper right corner that can be used to
+    temporarily disable / enable the mask.
+
 ## Color Palette Mask
 ![](../img/color_palette_mask.png)
 
