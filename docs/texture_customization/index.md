@@ -8,7 +8,7 @@ in new custom panel in [Scene Properties](../gui_changes/#scene-properties).
 Masks are filters that are applied to the texture when it is generated.
 Each UV-group has 6 faces. You can switch between faces to edit with
 "Side:" dropdown menu. The image below shows how the names of the
-sides (side1-6) are corelated to their placement on the texture.
+sides (side1-6) are correlated to their placement on the texture.
 
 ![](../img/faces.png)
 

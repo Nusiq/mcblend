@@ -21,7 +21,7 @@ from .operator_func.jsonc_decoder import JSONCDecoder
 from .operator_func.texture_generator import (
     list_mask_types_as_blender_enum, UvMaskTypes)
 
-from .panel import get_unused_uv_group_name
+from .custom_properties import get_unused_uv_group_name
 
 # Model importer
 class OBJECT_OT_NusiqMcblendExportModelOperator(

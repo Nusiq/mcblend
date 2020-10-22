@@ -38,12 +38,17 @@ from .operator import (
     OBJECT_OT_NusiqMcblendRemoveUvMaskStripe,
     OBJECT_OT_NusiqMcblendMoveUvMaskStripe,
 )
-from .panel import (
+from .custom_properties import (
     OBJECT_NusiqMcblendExporterProperties,
     OBJECT_NusiqMcblendAnimationProperties,
-
     OBJECT_NusiqMcblendObjectProperties,
+    OBJECT_NusiqMcblendStripeProperties,
+    OBJECT_NusiqMcblendColorProperties,
+    OBJECT_NusiqMcblendUvMaskProperties,
+    OBJECT_NusiqMcblendUvGroupProperties,
+)
 
+from .panel import (
     OBJECT_PT_NusiqMcblendObjectPropertiesPanel,
     OBJECT_PT_NusiqMcblendExportPanel,
     OBJECT_PT_NusiqMcblendExportAnimationPanel,
@@ -52,11 +57,6 @@ from .panel import (
     OBJECT_PT_NusiqMcblendImportPanel,
     OBJECT_PT_NusiqMcblendUVGroupPanel,
     OBJECT_UL_NusiqMcblendUVGroupList,
-
-    OBJECT_NusiqMcblendStripeProperties,
-    OBJECT_NusiqMcblendColorProperties,
-    OBJECT_NusiqMcblendUvMaskProperties,
-    OBJECT_NusiqMcblendUvGroupProperties,
 )
 
 
