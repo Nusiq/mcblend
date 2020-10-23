@@ -3,7 +3,10 @@ This module contains all of the operators.
 '''
 # don't import future annotations Blender needs that
 import json
-from typing import Optional, Dict
+from json.decoder import JSONDecodeError
+from typing import Any, List, Optional, Dict
+
+from numpy.lib.arraysetops import isin
 
 import bpy_types
 import bpy
@@ -19,7 +22,7 @@ from .operator_func.exception import (
     NameConflictException, NotEnoughTextureSpace,)
 from .operator_func.jsonc_decoder import JSONCDecoder
 from .operator_func.texture_generator import (
-    list_mask_types_as_blender_enum, UvMaskTypes)
+    list_mask_types_as_blender_enum, UvMaskTypes, MixMaskMode)
 
 from .custom_properties import get_unused_uv_group_name
 
@@ -981,19 +984,352 @@ class OBJECT_OT_NusiqMcblendMoveUvMaskStripe(bpy.types.Operator):
         mask.stripes.move(self.move_from, self.move_to)
         return {'FINISHED'}
 
-# TODO - create operators for importing/exporting texture generation masks
-# to JSON
-# {
-#     "version": 1,
-#     "focused_side": "side1",
-#     "sides": {
-#         "side1": {
-#             "masks": [...]
-#         },
-#         "side2": {...},
-#         "side3": {...},
-#         "side4": {...},
-#         "side5": {...},
-#         "side6": {...},
-#     }
-# }
+# UV Mask exporter
+class OBJECT_OT_NusiqMcblendExportUvGroupOperator(
+        bpy.types.Operator, ExportHelper):
+    '''Operator used for exporting active UV-group from Blender.'''
+    # pylint: disable=unused-argument, no-member
+    bl_idname = "object.nusiq_mcblend_export_uv_group_operator"
+    bl_label = "Export UV-group"
+    bl_options = {'REGISTER'}
+    bl_description = "Exports active UV-group"
+
+    filename_ext = '.uvgroup.json'
+
+    filter_glob: StringProperty(  # type: ignore
+        default='*.uvgroup.json',
+        options={'HIDDEN'},
+        maxlen=1000
+    )
+
+    @classmethod
+    def poll(cls, context: bpy_types.Context):
+        return len(context.scene.nusiq_mcblend_uv_groups) > 0
+
+    def execute(self, context):
+        group_id = context.scene.nusiq_mcblend_active_uv_group
+        uv_group = context.scene.nusiq_mcblend_uv_groups[group_id]
+
+        with open(self.filepath, 'w') as f:
+            json.dump(uv_group.json(), f, cls=CompactEncoder)
+        self.report({'INFO'}, f'UV-group saved in {self.filepath}.')
+        return {'FINISHED'}
+
+def menu_func_nusiq_mcblend_export_uv_group(self, context):
+    '''Registers ExportUvGroup operator to the F3 menu.'''
+    # pylint: disable=unused-argument
+    self.layout.operator(
+        OBJECT_OT_NusiqMcblendExportUvGroupOperator.bl_idname,
+        text="Mcblend: Export UV-group"
+    )
+
+# UV Mask exporter
+class OBJECT_OT_NusiqMcblendImportUvGroupOperator(bpy.types.Operator, ImportHelper):
+    '''Operator used for importing Minecraft models to Blender.'''
+    # pylint: disable=unused-argument, no-member
+    bl_idname = "object.nusiq_mcblend_import_uv_group_operator"
+    bl_label = "Import UV-group"
+    bl_options = {'REGISTER'}
+    bl_description = "Import UV-group from JSON file."
+    # ImportHelper mixin class uses this
+    filename_ext = ".json"
+    filter_glob: StringProperty(  # type: ignore
+        default="*.json",
+        options={'HIDDEN'},
+        maxlen=1000,
+    )
+
+    def _load_mask_data(self, mask_data, side) -> Optional[str]:
+        loading_warning: Optional[str] = None
+        if "mask_type" not in mask_data:
+            return (
+                "Some of the masks are missing the 'mask_type' definition.")
+        mask_type = mask_data["mask_type"]
+        if not isinstance(mask_type, str):
+            return  (
+                f"Mask type property must be a string not a {type(mask_type)}")
+        if mask_type not in [m.value for m in UvMaskTypes]:
+            return f'Unknown mask type: {mask_type}'
+        mask=side.add()
+        mask.mask_type = mask_type
+
+        # Loading properties of the mask
+        # Loading relative_boundries first because they affect other properties
+        relative_boundaries: bool = False
+        if mask_type in [
+                UvMaskTypes.GRADIENT_MASK.value, UvMaskTypes.ELLIPSE_MASK.value,
+                UvMaskTypes.RECTANGLE_MASK.value,
+                UvMaskTypes.STRIPES_MASK.value]:
+            if 'relative_boundaries' in mask_data:
+                if isinstance(mask_data['relative_boundaries'], bool):
+                    relative_boundaries = mask_data['relative_boundaries']
+                    mask.relative_boundaries = relative_boundaries
+                else:
+                    loading_warning = (
+                        '"relative_boundaries" property must be a boolean')
+        if mask_type == UvMaskTypes.MIX_MASK.value:
+            if 'mode' in mask_data:
+                mode = mask_data['mode']
+                if mode not in [m.value for m in MixMaskMode]:
+                    loading_warning=f'Unknown mode {mode}'
+                else:
+                    mask.mode = mode
+            if 'children' in mask_data:
+                children = mask_data['children']
+                if not isinstance(children, int):
+                    loading_warning = f'Children property must be an integer'
+                else:
+                    mask.children = mask_data['children']
+        if mask_type == UvMaskTypes.COLOR_PALLETTE_MASK.value:
+            if 'colors' in mask_data:
+                colors = mask_data['colors']
+                if not isinstance(colors, list):
+                    loading_warning = (
+                        'Colors property must be a list of lists of floats')
+                else:
+                    for color_data in colors:
+                        if (
+                                not isinstance(color_data, list) or
+                                len(color_data) != 3):
+                            loading_warning = (
+                                'Every color on colors list should be '
+                                'a list of floats.')
+                            continue
+                        is_color = True
+                        for value_data in color_data:
+                            if not isinstance(value_data, (float, int)):
+                                is_color = False
+                                loading_warning =(
+                                    'All values of color must be '
+                                    'floats in range 0.0-1.0')
+                                break
+                        if is_color:
+                            color = mask.colors.add()
+                            color.color = color_data
+            if 'interpolate' in mask_data:
+                interpolate = mask_data['interpolate']
+                if not isinstance(interpolate, bool):
+                    loading_warning = 'Interpolate property must be a boolean'
+                else:
+                    mask.interpolate = interpolate
+            if 'normalize' in mask_data:
+                normalize = mask_data['normalize']
+                if not isinstance(normalize, bool):
+                    loading_warning = 'Normalize property must be a boolean'
+                else:
+                    mask.normalize = normalize
+        if mask_type in [
+                UvMaskTypes.GRADIENT_MASK.value, UvMaskTypes.ELLIPSE_MASK.value,
+                UvMaskTypes.RECTANGLE_MASK.value]:
+            if relative_boundaries:
+                if 'p1' in mask_data:
+                    if (
+                            isinstance(mask_data, (float, int)) and
+                            0.0 <= mask_data['p1'] <= 1.0):
+                        mask.p1_relative = mask_data['p1']
+                    else:
+                        loading_warning = (
+                            '"p1" property must be a float in range 0.0 to '
+                            '1.0 if "relative_boundaries" are True')
+                if 'p2' in mask_data:
+                    if (
+                            isinstance(mask_data, (float, int)) and
+                            0.0 <= mask_data['p2'] <= 1.0):
+                        mask.p2_relative = mask_data['p2']
+                    else:
+                        loading_warning = (
+                            '"p2" property must be a float in range 0.0 to '
+                            '1.0 if "relative_boundaries" are True')
+            else:
+                if 'p1' in mask_data:
+                    if isinstance(mask_data, int):
+                        mask.p1 = mask_data['p1']
+                    else:
+                        loading_warning = (
+                            '"p1" property must be an integer if '
+                            '"relative_boundaries" are False')
+                if 'p2' in mask_data:
+                    if isinstance(mask_data, int):
+                        mask.p2 = mask_data['p2']
+                    else:
+                        loading_warning = (
+                            '"p2" property must be an integer if '
+                            '"relative_boundaries" are False')
+        if mask_type in [
+                UvMaskTypes.GRADIENT_MASK.value, UvMaskTypes.STRIPES_MASK.value]:
+            if 'stripes' in mask_data:
+                stripes = mask_data['stripes']
+                if not isinstance(stripes, list):
+                    loading_warning = '"stripes" property must be a list.'
+                else:
+                    for stripe_data in stripes:
+                        if not isinstance(stripe_data, dict):
+                            loading_warning = (
+                                'Every stripe in the stripes list must be an '
+                                'object')
+                            continue
+                        stripe = mask.stripes.add()
+                        if 'width' in stripe_data:
+                            width = stripe_data['width']
+                            if relative_boundaries:
+                                if (
+                                        isinstance(width, (float, int)) and
+                                        0.0 <= width <= 1.0):
+                                    stripe.width_relative = width
+                                else:
+                                    loading_warning = (
+                                        "Stripe width must be a float in "
+                                        "range 0.0 to 1.0 if "
+                                        "relative_boundaries is True")
+                            else:
+                                if isinstance(width, int):
+                                    stripe.width = width
+                                else:
+                                    loading_warning = (
+                                        "Stripe width must be an integer if "
+                                        "relative_boundaries is True")
+                        if 'strength' in stripe_data:
+                            strength = stripe_data['strength']
+                            if isinstance(strength, (float, int)):
+                                stripe.strength = strength
+                            else:
+                                loading_warning = (
+                                    'Stripe strength must be a float.')
+        if mask_type in [
+                UvMaskTypes.GRADIENT_MASK.value, UvMaskTypes.ELLIPSE_MASK.value,
+                UvMaskTypes.RECTANGLE_MASK.value, UvMaskTypes.MIX_MASK.value,
+                UvMaskTypes.RANDOM_MASK.value]:
+            if 'expotent' in mask_data:
+                expotent = mask_data['expotent']
+                if isinstance(expotent, (float, int)):
+                    mask.expotent = mask_data['expotent']
+                else:
+                    loading_warning = 'Expotent property must be a float.'
+        if mask_type in [
+                UvMaskTypes.ELLIPSE_MASK.value,
+                UvMaskTypes.RECTANGLE_MASK.value, UvMaskTypes.MIX_MASK.value,
+                UvMaskTypes.RANDOM_MASK.value]:
+            if 'strength' in mask_data:
+                strength = mask_data['strength']
+                if (
+                        isinstance(strength, list) and len(strength) == 2
+                        and isinstance(strength[0], (float, int)) and
+                        isinstance(strength[1], (float, int)) and
+                        0.0 < strength[0] < 1.0 and
+                        0.0 < strength[1] < 1.0):
+                    mask.strength = mask_data['strength']
+                else:
+                    loading_warning = (
+                        '"strength" property must be a list of '
+                        'two floats in range 0.0 to 1.0.')
+        if mask_type in [
+                UvMaskTypes.ELLIPSE_MASK.value,
+                UvMaskTypes.RECTANGLE_MASK.value]:
+            if 'hard_edge' in mask_data:
+                if isinstance(mask_data['hard_edge'], bool):
+                    hard_edge = mask_data['hard_edge']
+                    mask.hard_edge = hard_edge
+                else:
+                    loading_warning = '"hard_edge" property must be a boolean'
+        if mask_type == UvMaskTypes.STRIPES_MASK.value:
+            if 'horizontal' in mask_data:
+                if isinstance(mask_data['horizontal'], bool):
+                    horizontal = mask_data['horizontal']
+                    mask.horizontal = horizontal
+                else:
+                    loading_warning = '"horizontal" property must be a boolean'
+        if mask_type == UvMaskTypes.RANDOM_MASK.value:
+            if 'use_seed' in mask_data:
+                if isinstance(mask_data['use_seed'], bool):
+                    use_seed = mask_data['use_seed']
+                    mask.use_seed = use_seed
+                else:
+                    loading_warning = '"use_seed" property must be a boolean'
+            if 'seed' in mask_data:
+                seed = mask_data['seed']
+                if isinstance(seed, int):
+                    mask.seed = mask_data['seed']
+                else:
+                    loading_warning = '"seed" property must be an interger.'
+        if mask_type == UvMaskTypes.COLOR_MASK.value:
+            if 'color' in mask_data:
+                color_data = mask_data['color']
+                if (
+                        not isinstance(color_data, list) or
+                        len(color_data) != 3):
+                    loading_warning = (
+                        'Every color on colors list should be '
+                        'a list of floats.')
+                else:
+                    is_color = True
+                    for value_data in color_data:
+                        if not isinstance(value_data, (float, int)):
+                            is_color = False
+                            loading_warning =(
+                                'All values of color must be '
+                                'floats in range 0.0-1.0')
+                            break
+                    if is_color:
+                        mask.color.color = color_data
+        return loading_warning
+
+    def _load_side(self, side: Any, side_data: List) -> Optional[str]:
+        loading_warning = None
+        for mask_data in side_data:
+            loading_warning = self._load_mask_data(mask_data, side)
+        return loading_warning
+
+    def execute(self, context):
+        name: str = get_unused_uv_group_name('uv_group')
+        # Save file and finish
+        try:
+            with open(self.filepath, 'r') as f:
+                data = json.load(f, cls=JSONCDecoder)
+            version = data['version']
+            if version != 1:
+                self.report({'ERROR'}, "Unknown UV-group version.")
+                return {'CANCELLED'}
+        except (KeyError, TypeError, JSONDecodeError) as e:
+            self.report({'ERROR'}, "Unable to to read the UV-group data.")
+            return {'CANCELLED'}
+
+        # Create new UV-group
+        len_groups = len(context.scene.nusiq_mcblend_uv_groups)
+        # Add new uv_group and set its properties
+        uv_group_new = context.scene.nusiq_mcblend_uv_groups.add()
+        len_groups = len(context.scene.nusiq_mcblend_uv_groups)
+        context.scene.nusiq_mcblend_active_uv_group=len_groups-1
+
+        # Currently only version 1 is supported
+        if 'name' in data and isinstance(data['name'], str):
+            name =  get_unused_uv_group_name(data['name'])
+        uv_group_new.name = name
+
+        # Used for showing warnings about loading process (the loader shows
+        # only one warning at a time)
+        loading_warning: Optional[str] = None
+        if 'side1' in data and isinstance(data['side1'], list):
+            loading_warning=self._load_side(uv_group_new.side1, data['side1'])
+        if 'side2' in data and isinstance(data['side2'], list):
+            loading_warning=self._load_side(uv_group_new.side2, data['side2'])
+        if 'side3' in data and isinstance(data['side3'], list):
+            loading_warning=self._load_side(uv_group_new.side3, data['side3'])
+        if 'side4' in data and isinstance(data['side4'], list):
+            loading_warning=self._load_side(uv_group_new.side4, data['side4'])
+        if 'side5' in data and isinstance(data['side5'], list):
+            loading_warning=self._load_side(uv_group_new.side5, data['side5'])
+        if 'side6' in data and isinstance(data['side6'], list):
+            loading_warning=self._load_side(uv_group_new.side6, data['side6'])
+
+        # If something didn't load propertly also display a warning
+        if loading_warning is not None:
+            self.report({'WARNING'}, loading_warning)
+        return {'FINISHED'}
+
+def menu_func_nusiq_mcblend_import_uv_group(self, context):
+    '''Registers ImportUvGroup operator to the F3 menu.'''
+    # pylint: disable=unused-argument
+    self.layout.operator(
+        OBJECT_OT_NusiqMcblendImportUvGroupOperator.bl_idname,
+        text="Mcblend: Import UV-group"
+    )

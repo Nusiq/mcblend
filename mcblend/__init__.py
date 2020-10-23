@@ -37,6 +37,11 @@ from .operator import (
     OBJECT_OT_NusiqMcblendAddUvMaskStripe,
     OBJECT_OT_NusiqMcblendRemoveUvMaskStripe,
     OBJECT_OT_NusiqMcblendMoveUvMaskStripe,
+
+    OBJECT_OT_NusiqMcblendExportUvGroupOperator,
+    menu_func_nusiq_mcblend_export_uv_group,
+    OBJECT_OT_NusiqMcblendImportUvGroupOperator,
+    menu_func_nusiq_mcblend_import_uv_group,
 )
 from .custom_properties import (
     OBJECT_NusiqMcblendExporterProperties,
@@ -119,6 +124,9 @@ classes = (
     OBJECT_NusiqMcblendColorProperties,
     OBJECT_NusiqMcblendUvMaskProperties,  # must be before UvGroupProperties
     OBJECT_NusiqMcblendUvGroupProperties,
+
+    OBJECT_OT_NusiqMcblendExportUvGroupOperator,
+    OBJECT_OT_NusiqMcblendImportUvGroupOperator,
 )
 
 def register():
@@ -161,6 +169,12 @@ def register():
     bpy.types.TOPBAR_MT_file_import.append(
         menu_func_nusiq_mcblend_import
     )
+    bpy.types.TOPBAR_MT_file_import.append(
+        menu_func_nusiq_mcblend_export_uv_group
+    )
+    bpy.types.TOPBAR_MT_file_import.append(
+        menu_func_nusiq_mcblend_import_uv_group
+    )
 
 
 def unregister():
@@ -177,4 +191,10 @@ def unregister():
     )
     bpy.types.TOPBAR_MT_file_import.remove(
         menu_func_nusiq_mcblend_import
+    )
+    bpy.types.TOPBAR_MT_file_import.remove(
+        menu_func_nusiq_mcblend_export_uv_group
+    )
+    bpy.types.TOPBAR_MT_file_import.remove(
+        menu_func_nusiq_mcblend_import_uv_group
     )

@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Dict, List, Optional
 from dataclasses import dataclass
 
 import bpy
@@ -12,7 +12,7 @@ from .operator_func.texture_generator import (
     list_mask_types_as_blender_enum, UvMaskTypes,
     list_mix_mask_modes_as_blender_enum)
 
-# Custom properties
+
 # UV-mask stripe properties
 class OBJECT_NusiqMcblendStripeProperties(bpy.types.PropertyGroup):
     '''Properties of a UV-mask stripe.'''
@@ -23,12 +23,30 @@ class OBJECT_NusiqMcblendStripeProperties(bpy.types.PropertyGroup):
     strength: FloatProperty(  # type: ignore
         name='Strength', min=0.0, max=1.0, default=1.0)
 
+    def json(self, relative: bool) -> Dict:
+        '''
+        :returns: JSON representation of this object.
+        '''
+        result = {'strength': self.strength}
+        if relative:
+            result['width'] = self.width_relative
+        else:
+            result['width'] = self.width
+        return result
+
+
 # UV-mask color properties
 class OBJECT_NusiqMcblendColorProperties(bpy.types.PropertyGroup):
     '''Properties of a UV-mask color.'''
     color: FloatVectorProperty(  # type: ignore
         name='Color',  subtype='COLOR',
         min=0, max=1, step=1000, default=(1.0, 1.0, 1.0))
+
+    def json(self) -> List[float]:
+        '''
+        :returns: JSON representation of this object
+        '''
+        return list(self.color)
 
 # UV-mask properties
 class OBJECT_NusiqMcblendUvMaskProperties(bpy.types.PropertyGroup):
@@ -101,6 +119,62 @@ class OBJECT_NusiqMcblendUvMaskProperties(bpy.types.PropertyGroup):
     color: PointerProperty(  # type: ignore
         type=OBJECT_NusiqMcblendColorProperties,
         name='Color')
+
+    def json(self) -> Dict:
+        '''
+        :returns: JSON represetnation of this object.
+        '''
+        result = {
+            "mask_type": self.mask_type
+        }
+        if self.mask_type == UvMaskTypes.MIX_MASK.value:
+            result['mode'] = self.mode
+            result['children'] = self.children
+        if self.mask_type == UvMaskTypes.COLOR_PALLETTE_MASK.value:
+            result['colors'] = [color.json() for color in self.colors]
+            result['interpolate'] = self.interpolate
+            result['normalize'] = self.normalize
+        if self.mask_type in [
+                UvMaskTypes.GRADIENT_MASK.value, UvMaskTypes.ELLIPSE_MASK.value,
+                UvMaskTypes.RECTANGLE_MASK.value]:
+            if self.relative_boundaries:
+                result['p1'] = list(self.p1_relative)
+                result['p2'] = list(self.p2_relative)
+            else:
+                result['p1'] = list(self.p1)
+                result['p2'] = list(self.p2)
+        if self.mask_type in [
+                UvMaskTypes.GRADIENT_MASK.value, UvMaskTypes.STRIPES_MASK.value]:
+            result['stripes'] = [
+                stripe.json(self.relative_boundaries)
+                for stripe in self.stripes]
+        if self.mask_type in [
+                UvMaskTypes.GRADIENT_MASK.value, UvMaskTypes.ELLIPSE_MASK.value,
+                UvMaskTypes.RECTANGLE_MASK.value,
+                UvMaskTypes.STRIPES_MASK.value]:
+            result['relative_boundaries'] = self.relative_boundaries
+        if self.mask_type in [
+                UvMaskTypes.GRADIENT_MASK.value, UvMaskTypes.ELLIPSE_MASK.value,
+                UvMaskTypes.RECTANGLE_MASK.value, UvMaskTypes.MIX_MASK.value,
+                UvMaskTypes.RANDOM_MASK.value]:
+            result['expotent'] = self.expotent
+        if self.mask_type in [
+                UvMaskTypes.ELLIPSE_MASK.value,
+                UvMaskTypes.RECTANGLE_MASK.value, UvMaskTypes.MIX_MASK.value,
+                UvMaskTypes.RANDOM_MASK.value]:
+            result['strength'] = list(self.strength)
+        if self.mask_type in [
+                UvMaskTypes.ELLIPSE_MASK.value,
+                UvMaskTypes.RECTANGLE_MASK.value]:
+            result['hard_edge'] = self.hard_edge
+        if self.mask_type == UvMaskTypes.STRIPES_MASK.value:
+            result['horizontal'] = self.horizontal
+        if self.mask_type == UvMaskTypes.RANDOM_MASK.value:
+            result['use_seed'] = self.use_seed
+            result['seed'] = self.seed
+        if self.mask_type == UvMaskTypes.COLOR_MASK.value:
+            result['color'] = self.color.json()
+        return result
 
 # UV-group properties
 def get_unused_uv_group_name(base_name: str, i=1):
@@ -185,6 +259,33 @@ class OBJECT_NusiqMcblendUvGroupProperties(bpy.types.PropertyGroup):
     side6: CollectionProperty(  # type: ignore
         type=OBJECT_NusiqMcblendUvMaskProperties,
         description='Collection of the filters for side6 of the cuboid.')
+
+    def json(self) -> Dict:
+        '''
+        :returns: JSON representation of this object.
+        '''
+        return {
+            'version': 1,
+            'name': self.name,
+            'side1': [
+                mask.json() for mask in self.side1
+            ],
+            'side2': [
+                mask.json() for mask in self.side2
+            ],
+            'side3': [
+                mask.json() for mask in self.side3
+            ],
+            'side4': [
+                mask.json() for mask in self.side4
+            ],
+            'side5': [
+                mask.json() for mask in self.side5
+            ],
+            'side6': [
+                mask.json() for mask in self.side6
+            ]
+        }
 
 # Model object properties
 class OBJECT_NusiqMcblendObjectProperties(bpy.types.PropertyGroup):
