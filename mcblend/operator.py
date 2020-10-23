@@ -1124,7 +1124,7 @@ class OBJECT_OT_NusiqMcblendImportUvGroupOperator(bpy.types.Operator, ImportHelp
             if relative_boundaries:
                 if 'p1' in mask_data:
                     if (
-                            isinstance(mask_data, (float, int)) and
+                            isinstance(mask_data['p1'], (float, int)) and
                             0.0 <= mask_data['p1'] <= 1.0):
                         mask.p1_relative = mask_data['p1']
                     else:
@@ -1133,7 +1133,7 @@ class OBJECT_OT_NusiqMcblendImportUvGroupOperator(bpy.types.Operator, ImportHelp
                             '1.0 if "relative_boundaries" are True')
                 if 'p2' in mask_data:
                     if (
-                            isinstance(mask_data, (float, int)) and
+                            isinstance(mask_data['p2'], (float, int)) and
                             0.0 <= mask_data['p2'] <= 1.0):
                         mask.p2_relative = mask_data['p2']
                     else:
@@ -1142,14 +1142,14 @@ class OBJECT_OT_NusiqMcblendImportUvGroupOperator(bpy.types.Operator, ImportHelp
                             '1.0 if "relative_boundaries" are True')
             else:
                 if 'p1' in mask_data:
-                    if isinstance(mask_data, int):
+                    if isinstance(mask_data['p1'], int):
                         mask.p1 = mask_data['p1']
                     else:
                         loading_warning = (
                             '"p1" property must be an integer if '
                             '"relative_boundaries" are False')
                 if 'p2' in mask_data:
-                    if isinstance(mask_data, int):
+                    if isinstance(mask_data['p2'], int):
                         mask.p2 = mask_data['p2']
                     else:
                         loading_warning = (
