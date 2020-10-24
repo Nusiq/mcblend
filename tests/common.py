@@ -119,6 +119,12 @@ def assert_is_model(a: tp.Dict):
 
 def make_comparable_json(
         jsonable: tp.Any, set_paths: tp.Set[tp.Tuple], curr_path=None):
+    '''
+    Replaces some of the lists in JSON with frozen sets so the objects can
+    be safely compared and the order doesn't matter. Dictionaries are replaced
+    with tuples of key value pairs because dictionaries are mutable and can't
+    be part of a frozenset.
+    '''
     if curr_path is None:
         curr_path = []
 

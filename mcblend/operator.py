@@ -26,7 +26,7 @@ from .operator_func.texture_generator import (
 
 from .custom_properties import get_unused_uv_group_name
 
-# Model importer
+# Model exporter
 class OBJECT_OT_NusiqMcblendExportModelOperator(
         bpy.types.Operator, ExportHelper):
     '''Operator used for exporting minecraft models from blender.'''
@@ -1139,8 +1139,12 @@ class OBJECT_OT_NusiqMcblendImportUvGroupOperator(bpy.types.Operator, ImportHelp
             if relative_boundaries:
                 if 'p1' in mask_data:
                     if (
-                            isinstance(mask_data['p1'], (float, int)) and
-                            0.0 <= mask_data['p1'] <= 1.0):
+                            isinstance(mask_data['p1'], list) and 
+                            len(mask_data['p1']) == 2 and
+                            isinstance(mask_data['p1'][0], (float, int)) and
+                            isinstance(mask_data['p1'][1], (float, int)) and
+                            0.0 <= mask_data['p1'][0] <= 1.0 and
+                            0.0 <= mask_data['p1'][1] <= 1.0):
                         mask.p1_relative = mask_data['p1']
                     else:
                         loading_warning = (
@@ -1148,8 +1152,12 @@ class OBJECT_OT_NusiqMcblendImportUvGroupOperator(bpy.types.Operator, ImportHelp
                             '1.0 if "relative_boundaries" are True')
                 if 'p2' in mask_data:
                     if (
-                            isinstance(mask_data['p2'], (float, int)) and
-                            0.0 <= mask_data['p2'] <= 1.0):
+                            isinstance(mask_data['p2'], list) and 
+                            len(mask_data['p2']) == 2 and
+                            isinstance(mask_data['p2'][0], (float, int)) and
+                            isinstance(mask_data['p2'][1], (float, int)) and
+                            0.0 <= mask_data['p2'][0] <= 1.0 and
+                            0.0 <= mask_data['p2'][1] <= 1.0):
                         mask.p2_relative = mask_data['p2']
                     else:
                         loading_warning = (
@@ -1157,14 +1165,22 @@ class OBJECT_OT_NusiqMcblendImportUvGroupOperator(bpy.types.Operator, ImportHelp
                             '1.0 if "relative_boundaries" are True')
             else:
                 if 'p1' in mask_data:
-                    if isinstance(mask_data['p1'], int):
+                    if (
+                            isinstance(mask_data['p1'], list) and 
+                            len(mask_data['p1']) == 2 and
+                            isinstance(mask_data['p1'][0], int) and
+                            isinstance(mask_data['p1'][1], int)):
                         mask.p1 = mask_data['p1']
                     else:
                         loading_warning = (
                             '"p1" property must be an integer if '
                             '"relative_boundaries" are False')
                 if 'p2' in mask_data:
-                    if isinstance(mask_data['p2'], int):
+                    if (
+                            isinstance(mask_data['p2'], list) and 
+                            len(mask_data['p2']) == 2 and
+                            isinstance(mask_data['p2'][0], int) and
+                            isinstance(mask_data['p2'][1], int)):
                         mask.p2 = mask_data['p2']
                     else:
                         loading_warning = (
@@ -1227,11 +1243,11 @@ class OBJECT_OT_NusiqMcblendImportUvGroupOperator(bpy.types.Operator, ImportHelp
             if 'strength' in mask_data:
                 strength = mask_data['strength']
                 if (
-                        isinstance(strength, list) and len(strength) == 2
-                        and isinstance(strength[0], (float, int)) and
+                        isinstance(strength, list) and len(strength) == 2 and
+                        isinstance(strength[0], (float, int)) and
                         isinstance(strength[1], (float, int)) and
-                        0.0 < strength[0] < 1.0 and
-                        0.0 < strength[1] < 1.0):
+                        0.0 <= strength[0] <= 1.0 and
+                        0.0 <= strength[1] <= 1.0):
                     mask.strength = mask_data['strength']
                 else:
                     loading_warning = (
@@ -1339,5 +1355,7 @@ class OBJECT_OT_NusiqMcblendImportUvGroupOperator(bpy.types.Operator, ImportHelp
         # If something didn't load propertly also display a warning
         if loading_warning is not None:
             self.report({'WARNING'}, loading_warning)
-        context.area.tag_redraw()
+        
+        if context.area is not None:  # There is no area when running from CLI
+            context.area.tag_redraw()
         return {'FINISHED'}
