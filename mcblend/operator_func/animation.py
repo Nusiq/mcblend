@@ -148,13 +148,12 @@ class Pose:
         for objprop in object_properties.values():
             if objprop.mctype in [MCObjType.BONE, MCObjType.BOTH]:
                 # Scale
-                scale = (
-                    np.array(objprop.obj_matrix_world.to_scale()) /
-                    # pylint: disable=no-value-for-parameter
-                    np.array(mathutils.Matrix().to_scale())
+                scale = np.array(
+                    objprop.obj_matrix_world.to_scale()
                 )[[0, 2, 1]]
                 # Location
-                local_matrix = objprop.get_local_matrix(objprop.parent)
+                local_matrix = objprop.get_local_matrix(
+                    objprop.parent, normalize=True)
                 location = np.array(local_matrix.to_translation())
                 location = location[[0, 2, 1]] * MINECRAFT_SCALE_FACTOR
                 # Rotation

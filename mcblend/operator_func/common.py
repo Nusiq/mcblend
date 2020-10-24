@@ -221,7 +221,7 @@ class McblendObject:
         :param normalize: Whether to normalizes parent and child matrixes
             before calculating the relative matrix. This solves problems
             related to different scales of parent and child transformations
-            (see github issue #62)
+            (see github issue #62 and #71)
         :returns: translation matrix of this object.
         '''
         if other is not None:
