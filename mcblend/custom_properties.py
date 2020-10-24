@@ -29,7 +29,7 @@ class OBJECT_NusiqMcblendStripeProperties(bpy.types.PropertyGroup):
         '''
         result = {'strength': self.strength}
         if relative:
-            result['width'] = self.width_relative
+            result['width'] = round(self.width_relative, 5)
         else:
             result['width'] = self.width
         return result
@@ -46,7 +46,8 @@ class OBJECT_NusiqMcblendColorProperties(bpy.types.PropertyGroup):
         '''
         :returns: JSON representation of this object
         '''
-        return list(self.color)
+        # 1/256 = 0.00390625 (8 digits precision)
+        return [round(i, 8) for i in self.color]
 
 # UV-mask properties
 class OBJECT_NusiqMcblendUvMaskProperties(bpy.types.PropertyGroup):
@@ -138,8 +139,8 @@ class OBJECT_NusiqMcblendUvMaskProperties(bpy.types.PropertyGroup):
                 UvMaskTypes.GRADIENT_MASK.value, UvMaskTypes.ELLIPSE_MASK.value,
                 UvMaskTypes.RECTANGLE_MASK.value]:
             if self.relative_boundaries:
-                result['p1'] = list(self.p1_relative)
-                result['p2'] = list(self.p2_relative)
+                result['p1'] = [round(i, 5) for i in self.p1_relative]
+                result['p2'] = [round(i, 5) for i in self.p2_relative]
             else:
                 result['p1'] = list(self.p1)
                 result['p2'] = list(self.p2)
@@ -157,12 +158,12 @@ class OBJECT_NusiqMcblendUvMaskProperties(bpy.types.PropertyGroup):
                 UvMaskTypes.GRADIENT_MASK.value, UvMaskTypes.ELLIPSE_MASK.value,
                 UvMaskTypes.RECTANGLE_MASK.value, UvMaskTypes.MIX_MASK.value,
                 UvMaskTypes.RANDOM_MASK.value]:
-            result['expotent'] = self.expotent
+            result['expotent'] = round(self.expotent, 5)
         if self.mask_type in [
                 UvMaskTypes.ELLIPSE_MASK.value,
                 UvMaskTypes.RECTANGLE_MASK.value, UvMaskTypes.MIX_MASK.value,
                 UvMaskTypes.RANDOM_MASK.value]:
-            result['strength'] = list(self.strength)
+            result['strength'] = [round(i, 5) for i in self.strength]
         if self.mask_type in [
                 UvMaskTypes.ELLIPSE_MASK.value,
                 UvMaskTypes.RECTANGLE_MASK.value]:
