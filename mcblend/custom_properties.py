@@ -190,13 +190,14 @@ def get_unused_uv_group_name(base_name: str, i=1):
         i += 1
     return name
 
-def _update_uv_group_name(uv_group, new_name: str):
+def _update_uv_group_name(uv_group, new_name: str, update_references: bool):
     # Update the names of all of the meshes
-    for obj in bpy.data.objects:
-        if obj.type == "MESH":
-            obj_props = obj.nusiq_mcblend_object_properties
-            if obj_props.uv_group == uv_group.name:
-                obj_props.uv_group = new_name
+    if update_references:
+        for obj in bpy.data.objects:
+            if obj.type == "MESH":
+                obj_props = obj.nusiq_mcblend_object_properties
+                if obj_props.uv_group == uv_group.name:
+                    obj_props.uv_group = new_name
     # Update the name of the UV group
     uv_group['name'] = new_name
 
@@ -206,6 +207,12 @@ def _set_uv_group_name(self, value):
     # Empty name is no allowed
     if value == '':
         return
+
+    # Objects use '' as the UV-group name when they have no uv-group.
+    # The '' is also the default value of the UV-group (but it's instantly
+    # changed to something else on creation). This prevents assigning all
+    # of the object without an UV group to newly added UV-group.
+    update_references = 'name' in self
 
     # If name already in use rename the other uv group
     for other_group in groups:
@@ -225,7 +232,7 @@ def _set_uv_group_name(self, value):
             other_new_name = get_unused_uv_group_name(base_name, i)
             _update_uv_group_name(other_group, other_new_name)
             break
-    _update_uv_group_name(self, value)
+        _update_uv_group_name(self, value, update_references)
 
 def _get_uv_group_name(self):
     if 'name' not in self:
