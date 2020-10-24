@@ -218,6 +218,12 @@ class OBJECT_OT_NusiqMcblendUvGroupOperator(bpy.types.Operator):
         self.report(
             {'INFO'},
             f'Set UV group of selected objects to {self.uv_groups_enum}.')
+
+        # The object properties display the property edited by this operator
+        # redraw it.
+        for area in context.screen.areas:
+            if area.type == 'PROPERTIES':
+                area.tag_redraw()
         return {'FINISHED'}
 
 class OBJECT_OT_NusiqMcblendClearUvGroupOperator(bpy.types.Operator):
@@ -243,6 +249,12 @@ class OBJECT_OT_NusiqMcblendClearUvGroupOperator(bpy.types.Operator):
             if obj.type == 'MESH':
                 obj.nusiq_mcblend_object_properties.uv_group = ''
         self.report({'INFO'}, 'Cleared UV group of selected objects.')
+
+        # The object properties display the property edited by this operator
+        # redraw it.
+        for area in context.screen.areas:
+            if area.type == 'PROPERTIES':
+                area.tag_redraw()
         return {'FINISHED'}
 
 # Mirror property
@@ -288,6 +300,12 @@ class OBJECT_OT_NusiqMcblendToggleMirrorOperator(bpy.types.Operator):
                         ).mirror = True
             self.report({'INFO'}, 'Enabled the mirror for generating UV for '
                 'selected objects.')
+
+        # The object properties display the property edited by this operator
+        # redraw it.
+        for area in context.screen.areas:
+            if area.type == 'PROPERTIES':
+                area.tag_redraw()
         return {'FINISHED'}
 
 # is_bone property
@@ -335,6 +353,11 @@ class OBJECT_OT_NusiqMcblendToggleIsBoneOperator(bpy.types.Operator):
                     obj.nusiq_mcblend_object_properties.is_bone = True
             self.report({'INFO'}, 'Marked selected objects to export as bones')
 
+        # The object properties display the property edited by this operator
+        # redraw it.
+        for area in context.screen.areas:
+            if area.type == 'PROPERTIES':
+                area.tag_redraw()
         return {'FINISHED'}
 
 # Inflate property
