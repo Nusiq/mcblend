@@ -1015,14 +1015,6 @@ class OBJECT_OT_NusiqMcblendExportUvGroupOperator(
         self.report({'INFO'}, f'UV-group saved in {self.filepath}.')
         return {'FINISHED'}
 
-def menu_func_nusiq_mcblend_export_uv_group(self, context):
-    '''Registers ExportUvGroup operator to the F3 menu.'''
-    # pylint: disable=unused-argument
-    self.layout.operator(
-        OBJECT_OT_NusiqMcblendExportUvGroupOperator.bl_idname,
-        text="Mcblend: Export UV-group"
-    )
-
 # UV Mask exporter
 class OBJECT_OT_NusiqMcblendImportUvGroupOperator(bpy.types.Operator, ImportHelper):
     '''Operator used for importing Minecraft models to Blender.'''
@@ -1324,12 +1316,5 @@ class OBJECT_OT_NusiqMcblendImportUvGroupOperator(bpy.types.Operator, ImportHelp
         # If something didn't load propertly also display a warning
         if loading_warning is not None:
             self.report({'WARNING'}, loading_warning)
+        context.area.tag_redraw()
         return {'FINISHED'}
-
-def menu_func_nusiq_mcblend_import_uv_group(self, context):
-    '''Registers ImportUvGroup operator to the F3 menu.'''
-    # pylint: disable=unused-argument
-    self.layout.operator(
-        OBJECT_OT_NusiqMcblendImportUvGroupOperator.bl_idname,
-        text="Mcblend: Import UV-group"
-    )

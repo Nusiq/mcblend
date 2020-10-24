@@ -298,12 +298,17 @@ class OBJECT_PT_NusiqMcblendUVGroupPanel(bpy.types.Panel):
         '''Draws whole UV-group panel.'''
         col = self.layout.column(align=True)
 
-        row = col.row()
 
         # Add group
+        row = col.row()
         row.operator(
             "object.nusiq_mcblend_add_uv_group", text="New UV group",
             icon='ADD'
+        )
+        row_import_export = col.row()
+        row_import_export.operator(
+            "object.nusiq_mcblend_import_uv_group_operator",
+            text="Import UV group", icon='IMPORT'
         )
         active_uv_group_id = bpy.context.scene.nusiq_mcblend_active_uv_group
         uv_groups = bpy.context.scene.nusiq_mcblend_uv_groups
@@ -320,6 +325,10 @@ class OBJECT_PT_NusiqMcblendUVGroupPanel(bpy.types.Panel):
             row.operator(
                 "object.nusiq_mcblend_remove_uv_group",
                 text="Delete this UV group", icon='X')
+            row_import_export.operator(
+                "object.nusiq_mcblend_export_uv_group_operator",
+                text="Export UV group", icon='EXPORT'
+            )
             # Select side
             row = col.row()
             row.label(text='Side:')
