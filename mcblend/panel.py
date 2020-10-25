@@ -4,6 +4,8 @@ This module contains all of the panels for mcblend GUI.
 # don't import future annotations Blender needs that
 from typing import List, Optional
 from dataclasses import dataclass
+from .custom_properties import EffectTypes
+
 
 import bpy
 from bpy.props import (
@@ -25,14 +27,14 @@ class OBJECT_UL_NusiqMcblendUVGroupList(bpy.types.UIList):
         '''
         Drawing OBJECT_NusiqMcblendUvGroupProperties in a list.
 
-        - `context` - the contexts of operator
-        - `layout: bpy.types.UILayout` - layout in which the object is drawn
-        - `data` - the RNA object containing the collection
-        - `item` - the item currently drawn in the collection
-        - `icon` - not used - "the "computed" icon for the item" (?)
-        - `active_data` - the RNA object containing the active property for the
+        :param context: the contexts of operator
+        :param layout: layout in which the object is drawn
+        :param data: the RNA object containing the collection
+        :param item: the item currently drawn in the collection
+        :param icon: not used - "the "computed" icon for the item" (?)
+        :param active_data: the RNA object containing the active property for the
           collection.
-        - `active_propname` - the name of the active property.
+        :param active_propname: the name of the active property.
 
         For more info see the UI Template called: "UI List Simple".
         '''
@@ -366,6 +368,97 @@ class OBJECT_PT_NusiqMcblendUVGroupPanel(bpy.types.Panel):
                     else:
                         break
 
+# Event group panel
+class OBJECT_UL_NusiqMcblendEventsList(bpy.types.UIList):
+    '''GUI item used for drawing list of names of events.'''
+    def draw_item(
+            self, context, layout, data, item, icon, active_data,
+            active_propname):
+        '''
+        
+        Drawing OBJECT_NusiqMcblendEventGroupProperties in a list.
+
+        :param context: the contexts of operator
+        :param layout: layout in which the object is drawn
+        :param data: the RNA object containing the collection
+        :param item: the item currently drawn in the collection
+        :param icon: not used - "the "computed" icon for the item" (?)
+        :param active_data: the RNA object containing the active property for the
+          collection.
+        :param active_propname: the name of the active property.
+        '''
+        # pylint: disable=arguments-differ, unused-argument
+        if self.layout_type in {'DEFAULT', 'COMPACT', 'CENTER'}:
+            # No rename functionality:
+            # layout.label(text=item.name, translate=False)
+
+            # With rename functionality:
+            layout.prop(item, "name", text="", emboss=False)
+
+class OBJECT_PT_NusiqMcblendEventsPanel(bpy.types.Panel):
+    '''Panel used for editing events.'''
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = 'scene'
+    bl_label = "Mcblend events"
+
+
+    def draw_effect(self, effect, index: int, col: bpy.types.UILayout):
+        # TODO - docstring
+
+        # If parent is collapsed don't draw anything
+        box = col.box()
+        col = box.column()
+        row = col.row()
+        row.label(text=f'{effect.effect_type}')
+
+        # Delete button
+        op_props = row.operator(
+            "object.nusiq_mcblend_remove_effect", icon='X', text='')
+        op_props.effect_index = index
+        if effect.effect_type == EffectTypes.PARTICLE_EFFECT.value:
+            col.prop(effect, "effect", text="Effect")
+            col.prop(effect, "locator", text="Locator")
+            col.prop(effect, "pre_effect_script", text="Pre effect script")
+            col.prop(effect, "bind_to_actor", text="Bind to actor")
+        elif effect.effect_type == EffectTypes.SOUND_EFFECT.value:
+            col.prop(effect, "effect", text="Effect")
+
+    def draw(self, context):
+        '''Draws whole event group panel.'''
+        col = self.layout.column(align=True)
+        row = col.row()
+
+        active_animation_id = context.scene.nusiq_mcblend_active_animation
+        animations = context.scene.nusiq_mcblend_animations
+        if 0 <= active_animation_id < len(animations):
+            active_animation = animations[active_animation_id]
+            active_event_id = active_animation.active_event
+            events = active_animation.events
+            col.template_list(
+                listtype_name="OBJECT_UL_NusiqMcblendEventsList",
+                list_id="", dataptr=active_animation, propname="events",
+                active_dataptr=active_animation,
+                active_propname="active_event")
+
+            row.operator(
+                "object.nusiq_mcblend_add_event", text="New event",
+                icon='ADD')
+
+            if 0 <= active_event_id < len(events):
+                row.operator(
+                    "object.nusiq_mcblend_remove_event",
+                    text="Delete this UV group", icon='X')
+                event = events[active_event_id]
+                effects = event.effects
+                col.operator_menu_enum(
+                    "object.nusiq_mcblend_add_effect", "effect_type",
+                    text="Add effect", icon="ADD")
+                if len(effects) > 0:
+                    for i, effect in enumerate(effects):
+                        col.separator(factor=0.5)
+                        self.draw_effect(effect, i, col)
+
 # Custom object properties panel
 class OBJECT_PT_NusiqMcblendObjectPropertiesPanel(bpy.types.Panel):
     '''Panel used for editing custom model object properties.'''
@@ -390,7 +483,6 @@ class OBJECT_PT_NusiqMcblendObjectPropertiesPanel(bpy.types.Panel):
             col.prop(object_properties, "is_bone", text="Export as bone")
             if context.object.type == 'MESH':
                 col.prop(object_properties, "mirror", text="Mirror")
-                # TODO - add button to add/remove UV group
                 if object_properties.uv_group != '':
                     col.label(text=f'UV Group: {object_properties.uv_group}')
                 else:

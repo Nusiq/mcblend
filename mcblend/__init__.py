@@ -40,6 +40,11 @@ from .operator import (
 
     OBJECT_OT_NusiqMcblendExportUvGroupOperator,
     OBJECT_OT_NusiqMcblendImportUvGroupOperator,
+
+    OBJECT_OT_NusiqMcblendAddEvent,
+    OBJECT_OT_NusiqMcblendRemoveEvent,
+    OBJECT_OT_NusiqMcblendAddEffect,
+    OBJECT_OT_NusiqMcblendRemoveEffect,
 )
 from .custom_properties import (
     OBJECT_NusiqMcblendExporterProperties,
@@ -49,6 +54,8 @@ from .custom_properties import (
     OBJECT_NusiqMcblendColorProperties,
     OBJECT_NusiqMcblendUvMaskProperties,
     OBJECT_NusiqMcblendUvGroupProperties,
+    OBJECT_NusiqMcblendEffectProperties,
+    OBJECT_NusiqMcblendEventProperties,
 )
 
 from .panel import (
@@ -60,6 +67,8 @@ from .panel import (
     OBJECT_PT_NusiqMcblendImportPanel,
     OBJECT_PT_NusiqMcblendUVGroupPanel,
     OBJECT_UL_NusiqMcblendUVGroupList,
+    OBJECT_PT_NusiqMcblendEventsPanel,
+    OBJECT_UL_NusiqMcblendEventsList,
 )
 
 
@@ -77,6 +86,9 @@ bl_info = {
 
 classes = (
     OBJECT_NusiqMcblendExporterProperties,
+
+    OBJECT_NusiqMcblendEffectProperties,
+    OBJECT_NusiqMcblendEventProperties,
     OBJECT_NusiqMcblendAnimationProperties,
 
     OBJECT_PT_NusiqMcblendObjectPropertiesPanel,
@@ -97,6 +109,15 @@ classes = (
     OBJECT_PT_NusiqMcblendImportPanel,
     OBJECT_PT_NusiqMcblendUVGroupPanel,
     OBJECT_UL_NusiqMcblendUVGroupList,
+
+
+    OBJECT_OT_NusiqMcblendAddEvent,
+    OBJECT_OT_NusiqMcblendRemoveEvent,
+    OBJECT_OT_NusiqMcblendAddEffect,
+    OBJECT_OT_NusiqMcblendRemoveEffect,
+    OBJECT_PT_NusiqMcblendEventsPanel,
+    OBJECT_UL_NusiqMcblendEventsList,
+
 
     OBJECT_OT_NusiqMcblendListAnimations,
     OBJECT_OT_NusiqMcblendAddAnimation,
