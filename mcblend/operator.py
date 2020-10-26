@@ -15,7 +15,7 @@ from bpy.props import (
 from bpy_extras.io_utils import ExportHelper, ImportHelper
 
 from .custom_properties import (
-    EffectTypes, get_unused_event_name, list_effect_types_as_blender_enum)
+    get_unused_event_name, list_effect_types_as_blender_enum)
 from .operator_func.common import inflate_objects
 from .operator_func import (
     export_model, export_animation, set_uvs, round_dimensions, import_model)
@@ -487,7 +487,7 @@ def menu_func_nusiq_mcblend_import(self, context):
         OBJECT_OT_NusiqMcblendImport.bl_idname, text="Mcblend: Import model"
     )
 
-def save_animation_frame_properties(animation, context):
+def save_animation_properties(animation, context):
     '''
     Saves animation properties from context to
     OBJECT_NusiqMcblendAnimationProperties object.
@@ -496,7 +496,13 @@ def save_animation_frame_properties(animation, context):
     animation.frame_end = context.scene.frame_end
     animation.frame_current = context.scene.frame_current
 
-def load_animation_frame_properties(animation, context):
+    animation.timeline_markers.clear()
+    for timeline_marker in context.scene.timeline_markers:
+        anim_timeline_marker = animation.timeline_markers.add()
+        anim_timeline_marker.name = timeline_marker.name
+        anim_timeline_marker.frame = timeline_marker.frame
+
+def load_animation_properties(animation, context):
     '''
     Saves animation properties from OBJECT_NusiqMcblendAnimationProperties
     object to the context.
@@ -504,6 +510,12 @@ def load_animation_frame_properties(animation, context):
     context.scene.frame_start = animation.frame_start
     context.scene.frame_end = animation.frame_end
     context.scene.frame_current = animation.frame_current
+
+    context.scene.timeline_markers.clear()
+    for anim_timeline_marker in animation.timeline_markers:
+        context.scene.timeline_markers.new(
+            anim_timeline_marker.name,
+            frame=anim_timeline_marker.frame)
 
 class OBJECT_OT_NusiqMcblendListAnimations(bpy.types.Operator):
     '''
@@ -535,13 +547,13 @@ class OBJECT_OT_NusiqMcblendListAnimations(bpy.types.Operator):
         len_anims = len(context.scene.nusiq_mcblend_animations)
         curr_anim_id = context.scene.nusiq_mcblend_active_animation
         if 0 <= curr_anim_id < len_anims:
-            save_animation_frame_properties(
+            save_animation_properties(
                 context.scene.nusiq_mcblend_animations[curr_anim_id], context)
 
         # Set new animation and load its state
         new_anim_id=int(self.animations_enum)
         context.scene.nusiq_mcblend_active_animation=new_anim_id
-        load_animation_frame_properties(
+        load_animation_properties(
                 context.scene.nusiq_mcblend_animations[new_anim_id], context)
         return {'FINISHED'}
 
@@ -556,8 +568,9 @@ class OBJECT_OT_NusiqMcblendAddAnimation(bpy.types.Operator):
         len_anims = len(context.scene.nusiq_mcblend_animations)
         curr_anim_id = context.scene.nusiq_mcblend_active_animation
         if 0 <= curr_anim_id < len_anims:
-            save_animation_frame_properties(
+            save_animation_properties(
                 context.scene.nusiq_mcblend_animations[curr_anim_id], context)
+            context.scene.timeline_markers.clear()
 
         # Add new animation and set its properties
         animation_new = context.scene.nusiq_mcblend_animations.add()
@@ -598,7 +611,7 @@ class OBJECT_OT_NusiqMcblendRemoveAnimation(bpy.types.Operator):
         # Load data from new active animation
         curr_anim_id=context.scene.nusiq_mcblend_active_animation
         if 0 <= curr_anim_id < len_anims:
-            load_animation_frame_properties(
+            load_animation_properties(
                 context.scene.nusiq_mcblend_animations[curr_anim_id], context)
 
         # The object properties display the property edited by this operator

@@ -48,6 +48,7 @@ from .operator import (
 )
 from .custom_properties import (
     OBJECT_NusiqMcblendExporterProperties,
+    OBJECT_NusiqMcblendTimelineMarkerProperties,
     OBJECT_NusiqMcblendAnimationProperties,
     OBJECT_NusiqMcblendObjectProperties,
     OBJECT_NusiqMcblendStripeProperties,
@@ -89,6 +90,7 @@ classes = (
 
     OBJECT_NusiqMcblendEffectProperties,
     OBJECT_NusiqMcblendEventProperties,
+    OBJECT_NusiqMcblendTimelineMarkerProperties,
     OBJECT_NusiqMcblendAnimationProperties,
 
     OBJECT_PT_NusiqMcblendObjectPropertiesPanel,

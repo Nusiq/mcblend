@@ -452,6 +452,19 @@ class OBJECT_NusiqMcblendEventProperties(bpy.types.PropertyGroup):
 
 
 # Animation properties
+class OBJECT_NusiqMcblendTimelineMarkerProperties(bpy.types.PropertyGroup):
+    '''Saves the data about a timeline marker.'''
+    name: StringProperty(  # type: ignore
+        name="Name",
+        description="Name of the timeline marker.", default="marker",
+        maxlen=1024
+    )
+    frame: IntProperty(  # type: ignore
+        name="Frame",
+        description="The frame of the timeline marker.",
+        default=0
+    )
+
 class OBJECT_NusiqMcblendAnimationProperties(bpy.types.PropertyGroup):
     '''Properties of an animation template.'''
     name: StringProperty(  # type: ignore
@@ -502,8 +515,14 @@ class OBJECT_NusiqMcblendAnimationProperties(bpy.types.PropertyGroup):
         type=OBJECT_NusiqMcblendEventProperties, name='Events',
         description=(
             "Events of this animation used to trigger sound- and "
-            "particle- effects")
+            "particle- effects"
         )
+    )
+    timeline_markers: CollectionProperty(  # type: ignore
+        type=OBJECT_NusiqMcblendTimelineMarkerProperties, name='Timeline Markers',
+        description='Timeline markers related to this animation.'
+    )
+
 
 # Mcblend properties
 class OBJECT_NusiqMcblendExporterProperties(bpy.types.PropertyGroup):
