@@ -9,7 +9,6 @@ from itertools import tee, islice
 
 import bpy
 import bpy_types
-import mathutils
 
 import numpy as np
 from .json_tools import get_vect_json
@@ -175,6 +174,8 @@ class AnimationExport:
     :param anim_time_update: Value of anim_time_update property of Minecraft
         animation.
     :param fps: The FPS setting of the scene.
+    :param effect_events: The events of the animation from
+        OBJECT_NusiqMcblendEventProperties.
     :param original_pose: Optional - the base pose of the animated object.
         The pose is empty by default after object creation until it's loaded.
     :param single_frame: Optional - whether the animation should be exported as
@@ -188,9 +189,12 @@ class AnimationExport:
     loop_animation: bool
     anim_time_update: str
     fps: float
+    effect_events: Dict[str, Tuple[List[Dict], List[Dict]]]
     original_pose: Pose = field(default_factory=Pose)
     single_frame: bool = field(default_factory=bool)  # bool() = False
     poses: Dict[int, Pose] = field(default_factory=dict)
+    sound_effects: Dict[int, List[Dict]] = field(default_factory=dict)
+    particle_effects: Dict[int, List[Dict]] = field(default_factory=dict)
 
     def load_poses(
             self, object_properties: McblendObjectGroup,
@@ -223,6 +227,15 @@ class AnimationExport:
                     curr_pose.load_poses(object_properties)
                     self.poses[next_keyframe] = curr_pose
                     next_keyframe = _get_next_keyframe(context)
+                # Load sound effects and particle effects
+                for timeline_marker in context.scene.timeline_markers:
+                    if timeline_marker.name not in self.effect_events:
+                        continue
+                    sound, particle = self.effect_events[timeline_marker.name]
+                    if len(sound) > 0:
+                        self.sound_effects[timeline_marker.frame] = sound
+                    if len(particle) > 0:
+                        self.particle_effects[timeline_marker.frame] = particle
         finally:
             context.scene.frame_set(original_frame)
 
@@ -258,6 +271,22 @@ class AnimationExport:
                 "animation_length": self.length,
                 "bones": bones
             }
+            if len(self.particle_effects) > 0:
+                particle_effects = {}
+                for key_frame, value in self.particle_effects.items():
+                    timestamp = str(round((key_frame-1) / self.fps, 4))
+                    particle_effects[timestamp] = value
+                result["animations"][f"animation.{self.name}"][
+                    'particle_effects'] = particle_effects
+
+            if len(self.sound_effects) > 0:
+                sound_effects = {}
+                for key_frame, value in self.sound_effects.items():
+                    timestamp = str(round((key_frame-1) / self.fps, 4))
+                    sound_effects[timestamp] = value
+                result["animations"][f"animation.{self.name}"][
+                    'sound_effects'] = sound_effects
+
             data = result["animations"][f"animation.{self.name}"]
             if self.loop_animation:
                 data['loop'] = True

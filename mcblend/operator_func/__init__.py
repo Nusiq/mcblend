@@ -64,7 +64,8 @@ def export_animation(
         loop_animation=anim_data.loop,
         single_frame=anim_data.single_frame,
         anim_time_update=anim_data.anim_time_update,
-        fps=context.scene.render.fps
+        fps=context.scene.render.fps,
+        effect_events=anim_data.get_events_dict()
     )
     animation.load_poses(object_properties, context)
     return animation.json(old_json=old_dict)

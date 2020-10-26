@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 import bpy
 from bpy.props import (
@@ -343,7 +343,6 @@ class OBJECT_NusiqMcblendEffectProperties(bpy.types.PropertyGroup):
     '''
     An effect of an event (sound or particles)
     '''
-    # TODO - implement function returning values for the enum property
     effect_type: EnumProperty(  # type: ignore
         items=list_effect_types_as_blender_enum,
         name='Effect type')
@@ -450,6 +449,28 @@ class OBJECT_NusiqMcblendEventProperties(bpy.types.PropertyGroup):
         description='Collection of effects triggered of this event.',
         name='Sound effects')
 
+    def get_effects_dict(self) -> Tuple[List[Dict], List[Dict]]:
+        '''
+        Returns tuple of two lists (sound effects, particle effects).
+        '''
+        sound_effects: List[Dict] = []
+        particle_effects: List[Dict] = []
+        for effect in self.effects:
+            if effect.effect_type == EffectTypes.PARTICLE_EFFECT.value:
+                result = {"effect": effect.effect}
+                if effect.locator != '':
+                    result["locator"] = effect.locator
+                if effect.pre_effect_script != '':
+                    result["pre_effect_script"] = (
+                        effect.pre_effect_script)
+                if not effect.bind_to_actor:
+                    result["bind_to_actor"] = effect.bind_to_actor
+                particle_effects.append(result)
+            elif effect.effect_type == EffectTypes.SOUND_EFFECT.value:
+                sound_effects.append({"effect": effect.effect})
+            else:
+                raise ValueError('Unknown effect type.')
+        return sound_effects, particle_effects
 
 # Animation properties
 class OBJECT_NusiqMcblendTimelineMarkerProperties(bpy.types.PropertyGroup):
@@ -523,6 +544,16 @@ class OBJECT_NusiqMcblendAnimationProperties(bpy.types.PropertyGroup):
         description='Timeline markers related to this animation.'
     )
 
+    def get_events_dict(self) -> Dict[str, Tuple[List[Dict], List[Dict]]]:
+        '''
+        Returns dictionary with events data.
+        key - name of the event
+        value - tuple with two lists (sound effects, particle effects)
+        '''
+        return {
+            event.name: event.get_effects_dict()
+            for event in self.events
+        }
 
 # Mcblend properties
 class OBJECT_NusiqMcblendExporterProperties(bpy.types.PropertyGroup):
