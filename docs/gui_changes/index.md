@@ -3,6 +3,7 @@ Mcblend adds new panels to Blender GUI:
 
 - _Mcblend_ tab on [sidebar](#sidebar),
 - _Mcblend UV groups_ tab in the [Scene Properties](#scene-properties),
+- _Mcblend events_ tab in the [Scene Properties](#scene-properties),
 - _Mcblend object properties_ in the [Object Properties](#object-properties),
 - _Mcblend: Export model_ and _Mcblend: Export animation_ in
   the export menu,

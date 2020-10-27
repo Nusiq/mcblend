@@ -404,7 +404,7 @@ class OBJECT_PT_NusiqMcblendEventsPanel(bpy.types.Panel):
 
 
     def draw_effect(self, effect, index: int, col: bpy.types.UILayout):
-        # TODO - docstring
+        '''Draw single effect in the event'''
 
         # If parent is collapsed don't draw anything
         box = col.box()
@@ -429,35 +429,32 @@ class OBJECT_PT_NusiqMcblendEventsPanel(bpy.types.Panel):
         col = self.layout.column(align=True)
         row = col.row()
 
-        active_animation_id = context.scene.nusiq_mcblend_active_animation
-        animations = context.scene.nusiq_mcblend_animations
-        if 0 <= active_animation_id < len(animations):
-            active_animation = animations[active_animation_id]
-            active_event_id = active_animation.active_event
-            events = active_animation.events
-            col.template_list(
-                listtype_name="OBJECT_UL_NusiqMcblendEventsList",
-                list_id="", dataptr=active_animation, propname="events",
-                active_dataptr=active_animation,
-                active_propname="active_event")
+        events = bpy.context.scene.nusiq_mcblend_events
+        active_event_id = bpy.context.scene.nusiq_mcblend_active_event
+        col.template_list(
+            listtype_name="OBJECT_UL_NusiqMcblendEventsList",
+            list_id="",
+            dataptr=bpy.context.scene, propname="nusiq_mcblend_events",
+            active_dataptr=bpy.context.scene,
+            active_propname="nusiq_mcblend_active_event")
 
+        row.operator(
+            "object.nusiq_mcblend_add_event", text="New event",
+            icon='ADD')
+
+        if 0 <= active_event_id < len(events):
             row.operator(
-                "object.nusiq_mcblend_add_event", text="New event",
-                icon='ADD')
-
-            if 0 <= active_event_id < len(events):
-                row.operator(
-                    "object.nusiq_mcblend_remove_event",
-                    text="Delete this UV group", icon='X')
-                event = events[active_event_id]
-                effects = event.effects
-                col.operator_menu_enum(
-                    "object.nusiq_mcblend_add_effect", "effect_type",
-                    text="Add effect", icon="ADD")
-                if len(effects) > 0:
-                    for i, effect in enumerate(effects):
-                        col.separator(factor=0.5)
-                        self.draw_effect(effect, i, col)
+                "object.nusiq_mcblend_remove_event",
+                text="Delete this UV group", icon='X')
+            event = events[active_event_id]
+            effects = event.effects
+            col.operator_menu_enum(
+                "object.nusiq_mcblend_add_effect", "effect_type",
+                text="Add effect", icon="ADD")
+            if len(effects) > 0:
+                for i, effect in enumerate(effects):
+                    col.separator(factor=0.5)
+                    self.draw_effect(effect, i, col)
 
 # Custom object properties panel
 class OBJECT_PT_NusiqMcblendObjectPropertiesPanel(bpy.types.Panel):

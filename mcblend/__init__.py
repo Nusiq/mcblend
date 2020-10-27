@@ -165,6 +165,12 @@ def register():
         default=0)
     bpy.types.Scene.nusiq_mcblend_animations = CollectionProperty(
         type=OBJECT_NusiqMcblendAnimationProperties)
+    
+    # Events
+    bpy.types.Scene.nusiq_mcblend_events = CollectionProperty(
+        type=OBJECT_NusiqMcblendEventProperties)
+    bpy.types.Scene.nusiq_mcblend_active_event = IntProperty(
+        default=0)
 
     # UV Groups
     bpy.types.Scene.nusiq_mcblend_active_uv_group = IntProperty(

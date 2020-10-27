@@ -1388,71 +1388,45 @@ class OBJECT_OT_NusiqMcblendImportUvGroupOperator(bpy.types.Operator, ImportHelp
 
 # Events
 class OBJECT_OT_NusiqMcblendAddEvent(bpy.types.Operator):
-    '''Operator used for adding events to animations.'''
+    '''Operator used for adding events to scene.'''
     bl_idname = "object.nusiq_mcblend_add_event"
-    bl_label = '''Adds new event to active animation.'''
+    bl_label = '''Adds new event to scene.'''
     bl_options = {'UNDO'}
 
-    @classmethod
-    def poll(cls, context: bpy_types.Context):
-        if len(context.scene.nusiq_mcblend_animations) < 1:
-            return False
-        active_animation_id = context.scene.nusiq_mcblend_active_animation
-        animations = context.scene.nusiq_mcblend_animations
-        if not (0 <= active_animation_id < len(animations)):
-            return False
-        return True
-
     def execute(self, context):
-        active_animation_id = context.scene.nusiq_mcblend_active_animation
-        animations = context.scene.nusiq_mcblend_animations
-        active_animation = animations[active_animation_id]
-        event_new = active_animation.events.add()
+        event_new = bpy.context.scene.nusiq_mcblend_events.add()
         event_new.name = get_unused_event_name('event')
         return {'FINISHED'}
 
 class OBJECT_OT_NusiqMcblendRemoveEvent(bpy.types.Operator):
-    '''Operator used for removing events from animations.'''
+    '''Operator used for removing events.'''
     bl_idname = "object.nusiq_mcblend_remove_event"
-    bl_label = '''Removes event from animation.'''
+    bl_label = '''Removes event from scene.'''
     bl_options = {'UNDO'}
 
     @classmethod
     def poll(cls, context: bpy_types.Context):
-        if len(context.scene.nusiq_mcblend_animations) < 1:
-            return False
-        active_animation_id = context.scene.nusiq_mcblend_active_animation
-        animations = context.scene.nusiq_mcblend_animations
-        if not (0 <= active_animation_id < len(animations)):
-            return False
-        active_animation = animations[active_animation_id]
-        active_event_id = active_animation.active_event
-        events = active_animation.events
+        events = bpy.context.scene.nusiq_mcblend_events
+        active_event_id = bpy.context.scene.nusiq_mcblend_active_event
         if not (0 <= active_event_id < len(events)):
             return False
         return True
 
     def execute(self, context):
-        active_animation_id = context.scene.nusiq_mcblend_active_animation
-        animations = context.scene.nusiq_mcblend_animations
-        active_animation = animations[active_animation_id]
-        active_event_id = active_animation.active_event
-
+        active_event_id = bpy.context.scene.nusiq_mcblend_active_event
         # Remove animation
-        active_animation.events.remove(
+        bpy.context.scene.nusiq_mcblend_events.remove(
             active_event_id)
 
         # Set new active event
         if active_event_id > 0:
-            active_animation.active_event=active_event_id-1
+            bpy.context.scene.nusiq_mcblend_active_event=active_event_id-1
         return {'FINISHED'}
-
-
 
 class OBJECT_OT_NusiqMcblendAddEffect(bpy.types.Operator):
     '''Operator used for adding effects to events.'''
     bl_idname = "object.nusiq_mcblend_add_effect"
-    bl_label = '''Adds new effect to active event of active animation.'''
+    bl_label = '''Adds new effect to active event.'''
     bl_options = {'UNDO'}
 
     effect_type: EnumProperty(  # type: ignore
@@ -1461,51 +1435,33 @@ class OBJECT_OT_NusiqMcblendAddEffect(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context: bpy_types.Context):
-        if len(context.scene.nusiq_mcblend_animations) < 1:
-            return False
-        active_animation_id = context.scene.nusiq_mcblend_active_animation
-        animations = context.scene.nusiq_mcblend_animations
-        if not (0 <= active_animation_id < len(animations)):
-            return False
-        active_animation = animations[active_animation_id]
-        active_event_id = active_animation.active_event
-        events = active_animation.events
+        events = bpy.context.scene.nusiq_mcblend_events
+        active_event_id = bpy.context.scene.nusiq_mcblend_active_event
         if not (0 <= active_event_id < len(events)):
             return False
         return True
 
     def execute(self, context):
-        active_animation_id = context.scene.nusiq_mcblend_active_animation
-        animations = context.scene.nusiq_mcblend_animations
-        active_animation = animations[active_animation_id]
-        active_event_id = active_animation.active_event
-        events = active_animation.events
+        events = bpy.context.scene.nusiq_mcblend_events
+        active_event_id = bpy.context.scene.nusiq_mcblend_active_event
         event = events[active_event_id]
-
 
         effect = event.effects.add()
         effect.effect_type = self.effect_type
         return {'FINISHED'}
 
 class OBJECT_OT_NusiqMcblendRemoveEffect(bpy.types.Operator):
-    '''Operator used for removeing effects effects frp, events.'''
+    '''Operator used for removeing effects effects from events.'''
     bl_idname = "object.nusiq_mcblend_remove_effect"
-    bl_label = '''Remove effect from active event of active animation.'''
+    bl_label = '''Remove effect from active event.'''
     bl_options = {'UNDO'}
 
     effect_index: IntProperty()  # type: ignore
 
     @classmethod
     def poll(cls, context: bpy_types.Context):
-        if len(context.scene.nusiq_mcblend_animations) < 1:
-            return False
-        active_animation_id = context.scene.nusiq_mcblend_active_animation
-        animations = context.scene.nusiq_mcblend_animations
-        if not (0 <= active_animation_id < len(animations)):
-            return False
-        active_animation = animations[active_animation_id]
-        active_event_id = active_animation.active_event
-        events = active_animation.events
+        events = bpy.context.scene.nusiq_mcblend_events
+        active_event_id = bpy.context.scene.nusiq_mcblend_active_event
         if not (0 <= active_event_id < len(events)):
             return False
         event = events[active_event_id]
@@ -1515,11 +1471,8 @@ class OBJECT_OT_NusiqMcblendRemoveEffect(bpy.types.Operator):
         return True
 
     def execute(self, context):
-        active_animation_id = context.scene.nusiq_mcblend_active_animation
-        animations = context.scene.nusiq_mcblend_animations
-        active_animation = animations[active_animation_id]
-        active_event_id = active_animation.active_event
-        events = active_animation.events
+        events = bpy.context.scene.nusiq_mcblend_events
+        active_event_id = bpy.context.scene.nusiq_mcblend_active_event
         event = events[active_event_id]
         event.effects.remove(self.effect_index)
 

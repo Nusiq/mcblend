@@ -376,11 +376,7 @@ def get_unused_event_name(base_name: str, i=1):
     This function assumes there is an active event and active animation. It
     will throw errors without asserting these conditions.
     '''
-    active_animation_id = bpy.context.scene.nusiq_mcblend_active_animation
-    animations = bpy.context.scene.nusiq_mcblend_animations
-    active_animation = animations[active_animation_id]
-    active_event_id = active_animation.active_event
-    events = active_animation.events
+    events = bpy.context.scene.nusiq_mcblend_events
 
     name = base_name
     while name in events.keys():
@@ -396,10 +392,7 @@ def _update_event_name(event, new_name: str):
     event['name'] = new_name
 
 def _set_event_name(self, value):
-    active_animation_id = bpy.context.scene.nusiq_mcblend_active_animation
-    animations = bpy.context.scene.nusiq_mcblend_animations
-    active_animation = animations[active_animation_id]
-    events = active_animation.events
+    events = bpy.context.scene.nusiq_mcblend_events
 
     # Empty name is no allowed
     if value == '':
@@ -433,7 +426,7 @@ def _get_event_name(self):
 
 class OBJECT_NusiqMcblendEventProperties(bpy.types.PropertyGroup):
     '''
-    A collection of sound- and particle- events.
+    A collection of sound and particle events.
     '''
     name: StringProperty(  # type: ignore
         name="Name",
@@ -527,33 +520,11 @@ class OBJECT_NusiqMcblendAnimationProperties(bpy.types.PropertyGroup):
         default=100,
         min=0
     )
-    active_event: IntProperty(  # type: ignore
-        name="Frame current",
-        description=(
-            "Used to mark active event in the animation for GUI editing."),
-        default=0)
-    events: CollectionProperty(  # type: ignore
-        type=OBJECT_NusiqMcblendEventProperties, name='Events',
-        description=(
-            "Events of this animation used to trigger sound- and "
-            "particle- effects"
-        )
-    )
     timeline_markers: CollectionProperty(  # type: ignore
         type=OBJECT_NusiqMcblendTimelineMarkerProperties, name='Timeline Markers',
         description='Timeline markers related to this animation.'
     )
 
-    def get_events_dict(self) -> Dict[str, Tuple[List[Dict], List[Dict]]]:
-        '''
-        Returns dictionary with events data.
-        key - name of the event
-        value - tuple with two lists (sound effects, particle effects)
-        '''
-        return {
-            event.name: event.get_effects_dict()
-            for event in self.events
-        }
 
 # Mcblend properties
 class OBJECT_NusiqMcblendExporterProperties(bpy.types.PropertyGroup):

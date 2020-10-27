@@ -65,7 +65,10 @@ def export_animation(
         single_frame=anim_data.single_frame,
         anim_time_update=anim_data.anim_time_update,
         fps=context.scene.render.fps,
-        effect_events=anim_data.get_events_dict()
+        effect_events={
+            event.name: event.get_effects_dict()
+            for event in context.scene.nusiq_mcblend_events
+        }
     )
     animation.load_poses(object_properties, context)
     return animation.json(old_json=old_dict)
