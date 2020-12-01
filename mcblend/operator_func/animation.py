@@ -116,6 +116,7 @@ class PoseBone(NamedTuple):
     location: np.array
     rotation: np.array
     scale: np.array
+    parent_name: Optional[str] = None
 
     def relative(self, original: PoseBone) -> PoseBone:
         '''
@@ -128,6 +129,7 @@ class PoseBone(NamedTuple):
             name=self.name, scale=self.scale / original.scale,
             location=self.location - original.location,
             rotation=self.rotation - original.rotation,
+            parent_name=original.parent_name
         )
 
 class Pose:
@@ -147,20 +149,21 @@ class Pose:
         for objprop in object_properties.values():
             if objprop.mctype in [MCObjType.BONE, MCObjType.BOTH]:
                 # Scale
-                scale = np.array(
-                    objprop.obj_matrix_world.to_scale()
-                )[[0, 2, 1]]
-                # Location
                 local_matrix = objprop.get_local_matrix(
-                    objprop.parent, normalize=True)
+                    objprop.parent, normalize=False)
+                scale = np.array(local_matrix.to_scale())[[0, 2, 1]]
+                # Location
                 location = np.array(local_matrix.to_translation())
                 location = location[[0, 2, 1]] * MINECRAFT_SCALE_FACTOR
                 # Rotation
                 rotation = objprop.get_mcrotation(objprop.parent)
+                if objprop.parent is not None:
+                    parent_name=objprop.parent.obj_name
+                else:
+                    parent_name=None
                 self.pose_bones[objprop.obj_name] = PoseBone(
                     name=objprop.obj_name, location=location, scale=scale,
-                    rotation=rotation
-                )
+                    rotation=rotation, parent_name=parent_name)
 
 @dataclass
 class AnimationExport:
@@ -311,15 +314,29 @@ class AnimationExport:
         )
         for key_frame in self.poses:
             # Get relative PoseBone with minimized rotation
+            original_pose_bone = self.original_pose.pose_bones[bone_name]
+            parent_name = original_pose_bone.parent_name
+
+            # Get original parent scale. Scaling the location with original
+            # parent scale allows to have issue #71 fixed and also being able
+            # to use scale in animations (issue #76) which was impossible to do
+            # after commit 19ef865943da7fde039bba7b7f50d1fa69a140b6 (the one
+            # which closed issue #71).
+            if parent_name in self.original_pose.pose_bones:
+                original_parent_pose_bone = self.original_pose.pose_bones[
+                    parent_name]
+                original_parent_scale = original_parent_pose_bone.scale
+            else:
+                original_parent_scale = np.ones(3)
             pose_bone = self.poses[key_frame].pose_bones[bone_name].relative(
-                self.original_pose.pose_bones[bone_name]
-            )
+                original_pose_bone)
             pose_bone = PoseBone(
-                name=pose_bone.name, scale=pose_bone.scale,
-                location=pose_bone.location, rotation=_pick_closest_rotation(
+                name=pose_bone.name,
+                scale=pose_bone.scale,
+                location=pose_bone.location * original_parent_scale,
+                rotation=_pick_closest_rotation(
                     pose_bone.rotation, prev_pose_bone.rotation,
-                    self.original_pose.pose_bones[bone_name].rotation
-                )
+                    original_pose_bone.rotation)
             )
             timestamp = str(round((key_frame-1) / self.fps, 4))
             poses.append({
