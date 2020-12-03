@@ -316,10 +316,13 @@ class EllipseMask(TwoPointSurfaceMask):
             mask[inside] = self.strength[0]
         else:
             mask[inside] = self.strength[1]
-            mask = np.interp(mask,
-                [np.min(mask[outside]), np.max(mask[outside])],
-                self.strength
-            )
+            try:
+                mask = np.interp(mask,
+                    [np.min(mask[outside]), np.max(mask[outside])],
+                    self.strength
+                )
+            except ValueError:  # when mask[outside] or is empty
+                pass
         mask=mask**self.expotent
         return mask[:, :, np.newaxis]
 
