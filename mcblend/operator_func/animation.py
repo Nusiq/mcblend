@@ -242,13 +242,17 @@ class AnimationExport:
         finally:
             context.scene.frame_set(original_frame)
 
-    def json(self, old_json: Optional[Dict] = None) -> Dict:
+    def json(
+            self, old_json: Optional[Dict]=None,
+            skip_rest_poses: bool=True) -> Dict:
         '''
         Returns the JSON dict with Minecraft animation. If JSON dict with
         valid animation file is passed to the function the function
         modifies it's content.
 
         :param old_json: The original animation file to write into.
+        :param skip_rest_poses: If true the exported animation won't contain
+            information about bones that remain in the rest pose.
         :returns: JSON dict with Minecraft animation.
         '''
         # Create result dict
@@ -261,7 +265,9 @@ class AnimationExport:
 
         bones: Dict = {}
         for bone_name in self.original_pose.pose_bones:
-            bones[bone_name] = self._json_bone(bone_name)
+            bone = self._json_bone(bone_name, skip_rest_poses)
+            if bone != {}:  # Nothing to export
+                bones[bone_name] = bone
 
         if self.single_frame:
             # Other properties don't apply
@@ -297,13 +303,13 @@ class AnimationExport:
                 data['anim_time_update'] = self.anim_time_update
         return result
 
-    def _json_bone(
-                self, bone_name: str
-        ) -> Dict:
+    def _json_bone(self, bone_name: str, skip_rest_pose: bool) -> Dict:
         '''
         Returns optimized JSON dict with an animation of single bone.
 
         :param bone_name: the name of the bone.
+        :param skip_rest_pose: whether the properties of the bone being in
+            its rest pose should be skipped.
         :returns: the part of animation with animation of a single bone.
         '''
         # t, rot, loc, scale
@@ -352,16 +358,23 @@ class AnimationExport:
         if not poses:  # If empty return empty animation
             return {'position': {}, 'rotation': {}, 'scale': {}}
         if self.single_frame:  # Returning single frame pose is easier
-            return {  # dictionary populated with 0 timestamp frame
-                'position': poses[0]['loc'],
-                'rotation': poses[0]['rot'],
-                'scale': poses[0]['scl']}
+            result = {}
+            loc, rot, scl = poses[0]['loc'], poses[0]['rot'], poses[0]['scl']
+            # Filter rest pose positions
+            if loc != [0, 0, 0] or not skip_rest_pose:
+                result['position'] = poses[0]['loc']
+            if rot != [0, 0, 0] or not skip_rest_pose:
+                result['rotation'] = poses[0]['rot']
+            if scl != [1, 1, 1] or not skip_rest_pose:
+                result['scale'] = poses[0]['scl']
+            return result
         bone: Dict = {  # dictionary populated with 0 timestamp frame
             'position': {poses[0]['t']: poses[0]['loc']},
             'rotation': {poses[0]['t']: poses[0]['rot']},
             'scale': {poses[0]['t']: poses[0]['scl']},
         }
-        # iterate in threes (previous, current , next)
+        # iterate in threes (previous, current , next), remove unnecessary
+        # items
         prev, curr, next_ = tee(poses, 3)
         for prv, crr, nxt in zip(
                 prev, islice(curr, 1, None), islice(next_, 2, None)
@@ -377,7 +390,26 @@ class AnimationExport:
         # Add last element unless there is only one (in which case it's already
         # added)
         if len(poses) > 1:
-            bone['scale'][poses[-1]['t']] = poses[-1]['scl']
-            bone['position'][poses[-1]['t']] = poses[-1]['loc']
             bone['rotation'][poses[-1]['t']] = poses[-1]['rot']
+            bone['position'][poses[-1]['t']] = poses[-1]['loc']
+            bone['scale'][poses[-1]['t']] = poses[-1]['scl']
+        # Filter rest pose positions
+        if skip_rest_pose:
+            for v in bone['position'].values():
+                if v != [0, 0, 0]:
+                    break  # found non-rest pose item
+            else:  # this is rest pose
+                del bone['position']
+
+            for v in bone['rotation'].values():
+                if v != [0, 0, 0]:
+                    break  # found non-rest pose item
+            else:  # this is rest pose
+                del bone['rotation']
+
+            for v in bone['scale'].values():
+                if v != [1, 1, 1]:
+                    break  # found non-rest pose item
+            else:  # this is rest pose
+                del bone['scale']
         return bone

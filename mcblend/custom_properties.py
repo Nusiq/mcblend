@@ -491,6 +491,13 @@ class OBJECT_NusiqMcblendAnimationProperties(bpy.types.PropertyGroup):
         description="Exports current pose as single frame animation",
         default=False,
     )
+    skip_rest_poses: BoolProperty(  # type: ignore
+        name="Skip rest poses",
+        description=(
+            "Whether bone transformations that represent a rest position "
+            "throughout the whole animation should be ignored."),
+        default=False,
+    )
     anim_time_update: StringProperty(  # type: ignore
         name="anim_time_update",
         description="Adds anim_time_update value unless is left empty",

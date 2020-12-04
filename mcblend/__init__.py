@@ -78,7 +78,7 @@ bl_info = {
     "author": "Artur",
     "description": "",
     "blender": (2, 80, 0),
-    "version": (6, 0, 2),  # COMPATIBILITY BREAKING CHANGE, NEW FEATURE, BUGFIX
+    "version": (6, 1, 0),  # COMPATIBILITY BREAKING CHANGE, NEW FEATURE, BUGFIX
     "location": "",
     "warning": "",
     "category": "Generic"

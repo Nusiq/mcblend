@@ -71,7 +71,8 @@ def export_animation(
         }
     )
     animation.load_poses(object_properties, context)
-    return animation.json(old_json=old_dict)
+    return animation.json(
+        old_json=old_dict, skip_rest_poses=anim_data.skip_rest_poses)
 
 def set_uvs(context: bpy_types.Context):
     '''

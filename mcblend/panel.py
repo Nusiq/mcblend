@@ -568,6 +568,7 @@ class OBJECT_PT_NusiqMcblendExportAnimationPanel(bpy.types.Panel):
 
             active_anim = anims[active_anim_id]
             col.prop(active_anim, "name", text="Name")
+            col.prop(active_anim, "skip_rest_poses", text="Skip rest poses")
             col.prop(active_anim, "single_frame", text="Export as pose")
             if active_anim.single_frame:
                 col.prop(bpy.context.scene, "frame_current", text="Frame")
