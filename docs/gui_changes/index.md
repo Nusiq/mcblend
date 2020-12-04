@@ -23,8 +23,10 @@ panels:
 
 ## Scene properties
 
-Scene properties tab has new panel called _Mcblend UV groups_. It is used for
-[creating](../uv_groups) and [customizing](../texture_customization) UV-groups.
+Scene properties tab has two new panels:
+
+- _Mcblend UV groups_ - used for [creating](../uv_groups) and [customizing](../texture_customization) UV-groups.
+- _Mcblend events_ - used for adding events for creating [sound- and particle-effects animations](../animating_effects).
 
 
 ![](../img/uv_groups_panel.png)
