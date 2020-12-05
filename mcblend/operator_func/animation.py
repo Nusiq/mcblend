@@ -291,6 +291,11 @@ class AnimationExport:
                 self.poses[original_frame] = pose
             else:
                 for keyframe in _get_keyframes(context):
+                    if (
+                        keyframe < context.scene.frame_start or
+                        keyframe > context.scene.frame_end
+                    ):
+                        continue  # skip frames out of range
                     context.scene.frame_set(keyframe)
                     curr_pose = Pose()
                     curr_pose.load_poses(object_properties)
