@@ -3,9 +3,10 @@ Functions related to exporting animations.
 '''
 from __future__ import annotations
 
-from typing import NamedTuple, Dict, Optional, List, Tuple
+from typing import NamedTuple, Dict, Optional, List, Tuple, Set
+import math
 from dataclasses import dataclass, field
-from itertools import tee, islice
+from itertools import cycle, tee, islice
 
 import bpy
 import bpy_types
@@ -78,7 +79,7 @@ def _pick_closest_rotation(
         return choice2
     return choice1
 
-def _get_next_keyframe(context: bpy_types.Context) -> Optional[int]:
+def _get_next_keyframe(context: bpy_types.Context) -> Optional[int]:  # TODO - this is old code. Remove it.
     '''
     Returns the next keyframe index from selected objects or None if there is
     no more keyframes to chose from until the end of animation.
@@ -109,6 +110,73 @@ def _get_next_keyframe(context: bpy_types.Context) -> Optional[int]:
     if next_keyframe is not None and next_keyframe > context.scene.frame_end:
         return None
     return next_keyframe
+
+def _get_keyframes(context: bpy_types.Context) -> List[int]:
+    '''
+    Lists keyframe numbers of the animation from keyframes of NLA tracks and
+    actions of selected objects.
+
+    :param context: the context of running the operator.
+    :returns: the list of the keyframes for the animation.
+    '''
+    def get_action_keyframes(action: bpy.types.Action) -> Set[int]:
+        '''Gets set of keyframes from an action.'''
+        if action.fcurves is None:
+            return set()
+        result: Set[int] = set()
+        for fcurve in action.fcurves:
+            if fcurve.keyframe_points is None:
+                continue
+            for keyframe_point in fcurve.keyframe_points:
+                result.add(round(keyframe_point.co[0]))
+        return result
+
+    keyframes: Set[int] = set()
+    for obj in context.selected_objects:
+        if obj.animation_data is None:
+            continue
+        if obj.animation_data.action is not None:
+            keyframes.update(get_action_keyframes(obj.animation_data.action))
+        if obj.animation_data.nla_tracks is None:
+            continue
+        for nla_track in obj.animation_data.nla_tracks:
+            if nla_track.mute:
+                continue
+            for strip in nla_track.strips:
+                if strip.type != 'CLIP':
+                    continue
+                strip_action_keyframes = get_action_keyframes(strip.action)
+                # Scale/strip the action data with the strip
+                # transformations
+                offset =  strip.frame_start
+                limit_down =  strip.action_frame_start
+                limit_up =  strip.action_frame_end
+                scale =  strip.scale
+                cycle_length = limit_up - limit_down
+                scaled_cycle_length = cycle_length * scale
+                repeat =  strip.repeat
+                transformed_keyframes: Set[int] = set()
+                for keyframe in sorted(strip_action_keyframes):
+                    if keyframe < limit_down or keyframe > limit_up:
+                        continue
+                    transformed_keyframe_base = keyframe * scale
+                    for i in range(math.ceil(repeat)):
+                        transformed_keyframe = (
+                            (i * scaled_cycle_length) +
+                            transformed_keyframe_base
+                        )
+                        if transformed_keyframe/scaled_cycle_length > repeat:
+                            # Can happen when we've got for example 4th
+                            # repeat but we only need 3.5
+                            break
+                        transformed_keyframe += offset
+                        transformed_keyframes.add(
+                            min(round(transformed_keyframe), strip.frame_end))
+                keyframes.update(transformed_keyframes)
+    return sorted(keyframes)  # Sorted list of ints
+
+
+
 
 class PoseBone(NamedTuple):
     '''Properties of a pose of single bone.'''
@@ -222,14 +290,11 @@ class AnimationExport:
                 # The frame value in the dictionary key doesn't really matter
                 self.poses[original_frame] = pose
             else:
-                # next_keyframe = _get_next_keyframe(context)
-                next_keyframe = context.scene.frame_start
-                while next_keyframe is not None:
-                    context.scene.frame_set(next_keyframe)
+                for keyframe in _get_keyframes(context):
+                    context.scene.frame_set(keyframe)
                     curr_pose = Pose()
                     curr_pose.load_poses(object_properties)
-                    self.poses[next_keyframe] = curr_pose
-                    next_keyframe = _get_next_keyframe(context)
+                    self.poses[keyframe] = curr_pose
                 # Load sound effects and particle effects
                 for timeline_marker in context.scene.timeline_markers:
                     if timeline_marker.name not in self.effect_events:
