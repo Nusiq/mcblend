@@ -79,38 +79,6 @@ def _pick_closest_rotation(
         return choice2
     return choice1
 
-def _get_next_keyframe(context: bpy_types.Context) -> Optional[int]:  # TODO - this is old code. Remove it.
-    '''
-    Returns the next keyframe index from selected objects or None if there is
-    no more keyframes to chose from until the end of animation.
-
-    :param context: the context of running the operator.
-    :returns: index of the next keyframe or None.
-    '''
-    curr = context.scene.frame_current
-    next_keyframe = None
-    for obj in context.selected_objects:
-        if (
-                obj.animation_data is None or
-                obj.animation_data.action is None or
-                obj.animation_data.action.fcurves is None
-        ):
-            continue
-        for fcurve in obj.animation_data.action.fcurves:
-            if fcurve.keyframe_points is None:
-                continue
-            for kframe_point in fcurve.keyframe_points:
-                time = kframe_point.co[0]
-                if time <= curr:
-                    continue
-                if next_keyframe is None:
-                    next_keyframe = time
-                else:
-                    next_keyframe = min(time, next_keyframe)
-    if next_keyframe is not None and next_keyframe > context.scene.frame_end:
-        return None
-    return next_keyframe
-
 def _get_keyframes(context: bpy_types.Context) -> List[int]:
     '''
     Lists keyframe numbers of the animation from keyframes of NLA tracks and
