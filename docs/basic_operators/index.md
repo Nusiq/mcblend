@@ -48,6 +48,24 @@ The export model operator can also be accessed via `File -> Export` menu.
 
 Exporting animations is done with "Export bedrock animations" panel.
 
+!!! note
+
+    Mcblend exports animations using key frames. Molang is not supported.
+    
+    Blender let's you implement various dependencies between animated objects
+    with constraints and rigging. This means that animating one object can
+    affect movement of another object even if the second object doesn't have
+    any key frames. That is why the key frames in Blender animations aren't
+    directly translated to key frames in Minecraft animations. Mcblend collects
+    the time stamps of every keyframe of every selected objects and goes
+    through that list looking for movements. Every movement of every  object
+    between two frames is saved to exported file.
+
+    Non-linear animations (NLA) are also supported even though Blender doesn't
+    let you view the exact times of the key frames from animation strips on
+    a timeline.
+
+
 ![](../img/export_animation_panel.png)
 
 __Usage__
@@ -58,13 +76,17 @@ __Usage__
   with "Select animation" dropdown menu.
 2. Select the objects to export in the 3d viewport.
 3. Fill in the form with the information about the animation.
-  - **Name** - the name of the animation.
-  - **Loop** - whether the animation should be looped.
-  - **Current frame only** - instead of exporting animation exports the
-    current frame as looped single frame pose animation.
-  - **anim_time_update** - the content of this textfield is copied to
-    "anim_time_update" property of the Minecraft animtion. If you leave it
-    blank the the animation won't use the anim_time_update.
+    - **Name** - the name of the animation.
+    - **Skip rest poses** - whether the bones in rest poses should be exported
+        as a part of animation. A rest pose is a pose with default location,
+        rotation and scale. This setting typically significantly reduces the
+        size of the exported animation.
+    - **Export as pose** - exports current frame as a looped animation with
+        a pose instead of exporting full animation.
+    - **Loop** - whether the animation should be looped.
+    - **anim_time_update** - the content of this text field is copied to
+      "anim_time_update" property of the Minecraft animation. If you leave it
+      blank the the animation won't use the anim_time_update.
 4. Press the "Export animation" button.
 
 
