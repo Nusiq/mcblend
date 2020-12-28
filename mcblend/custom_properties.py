@@ -11,7 +11,7 @@ from bpy.props import (
 from .operator_func.texture_generator import (
     list_mask_types_as_blender_enum, UvMaskTypes,
     list_mix_mask_modes_as_blender_enum)
-
+from .operator_func.common import MeshType
 
 # UV-mask stripe properties
 class OBJECT_NusiqMcblendStripeProperties(bpy.types.PropertyGroup):
@@ -296,6 +296,12 @@ class OBJECT_NusiqMcblendUvGroupProperties(bpy.types.PropertyGroup):
         }
 
 # Model object properties
+def list_mesh_types_as_blender_enum(self, context):
+    '''List mesh types for EnumProperty.'''
+    # pylint: disable=unused-argument
+    return [(i.value, i.value, i.value) for i in MeshType]
+
+
 class OBJECT_NusiqMcblendObjectProperties(bpy.types.PropertyGroup):
     '''Custom properties of an object.'''
     mirror: BoolProperty(  # type: ignore
@@ -323,6 +329,8 @@ class OBJECT_NusiqMcblendObjectProperties(bpy.types.PropertyGroup):
         description="The inflate value of this object.",
         default=0.0
     )
+    mesh_type: EnumProperty(  # type: ignore
+        items=list_mesh_types_as_blender_enum, name='Mesh type')
 
 # Animation sound and particle effects
 class EffectTypes(Enum):

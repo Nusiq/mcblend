@@ -13,12 +13,12 @@ import bpy_types
 
 from .common import (
     MINECRAFT_SCALE_FACTOR, McblendObject, McblendObjectGroup, MCObjType,
-    CubePolygons, CubePolygon
+    CubePolygons, CubePolygon, MeshType
 )
 from .json_tools import get_vect_json
 from .exception import NoCubePolygonsException, NotAStandardUvException
 from .uv import CoordinatesConverter
-
+from copy import copy
 
 @dataclass
 class ModelExport:
@@ -137,6 +137,7 @@ class BoneExport:
         self.rotation: np.ndarray = bone.get_mcrotation(bone.parent)
         self.pivot: np.ndarray = bone.mcpivot * MINECRAFT_SCALE_FACTOR
         self.cubes: List[CubeExport] = []
+        self.poly_mesh: PolyMesh = PolyMesh(self, bone)
         self.locators: Dict[str, LocatorExport] = {}
         self.load(bone, cubes, locators)
 
@@ -167,24 +168,27 @@ class BoneExport:
 
         # Set cubes
         for cubeprop in cube_objs:
-            _c_scale = _scale(cubeprop)
-            c_size = cubeprop.mcube_size * _c_scale * MINECRAFT_SCALE_FACTOR
-            c_pivot = cubeprop.mcpivot * MINECRAFT_SCALE_FACTOR
-            c_origin = c_pivot + (
-                cubeprop.mccube_position * _c_scale * MINECRAFT_SCALE_FACTOR
-            )
-            c_rot = cubeprop.get_mcrotation(thisobj)
+            if cubeprop.mesh_type is MeshType.CUBE:
+                _c_scale = _scale(cubeprop)
+                c_size = cubeprop.mcube_size * _c_scale * MINECRAFT_SCALE_FACTOR
+                c_pivot = cubeprop.mcpivot * MINECRAFT_SCALE_FACTOR
+                c_origin = c_pivot + (
+                    cubeprop.mccube_position * _c_scale * MINECRAFT_SCALE_FACTOR
+                )
+                c_rot = cubeprop.get_mcrotation(thisobj)
 
-            if cubeprop.inflate != 0:
-                c_size = c_size - cubeprop.inflate*2
-                c_origin = c_origin + cubeprop.inflate
+                if cubeprop.inflate != 0:
+                    c_size = c_size - cubeprop.inflate*2
+                    c_origin = c_origin + cubeprop.inflate
 
-            uv = uv_factory.get_uv_export(cubeprop, c_size)
+                uv = uv_factory.get_uv_export(cubeprop, c_size)
 
-            cube = CubeExport(
-                size=c_size, pivot=c_pivot, origin=c_origin,
-                rotation=c_rot, inflate=cubeprop.inflate, uv=uv)
-            self.cubes.append(cube)
+                cube = CubeExport(
+                    size=c_size, pivot=c_pivot, origin=c_origin,
+                    rotation=c_rot, inflate=cubeprop.inflate, uv=uv)
+                self.cubes.append(cube)
+            elif cubeprop.mesh_type is MeshType.POLY_MESH:
+                self.poly_mesh.mesh_objects.append(cubeprop)
 
 
     def json(self) -> Dict:
@@ -196,7 +200,7 @@ class BoneExport:
         `Dict` - the single bone from Minecraft model.
         '''
         # Basic bone properties
-        mcbone: Dict = {'name': self.name, 'cubes': []}
+        mcbone: Dict = {'name': self.name}
         if self.parent is not None:
             mcbone['parent'] = self.parent
         mcbone['pivot'] = get_vect_json(self.pivot)
@@ -209,9 +213,12 @@ class BoneExport:
                 mcbone['locators'][name] = locator.json()
 
         # Cubess
-        for cube in self.cubes:
-            mcbone['cubes'].append(cube.json())
-
+        if len(self.cubes) > 0:
+            mcbone['cubes'] = []
+            for cube in self.cubes:
+                mcbone['cubes'].append(cube.json())
+        if len(self.poly_mesh.mesh_objects) > 0:
+            mcbone['poly_mesh'] = self.poly_mesh.json()
         return mcbone
 
 @dataclass
@@ -250,6 +257,71 @@ class CubeExport:
         if self.uv.mirror:
             cube_dict['mirror'] = True
         return cube_dict
+
+class PolyMesh:
+    '''Object that represents a poly_mesh of a bone.'''
+
+    def __init__(self, bone_export: BoneExport, bone: McblendObject):
+        self.bone_export = bone_export
+        self.bone = bone
+        self.mesh_objects: List[McblendObject] = []
+
+    def json(self):
+        poly_mesh = {
+            'normalized_uvs': True,
+            'positions': [],
+            'normals': [],
+            'uvs': [],
+            'polys': []
+        }
+        for mesh_obj in self.mesh_objects:
+            vertex_id_offset = len(poly_mesh['positions'])
+            loop_id_offset = len(poly_mesh['uvs'])
+            # Get polys properties
+            polys = mesh_obj.thisobj.data.polygons  # TODO - special function for accessing .thisobj.data.polygons
+            # [x].loop_indices - id of a loop; [x].vertices - id of vertex
+            vertices = mesh_obj.thisobj.data.vertices  # TODO - special function for accessing .thisobj.data.vertices
+            # [x].co - vertex coordinates; [x].normal - vertex normal
+            uvs = mesh_obj.thisobj.data.uv_layers[0].data  # TODO - special function for accessing .thisobj.data.uv_layers
+            # [x].uv - uv coordinats
+
+            inv_bone_matrix = mesh_obj.get_local_matrix(self.bone)
+
+            def transformed_coords(crds, multiplier=1):
+                # Transform to parent space
+                crds = inv_bone_matrix @ crds
+                crds = get_vect_json(
+                    np.array(
+                        np.array(crds) *
+                        np.array(self.bone.obj_matrix_world.to_scale()) *
+                        multiplier
+                    )[[0, 2, 1]] + self.bone_export.pivot
+                )
+                return crds
+
+            for vertex in vertices:
+                poly_mesh['positions'].append(transformed_coords(
+                    vertex.co,
+                    multiplier=MINECRAFT_SCALE_FACTOR))
+                poly_mesh['normals'].append(transformed_coords(vertex.normal))
+
+            for uv in uvs:
+                poly_mesh['uvs'].append(get_vect_json([uv.uv[0], uv.uv[1]]))
+
+            for poly in polys:
+                curr_poly = []
+                poly_mesh['polys'].append(curr_poly)
+                for loop_id, vertex_id in zip(poly.loop_indices, poly.vertices):
+                    vertex_id += vertex_id_offset
+                    loop_id += loop_id_offset
+                    curr_poly.append([
+                        vertex_id,
+                        vertex_id,
+                        loop_id])  # [positions, normals, uvs]
+                if len(curr_poly) == 3:
+                    curr_poly.append(copy(curr_poly[2]))
+        return poly_mesh
+
 
 class UvExport:
     '''

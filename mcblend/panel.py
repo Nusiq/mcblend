@@ -478,6 +478,7 @@ class OBJECT_PT_NusiqMcblendObjectPropertiesPanel(bpy.types.Panel):
         if context.mode == "OBJECT" and context.object is not None:
             object_properties = context.object.nusiq_mcblend_object_properties
             col.prop(object_properties, "is_bone", text="Export as bone")
+            col.prop(object_properties, "mesh_type", text="")
             if context.object.type == 'MESH':
                 col.prop(object_properties, "mirror", text="Mirror")
                 if object_properties.uv_group != '':

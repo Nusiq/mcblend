@@ -27,6 +27,14 @@ class MCObjType(Enum):
     BOTH = 'BOTH'
     LOCATOR = 'LOCATOR'
 
+class MeshType(Enum):
+    '''
+    Type of the exported mesh. Changes the way of representation of this
+    object in exported model file.
+    '''
+    CUBE = 'Cube'
+    POLY_MESH = 'Poly Mesh'
+
 class ObjectId(NamedTuple):
     '''
     Object that represents Unique ID of blender object (bone, empty or mesh).
@@ -97,6 +105,15 @@ class McblendObject:
     @inflate.setter
     def inflate(self, inflate: float):
         self.thisobj.nusiq_mcblend_object_properties.inflate = inflate
+
+    @property
+    def mesh_type(self) -> MeshType:
+        '''Mesh type of this object'''
+        return MeshType(self.thisobj.nusiq_mcblend_object_properties.mesh_type)
+
+    @mesh_type.setter
+    def mesh_type(self, mesh_type: MeshType):
+        self.thisobj.nusiq_mcblend_object_properties.mesh_type = mesh_type
 
     @property
     def mirror(self) -> bool:
