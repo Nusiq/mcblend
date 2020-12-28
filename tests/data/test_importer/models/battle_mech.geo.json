@@ -238,7 +238,6 @@
 				},
 				{
 					"name": "cockpit",
-					"cubes": [],
 					"parent": "pad",
 					"pivot": [-0.599, 62.063, 3.28],
 					"rotation": [0, 0, 0]

@@ -117,7 +117,6 @@ def test_importer(import_properties):
         ("minecraft:geometry"),
         ("minecraft:geometry", 0, "bones"),
         ("minecraft:geometry", 0, "bones", 0, "cubes"),
-        ("minecraft:geometry", 0, "bones", 0, "cubes", 0, "locators"),
     }
     source_comparable = make_comparable_json(source_dict, set_paths)
     target_comparable = make_comparable_json(target_dict, set_paths)

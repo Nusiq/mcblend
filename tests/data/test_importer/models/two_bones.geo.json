@@ -13,14 +13,12 @@
 			"bones": [
 				{
 					"name": "top",
-					"cubes": [],
 					"parent": "bottom",
 					"pivot": [0, 128, 0],
 					"rotation": [0, 0, 0]
 				},
 				{
 					"name": "bottom",
-					"cubes": [],
 					"pivot": [0, 48, 0],
 					"rotation": [0, 0, 0]
 				}

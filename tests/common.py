@@ -83,7 +83,7 @@ def assert_is_model(a: tp.Dict):
                 'name', 'cubes', 'pivot', 'rotation', 'parent', 'locators'
             }
             assert set(bone.keys()) >= {  # obligatory keys
-                'name', 'cubes', 'pivot', 'rotation'
+                'name', 'pivot', 'rotation'
             }
             assert type(bone['name']) is str
 
@@ -98,23 +98,24 @@ def assert_is_model(a: tp.Dict):
                     assert type(locator_name) is str
                     assert_is_vector(locator, 3, (int, float))
             # minecraft:geometry -> bones -> cubes
-            assert type(bone['cubes']) is list
-            for cube in bone['cubes']:
-                assert type(cube) is dict
-                assert set(cube.keys()) <= {  # acceptable keys
-                    'uv', 'size', 'origin', 'pivot', 'rotation',
-                    'mirror'
-                }
-                assert set(cube.keys()) >= {  # obligatory keys
-                    'uv', 'size', 'origin', 'pivot', 'rotation'
-                }
-                assert_is_vector(cube['uv'], 2, (int, float))
-                assert_is_vector(cube['size'], 3, (int, float))
-                assert_is_vector(cube['origin'], 3, (int, float))
-                assert_is_vector(cube['pivot'], 3, (int, float))
-                assert_is_vector(cube['rotation'], 3, (int, float))
-                if 'mirror' in cube:
-                    assert type(cube['mirror']) is bool
+            if 'cubes' in bone:
+                assert type(bone['cubes']) is list
+                for cube in bone['cubes']:
+                    assert type(cube) is dict
+                    assert set(cube.keys()) <= {  # acceptable keys
+                        'uv', 'size', 'origin', 'pivot', 'rotation',
+                        'mirror'
+                    }
+                    assert set(cube.keys()) >= {  # obligatory keys
+                        'uv', 'size', 'origin', 'pivot', 'rotation'
+                    }
+                    assert_is_vector(cube['uv'], 2, (int, float))
+                    assert_is_vector(cube['size'], 3, (int, float))
+                    assert_is_vector(cube['origin'], 3, (int, float))
+                    assert_is_vector(cube['pivot'], 3, (int, float))
+                    assert_is_vector(cube['rotation'], 3, (int, float))
+                    if 'mirror' in cube:
+                        assert type(cube['mirror']) is bool
 
 
 def make_comparable_json(

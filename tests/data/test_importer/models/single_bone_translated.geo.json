@@ -13,7 +13,6 @@
 			"bones": [
 				{
 					"name": "Empty",
-					"cubes": [],
 					"pivot": [16, 48, 32],
 					"rotation": [0, 0, 0]
 				}
