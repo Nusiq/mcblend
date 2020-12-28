@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from typing import List, Dict, Tuple, Any, Optional
 from dataclasses import dataclass, field
+import mathutils
 
 import numpy as np
 
@@ -137,7 +138,7 @@ class BoneExport:
         self.rotation: np.ndarray = bone.get_mcrotation(bone.parent)
         self.pivot: np.ndarray = bone.mcpivot * MINECRAFT_SCALE_FACTOR
         self.cubes: List[CubeExport] = []
-        self.poly_mesh: PolyMesh = PolyMesh(self, bone)
+        self.poly_mesh: PolyMesh = PolyMesh()
         self.locators: Dict[str, LocatorExport] = {}
         self.load(bone, cubes, locators)
 
@@ -188,8 +189,41 @@ class BoneExport:
                     rotation=c_rot, inflate=cubeprop.inflate, uv=uv)
                 self.cubes.append(cube)
             elif cubeprop.mesh_type is MeshType.POLY_MESH:
-                self.poly_mesh.mesh_objects.append(cubeprop)
+                polygons = cubeprop.obj_data.polygons  # loop ids and vertices
+                vertices = cubeprop.obj_data.vertices  # crds and normals
+                uv_data = cubeprop.obj_data.uv_layers.active.data  # uv
 
+                inv_bone_matrix = cubeprop.get_local_matrix(thisobj)
+
+                def transformed_coords(crds: mathutils.Vector) -> List[float]:
+                    '''
+                    Converts coordinates from Blender meshes to Minecraft
+                    polymesh format in space of this bone.
+                    '''
+                    crds = inv_bone_matrix @ crds
+                    crds = np.array(
+                        np.array(crds) * MINECRAFT_SCALE_FACTOR *
+                        np.array(thisobj.obj_matrix_world.to_scale())
+                    )
+                    return list(crds[[0, 2, 1]] + self.pivot)
+
+                positions: List[List[float]] = []
+                normals: List[List[float]] = []
+                polys: List[List[Tuple[int, int, int]]] = []
+                uvs: List[List[int]] = [list(i.uv) for i in uv_data]
+                for vertex in vertices:
+                    positions.append(transformed_coords(vertex.co))
+                    normals.append(transformed_coords(vertex.normal))
+                for poly in polygons:
+                    # vertex data -> List[(positions, normals, uvs)]
+                    curr_poly: List[Tuple[int, int, int]] = []
+                    for loop_id, vertex_id in zip(
+                            poly.loop_indices, poly.vertices):
+                        curr_poly.append((vertex_id, vertex_id, loop_id))
+                    if len(curr_poly) == 3:
+                        curr_poly.append(copy(curr_poly[2]))
+                    polys.append(curr_poly)
+                self.poly_mesh.extend_mesh_data(positions, normals, polys, uvs)
 
     def json(self) -> Dict:
         '''
@@ -217,7 +251,7 @@ class BoneExport:
             mcbone['cubes'] = []
             for cube in self.cubes:
                 mcbone['cubes'].append(cube.json())
-        if len(self.poly_mesh.mesh_objects) > 0:
+        if not self.poly_mesh.is_empty:
             mcbone['poly_mesh'] = self.poly_mesh.json()
         return mcbone
 
@@ -258,70 +292,49 @@ class CubeExport:
             cube_dict['mirror'] = True
         return cube_dict
 
+
 class PolyMesh:
     '''Object that represents a poly_mesh of a bone.'''
+    def __init__(self):
+        self.positions: List[List[float]] = []
+        self.normals: List[List[float]] = []
+        self.uvs: List[List[int]] = []
+        self.polys: List[List[List[int]]] = []
+        self.normalized_uvs: bool = True
 
-    def __init__(self, bone_export: BoneExport, bone: McblendObject):
-        self.bone_export = bone_export
-        self.bone = bone
-        self.mesh_objects: List[McblendObject] = []
+    def extend_mesh_data(
+            self, positions: List[List[float]], normals: List[List[float]],
+            polys: List[List[Tuple[int, int, int]]],
+            uvs: List[List[int]]):
+        vertex_id_offset = len(self.positions)
+        loop_id_offset = len(self.uvs)
+
+        self.positions.extend(positions)
+        self.normals.extend(normals)
+        self.uvs.extend(uvs)
+        for poly in polys:
+            curr_poly: List[List[int]] = []
+            for vertex_data in poly:
+                curr_poly.append([
+                    vertex_data[0] + vertex_id_offset,  # position id
+                    vertex_data[1] + vertex_id_offset,  # normal id
+                    vertex_data[2] + loop_id_offset,  # uv id
+                ])
+            self.polys.append(curr_poly)
+
+    @property
+    def is_empty(self) -> bool:
+        return len(self.polys) == 0
 
     def json(self):
         poly_mesh = {
-            'normalized_uvs': True,
-            'positions': [],
-            'normals': [],
-            'uvs': [],
-            'polys': []
+            'normalized_uvs': self.normalized_uvs,
+            'positions': [get_vect_json(i) for i in self.positions],
+            'normals': [get_vect_json(i) for i in self.normals],
+            'uvs': [get_vect_json(i) for i in self.uvs],
+            'polys': self.polys,
         }
-        for mesh_obj in self.mesh_objects:
-            vertex_id_offset = len(poly_mesh['positions'])
-            loop_id_offset = len(poly_mesh['uvs'])
-            # Get polys properties
-            polys = mesh_obj.thisobj.data.polygons  # TODO - special function for accessing .thisobj.data.polygons
-            # [x].loop_indices - id of a loop; [x].vertices - id of vertex
-            vertices = mesh_obj.thisobj.data.vertices  # TODO - special function for accessing .thisobj.data.vertices
-            # [x].co - vertex coordinates; [x].normal - vertex normal
-            uvs = mesh_obj.thisobj.data.uv_layers[0].data  # TODO - special function for accessing .thisobj.data.uv_layers
-            # [x].uv - uv coordinats
-
-            inv_bone_matrix = mesh_obj.get_local_matrix(self.bone)
-
-            def transformed_coords(crds, multiplier=1):
-                # Transform to parent space
-                crds = inv_bone_matrix @ crds
-                crds = get_vect_json(
-                    np.array(
-                        np.array(crds) *
-                        np.array(self.bone.obj_matrix_world.to_scale()) *
-                        multiplier
-                    )[[0, 2, 1]] + self.bone_export.pivot
-                )
-                return crds
-
-            for vertex in vertices:
-                poly_mesh['positions'].append(transformed_coords(
-                    vertex.co,
-                    multiplier=MINECRAFT_SCALE_FACTOR))
-                poly_mesh['normals'].append(transformed_coords(vertex.normal))
-
-            for uv in uvs:
-                poly_mesh['uvs'].append(get_vect_json([uv.uv[0], uv.uv[1]]))
-
-            for poly in polys:
-                curr_poly = []
-                poly_mesh['polys'].append(curr_poly)
-                for loop_id, vertex_id in zip(poly.loop_indices, poly.vertices):
-                    vertex_id += vertex_id_offset
-                    loop_id += loop_id_offset
-                    curr_poly.append([
-                        vertex_id,
-                        vertex_id,
-                        loop_id])  # [positions, normals, uvs]
-                if len(curr_poly) == 3:
-                    curr_poly.append(copy(curr_poly[2]))
         return poly_mesh
-
 
 class UvExport:
     '''
