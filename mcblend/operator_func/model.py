@@ -189,8 +189,10 @@ class BoneExport:
                     rotation=c_rot, inflate=cubeprop.inflate, uv=uv)
                 self.cubes.append(cube)
             elif cubeprop.mesh_type is MeshType.POLY_MESH:
+                cubeprop.obj_data.calc_normals_split()
                 polygons = cubeprop.obj_data.polygons  # loop ids and vertices
-                vertices = cubeprop.obj_data.vertices  # crds and normals
+                vertices = cubeprop.obj_data.vertices  # crds
+                loops = cubeprop.obj_data.loops  # normals
                 uv_data = cubeprop.obj_data.uv_layers.active.data  # uv
 
                 inv_bone_matrix = cubeprop.get_local_matrix(thisobj)
@@ -213,13 +215,14 @@ class BoneExport:
                 uvs: List[List[int]] = [list(i.uv) for i in uv_data]
                 for vertex in vertices:
                     positions.append(transformed_coords(vertex.co))
-                    normals.append(transformed_coords(vertex.normal))
+                for loop in loops:
+                    normals.append(transformed_coords(loop.normal))
                 for poly in polygons:
                     # vertex data -> List[(positions, normals, uvs)]
                     curr_poly: List[Tuple[int, int, int]] = []
                     for loop_id, vertex_id in zip(
                             poly.loop_indices, poly.vertices):
-                        curr_poly.append((vertex_id, vertex_id, loop_id))
+                        curr_poly.append((vertex_id, loop_id, loop_id))
                     if len(curr_poly) == 3:
                         curr_poly.append(copy(curr_poly[2]))
                     polys.append(curr_poly)
@@ -307,6 +310,7 @@ class PolyMesh:
             polys: List[List[Tuple[int, int, int]]],
             uvs: List[List[int]]):
         vertex_id_offset = len(self.positions)
+        normal_id_offset = len(self.normals)
         loop_id_offset = len(self.uvs)
 
         self.positions.extend(positions)
@@ -317,7 +321,7 @@ class PolyMesh:
             for vertex_data in poly:
                 curr_poly.append([
                     vertex_data[0] + vertex_id_offset,  # position id
-                    vertex_data[1] + vertex_id_offset,  # normal id
+                    vertex_data[1] + normal_id_offset,  # normal id
                     vertex_data[2] + loop_id_offset,  # uv id
                 ])
             self.polys.append(curr_poly)
