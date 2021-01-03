@@ -197,26 +197,22 @@ class BoneExport:
 
                 inv_bone_matrix = cubeprop.get_local_matrix(thisobj)
 
-                def transformed_coords(crds: mathutils.Vector) -> List[float]:
-                    '''
-                    Converts coordinates from Blender meshes to Minecraft
-                    polymesh format in space of this bone.
-                    '''
-                    crds = inv_bone_matrix @ crds
-                    crds = np.array(
-                        np.array(crds) * MINECRAFT_SCALE_FACTOR *
-                        np.array(thisobj.obj_matrix_world.to_scale())
-                    )
-                    return list(crds[[0, 2, 1]] + self.pivot)
-
                 positions: List[List[float]] = []
                 normals: List[List[float]] = []
                 polys: List[List[Tuple[int, int, int]]] = []
                 uvs: List[List[int]] = [list(i.uv) for i in uv_data]
                 for vertex in vertices:
-                    positions.append(transformed_coords(vertex.co))
+                    transformed_vertex = inv_bone_matrix @ vertex.co
+                    transformed_vertex = (
+                        np.array(transformed_vertex) * MINECRAFT_SCALE_FACTOR *
+                        np.array(thisobj.obj_matrix_world.to_scale())
+                    )[[0, 2, 1]] + self.pivot
+                    positions.append(list(transformed_vertex))
                 for loop in loops:
-                    normals.append(transformed_coords(loop.normal))
+                    transformed_normal = mathutils.Vector(
+                            np.array(loop.normal)[[0, 2, 1]]
+                    ).normalized()
+                    normals.append(list(transformed_normal))
                 for poly in polygons:
                     # vertex data -> List[(positions, normals, uvs)]
                     curr_poly: List[Tuple[int, int, int]] = []

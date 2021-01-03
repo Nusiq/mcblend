@@ -354,8 +354,8 @@ class ModelLoader:
             "debug": False,  # bool
             "render_group_id": 0,  # int >= 0
             "cubes" : [],  # List[Dict]
-            "locators": {},  # Dict[...]  # TODO - parsing dict locators Dict[List or Dict]
-            "poly_mesh": {},  # Dict
+            "locators": {},  # Dict[...]
+            "poly_mesh": None,  # Dict
             "texture_meshes": []  # List[Dict]
         }
         parser_version = pick_version_parser(
@@ -421,9 +421,8 @@ class ModelLoader:
                 result['locators'] = self._load_locators(
                     bone['locators'], bone_path + ['locators'])
             if 'poly_mesh' in bone:
-                # type: dict
-                raise ImportingNotImplementedError(
-                    'poly_mesh', bone_path + ['poly_mesh'])
+                result['poly_mesh'] = self._load_poly_mesh(
+                    bone['poly_mesh'], bone_path + ['poly_mesh'])
             if 'texture_meshes' in bone:
                 # type: list
                 raise ImportingNotImplementedError(
@@ -507,9 +506,8 @@ class ModelLoader:
                 result['locators'] = self._load_locators(
                     bone['locators'], bone_path + ['locators'])
             if 'poly_mesh' in bone:
-                # type: dict
-                raise ImportingNotImplementedError(
-                    'poly_mesh', bone_path + ['poly_mesh'])
+                result['poly_mesh'] = self._load_poly_mesh(
+                    bone['poly_mesh'], bone_path + ['poly_mesh'])
             if 'texture_meshes' in bone:
                 # type: list
                 raise ImportingNotImplementedError(
@@ -706,6 +704,150 @@ class ModelLoader:
             return result
         raise FileIsNotAModelException('Unsupported format version')
 
+    def _load_poly_mesh(
+            self, poly_mesh: Any, poly_mesh_path: List) -> Dict[str, Any]:
+        '''
+        Returns a cube with added all of the missing default values of the
+        properties.
+
+        :param cube: Part of the JSON dict that has the inforation about the
+            cube.
+        :param cube_path: JSON path to the cube (used for error messages).
+        :param default_mirror: Mirror value of a bone that owns this cube.
+        '''
+        result = {
+            'normalized_uvs': False,
+            'positions': [],
+            'normals': [],
+            'uvs': [],
+            'polys': [],  # 'tri_list' or 'quad_list" or list with data
+        }
+        parser_version = pick_version_parser(
+            ('1.12.0', '1.8.0'), self.format_version)
+        if parser_version in ['1.12.0', '1.8.0']:
+            _assert_is_type('poly_mesh', poly_mesh, (dict,), poly_mesh_path)
+            # There is no required keys {} is a valid poly_mesh
+            _assert_has_required_keys(
+                'poly_mesh', set(poly_mesh.keys()), {'polys'}, poly_mesh_path)
+            acceptable_keys = {
+                "normalized_uvs", "positions", "normals", "uvs", "polys"}
+            _assert_has_accepted_keys_only(
+                'poly_mesh', set(poly_mesh.keys()), acceptable_keys,
+                poly_mesh_path)
+            # Acceptable keys
+            if 'normalized_uvs' in poly_mesh:
+                _assert_is_type(
+                    'normalized_uvs', poly_mesh['normalized_uvs'], (bool,),
+                    poly_mesh_path + ['normalized_uvs'])
+                result['normalized_uvs'] = poly_mesh['normalized_uvs']
+            if 'positions' in poly_mesh:
+                positions = poly_mesh['positions']
+                positions_path = poly_mesh_path + ['position']
+                _assert_is_type('positions', positions, (list,), positions_path)
+                for position_id, position in enumerate(positions):
+                    _assert_is_vector(
+                        'position', position, 3, (float, int,),
+                        positions_path + [position_id])
+                    result['positions'].append(tuple(position))  # type: ignore
+            if 'normals' in poly_mesh:
+                normals = poly_mesh['normals']
+                normals_path = poly_mesh_path + ['normal']
+                _assert_is_type('normals', normals, (list,), normals_path)
+                for normal_id, normal in enumerate(normals):
+                    _assert_is_vector(
+                        'normal', normal, 3, (float, int,),
+                        normals_path + [normal_id])
+                    result['normals'].append(tuple(normal))  # type: ignore
+            if 'uvs' in poly_mesh:
+                uvs = poly_mesh['uvs']
+                uvs_path = poly_mesh_path + ['uv']
+                _assert_is_type('uvs', uvs, (list,), uvs_path)
+                for uv_id, uv in enumerate(uvs):
+                    _assert_is_vector(
+                        'uv', uv, 2, (float, int,),
+                        uvs_path + [uv_id])
+                    result['uvs'].append(tuple(uv))  # type: ignore
+            # Required keys
+            _assert_is_type(
+                'polys', poly_mesh['polys'], (str, list),
+                poly_mesh_path + ['polys'])
+            if isinstance(poly_mesh['polys'], str):
+                result['polys'] = self._create_default_polys(
+                    poly_mesh['polys'],
+                    result['positions'],  # type: ignore
+                    result['normals'],  # type: ignore
+                    result['uvs'],  # type: ignore
+                    poly_mesh_path)
+            elif isinstance(poly_mesh['polys'], list):
+                polys_path = poly_mesh_path + ['polys']
+                for poly_id, poly in enumerate(poly_mesh['polys']):
+                    curr_result_poly: List[Tuple[int, int, int]] = []
+                    result['polys'].append(curr_result_poly)  # type: ignore
+                    poly_path = polys_path + [poly_id]
+                    _assert_is_type(
+                        'poly', poly, (list,), poly_path)
+                    for poly_vertex_id, poly_vertex in enumerate(poly):
+                        _assert_is_vector(
+                            'vertex', poly_vertex, 3, (int,),
+                            poly_path + [poly_vertex_id])
+                        curr_result_poly.append(
+                            tuple(poly_vertex))  # type: ignore
+            else:
+                raise FileIsNotAModelException(
+                    f'{poly_mesh_path + ["polys"]}::{"polys"} is not an '
+                    f'instance of {(str, list)}')
+            return result
+        raise FileIsNotAModelException('Unsupported format version')
+
+    def _create_default_polys(
+            self, grouping_mode: str, positions: List[List[float]],
+            normals: List[List[float]], uvs: List[List[float]],
+            poly_mesh_path: List[str]
+            ) -> List[List[List[int]]]:
+        '''
+        Creates default "polys" property of a polymesh for "tri_list" or
+        "quad_list" mode. Checks if positions, normals and uv are the same
+        length and can be divided by 3 (for tri_list mode) or 4 (for quad_list
+        mode). Rises an exception if the creating default polys list is
+        impossible with input data.
+
+        :param grouping_mode: a string with grouping mode. It should be either
+            'tri_list' or 'quad_list' otherwise an exception is risen.
+        :param positions: list of positions of the vertices.
+        :param normals: list of normals of the loops.
+        :param uvs: list of the uv coordinates of the loops.
+        :parma poly_mesh_path: the JSON path to the poly_mesh that contains
+            this polys property.
+        '''
+        # Get polygon group size (three or four items)
+        if grouping_mode == 'tri_list':
+            group_size = 3
+        elif grouping_mode == 'quad_list':
+            group_size = 4
+        else:
+            raise FileIsNotAModelException(
+                f'{poly_mesh_path + ["polys"]}::{"polys"} is not an a list of polys or a '
+                'literal string "quad_list" or "tri_list"')
+        # Check if positions, normals and uvs are the same lengts
+        pos_length = len(positions)
+        if not (pos_length == len(normals) == len(uvs)):
+            raise FileIsNotAModelException(
+                f'{poly_mesh_path}::"positions", "normals" and "uvs" are not '
+                'the same lengths. They must be the same lengths in "tri_list"'
+                ' and "quad_list" polys grouping mode.')
+        # Check if list length is divisible by the group_size
+        if not (pos_length % group_size == 0):
+            raise FileIsNotAModelException(
+                f'{poly_mesh_path}::"positions" list length must be '
+                f'divisible by {group_size} in {grouping_mode}.')
+        # Build default polys property in list format
+        result = np.repeat(
+            range(pos_length), 3
+        ).reshape(
+            -1, group_size, 3
+        ).to_list()
+        return result
+
     def _load_uv(
             self, uv: Any, uv_path: List,
             cube_size: Tuple[float, float, float]) -> Dict[str, Any]:
@@ -864,6 +1006,7 @@ class ModelLoader:
             return locator
         raise FileIsNotAModelException('Unsupported format version')
 
+
 class ImportLocator:
     '''
     Represents Minecraft locator during import operation.
@@ -910,6 +1053,62 @@ class ImportCube:
             data['rotation'])
 
 
+class ImportPolyMesh:
+    '''
+    Represents Minecraft poly_mesh during import operation.
+
+    :param data: The part of the Minecraft model JSON dict that represents this
+        poly_mesh.
+    '''
+    def __init__(
+            self, data: Dict):
+        '''
+        Creates ImportPolyMesh object created from a dictionary (part of the
+        JSON) file in the model.
+
+        :param data: The part of the Minecraft model JSON file that represents
+        the poly_mesh.
+        '''
+        self.blend_object: Optional[bpy.types.Object] = None
+
+        self.normalized_uvs: bool = data['normalized_uvs']
+        self.positions: List[Tuple[float, float, float]] = data['positions']
+        self.normals: List[Tuple[float, float, float]] = data['normals']
+        self.uvs: List[Tuple[float, float]] = data['uvs']
+        self.polys: List[List[Tuple[int, int, int]]] = data['polys']
+
+    def unpack_data(self):
+        '''
+        Unpacks the data about polymesh to a format more useful in blender.
+        The data is not converted to minecraft format.
+        '''
+        # positions -> vertices
+        # polys -> [loops]
+        #   vertex ID
+        #   loop normal ID
+        #   loop uv ID
+        # normals -> normals (coordinates)
+        # uvs -> uvs (coordinates)
+
+        # vertex IDs to create polygons
+        blender_polygons: List[List[int]] = []
+        # List of vectors with normals
+        blender_normals: List[Tuple[float, float, float]] = []
+        # List of vectors with UVs
+        blender_uvs: List[Tuple[float, float]] = []
+
+        # TODO - this function or earlier data processing should make sure
+        # the indices doesn't go out of bounds
+        for poly in self.polys:
+            curr_polygon: List[int] = []
+            for vertex_id, normal_id, uv_id in poly:
+                curr_polygon.append(vertex_id)
+                blender_normals.append(self.normals[normal_id])
+                blender_uvs.append(self.uvs[uv_id])
+            blender_polygons.append(curr_polygon)
+        return blender_polygons, self.positions, blender_normals, blender_uvs
+
+
 class ImportBone:
     '''
     Represents Minecraft bone during import operation.
@@ -932,6 +1131,9 @@ class ImportBone:
         self.name: str = data['name']
         self.parent: str = data['parent']
         self.cubes = import_cubes
+        self.poly_mesh: Optional[ImportPolyMesh] = None
+        if data['poly_mesh'] is not None:
+            self.poly_mesh = ImportPolyMesh(data['poly_mesh'])
         self.locators = locators
         self.pivot: Tuple[float, float, float] = tuple(  # type: ignore
             data['pivot'])
@@ -1007,6 +1209,63 @@ class ImportGeometry:
                 # 5. Apply translation
                 _mc_translate(cube_obj, cube.origin, cube.size, cube.pivot)
 
+            if bone.poly_mesh is not None:
+                # 1. Unpack the data to format suitable for creating Blender
+                # mesh
+                blender_polygons: List[List[int]] = []
+                blender_normals: List[mathutils.Vector] = []
+                blender_uvs: List[Tuple[float, float]] = []
+                blender_vertices: List[Tuple[float, float, float]] = []
+
+                for vertex in bone.poly_mesh.positions:
+                    blender_vertices.append((
+                            vertex[0] / MINECRAFT_SCALE_FACTOR,
+                            vertex[2] / MINECRAFT_SCALE_FACTOR,
+                            vertex[1] / MINECRAFT_SCALE_FACTOR))
+                for poly in bone.poly_mesh.polys:
+                    curr_polygon: List[int] = []
+                    for vertex_id, normal_id, uv_id in poly:
+                        if vertex_id in curr_polygon:
+                            # vertex can apear only onece per polygon. The
+                            # exporter sometimes adds vertex twice to exported
+                            # meshes because Minecraft can't handle triangles
+                            # properly. A polygon that uses same vertex twice
+                            # won't work in Blender.
+                            continue
+                        curr_polygon.append(vertex_id)
+                        curr_normal = bone.poly_mesh.normals[normal_id]
+                        blender_normals.append(
+                            mathutils.Vector((
+                                curr_normal[0],
+                                curr_normal[2],
+                                curr_normal[1])
+                            ).normalized()
+                        )
+                        blender_uvs.append(bone.poly_mesh.uvs[uv_id])
+                    blender_polygons.append(curr_polygon)
+
+                # 2. Create mesh
+                mesh = bpy.data.meshes.new(name='poly_mesh')
+                mesh.from_pydata(blender_vertices, [], blender_polygons)
+
+                if not mesh.validate():  # Valid geometry
+                    # 3. Create an object and connect mesh to it
+                    poly_mesh_obj = bpy.data.objects.new('poly_mesh', mesh)
+                    context.collection.objects.link(poly_mesh_obj)
+                    bone.poly_mesh.blend_object = poly_mesh_obj
+                    # 4. Set mesh normals and UVs
+                    mesh.create_normals_split()
+                    mesh.use_auto_smooth = True
+                    mesh.normals_split_custom_set(blender_normals)
+                    if mesh.uv_layers.active is None:
+                        mesh.uv_layers.new()
+                    uv_layer = mesh.uv_layers.active.data  # type: ignore
+                    for i, uv in enumerate(blender_uvs):
+                        uv_layer[i].uv = uv
+                else:
+                    del mesh
+                    raise FileIsNotAModelException('Invalid poly_mesh geometry!')
+
             for locator in bone.locators:
                 # 1. Spawn locator (empty)
                 locator_obj: bpy.types.Object
@@ -1037,7 +1296,16 @@ class ImportGeometry:
                 cube_obj.matrix_parent_inverse = (
                     bone_obj.matrix_world.inverted()
                 )
-            # 3. Parent locators keep transform
+            # 3. Parent poly_mesh keep transform
+            if bone.poly_mesh is not None:
+                poly_mesh_obj = bone.poly_mesh.blend_object
+                context.view_layer.update()
+                poly_mesh_obj.parent = bone_obj
+                poly_mesh_obj.matrix_parent_inverse = (
+                    bone_obj.matrix_world.inverted()
+                )
+
+            # 4. Parent locators keep transform
             for locator in bone.locators:
                 locator_obj = locator.blend_empty
                 context.view_layer.update()
@@ -1088,71 +1356,57 @@ class ImportGeometry:
                 edit_bones[bone.name].parent = edit_bones[parent_obj.name]
         bpy.ops.object.mode_set(mode='OBJECT')
 
+        def parent_bone_keep_transform(
+                obj: bpy.types.Object, bone: ImportBone):
+            '''
+            Used for replacing empty parent with new bone parent
+            '''
+            context.view_layer.update()
+
+            # Copy matrix_parent_inverse from previous parent
+            # It can be copied because old parent (locator) has the same
+            # transformation as the new one (bone)
+            parent_inverse = (
+                obj.matrix_parent_inverse.copy()  # type:ignore
+            )
+
+            obj.parent = armature  # type: ignore
+            obj.parent_bone = bone.name  # type: ignore
+            obj.parent_type = 'BONE'  # type: ignore
+
+            obj.matrix_parent_inverse = parent_inverse  # type: ignore
+
+            # Correct parenting to tail of the bone instead of head
+            context.view_layer.update()
+            blend_bone = armature.pose.bones[bone.name]
+            # pylint: disable=no-member
+            correction = mathutils.Matrix.Translation(
+                blend_bone.head-blend_bone.tail
+            )
+            obj.matrix_world = (  # type: ignore
+                correction @
+                obj.matrix_world  # type: ignore
+            )
+
         # Replace empties with bones
         for bone in self.bones.values():
             bone_obj = bone.blend_empty
 
             # 2. Parent cubes keep transform
             for cube in bone.cubes:
-                cube_obj = cube.blend_cube
-                context.view_layer.update()
+                parent_bone_keep_transform(cube.blend_cube, bone)
 
-                # Copy matrix_parent_inverse from previous parent
-                # It can be copied because old parent (locator) has the same
-                # transformation as the new one (bone)
-                parent_inverse = (
-                    cube_obj.matrix_parent_inverse.copy()  # type:ignore
-                )
+            # 3. Parent poly_mesh keep transform
+            if bone.poly_mesh is not None:
+                parent_bone_keep_transform(bone.poly_mesh.blend_object, bone)
 
-                cube_obj.parent = armature  # type: ignore
-                cube_obj.parent_bone = bone.name  # type: ignore
-                cube_obj.parent_type = 'BONE'  # type: ignore
-
-                cube_obj.matrix_parent_inverse = parent_inverse  # type: ignore
-
-                # Correct parenting to tail of the bone instead of head
-                context.view_layer.update()
-                blend_bone = armature.pose.bones[bone.name]
-                # pylint: disable=no-member
-                correction = mathutils.Matrix.Translation(
-                    blend_bone.head-blend_bone.tail
-                )
-                cube_obj.matrix_world = (  # type: ignore
-                    correction @
-                    cube_obj.matrix_world  # type: ignore
-                )
-
-
-            # 3. Parent locators keep transform
+            # 4. Parent locators keep transform
             for locator in bone.locators:
-                locator_obj = locator.blend_empty
-                context.view_layer.update()
-
-                # Copy matrix_parent_inverse from previous parent
-                parent_inverse = (  # type: ignore
-                    locator_obj.matrix_parent_inverse.copy())  # type: ignore
-
-                locator_obj.parent = armature  # type: ignore
-                locator_obj.parent_bone = bone.name  # type: ignore
-                locator_obj.parent_type = 'BONE'  # type: ignore
-
-                locator_obj.matrix_parent_inverse = (  # type: ignore
-                    parent_inverse)
-
-                # Correct parenting to tail of the bone instead of head
-                context.view_layer.update()
-                blend_bone = armature.pose.bones[bone.name]
-                # pylint: disable=no-member
-                correction = mathutils.Matrix.Translation(
-                    blend_bone.head-blend_bone.tail
-                )
-                locator_obj.matrix_world = (    # type: ignore
-                    correction @ locator_obj.matrix_world  # type: ignore
-                )
-
+                parent_bone_keep_transform(locator.blend_empty, bone)
 
             # remove the locators
             bpy.data.objects.remove(bone_obj)
+
 
 def _mc_translate(
         obj: bpy.types.Object, mctranslation: Tuple[float, float, float],
