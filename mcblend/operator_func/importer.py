@@ -13,7 +13,7 @@ import mathutils
 import bpy
 
 from .common import (
-    MINECRAFT_SCALE_FACTOR, CubePolygons, CubePolygon)
+    MINECRAFT_SCALE_FACTOR, CubePolygons, CubePolygon, MeshType)
 from .uv import CoordinatesConverter
 from .exception import FileIsNotAModelException, ImportingNotImplementedError
 
@@ -1249,10 +1249,14 @@ class ImportGeometry:
                 mesh.from_pydata(blender_vertices, [], blender_polygons)
 
                 if not mesh.validate():  # Valid geometry
-                    # 3. Create an object and connect mesh to it
+                    # 3. Create an object and connect mesh to it, mark as
+                    # polymesh
                     poly_mesh_obj = bpy.data.objects.new('poly_mesh', mesh)
                     context.collection.objects.link(poly_mesh_obj)
                     bone.poly_mesh.blend_object = poly_mesh_obj
+                    poly_mesh_obj.nusiq_mcblend_object_properties.mesh_type = (
+                        MeshType.POLY_MESH.value)
+
                     # 4. Set mesh normals and UVs
                     mesh.create_normals_split()
                     mesh.use_auto_smooth = True
