@@ -16,9 +16,8 @@ from bpy_extras.io_utils import ExportHelper, ImportHelper
 
 from .custom_properties import (
     get_unused_event_name, list_effect_types_as_blender_enum)
-from .operator_func.common import inflate_objects
 from .operator_func import (
-    export_model, export_animation, set_uvs, round_dimensions, import_model)
+    export_model, export_animation, separate_mesh_cubes, set_uvs, round_dimensions, import_model)
 from .operator_func.json_tools import CompactEncoder
 from .operator_func.exception import (
     NameConflictException, NotEnoughTextureSpace,)
@@ -431,6 +430,34 @@ class OBJECT_OT_NusiqMcblendRoundDimensionsOperator(bpy.types.Operator):
         round_dimensions(  # Returns number of edited objects
             context
         )
+        return {'FINISHED'}
+
+# Separate mesh cubes
+class OBJECT_OT_NusiqMcblendSeparateMeshCubesOperator(bpy.types.Operator):
+    '''
+    Separates object with mesh full of cuboids by the loose parts of the mesh.
+    Adjusts the rotations of the newly created objects to match the rotations
+    of the cubes inside of this object.
+    '''
+    # pylint: disable=unused-argument, R0201, no-member
+    bl_idname = "object.nusiq_mcblend_separate_mesh_cubes_operator"
+    bl_label = "Separate cubes"
+    bl_options = {'UNDO'}
+    bl_description = (
+        "Separate cubes from selected objects and rotate bound boxes to "
+        "minimize their size."
+    )
+
+    @classmethod
+    def poll(cls, context: bpy_types.Context):
+        if context.mode != 'OBJECT':
+            return False
+        if len(context.selected_objects) < 1:
+            return False
+        return True
+
+    def execute(self, context):
+        separate_mesh_cubes(context)
         return {'FINISHED'}
 
 # Model Importer

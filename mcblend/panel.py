@@ -654,3 +654,7 @@ class OBJECT_PT_NusiqMcblendOperatorsPanel(bpy.types.Panel):
             "object.nusiq_mcblend_round_dimensions_operator",
             text="Round dimensions"
         )
+        col.operator(
+            "object.nusiq_mcblend_separate_mesh_cubes_operator",
+            text="Separate cubes"
+        )

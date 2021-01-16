@@ -13,7 +13,9 @@ import bpy_types
 from .uv import UvMapper, CoordinatesConverter
 from .animation import AnimationExport
 from .model import ModelExport
-from .common import MINECRAFT_SCALE_FACTOR, McblendObjectGroup
+from .common import (
+    MINECRAFT_SCALE_FACTOR, McblendObjectGroup,
+    apply_obj_transform_keep_origin, fix_cube_rotation, inflate_objects)
 from .importer import ImportGeometry, ModelLoader
 
 
@@ -219,3 +221,17 @@ def import_model(
         context.scene.nusiq_mcblend.model_name = geometry.identifier[9:]
     else:
         context.scene.nusiq_mcblend.model_name = geometry.identifier
+
+def separate_mesh_cubes(context: bpy_types.Context):
+    '''
+    Separate selected object with meshes that use cuboids only by the lose
+    parts. Rotate bound boxes of the objects to fit them to the rotation of the
+    separated cubes.
+    '''
+    bpy.ops.mesh.separate(type='LOOSE')
+    for obj in context.selected_objects:
+        if obj.type != 'MESH':
+            continue
+        apply_obj_transform_keep_origin(obj)
+        bpy.context.view_layer.update()
+        fix_cube_rotation(obj)

@@ -17,6 +17,7 @@ from .operator import (
     OBJECT_OT_NusiqMcblendSetInflateOperator,
     menu_func_nusiq_mcblend_export_model, menu_func_nusiq_mcblend_export_animation,
     OBJECT_OT_NusiqMcblendRoundDimensionsOperator,
+    OBJECT_OT_NusiqMcblendSeparateMeshCubesOperator,
     OBJECT_OT_NusiqMcblendImport, menu_func_nusiq_mcblend_import,
 
     OBJECT_OT_NusiqMcblendListAnimations,
@@ -107,6 +108,7 @@ classes = (
     OBJECT_PT_NusiqMcblendOperatorsPanel,
     OBJECT_OT_NusiqMcblendSetInflateOperator,
     OBJECT_OT_NusiqMcblendRoundDimensionsOperator,
+    OBJECT_OT_NusiqMcblendSeparateMeshCubesOperator,
     OBJECT_OT_NusiqMcblendImport,
     OBJECT_PT_NusiqMcblendImportPanel,
     OBJECT_PT_NusiqMcblendUVGroupPanel,
@@ -196,7 +198,6 @@ def register():
     bpy.types.TOPBAR_MT_file_import.append(
         menu_func_nusiq_mcblend_import
     )
-
 
 def unregister():
     '''Unregisters the plugin'''

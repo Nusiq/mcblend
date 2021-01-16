@@ -3,6 +3,7 @@ Functions and objects shared between other modules of Mcblend.
 '''
 from __future__ import annotations
 
+from ctypes import c_int
 import math
 from enum import Enum
 from typing import (
@@ -362,6 +363,41 @@ class McblendObject:
         uv_group = bpy.context.scene.nusiq_mcblend_uv_groups[self.uv_group]
         masks = get_masks_from_side(uv_group.side6)
         return masks
+
+    def find_lose_parts(self) -> Tuple[int, ...]:
+        '''
+        Finds lose parts thisobj (must be a MESH otherwise an empty tuple is
+        returned). Returns a tuple of integers, the indices of the tuple
+        represent the indices of vertices, and the values identify the group.
+        Vertices that aren't connected to anything are assigned to group "-1".
+        The names of the groups aren't integers in any particular order. They
+        are based on the lowest vertex index in the group - e.g. a group with
+        vertices (3,6,2,4) would get ID 2 because 2 is the lowest vertex index.
+        '''
+        if self.obj_type != 'MESH':
+            return tuple()
+        obj = self.thisobj
+
+        # List that represents the grouping - index: the index of vertex
+        # value: the pointer to identifier of a group of that vertex
+        groups = [c_int(-1) for _ in range(len(obj.data.vertices))]
+
+        for edge in obj.data.edges:
+            a, b = edge.vertices
+            aptr, bptr = groups[a], groups[b]
+            if aptr.value != -1:
+                if bptr.value != -1:
+                    bptr.value = aptr.value = min(a, b, aptr.value, bptr.value)
+                else:
+                    groups[b] = aptr
+                    aptr.value = min(a, b, aptr.value)
+            elif bptr.value != -1: # aptr.value is None
+                groups[a] = bptr
+                bptr.value = min(a, b, bptr.value)
+            else:  # aptr.value is None and bptr.value is None
+                groups[b] = aptr
+                aptr.value = min(a, b)
+        return tuple([i.value for i in groups])
 
 # key (side, is_mirrored) : value (names of the vertices)
 # Used in CubePolygons constructor
@@ -764,3 +800,76 @@ def inflate_objects(
 
             counter += 1
     return counter
+
+
+# THE FIX BOUNDS OPERATOR:
+# TODO - maybe find a better place for this code
+
+def apply_obj_transform_keep_origin(obj: bpy.types.Object):
+    '''
+    Apply object transformations but keep the origin in place. Resets object
+    rotation and scale but keeps location the same.
+    '''
+    # Decompose object transformations
+    loc, rot, scl = obj.matrix_local.decompose()
+    loc_mat = mathutils.Matrix.Translation(loc)
+    rot_mat = rot.to_matrix().to_4x4()
+    scl_mat =  (
+        mathutils.Matrix.Scale(scl[0],4,(1,0,0)) @
+        mathutils.Matrix.Scale(scl[1],4,(0,1,0)) @
+        mathutils.Matrix.Scale(scl[2],4,(0,0,1)))
+    obj.matrix_local = loc_mat
+
+    for vertex in obj.data.vertices:
+        vertex.co =  rot_mat @ scl_mat @ vertex.co
+
+def fix_cube_rotation(obj: bpy.types.Object):
+    '''
+    Rotate the bounding box of a cuboid so  it's aligned with
+    the cube rotation. The scale and rotation of the object must
+    be in default position for this function to work.
+
+    :param obj: blender object with cuboid mesh. 
+    '''
+    # Get coordinates of 3 points (a,b and c) from any polygon
+    # I'm assuming this is a cuboid so I also can assume that
+    # vectors u and v are not planar:
+    # u = vector(b, a) and v = (b, c)
+    poly = obj.data.polygons[0]
+
+    vertices = obj.data.vertices
+    a = vertices[poly.vertices[0]].co
+    b = vertices[poly.vertices[1]].co
+    c = vertices[poly.vertices[2]].co
+
+    # Calculate the normal vector of the surface with points
+    # a, b and c
+    u: mathutils.Vector = (a-b).normalized()
+    v: mathutils.Vector = (c-b).normalized()
+
+    # The cross product creates the 3rd vector that defines
+    # the rotated space
+    w = u.cross(v).normalized()
+    # Recalculate V to make sure that all of the vectors are at
+    # the right angle (even though they should be)
+    v = u.cross(w).normalized()
+
+    # Create rotation matrix (unit vectors x, y, z in columns)
+    rotation_matrix = mathutils.Matrix((u, v, w))
+
+    # Rotate the mesh in opposite direction
+    for vertex in obj.data.vertices:
+        vertex.co = rotation_matrix @ vertex.co
+
+    # Counter rotate object around its origin
+    counter_rotation = rotation_matrix.to_4x4().inverted()
+
+    loc, rot, scl = obj.matrix_local.decompose()
+    loc_mat = mathutils.Matrix.Translation(loc)
+    rot_mat = rot.to_matrix().to_4x4()
+    scl_mat =  (
+        mathutils.Matrix.Scale(scl[0],4,(1,0,0)) @
+        mathutils.Matrix.Scale(scl[1],4,(0,1,0)) @
+        mathutils.Matrix.Scale(scl[2],4,(0,0,1)))
+
+    obj.matrix_local = loc_mat @ counter_rotation @ rot_mat @ scl_mat
