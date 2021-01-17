@@ -852,12 +852,17 @@ def fix_cube_rotation(obj: bpy.types.Object):
     w = u.cross(v).normalized()
     # Recalculate V to make sure that all of the vectors are at
     # the right angle (even though they should be)
-    v = u.cross(w).normalized()
+    v = w.cross(u).normalized()
 
     # Create rotation matrix (unit vectors x, y, z in columns)
-    rotation_matrix = mathutils.Matrix((u, v, w))
+    rotation_matrix = mathutils.Matrix((w, v, -u))
+    # (w, v, -u) - this order of normals in rotation matrix is set up in
+    # such way that applying the operator to the default cube (without
+    # rotations) will not change its rotation and won't flip its scale to -1.
+    # It will have no effect.
 
-    # Rotate the mesh in opposite direction
+
+    # Rotate the mesh
     for vertex in obj.data.vertices:
         vertex.co = rotation_matrix @ vertex.co
 
