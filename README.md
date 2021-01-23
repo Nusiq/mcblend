@@ -8,6 +8,8 @@ User guides and installation instructions can be found on the project site:
 
 https://nusiq.github.io/mcblend/
 
+### Discord
+You can contact me about the project on the [Bedrock OSS](https://discord.gg/XjV87YN) discord.
 
 ## Features
 - Exporting models for Minecraft bedrock edition. Custom Minecraft model
@@ -20,5 +22,5 @@ https://nusiq.github.io/mcblend/
   physics simulation and rigging.
 ## Planned features
 - Planned features can be found in the
-["Issues"](https://github.com/Nusiq/Blender-Export-MC-Bedrock-Model/issues)
+["Issues"](https://github.com/Nusiq/mcblend/issues)
 tab of this project on Github.
