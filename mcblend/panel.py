@@ -2,6 +2,7 @@
 This module contains all of the panels for mcblend GUI.
 '''
 # don't import future annotations Blender needs that
+from .operator_func.common import MeshType
 from typing import List, Optional
 from dataclasses import dataclass
 from .custom_properties import EffectTypes
@@ -480,12 +481,18 @@ class OBJECT_PT_NusiqMcblendObjectPropertiesPanel(bpy.types.Panel):
             col.prop(object_properties, "is_bone", text="Export as bone")
             if context.object.type == 'MESH':
                 col.prop(object_properties, "mesh_type", text="")
-                col.prop(object_properties, "mirror", text="Mirror")
-                if object_properties.uv_group != '':
-                    col.label(text=f'UV Group: {object_properties.uv_group}')
-                else:
-                    col.label(text="This object doesn't have a UV group")
-                col.prop(object_properties, "inflate", text="Inflate")
+
+                mesh_type = (
+                    context.object.nusiq_mcblend_object_properties.mesh_type)
+                if mesh_type == MeshType.CUBE.value:
+                    if object_properties.uv_group != '':
+                        col.label(
+                            text=f'UV Group: {object_properties.uv_group}')
+                    else:
+                        col.label(text="This object doesn't have a UV group")
+                    col.prop(object_properties, "mirror", text="Mirror")
+                    col.prop(object_properties, "inflate", text="Inflate")
+
 
 # Model export panel
 class OBJECT_PT_NusiqMcblendExportPanel(bpy.types.Panel):
