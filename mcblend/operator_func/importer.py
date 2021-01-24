@@ -828,7 +828,7 @@ class ModelLoader:
             raise FileIsNotAModelException(
                 f'{poly_mesh_path + ["polys"]}::{"polys"} is not an a list of polys or a '
                 'literal string "quad_list" or "tri_list"')
-        # Check if positions, normals and uvs are the same lengts
+        # Check if positions, normals and uvs are the same lengths
         pos_length = len(positions)
         if not (pos_length == len(normals) == len(uvs)):
             raise FileIsNotAModelException(
@@ -1226,7 +1226,7 @@ class ImportGeometry:
                     curr_polygon: List[int] = []
                     for vertex_id, normal_id, uv_id in poly:
                         if vertex_id in curr_polygon:
-                            # vertex can apear only onece per polygon. The
+                            # vertex can appear only once per polygon. The
                             # exporter sometimes adds vertex twice to exported
                             # meshes because Minecraft can't handle triangles
                             # properly. A polygon that uses same vertex twice

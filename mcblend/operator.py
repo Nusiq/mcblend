@@ -6,8 +6,6 @@ import json
 from json.decoder import JSONDecodeError
 from typing import Any, List, Optional, Dict
 
-from numpy.lib.arraysetops import isin
-
 import bpy_types
 import bpy
 from bpy.props import (
@@ -17,7 +15,8 @@ from bpy_extras.io_utils import ExportHelper, ImportHelper
 from .custom_properties import (
     get_unused_event_name, list_effect_types_as_blender_enum)
 from .operator_func import (
-    export_model, export_animation, separate_mesh_cubes, set_uvs, round_dimensions, import_model)
+    export_model, export_animation, separate_mesh_cubes, set_uvs, round_dimensions,
+    import_model, inflate_objects)
 from .operator_func.json_tools import CompactEncoder
 from .operator_func.exception import (
     NameConflictException, NotEnoughTextureSpace,)
@@ -1122,7 +1121,7 @@ class OBJECT_OT_NusiqMcblendImportUvGroupOperator(bpy.types.Operator, ImportHelp
         mask.mask_type = mask_type
 
         # Loading properties of the mask
-        # Loading relative_boundries first because they affect other properties
+        # Loading relative_boundaries first because they affect other properties
         relative_boundaries: bool = False
         if mask_type in [
                 UvMaskTypes.GRADIENT_MASK.value, UvMaskTypes.ELLIPSE_MASK.value,

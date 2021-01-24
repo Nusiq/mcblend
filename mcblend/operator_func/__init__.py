@@ -3,7 +3,7 @@ Functions used directly by the blender operators.
 '''
 from __future__ import annotations
 
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 
 import numpy as np
 
@@ -14,8 +14,8 @@ from .uv import UvMapper, CoordinatesConverter
 from .animation import AnimationExport
 from .model import ModelExport
 from .common import (
-    MINECRAFT_SCALE_FACTOR, McblendObjectGroup,
-    apply_obj_transform_keep_origin, fix_cube_rotation, inflate_objects)
+    MINECRAFT_SCALE_FACTOR, McblendObjectGroup, MeshType,
+    apply_obj_transform_keep_origin, fix_cube_rotation)
 from .importer import ImportGeometry, ModelLoader
 
 
@@ -235,3 +235,72 @@ def separate_mesh_cubes(context: bpy_types.Context):
         apply_obj_transform_keep_origin(obj)
         bpy.context.view_layer.update()
         fix_cube_rotation(obj)
+
+def inflate_objects(
+        context: bpy_types.Context, objects: List[bpy.types.Object],
+        inflate: float, mode: str) -> int:
+    '''
+    Adds inflate property to objects and changes their dimensions. Returns
+    the number of edited objects.
+
+    :param context: Context of running the operator.
+    :param objects: List of objects to inflate.
+    :param inflate: The inflation value.
+    :param mode: Either "RELATIVE" or "ABSOLUTE". If "RELATIVE" than
+        the value before applying the operator is taken as a base (0 means that
+        no changes should be applied). If "ABSOLUTE" than the inflate value
+        passed by the user is passed directly to the inflate value of
+        Minecraft model.
+    :returns: number of edited objects
+    '''
+    if mode == 'RELATIVE':
+        relative = True
+    elif mode == 'ABSOLUTE':
+        relative = False
+    else:
+        raise ValueError(f'Unknown mode for set_inflate operator: {mode}')
+
+    counter = 0
+    for obj in objects:
+        if (
+                obj.type == 'MESH' and
+                obj.nusiq_mcblend_object_properties.mesh_type ==
+                MeshType.CUBE.value):
+            if obj.nusiq_mcblend_object_properties.inflate != 0.0:
+                if relative:
+                    effective_inflate = (
+                        obj.nusiq_mcblend_object_properties.inflate + inflate)
+                else:
+                    effective_inflate = inflate
+                delta_inflate = (
+                    effective_inflate -
+                    obj.nusiq_mcblend_object_properties.inflate)
+                obj.nusiq_mcblend_object_properties.inflate = effective_inflate
+            else:
+                delta_inflate = inflate
+                obj.nusiq_mcblend_object_properties.inflate = inflate
+            # Clear parent from children for a moment
+            children = obj.children
+            for child in children:
+                old_matrix = child.matrix_world.copy()
+                child.parent = None
+                child.matrix_world = old_matrix
+
+            dimensions = np.array(obj.dimensions)
+
+            # Set new dimensions
+            dimensions = (
+                dimensions +
+                (2*delta_inflate/MINECRAFT_SCALE_FACTOR)
+            )
+
+            obj.dimensions = dimensions
+            context.view_layer.update()
+
+            # Add children back and set their previous transformations
+            for child in children:
+                child.parent = obj
+                child.matrix_parent_inverse = obj.matrix_world.inverted()
+
+            counter += 1
+    return counter
