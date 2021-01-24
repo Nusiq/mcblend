@@ -114,7 +114,8 @@ class McblendObject:
 
     @mesh_type.setter
     def mesh_type(self, mesh_type: MeshType):
-        self.thisobj.nusiq_mcblend_object_properties.mesh_type = mesh_type
+        self.thisobj.nusiq_mcblend_object_properties.mesh_type = (
+            mesh_type.value)
 
     @property
     def mirror(self) -> bool:

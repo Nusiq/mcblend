@@ -17,7 +17,8 @@ from .texture_generator import Mask
 from .exception import NotEnoughTextureSpace
 from .json_tools import get_vect_json
 from .common import (
-    MINECRAFT_SCALE_FACTOR, McblendObject, McblendObjectGroup, CubePolygon)
+    MINECRAFT_SCALE_FACTOR, McblendObject, McblendObjectGroup, CubePolygon,
+    MeshType)
 
 
 
@@ -525,7 +526,9 @@ class UvMapper:
 
             objprop: McblendObject
             for objprop in object_properties.values():
-                if objprop.obj_type != 'MESH':
+                if (
+                        objprop.obj_type != 'MESH' or
+                        objprop.mesh_type != MeshType.CUBE):
                     continue
                 scale = (
                     objprop.mcube_size *
