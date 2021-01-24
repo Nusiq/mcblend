@@ -53,11 +53,23 @@ class OBJECT_OT_NusiqMcblendExportModelOperator(
         return True
 
     def execute(self, context):
+        bpy.ops.screen.animation_cancel()
+        original_frame = context.scene.frame_current
         try:
+            context.scene.frame_set(0)
+            for obj in context.selected_objects:
+                if obj.type == 'MESH' and any(map(lambda x: x < 0, obj.scale)):
+                    self.report(
+                        {'ERROR'},
+                        "Negative object scale is not supported. "
+                        f"Object: {obj.name}; Frame: 0.")
+                    return {'FINISHED'}
             result = export_model(context)
         except NameConflictException as e:
             self.report({'WARNING'}, str(e))
             return {'FINISHED'}
+        finally:
+            context.scene.frame_set(original_frame)
 
         with open(self.filepath, 'w') as f:
             json.dump(result, f, cls=CompactEncoder)
@@ -159,21 +171,35 @@ class OBJECT_OT_NusiqMcblendMapUvOperator(bpy.types.Operator):
         return True
 
     def execute(self, context):
+        bpy.ops.screen.animation_cancel()
+        original_frame = context.scene.frame_current
         try:
+            context.scene.frame_set(0)
+            for obj in context.selected_objects:
+                if obj.type == 'MESH' and any(map(lambda x: x < 0, obj.scale)):
+                    self.report(
+                        {'ERROR'},
+                        "Negative object scale is not supported. "
+                        f"Object: {obj.name}; Frame: 0.")
+                    return {'FINISHED'}
             set_uvs(context)
         except NotEnoughTextureSpace:
-            self.report({'ERROR'}, "Unable to create UV-mapping.")
+            self.report(
+                {'ERROR'},
+                "Not enough texture space to create UV-mapping.")
             return {'FINISHED'}
         except NameConflictException as e:
             self.report({'WARNING'}, str(e))
             return {'FINISHED'}
+        finally:
+            context.scene.frame_set(original_frame)
+
         width = context.scene.nusiq_mcblend.texture_width
         height = context.scene.nusiq_mcblend.texture_height
         self.report(
             {'INFO'},
             f'UV map created successfully for {width}x{height} texture.'
         )
-
         return {'FINISHED'}
 
 # UV grouping

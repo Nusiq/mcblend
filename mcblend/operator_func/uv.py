@@ -503,65 +503,53 @@ class UvMapper:
     height: int
     uv_boxes: List[McblendObjUvBox] = field(default_factory=list)
 
-    def load_uv_boxes(
-            self, object_properties: McblendObjectGroup,
-            context: bpy_types.Context
-        ):
-        # pylint: disable=duplicate-code
+    def load_uv_boxes(self, object_properties: McblendObjectGroup):
         '''
         Populates the uv_boxes dictionary.
 
         # Properties:
         :prop object_properties: The properties of all of the Minecraft cubes
             and bones.
-        :prop context: The context of running the operator.
         '''
-        bpy.ops.screen.animation_cancel()
-        original_frame = context.scene.frame_current
-        try:
-            context.scene.frame_set(0)
+        # Dictionary identified by width, depth, height, group name
+        cube_uv_groups: Dict[Tuple[int, int, int, str], UvGroup] = {}
 
-            # Dictionary identified by width, depth, height, group name
-            cube_uv_groups: Dict[Tuple[int, int, int, str], UvGroup] = {}
+        objprop: McblendObject
+        for objprop in object_properties.values():
+            if (
+                    objprop.obj_type != 'MESH' or
+                    objprop.mesh_type != MeshType.CUBE):
+                continue
+            scale = (
+                objprop.mcube_size *
+                # scale
+                np.array(objprop.obj_matrix_world.decompose()[2].xzy) *
+                MINECRAFT_SCALE_FACTOR
+            )
 
-            objprop: McblendObject
-            for objprop in object_properties.values():
-                if (
-                        objprop.obj_type != 'MESH' or
-                        objprop.mesh_type != MeshType.CUBE):
-                    continue
-                scale = (
-                    objprop.mcube_size *
-                    # scale
-                    np.array(objprop.obj_matrix_world.decompose()[2].xzy) *
-                    MINECRAFT_SCALE_FACTOR
-                )
+            if objprop.inflate != 0:
+                scale = scale - objprop.inflate * 2
 
-                if objprop.inflate != 0:
-                    scale = scale - objprop.inflate * 2
-
-                # width, height, depth - rounded down to int
-                # first round with get_json_vect to avoid numerical errors and
-                # than round down to int (like minecraft does).
-                width, height, depth = [
-                    int(i) for i in get_vect_json(scale)]
-                if objprop.uv_group != '':
-                    curr_key = (width, depth, height, objprop.uv_group)
-                    if curr_key in cube_uv_groups:
-                        cube_uv_groups[curr_key].append(
-                            UvMcCube(width, depth, height, objprop)
-                        )
-                    else:
-                        cube_uv_groups[curr_key] = UvGroup(
-                            UvMcCube(width, depth, height, objprop)
-                        )
-                        self.uv_boxes.append(cube_uv_groups[curr_key])
-                else:
-                    self.uv_boxes.append(
+            # width, height, depth - rounded down to int
+            # first round with get_json_vect to avoid numerical errors and
+            # than round down to int (like minecraft does).
+            width, height, depth = [
+                int(i) for i in get_vect_json(scale)]
+            if objprop.uv_group != '':
+                curr_key = (width, depth, height, objprop.uv_group)
+                if curr_key in cube_uv_groups:
+                    cube_uv_groups[curr_key].append(
                         UvMcCube(width, depth, height, objprop)
                     )
-        finally:
-            context.scene.frame_set(original_frame)
+                else:
+                    cube_uv_groups[curr_key] = UvGroup(
+                        UvMcCube(width, depth, height, objprop)
+                    )
+                    self.uv_boxes.append(cube_uv_groups[curr_key])
+            else:
+                self.uv_boxes.append(
+                    UvMcCube(width, depth, height, objprop)
+                )
 
     def plan_uv(self, allow_expanding: bool):
         '''

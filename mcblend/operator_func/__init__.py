@@ -39,7 +39,7 @@ def export_model(context: bpy_types.Context) -> Dict:
         visible_bounds_height=context.scene.nusiq_mcblend.visible_bounds_height,
         model_name=context.scene.nusiq_mcblend.model_name,
     )
-    model.load(object_properties, context)
+    model.load(object_properties)
     return model.json()
 
 def export_animation(
@@ -95,7 +95,7 @@ def set_uvs(context: bpy_types.Context):
 
     object_properties = McblendObjectGroup(context)
     mapper = UvMapper(width, height)
-    mapper.load_uv_boxes(object_properties, context)
+    mapper.load_uv_boxes(object_properties)
     mapper.plan_uv(allow_expanding)
 
     # Replace old mappings

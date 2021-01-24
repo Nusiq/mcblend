@@ -46,25 +46,15 @@ class ModelExport:
     visible_bounds_height: float
     bones: List[BoneExport] = field(default_factory=list)
 
-    def load(
-            self, object_properties: McblendObjectGroup,
-            context: bpy_types.Context
-        ):
+    def load(self, object_properties: McblendObjectGroup):
         '''
         Populates the self.bones dictionary.
 
         :param object_properties: Group of mcblend objects.
-        :param context: The context of running the operator.
         '''
-        bpy.ops.screen.animation_cancel()
-        original_frame = context.scene.frame_current
-        try:
-            context.scene.frame_set(0)
-            for _, objprop in object_properties.items():
-                if objprop.mctype in [MCObjType.BONE, MCObjType.BOTH]:
-                    self.bones.append(BoneExport(objprop, self))
-        finally:
-            context.scene.frame_set(original_frame)
+        for _, objprop in object_properties.items():
+            if objprop.mctype in [MCObjType.BONE, MCObjType.BOTH]:
+                self.bones.append(BoneExport(objprop, self))
 
     def json(self) -> Dict:
         '''
