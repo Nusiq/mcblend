@@ -14,6 +14,7 @@ import shutil
 import pytest
 from .common import assert_is_model, blender_run_script, make_comparable_json
 
+OUTPUT = "./.tmp/test_uv_group"
 
 def make_comparison_files(
         source: str, tmp: str) -> tp.Tuple[tp.Dict, tp.Dict, str]:
@@ -63,7 +64,7 @@ UV_GROUP_FILES = [
 def setup_module(module):
     '''Runs before tests'''
     # pylint: disable=unused-argument
-    tmp_path = "./.tmp/test_importer"
+    tmp_path = OUTPUT
     if os.path.exists(tmp_path):
         shutil.rmtree(tmp_path)
 
@@ -79,7 +80,7 @@ def test_importer(import_properties: str):
         './tests/data/test_uv_group/import_export', import_properties)
 
     source_dict, target_dict = make_comparison_files(
-        model_file, "./.tmp/test_uv_group_import_export"
+        model_file, OUTPUT
     )
 
     # JSON paths to lists where order doesn't matter.

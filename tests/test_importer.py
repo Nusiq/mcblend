@@ -1,20 +1,21 @@
 '''
-This is a testing script fomr model importer. Imports file, exports imported
+This is a testing script for model importer. Imports file, exports imported
 content and than compares the exported file with the original.
 '''
 import os
-import subprocess
 import json
 from pathlib import Path
-import typing as tp
-import pytest
+from typing import Dict, Tuple
 import shutil
+
+import pytest
 from .common import assert_is_model, blender_run_script, make_comparable_json
 
+OUTPUT = "./.tmp/test_importer"
 
 def make_comparison_files(
         source: str, tmp: str, use_empties: bool
-    ) -> tp.Tuple[tp.Dict, tp.Dict, str]:
+    ) -> Tuple[Dict, Dict, str]:
     '''
     Loads model from source to blender using nusiq_mcblend_import_operator
     Exports this model to tmp (to a file with the same name as source file).
@@ -73,7 +74,7 @@ MODEL_FILES = [
     ("three_bones.geo.json", True),
     ("two_bones.geo.json", True),
     ("battle_mech.geo.json", True),
-    
+
     # Import bones
     ("cube_translated.geo.json", True),
     ("cube_with_offset_pivot.geo.json", True),
@@ -88,12 +89,16 @@ MODEL_FILES = [
     ("three_bones.geo.json", True),
     ("two_bones.geo.json", True),
     ("battle_mech.geo.json", True),
+
+    # Polymesh
+    ('flat_monkey_smooth_monkey.geo.json', True),
+    ('flat_monkey_smooth_monkey.geo.json', False),
 ]
 
 
 def setup_module(module):
     '''Runs before tests'''
-    tmp_path = "./.tmp/test_importer"
+    tmp_path = OUTPUT
     if os.path.exists(tmp_path):
         shutil.rmtree(tmp_path)
 
@@ -108,10 +113,11 @@ def test_importer(import_properties):
     model_file = os.path.join('./tests/data/test_importer/models/', import_properties[0])
     use_empties = import_properties[1]
 
-    source_dict, target_dict, _ = make_comparison_files(
-        model_file, "./.tmp/test_importer", use_empties
+    source_dict, target_dict, target = make_comparison_files(
+        model_file, OUTPUT, use_empties
     )
 
+    print(target)
     assert_is_model(target_dict)
     set_paths = {
         ("minecraft:geometry"),

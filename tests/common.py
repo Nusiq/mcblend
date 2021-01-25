@@ -80,7 +80,8 @@ def assert_is_model(a: tp.Dict):
             assert type(bone) is dict
 
             assert set(bone.keys()) <= {  # acceptable keys
-                'name', 'cubes', 'pivot', 'rotation', 'parent', 'locators'
+                'name', 'cubes', 'pivot', 'rotation', 'parent', 'locators',
+                'poly_mesh'
             }
             assert set(bone.keys()) >= {  # obligatory keys
                 'name', 'pivot', 'rotation'
@@ -116,7 +117,34 @@ def assert_is_model(a: tp.Dict):
                     assert_is_vector(cube['rotation'], 3, (int, float))
                     if 'mirror' in cube:
                         assert type(cube['mirror']) is bool
-
+            # minecraft:geometry -> bones -> poly_mesh
+            if 'poly_mesh' in bone:
+                poly_mesh = bone['poly_mesh']
+                assert isinstance(poly_mesh, dict)
+                assert set(poly_mesh.keys()) <= {  # acceptable keys
+                    'positions','normals','uvs','polys', 'normalized_uvs'}
+                assert set(poly_mesh.keys()) >= {  # obligatory keys
+                    'polys'}
+                if 'positions' in poly_mesh:
+                    assert isinstance(poly_mesh['positions'], list)
+                    for position in poly_mesh['positions']:
+                        assert_is_vector(position, 3, (int, float))
+                if 'normals' in poly_mesh:
+                    assert isinstance(poly_mesh['normals'], list)
+                    for normal in poly_mesh['normals']:
+                        assert_is_vector(normal, 3, (int, float))
+                if 'uvs' in poly_mesh:
+                    assert isinstance(poly_mesh['uvs'], list)
+                    for uv in poly_mesh['uvs']:
+                        assert_is_vector(uv, 2, (int, float))
+                assert isinstance(poly_mesh['polys'], list)
+                for poly in poly_mesh['polys']:
+                    assert isinstance(poly, list)
+                    assert 3 <= len(poly) <= 4
+                    for poly_item in poly:
+                        assert_is_vector(poly_item, 3, (int, float))
+                if 'normalized_uvs' in poly_mesh:
+                    assert isinstance(poly_mesh['normalized_uvs'], bool)
 
 def make_comparable_json(
         jsonable: tp.Any, set_paths: tp.Set[tp.Tuple], curr_path=None):
