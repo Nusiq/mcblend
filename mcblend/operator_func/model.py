@@ -374,7 +374,7 @@ class PerFaceUvExport(UvExport):
                 self.cube_polygons.up, '-++', '+-+')
         if not self._is_face_uv_outside(self.cube_polygons.down):
             result["down"] = self._one_face_uv(
-                self.cube_polygons.down, '+--', '-+-')
+                self.cube_polygons.down, '---', '++-')
 
         return result
 
