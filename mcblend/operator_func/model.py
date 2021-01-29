@@ -493,10 +493,10 @@ class UvExportFactory:
 
     def _get_per_face_uv_export(
             self, cube_polygons: CubePolygons,
-            uv_layer: bpy.types.MeshUVLoopLayer):
+            uv_layer: bpy.types.MeshUVLoopLayer) -> Tuple[Any, bool]:
         result = {}
 
-        def _is_face_uv_outside(self, cube_polygon):
+        def _is_face_uv_outside(cube_polygon):
             '''Tests if UV face is completely outside of the texture'''
             face: bpy_types.MeshPolygon = cube_polygon.side
             for loop_index in face.loop_indices:
@@ -549,4 +549,4 @@ class UvExportFactory:
         # 01 | 01
         # TODO - implement
 
-        return result
+        return result, False

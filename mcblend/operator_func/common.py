@@ -408,13 +408,13 @@ _MC_MAPPING_UV_ORDERS = {
     ('west', False) :('+--', '++-', '+++', '+-+'),
     ('south', False) :('++-', '-+-', '-++', '+++'),
     ('up', False) :('--+', '+-+', '+++', '-++'),
-    ('down', False) :('---', '+--', '++-', '-+-'),
+    ('down', False) :('-+-', '++-', '+--', '---'),
     ('west', True) :('++-', '+--', '+-+', '+++'),
     ('north', True) :('+--', '---', '--+', '+-+'),
     ('east', True) :('---', '-+-', '-++', '--+'),
     ('south', True) :('-+-', '++-', '+++', '-++'),
     ('up', True) :('+-+', '--+', '-++', '+++'),
-    ('down', True) :('+--', '---', '-+-', '++-'),
+    ('down', True) :('++-', '-+-', '---', '+--'),
 }
 
 class CubePolygons(NamedTuple):
@@ -548,8 +548,8 @@ class CubePolygon(NamedTuple):
         character symbolizes whether the vertex is on increasing (+) or
         decreasing (-) side of the corresponding axis (XYZ) in local space of
         the object.
-    :param order: Stores the order (values from 0 to 4) in which the loops of
-        the face should be rearranged to this order 0 left bottom corner,
+    :param order: Stores the order (values from 0 to 3) in which the loops of
+        the face should be rearranged to match this: 0 left bottom corner,
         1 right bottom corner, 2 right top corner, 3 left top corner.
     '''
     side: bpy_types.MeshPolygon
@@ -732,7 +732,6 @@ def cyclic_equiv(u: List, v: List) -> bool:
             j += k
     return False
 
-# THE FIX BOUNDS OPERATOR:
 # TODO - maybe find a better place for this code
 
 def apply_obj_transform_keep_origin(obj: bpy.types.Object):

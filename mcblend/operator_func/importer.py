@@ -563,7 +563,7 @@ class ModelLoader:
         face3 = _face((depth, height), (uv[0]+depth + width, uv[1] + depth))
         face4 = _face((width, height), (uv[0]+2*depth + width, uv[1] + depth))
         face5 = _face((width, depth), (uv[0]+depth, uv[1]))
-        face6 = _face((width, depth), (uv[0]+depth + width, uv[1]))
+        face6 = _face((width, -depth), (uv[0]+depth + width, uv[1] + depth))
         if mirror:
             face_west, face_east = face1, face3
         else:

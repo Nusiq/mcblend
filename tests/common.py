@@ -11,7 +11,11 @@ If BLENDER_EXEC_PATH is not specified the test script tries to run blender with
 The config.py file is blacklisted in .gitignore because it can be different on
 different devices.
 '''
-import typing as tp
+import os
+import json
+from typing import Optional, Tuple, Dict, Any, Set
+from pathlib import Path
+
 import subprocess
 try:
     from .config import BLENDER_EXEC_PATH
@@ -20,7 +24,7 @@ except:
 
 
 def blender_run_script(
-        script, *args, blend_file_path: tp.Optional[str] = None
+        script, *args, blend_file_path: Optional[str] = None
     ):
     '''
     Run blender script with *args arguments. You can pass optional argument
@@ -35,14 +39,12 @@ def blender_run_script(
         ]
     subprocess.call(command)
 
-
-def assert_is_vector(vect: tp. Any, length: int, types: tp.Tuple):
-    assert type(vect) is list
+def assert_is_vector(vect: Any, length: int, types: Tuple):
+    assert isinstance(vect, list)
     assert len(vect) == length
     assert all([isinstance(i, types) for i in vect])
 
-
-def assert_is_model(a: tp.Dict):
+def assert_is_model(a: Dict):
     '''Check if the input is a valid model'''
     assert type(a) is dict
     assert set(a.keys()) == {'format_version', 'minecraft:geometry'}
@@ -110,7 +112,18 @@ def assert_is_model(a: tp.Dict):
                     assert set(cube.keys()) >= {  # obligatory keys
                         'uv', 'size', 'origin', 'pivot', 'rotation'
                     }
-                    assert_is_vector(cube['uv'], 2, (int, float))
+                    if isinstance(cube['uv'], list):  # Standard MC uv
+                        assert_is_vector(cube['uv'], 2, (int, float))
+                    elif isinstance(cube['uv'], dict):  # Per face UV mapping
+                        assert set(cube['uv'].keys()) <= {  # acceptable keys
+                            'north', 'south', 'east', 'west', 'up', 'down'}
+                        for uv_face in cube['uv'].values():
+                            assert set(uv_face.keys()) <= {'uv', 'uv_size'}  # acceptable keys
+                            assert set(uv_face.keys()) >= {'uv'}  # obligatory keys
+                            assert_is_vector(uv_face['uv'], 2, (float, int))
+                            if 'uv_size' in uv_face:
+                                assert_is_vector(
+                                    uv_face['uv_size'], 2, (float, int))
                     assert_is_vector(cube['size'], 3, (int, float))
                     assert_is_vector(cube['origin'], 3, (int, float))
                     assert_is_vector(cube['pivot'], 3, (int, float))
@@ -147,7 +160,7 @@ def assert_is_model(a: tp.Dict):
                     assert isinstance(poly_mesh['normalized_uvs'], bool)
 
 def make_comparable_json(
-        jsonable: tp.Any, set_paths: tp.Set[tp.Tuple], curr_path=None):
+        jsonable: Any, set_paths: Set[Tuple], curr_path=None):
     '''
     Replaces some of the lists in JSON with frozen sets so the objects can
     be safely compared and the order doesn't matter. Dictionaries are replaced
@@ -171,3 +184,48 @@ def make_comparable_json(
         return tuple(result)
     if isinstance(jsonable, (type(None), bool, int, float, str)):
         return jsonable
+
+def run_import_export_comparison(
+        source: str, tmp: str, use_empties: bool
+    ) -> Tuple[Dict, Dict, str]:
+    '''
+    Loads model from source to blender using nusiq_mcblend_import_operator
+    Exports this model to tmp (to a file with the same name as source file).
+
+    Returns two dictionaries and a string:
+    - the original model
+    - the exported model.
+    - path to exported model temporary file
+    '''
+    source = os.path.abspath(source)
+    tmp = os.path.abspath(tmp)
+    target = os.path.join(tmp, os.path.split(source)[1])
+    script = os.path.abspath('./blender_scripts/import_export.py')
+
+    # Windows uses wierd path separators
+    source = source.replace('\\', '/')
+    tmp = tmp.replace('\\', '/')
+    target = target.replace('\\', '/')
+    script = script.replace('\\', '/')
+
+
+    # Create tmp if not exists
+    Path(tmp).mkdir(parents=True, exist_ok=True)
+
+    # Run blender actions
+    if use_empties:
+        blender_run_script(script, source, target, "use_empties")
+    else:
+        blender_run_script(script, source, target)
+
+    # Validate results
+    with open(source, 'r') as f:
+        source_dict = json.load(f)
+    with open(target, 'r') as f:
+        target_dict = json.load(f)
+
+    return (
+        source_dict,
+        target_dict,
+        target
+    )
