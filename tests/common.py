@@ -13,15 +13,21 @@ different devices.
 '''
 import os
 import json
-from typing import Optional, Tuple, Dict, Any, Set
+from typing import Optional, Tuple, Dict, Any, Set, Union, List
 from pathlib import Path
 
 import subprocess
+import numpy as np
+
 try:
     from .config import BLENDER_EXEC_PATH
 except:
     BLENDER_EXEC_PATH = 'blender'
 
+
+JSON = Union[Dict, List, str, float, int, bool, None]
+JSON_PATH_PATTERN = List[Union[str, int, None, type(int), type(str)]]
+JSON_PATH = List[Union[str, int]]
 
 def blender_run_script(
         script, *args, blend_file_path: Optional[str] = None
@@ -159,31 +165,130 @@ def assert_is_model(a: Dict):
                 if 'normalized_uvs' in poly_mesh:
                     assert isinstance(poly_mesh['normalized_uvs'], bool)
 
-def make_comparable_json(
-        jsonable: Any, set_paths: Set[Tuple], curr_path=None):
-    '''
-    Replaces some of the lists in JSON with frozen sets so the objects can
-    be safely compared and the order doesn't matter. Dictionaries are replaced
-    with tuples of key value pairs because dictionaries are mutable and can't
-    be part of a frozenset.
-    '''
-    if curr_path is None:
-        curr_path = []
+def json_path_matches(json_path: JSON_PATH, json_pattern: JSON_PATH_PATTERN):
+    if len(json_path) != len(json_pattern):
+        return False
+    for path_item, pattern_item in zip(json_path, json_pattern):
+        if pattern_item is None:
+            continue
+        elif pattern_item is int:  # literally the type(int) NOT int
+            if isinstance(path_item, int):
+                continue
+        elif pattern_item is str:  # literally the type(str) NOT str
+            if isinstance(path_item, str):
+                continue
+        if path_item != pattern_item:
+            return False
+    return True
 
-    if isinstance(jsonable, dict):
-        result = [
-            (k, make_comparable_json(v, set_paths, curr_path+[k]))
-            for k, v in jsonable.items()]
-        return frozenset(result)
-    if isinstance(jsonable, list):
-        result = [
-            make_comparable_json(i, set_paths, curr_path+[0])
-            for i in jsonable]
-        if tuple(curr_path) in set_paths:
-            return frozenset(result)
-        return tuple(result)
-    if isinstance(jsonable, (type(None), bool, int, float, str)):
-        return jsonable
+def json_path_matches_any(
+        json_path: JSON_PATH, json_patterns: Optional[List[JSON_PATH_PATTERN]]):
+    if json_patterns is None:
+        return False
+    for pattern in json_patterns:
+        if json_path_matches(json_path, pattern):
+            return True
+    return False
+
+
+class NoMatchError(Exception):
+    pass
+
+def compare_json_files(
+        source: JSON, target: JSON, rtol=1e-05, atol=1e-08,
+        ignore_order_paths: Optional[List[JSON_PATH]]=None,
+        path: Optional[List]=None) -> None:
+    '''
+    Compares two JSON objects. Raises an exception if they're not equal.
+
+    :param source: The original JSON to compare to.
+    :param target: The JSON that is being compared to original.
+    :param rtol: Relative tolerance for float values.
+    :param atol: Absolute tolerance for float values.
+    :param ignore_order_paths: JSON paths pattern for paths which lead to
+        content which order is not important.
+    :param path: Currently visited path (used internally for error messages).
+    '''
+    # Make sure that path exists
+    if path is None:
+        path = []
+    # Convert ints to floats
+    if isinstance(source, int):
+        source = float(source)
+    if isinstance(target, int):
+        target = float(target)
+    # Make sure that the types of source and target are the same
+    if not isinstance(source, type(target)):
+        raise NoMatchError(
+            f'{path}: Mismatched object types: {type(source).__name__} != '
+            f'{type(target).__name__}')
+
+    if isinstance(source, dict):
+        used_target_keys: Set[str] = set()
+        for k, v in source.items():
+            if json_path_matches_any(path, ignore_order_paths):
+                errors: List[str] = []
+                for target_k, target_v in target.items():
+                    if target_k in used_target_keys:
+                        continue
+                    try:
+                        compare_json_files(
+                            v, target_v,  rtol, atol, ignore_order_paths,
+                            path + [k])
+                        used_target_keys.add(target_k)
+                        break
+                    except NoMatchError as e:
+                        errors.append(str(e))
+                else:  # Not found -> rise an exception
+                    if len(errors) > 0:
+                        errors_text = '\n'.join(
+                            ['\n'] + errors).replace('\n', '\n\t')
+                        raise NoMatchError(
+                            f'{path + [k]}: Unable to find matching object.'
+                            f'All attempts failed with errors:{errors_text}'
+                        )
+                    raise NoMatchError(f'{path + [k]}: Unable to find matching object.')
+            else:
+                if k not in target:
+                    raise NoMatchError(f'{path}: Missing key "{k}"')
+                compare_json_files(
+                    v, target[k], rtol, atol, ignore_order_paths, path + [k])
+    elif isinstance(source, list):
+        if len(source) != len(target):
+            raise NoMatchError(f'{path}: Lists have different lengths')
+        used_target_keys: Set[int] = set()
+        for i, v in enumerate(source):
+            if json_path_matches_any(path, ignore_order_paths):
+                errors: List[str] = []
+                for target_i, target_v in enumerate(target):
+                    if target_i in used_target_keys:
+                        continue
+                    try:
+                        compare_json_files(
+                            v, target_v,  rtol, atol, ignore_order_paths,
+                            path + [i])
+                        used_target_keys.add(target_i)
+                        break
+                    except NoMatchError as e:
+                        errors.append(str(e))
+                else:  # Not found -> rise an exception
+                    if len(errors) > 0:
+                        errors_text = '\n'.join(
+                            ['\n'] + errors).replace('\n', '\n\t')
+                        raise NoMatchError(
+                            f'{path + [i]}: Unable to find matching object.'
+                            f'All attempts failed with errors:{errors_text}')
+                    raise NoMatchError(f'{path + [i]}: Unable to find matching object.')
+            else:
+                compare_json_files(
+                    v, target[i], rtol, atol, ignore_order_paths, path + [i])
+    elif isinstance(source, (type(None), bool, str)):
+        if source != target:
+            raise NoMatchError(f'{path}: Unequal items {source} != {target}')
+    elif isinstance(source, float):
+        if not np.isclose(source, target, rtol=rtol, atol=atol):
+            raise NoMatchError(f'{path}: Unequal items {source} != {target}')
+
 
 def run_import_export_comparison(
         source: str, tmp: str, use_empties: bool

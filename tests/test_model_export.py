@@ -9,7 +9,7 @@ from pathlib import Path
 import typing as tp
 
 import pytest
-from .common import assert_is_model, blender_run_script, make_comparable_json
+from .common import assert_is_model, blender_run_script, compare_json_files
 
 
 def make_comparison_files(
@@ -80,12 +80,11 @@ def test_importer(scene):
     assert_is_model(result)
     set_paths = {
         ("minecraft:geometry"),
-        ("minecraft:geometry", 0, "bones"),
-        ("minecraft:geometry", 0, "bones", 0, "cubes"),
-        ("minecraft:geometry", 0, "bones", 0, "cubes", 0, "locators"),
+        ("minecraft:geometry", int, "bones"),
+        ("minecraft:geometry", int, "bones", int, "cubes"),
+        ("minecraft:geometry", int, "bones", int, "cubes", int, "locators"),
     }
-    expected_result_comparable = make_comparable_json(
-        expected_result, set_paths)
-    result_comparable = make_comparable_json(result, set_paths)
 
-    assert expected_result_comparable == result_comparable
+    compare_json_files(
+        expected_result, result, atol=0.01,
+        ignore_order_paths=set_paths)

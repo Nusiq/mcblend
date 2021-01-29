@@ -9,7 +9,7 @@ from pathlib import Path
 import typing as tp
 
 import pytest
-from .common import blender_run_script, make_comparable_json
+from .common import blender_run_script
 
 
 def make_comparison_files(

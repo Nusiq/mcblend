@@ -482,13 +482,6 @@ class UvExportFactory:
             mirror = True
 
         # Return the JSON and mirror
-        loop_crds_list: List[np.array] = []
-        for loop in uv_layer.data:
-            loop_crds_list.append(
-                self.blend_to_mc_converter.convert(np.array(loop.uv))
-            )
-        loop_crds_arr: np.ndarray = np.vstack(loop_crds_list)
-        min_loop_crds = loop_crds_arr.min(0)
         return [round(i, 3) for i in min_loop_crds], mirror
 
     def _get_per_face_uv_export(

@@ -12,7 +12,7 @@ import typing as tp
 import shutil
 
 import pytest
-from .common import assert_is_model, blender_run_script, make_comparable_json
+from .common import blender_run_script, compare_json_files
 
 OUTPUT = "./.tmp/test_uv_group"
 
@@ -82,10 +82,4 @@ def test_importer(import_properties: str):
     source_dict, target_dict = make_comparison_files(
         model_file, OUTPUT
     )
-
-    # JSON paths to lists where order doesn't matter.
-    set_paths = {}  # The order always matter in this case
-    source_comparable = make_comparable_json(source_dict, set_paths)
-    target_comparable = make_comparable_json(target_dict, set_paths)
-
-    assert source_comparable == target_comparable
+    compare_json_files(source_dict, target_dict, atol=0.01)

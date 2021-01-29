@@ -7,7 +7,7 @@ import shutil
 
 import pytest
 from .common import (
-    assert_is_model, make_comparable_json, run_import_export_comparison)
+    assert_is_model, compare_json_files, run_import_export_comparison)
 
 
 OUTPUT = "./.tmp/test_import_with_empties"
@@ -56,10 +56,9 @@ def test_empties_importer(model_files_properties):
     assert_is_model(target_dict)
     set_paths = {
         ("minecraft:geometry"),
-        ("minecraft:geometry", 0, "bones"),
-        ("minecraft:geometry", 0, "bones", 0, "cubes"),
+        ("minecraft:geometry", int, "bones"),
+        ("minecraft:geometry", int, "bones", int, "cubes"),
     }
-    source_comparable = make_comparable_json(source_dict, set_paths)
-    target_comparable = make_comparable_json(target_dict, set_paths)
-
-    assert source_comparable == target_comparable
+    compare_json_files(
+        source_dict, target_dict, atol=0.01,
+        ignore_order_paths=set_paths)
