@@ -21,10 +21,9 @@ class NoCubePolygonsException(Exception):
     missing.
     '''
 
-class NotAStandardUvException(Exception):
+class InvalidUvShape(Exception):
     '''
-    Raised by StandardCubeUvExport class when the UV of an object doesn't have standard
-    Minecraft UV mapping shape
+    Raise when the UV-mapping of exported model is not valid.
     '''
 
 class FileIsNotAModelException(Exception):

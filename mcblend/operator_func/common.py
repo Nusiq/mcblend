@@ -475,12 +475,12 @@ class CubePolygons(NamedTuple):
             "+++": np.array(ppp), "++-": np.array(ppm)
         }
 
-        north: List[str] = ['--+', '+-+', '+--', '---']  # Cube Front
-        east: List[str] = ['---', '-+-', '-++', '--+']  # Cube Right
-        south: List[str] = ['-+-', '++-', '+++', '-++']  # Cube Back
+        north: List[str] = ['---', '+--', '+-+', '--+']  # Cube Front
+        east: List[str] = ['--+', '-++', '-+-', '---']  # Cube Right
+        south: List[str] = ['-++', '+++', '++-', '-+-']  # Cube Back
         west: List[str] = ['+--', '++-', '+++', '+-+']  # Cube Left
         up: List[str] = ['--+', '+-+', '+++', '-++']  # Cube Up
-        down: List[str] = ['---', '+--', '++-', '-+-']  # Cube Down
+        down: List[str] = ['-+-', '++-', '+--', '---']  # Cube Down
         cube_polygon_builder = {}  # Input for CubePolygons constructor
         for polygon in cube.data.polygons:
             bbv: List[str] = []  # bound box vertices
@@ -501,35 +501,32 @@ class CubePolygons(NamedTuple):
                         closest_bb_point = k
                 bbv.append(closest_bb_point)
 
-            # Im not sure which order of vertices is correct so I just check
-            # original and reversed
-            rbbv = list(reversed(bbv))
-            if cyclic_equiv(north, bbv) or cyclic_equiv(north, rbbv):
+            if cyclic_equiv(north, bbv):
                 t_bbv: Tuple[str, str, str, str] = tuple(bbv)  # type: ignore
                 cube_polygon_builder['north'] = CubePolygon(
                     polygon, t_bbv, get_order('north', mirror, t_bbv)
                 )
-            elif cyclic_equiv(east, bbv) or cyclic_equiv(east, rbbv):
+            elif cyclic_equiv(east, bbv):
                 t_bbv: Tuple[str, str, str, str] = tuple(bbv)  # type: ignore
                 cube_polygon_builder['east'] = CubePolygon(
                     polygon, t_bbv, get_order('east', mirror, t_bbv)
                 )
-            elif cyclic_equiv(south, bbv) or cyclic_equiv(south, rbbv):
+            elif cyclic_equiv(south, bbv):
                 t_bbv: Tuple[str, str, str, str] = tuple(bbv)  # type: ignore
                 cube_polygon_builder['south'] = CubePolygon(
                     polygon, t_bbv, get_order('south', mirror, t_bbv)
                 )
-            elif cyclic_equiv(west, bbv) or cyclic_equiv(west, rbbv):
+            elif cyclic_equiv(west, bbv):
                 t_bbv: Tuple[str, str, str, str] = tuple(bbv)  # type: ignore
                 cube_polygon_builder['west'] = CubePolygon(
                     polygon, t_bbv, get_order('west', mirror, t_bbv)
                 )
-            elif cyclic_equiv(up, bbv) or cyclic_equiv(up, rbbv):
+            elif cyclic_equiv(up, bbv):
                 t_bbv: Tuple[str, str, str, str] = tuple(bbv)  # type: ignore
                 cube_polygon_builder['up'] = CubePolygon(
                     polygon, t_bbv, get_order('up', mirror, t_bbv)
                 )
-            elif cyclic_equiv(down, bbv) or cyclic_equiv(down, rbbv):
+            elif cyclic_equiv(down, bbv):
                 t_bbv: Tuple[str, str, str, str] = tuple(bbv)  # type: ignore
                 cube_polygon_builder['down'] = CubePolygon(
                     polygon, t_bbv, get_order('down', mirror, t_bbv)
@@ -538,8 +535,7 @@ class CubePolygons(NamedTuple):
             return CubePolygons(**cube_polygon_builder)
         except TypeError as e:  # Missing argument
             raise NoCubePolygonsException(
-                f"Object {cube.name.split('.')} is not filling a bounding box "
-                "good enough to approximate its shape to a cube."
+                f'Object "{cube.name}" is not a cube.'
             ) from e
 
 class CubePolygon(NamedTuple):

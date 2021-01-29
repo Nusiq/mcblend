@@ -17,7 +17,7 @@ from .common import (
     CubePolygons, CubePolygon, MeshType
 )
 from .json_tools import get_vect_json
-from .exception import NoCubePolygonsException, NotAStandardUvException
+from .exception import NoCubePolygonsException, InvalidUvShape
 from .uv import CoordinatesConverter
 from copy import copy
 
@@ -172,11 +172,12 @@ class BoneExport:
                     c_size = c_size - cubeprop.inflate*2
                     c_origin = c_origin + cubeprop.inflate
 
-                uv = uv_factory.get_uv_export(cubeprop, c_size)
+                uv, uv_mirror = uv_factory.get_uv_export(cubeprop, c_size)
 
                 cube = CubeExport(
                     size=c_size, pivot=c_pivot, origin=c_origin,
-                    rotation=c_rot, inflate=cubeprop.inflate, uv=uv)
+                    rotation=c_rot, inflate=cubeprop.inflate, uv=uv,
+                    uv_mirror=uv_mirror)
                 self.cubes.append(cube)
             elif cubeprop.mesh_type is MeshType.POLY_MESH:
                 cubeprop.obj_data.calc_normals_split()
@@ -261,12 +262,13 @@ class CubeExport:
     origin: np.ndarray
     rotation: np.ndarray
     inflate: float
-    uv: UvExport
+    uv: Any
+    uv_mirror: bool
 
     def json(self):
         '''Returns JSON representation of this object.'''
         cube_dict = {
-            'uv': self.uv.json(),
+            'uv': self.uv,
             'size': get_vect_json(self.size),
             'origin': get_vect_json(self.origin),
             'pivot': get_vect_json(self.pivot),
@@ -277,10 +279,9 @@ class CubeExport:
         }
         if self.inflate != 0:
             cube_dict['inflate'] = round(self.inflate, 3)
-        if self.uv.mirror:
+        if self.uv_mirror:
             cube_dict['mirror'] = True
         return cube_dict
-
 
 class PolyMesh:
     '''Object that represents a poly_mesh of a bone.'''
@@ -326,132 +327,77 @@ class PolyMesh:
         }
         return poly_mesh
 
-class UvExport:
+class UvExportFactory:
     '''
-    Base class for objects that represent the UV of exported cube.
+    Object used for creating the UvExport objects. Decides which subtype of the
+    UvExport object should be used.
     '''
-    def __init__(self):
-        # Mirror is used only for StandardCubeUvExport but any other UV has to
-        # be able to return False when asked about mirror property
-        self.mirror = False
+    def __init__(self, texture_size: Tuple[int, int]):
+        self.blend_to_mc_converter = CoordinatesConverter(
+            np.array([[0, 1], [1, 0]]),
+            np.array([[0, texture_size[0]], [0, texture_size[1]]])
+        )
+        self.mc_to_blend_converter = CoordinatesConverter(
+            np.array([[0, texture_size[0]], [0, texture_size[1]]]),
+            np.array([[0, 1], [1, 0]])
+        )
 
-    def json(self) -> Any:
-        '''Returns JSON representation of this object.'''
-        # pylint: disable=no-self-use
-        return [0, 0]
-
-class PerFaceUvExport(UvExport):
-    '''
-    Object that represents the UV of a cube during export in per-face
-    UV-mapping style.
-    '''
-    def __init__(
-            self, cube_polygons: CubePolygons,
-            uv_layer: bpy.types.MeshUVLoopLayer,
-            blend_to_mc_converter: CoordinatesConverter):
-        super().__init__()
-        self.cube_polygons = cube_polygons
-        self.uv_layer = uv_layer
-        self.converter = blend_to_mc_converter
-
-    def json(self):
-        result = {}
-
-        if not self._is_face_uv_outside(self.cube_polygons.north):
-            result["north"] = self._one_face_uv(
-                self.cube_polygons.north, '--+', '+--')
-        if not self._is_face_uv_outside(self.cube_polygons.east):
-            result["east"] = self._one_face_uv(
-                self.cube_polygons.east, '-++', '---')
-        if not self._is_face_uv_outside(self.cube_polygons.south):
-            result["south"] = self._one_face_uv(
-                self.cube_polygons.south, '+++', '-+-')
-        if not self._is_face_uv_outside(self.cube_polygons.west):
-            result["west"] = self._one_face_uv(
-                self.cube_polygons.west, '+-+', '++-')
-        if not self._is_face_uv_outside(self.cube_polygons.up):
-            result["up"] = self._one_face_uv(
-                self.cube_polygons.up, '-++', '+-+')
-        if not self._is_face_uv_outside(self.cube_polygons.down):
-            result["down"] = self._one_face_uv(
-                self.cube_polygons.down, '---', '++-')
-
-        return result
-
-    def _is_face_uv_outside(self, cube_polygon):
-        '''Tests if UV face is completely outside of the texture'''
-        face: bpy_types.MeshPolygon = cube_polygon.side
-        for loop_index in face.loop_indices:
-            curr_loop = np.array(self.uv_layer.data[loop_index].uv)
-            if not ((curr_loop < 0).any() or (curr_loop > 1).any()):
-                return False  # Something isn't outside
-        return True  # Went through the loop (everything is outside)
-
-    def _one_face_uv(
-            self, cube_polygon: CubePolygon, corner1_name: str,
-            corner2_name: str) -> Dict:
-        face: bpy_types.MeshPolygon = cube_polygon.side
-        corner1_index = cube_polygon.orientation.index(corner1_name)
-        corner2_index = cube_polygon.orientation.index(corner2_name)
-
-        corner1_crds = np.array(self.converter.convert(
-            self.uv_layer.data[face.loop_indices[corner1_index]].uv
-        ))
-        corner2_crds = np.array(self.converter.convert(
-            self.uv_layer.data[face.loop_indices[corner2_index]].uv
-        ))
-        uv = corner1_crds
-        uv_size = corner2_crds-corner1_crds
-
-        return {
-            "uv": [round(i, 3) for i in uv],
-            "uv_size": [round(i, 3) for i in uv_size],
-        }
-
-class StandardCubeUvExport(UvExport):
-    '''
-    Object that represents the UV of a cube during export in default Minecraft
-    UV-mapping style - defined by a vector with two values (the shape of the
-    faces is implicitly determined by the dimensions of the cube).
-    '''
-    def __init__(
-            self, cube_polygons: CubePolygons,
-            uv_layer: bpy.types.MeshUVLoopLayer, cube_size: np.array,
-            blend_to_mc_converter: CoordinatesConverter):
-        super().__init__()
-        self.cube_size = cube_size
-        self.cube_polygons = cube_polygons
-        self.uv_layer = uv_layer
-        self.converter = blend_to_mc_converter
-
-        # test if the shape of the  UV is the standard Minecraft shape
-        self.assert_standard_uv_shape()
-
-    def _uv_from_name(
-            self, cube_polygon: CubePolygon, name: str) -> np.ndarray:
+    def get_uv_export(
+            self, mcobj: McblendObject, cube_size: np.ndarray) -> Tuple[Any, bool]:
         '''
-        Helper function used to get certain UV coordinates from a face by
-        its name.
+        Creates uv properties for given McblendObject.
+
+        :param mcobj: Object that needs UvExport.
+        :param cube_size: Size of the cube expressed in Minecraft coordinates
+            system.
+        :returns: The JSON with UV and the mirror property
+        '''
+        layer: Optional[bpy.types.MeshUVLoopLayer] = (
+            mcobj.obj_data.uv_layers.active)
+        if layer is None:  # Make sure that UV exists
+            return [0, 0], False
+        try:
+            polygons = mcobj.cube_polygons()
+        except NoCubePolygonsException:
+            return [0, 0], False
+        try:
+            return self._get_standard_cube_uv_export(
+                polygons, layer, cube_size)
+        except InvalidUvShape:
+            return self._get_per_face_uv_export(polygons, layer)
+        return [0, 0], False
+
+    def _get_uv(
+            self, uv_layer: bpy.types.MeshUVLoopLayer,
+            cube_polygon: CubePolygon, name: str) -> np.ndarray:
+        '''
+        Get certain UV coordinates identified by a name from a face.
+
+        :param cube_polygon: The face of the cube
+        :param name: The identifier of a loop in the UV
         '''
         face: bpy_types.MeshPolygon = cube_polygon.side
         name_index = cube_polygon.orientation.index(name)
 
         uv_layer_data_index = face.loop_indices[name_index]
-        return self.converter.convert(
-            np.array(self.uv_layer.data[uv_layer_data_index].uv)
+        return self.blend_to_mc_converter.convert(
+            np.array(uv_layer.data[uv_layer_data_index].uv)
         )
 
-    def assert_standard_uv_shape(self):
+    def _get_standard_cube_uv_export(
+            self, cube_polygons: CubePolygons,
+            uv_layer: bpy.types.MeshUVLoopLayer, cube_size: np.array
+        ) -> Tuple[Any, bool]:
         '''
-        Asserts that this object has a UV-shape that conforms to standard
-        Minecraft UV-mapping shape. If not than NotAStandardUvException
-        is risen.
+        Attempts to return UV and mirror for standard UV-mapping. Raises
+        InvalidUvShape exception if this kind of mapping is impossible for
+        given input.
         '''
         # Get min and max value of he loop coordinates
         loop_crds_list: List[np.array] = []
-        for loop in self.uv_layer.data:
+        for loop in uv_layer.data:
             loop_crds_list.append(
-                self.converter.convert(np.array(loop.uv))
+                self.blend_to_mc_converter.convert(np.array(loop.uv))
             )
         loop_crds_arr: np.ndarray = np.vstack(loop_crds_list)
         min_loop_crds = loop_crds_arr.min(0)
@@ -462,7 +408,7 @@ class StandardCubeUvExport(UvExport):
         # round down to int (like minecraft does).
         w, h, d = [
             int(i) for i in
-            get_vect_json(self.cube_size)]
+            get_vect_json(cube_size)]
         expected_shape = np.array([
             [d, d + h],  # north/front LD 0
             [d + w, d + h],  # north/front RD 1
@@ -503,81 +449,104 @@ class StandardCubeUvExport(UvExport):
         ]]
 
         real_shape = np.array([
-            self._uv_from_name(self.cube_polygons.north, '---'),  # north/front LD
-            self._uv_from_name(self.cube_polygons.north, '+--'),  # north/front RD
-            self._uv_from_name(self.cube_polygons.north, '+-+'),  # north/front RU
-            self._uv_from_name(self.cube_polygons.north, '--+'),  # north/front LU
-            self._uv_from_name(self.cube_polygons.east, '-+-'),  # east/right LD
-            self._uv_from_name(self.cube_polygons.east, '---'),  # east/right RD
-            self._uv_from_name(self.cube_polygons.east, '--+'),  # east/right RU
-            self._uv_from_name(self.cube_polygons.east, '-++'),  # east/right LU
-            self._uv_from_name(self.cube_polygons.south, '++-'),  # south/back LD
-            self._uv_from_name(self.cube_polygons.south, '-+-'),  # south/back RD
-            self._uv_from_name(self.cube_polygons.south, '-++'),  # south/back RU
-            self._uv_from_name(self.cube_polygons.south, '+++'),  # south/back LU
-            self._uv_from_name(self.cube_polygons.west, '+--'),  # west/left LD
-            self._uv_from_name(self.cube_polygons.west, '++-'),  # west/left RD
-            self._uv_from_name(self.cube_polygons.west, '+++'),  # west/left RU
-            self._uv_from_name(self.cube_polygons.west, '+-+'),  # west/left LU
-            self._uv_from_name(self.cube_polygons.up, '--+'),  # up/up LD
-            self._uv_from_name(self.cube_polygons.up, '+-+'),  # up/up RD
-            self._uv_from_name(self.cube_polygons.up, '+++'),  # up/up RU
-            self._uv_from_name(self.cube_polygons.up, '-++'),  # up/up LU
-            self._uv_from_name(self.cube_polygons.down, '---'),  # down/down LD
-            self._uv_from_name(self.cube_polygons.down, '+--'),  # down/down RD
-            self._uv_from_name(self.cube_polygons.down, '++-'),  # down/down RU
-            self._uv_from_name(self.cube_polygons.down, '-+-'),  # down/down LU
+            self._get_uv(uv_layer, cube_polygons.north, '---'),  # north/front LD
+            self._get_uv(uv_layer, cube_polygons.north, '+--'),  # north/front RD
+            self._get_uv(uv_layer, cube_polygons.north, '+-+'),  # north/front RU
+            self._get_uv(uv_layer, cube_polygons.north, '--+'),  # north/front LU
+            self._get_uv(uv_layer, cube_polygons.east, '-+-'),  # east/right LD
+            self._get_uv(uv_layer, cube_polygons.east, '---'),  # east/right RD
+            self._get_uv(uv_layer, cube_polygons.east, '--+'),  # east/right RU
+            self._get_uv(uv_layer, cube_polygons.east, '-++'),  # east/right LU
+            self._get_uv(uv_layer, cube_polygons.south, '++-'),  # south/back LD
+            self._get_uv(uv_layer, cube_polygons.south, '-+-'),  # south/back RD
+            self._get_uv(uv_layer, cube_polygons.south, '-++'),  # south/back RU
+            self._get_uv(uv_layer, cube_polygons.south, '+++'),  # south/back LU
+            self._get_uv(uv_layer, cube_polygons.west, '+--'),  # west/left LD
+            self._get_uv(uv_layer, cube_polygons.west, '++-'),  # west/left RD
+            self._get_uv(uv_layer, cube_polygons.west, '+++'),  # west/left RU
+            self._get_uv(uv_layer, cube_polygons.west, '+-+'),  # west/left LU
+            self._get_uv(uv_layer, cube_polygons.up, '--+'),  # up/up LD
+            self._get_uv(uv_layer, cube_polygons.up, '+-+'),  # up/up RD
+            self._get_uv(uv_layer, cube_polygons.up, '+++'),  # up/up RU
+            self._get_uv(uv_layer, cube_polygons.up, '-++'),  # up/up LU
+            self._get_uv(uv_layer, cube_polygons.down, '---'),  # down/down LD
+            self._get_uv(uv_layer, cube_polygons.down, '+--'),  # down/down RD
+            self._get_uv(uv_layer, cube_polygons.down, '++-'),  # down/down RU
+            self._get_uv(uv_layer, cube_polygons.down, '-+-'),  # down/down LU
         ], dtype=np.float64)
 
+        mirror = False
         if not np.isclose(expected_shape, real_shape).all():
             if not np.isclose(expected_shape_mirror, real_shape).all():
-                raise NotAStandardUvException()
-            self.mirror = True
+                raise InvalidUvShape()
+            mirror = True
 
-    def json(self):
+        # Return the JSON and mirror
         loop_crds_list: List[np.array] = []
-        for loop in self.uv_layer.data:
+        for loop in uv_layer.data:
             loop_crds_list.append(
-                self.converter.convert(np.array(loop.uv))
+                self.blend_to_mc_converter.convert(np.array(loop.uv))
             )
         loop_crds_arr: np.ndarray = np.vstack(loop_crds_list)
         min_loop_crds = loop_crds_arr.min(0)
-        return [round(i, 3) for i in min_loop_crds]
+        return [round(i, 3) for i in min_loop_crds], mirror
 
-class UvExportFactory:
-    '''
-    Object used for creating the UvExport objects. Decides which subtype of the
-    UvExport object should be used.
-    '''
-    def __init__(self, texture_size: Tuple[int, int]):
-        self.blend_to_mc_converter = CoordinatesConverter(
-            np.array([[0, 1], [1, 0]]),
-            np.array([[0, texture_size[0]], [0, texture_size[1]]])
-        )
-        self.mc_to_blend_converter = CoordinatesConverter(
-            np.array([[0, texture_size[0]], [0, texture_size[1]]]),
-            np.array([[0, 1], [1, 0]])
-        )
+    def _get_per_face_uv_export(
+            self, cube_polygons: CubePolygons,
+            uv_layer: bpy.types.MeshUVLoopLayer):
+        result = {}
 
-    def get_uv_export(
-            self, mcobj: McblendObject, cube_size: np.ndarray) -> UvExport:
-        '''
-        Creates UvExport object for given McblendObject.
+        def _is_face_uv_outside(self, cube_polygon):
+            '''Tests if UV face is completely outside of the texture'''
+            face: bpy_types.MeshPolygon = cube_polygon.side
+            for loop_index in face.loop_indices:
+                curr_loop = np.array(uv_layer.data[loop_index].uv)
+                if not ((curr_loop < 0).any() or (curr_loop > 1).any()):
+                    return False  # Something isn't outside
+            return True  # Went through the loop (everything is outside)
 
-        :param mcobj: Object that needs UvExport.
-        :param cube_size: Size of the cube expressed in Minecraft coordinates
-            system.
-        '''
-        layer: Optional[bpy.types.MeshUVLoopLayer] = (
-            mcobj.obj_data.uv_layers.active)
-        if layer is None:  # Make sure that UV exists
-            return UvExport()
-        try:
-            polygons = mcobj.cube_polygons()
-        except NoCubePolygonsException:
-            return UvExport()
-        try:
-            return StandardCubeUvExport(
-                polygons, layer, cube_size, self.blend_to_mc_converter)
-        except NotAStandardUvException:
-            return PerFaceUvExport(polygons, layer, self.blend_to_mc_converter)
+        def _one_face_uv(
+                cube_polygon: CubePolygon, corner1_name: str,
+                corner2_name: str) -> Dict:
+            face: bpy_types.MeshPolygon = cube_polygon.side
+            corner1_index = cube_polygon.orientation.index(corner1_name)
+            corner2_index = cube_polygon.orientation.index(corner2_name)
+
+            corner1_crds = np.array(self.blend_to_mc_converter.convert(
+                uv_layer.data[face.loop_indices[corner1_index]].uv
+            ))
+            corner2_crds = np.array(self.blend_to_mc_converter.convert(
+                uv_layer.data[face.loop_indices[corner2_index]].uv
+            ))
+            uv = corner1_crds
+            uv_size = corner2_crds-corner1_crds
+
+            return {
+                "uv": [round(i, 3) for i in uv],
+                "uv_size": [round(i, 3) for i in uv_size],
+            }
+
+        if not _is_face_uv_outside(cube_polygons.north):
+            result["north"] = _one_face_uv(cube_polygons.north, '--+', '+--')
+        if not _is_face_uv_outside(cube_polygons.east):
+            result["east"] = _one_face_uv(cube_polygons.east, '-++', '---')
+        if not _is_face_uv_outside(cube_polygons.south):
+            result["south"] = _one_face_uv(cube_polygons.south, '+++', '-+-')
+        if not _is_face_uv_outside(cube_polygons.west):
+            result["west"] = _one_face_uv(cube_polygons.west, '+-+', '++-')
+        if not _is_face_uv_outside(cube_polygons.up):
+            result["up"] = _one_face_uv(cube_polygons.up, '-++', '+-+')
+        if not _is_face_uv_outside(cube_polygons.down):
+            result["down"] = _one_face_uv(cube_polygons.down, '---', '++-')
+
+        # Asserts that every face has a shape that can be mapped with per-face
+        # UV-mapping. If not than InvalidUvShape is raised.
+        # Allowed shapes (mirrored default shape on X or Y):
+        # 01 | 10
+        # 23 | 32
+        # ---+---
+        # 23 | 32
+        # 01 | 01
+        # TODO - implement
+
+        return result
