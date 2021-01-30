@@ -350,7 +350,7 @@ class UvExportFactory:
         :param mcobj: Object that needs UvExport.
         :param cube_size: Size of the cube expressed in Minecraft coordinates
             system.
-        :returns: The JSON with UV and the mirror property
+        :returns: The JSON with UV, and the mirror property
         '''
         layer: Optional[bpy.types.MeshUVLoopLayer] = (
             mcobj.obj_data.uv_layers.active)
@@ -489,57 +489,31 @@ class UvExportFactory:
             uv_layer: bpy.types.MeshUVLoopLayer) -> Tuple[Any, bool]:
         result = {}
 
-        def _is_face_uv_outside(cube_polygon):
-            '''Tests if UV face is completely outside of the texture'''
-            face: bpy_types.MeshPolygon = cube_polygon.side
-            for loop_index in face.loop_indices:
-                curr_loop = np.array(uv_layer.data[loop_index].uv)
-                if not ((curr_loop < 0).any() or (curr_loop > 1).any()):
-                    return False  # Something isn't outside
-            return True  # Went through the loop (everything is outside)
+        def map_face(cube_polygon: CubePolygon, side_name: str):
+            crds = cube_polygon.uv_layer_coordinates(uv_layer)
 
-        def _one_face_uv(
-                cube_polygon: CubePolygon, corner1_name: str,
-                corner2_name: str) -> Dict:
-            face: bpy_types.MeshPolygon = cube_polygon.side
-            corner1_index = cube_polygon.orientation.index(corner1_name)
-            corner2_index = cube_polygon.orientation.index(corner2_name)
+            # If fully out of the texture
+            if ((crds < 0) | (crds > 1)).all():
+                return
+            is_valid, is_u_flipped, is_v_flipped = (
+                CubePolygon.validate_rectangle_uv(crds))
+            if not is_valid:
+                raise InvalidUvShape(
+                    f'{side_name} face has invalid UV-mapping')
 
-            corner1_crds = np.array(self.blend_to_mc_converter.convert(
-                uv_layer.data[face.loop_indices[corner1_index]].uv
-            ))
-            corner2_crds = np.array(self.blend_to_mc_converter.convert(
-                uv_layer.data[face.loop_indices[corner2_index]].uv
-            ))
-            uv = corner1_crds
-            uv_size = corner2_crds-corner1_crds
+            left_top = self.blend_to_mc_converter.convert(crds[3])
+            right_bottom = self.blend_to_mc_converter.convert(crds[1])
 
-            return {
-                "uv": [round(i, 3) for i in uv],
-                "uv_size": [round(i, 3) for i in uv_size],
+            result[side_name] = {
+                "uv": [round(i, 3) for i in left_top],
+                "uv_size": [round(i, 3) for i in right_bottom-left_top],
             }
 
-        if not _is_face_uv_outside(cube_polygons.north):
-            result["north"] = _one_face_uv(cube_polygons.north, '--+', '+--')
-        if not _is_face_uv_outside(cube_polygons.east):
-            result["east"] = _one_face_uv(cube_polygons.east, '-++', '---')
-        if not _is_face_uv_outside(cube_polygons.south):
-            result["south"] = _one_face_uv(cube_polygons.south, '+++', '-+-')
-        if not _is_face_uv_outside(cube_polygons.west):
-            result["west"] = _one_face_uv(cube_polygons.west, '+-+', '++-')
-        if not _is_face_uv_outside(cube_polygons.up):
-            result["up"] = _one_face_uv(cube_polygons.up, '-++', '+-+')
-        if not _is_face_uv_outside(cube_polygons.down):
-            result["down"] = _one_face_uv(cube_polygons.down, '---', '++-')
-
-        # Asserts that every face has a shape that can be mapped with per-face
-        # UV-mapping. If not than InvalidUvShape is raised.
-        # Allowed shapes (mirrored default shape on X or Y):
-        # 01 | 10
-        # 23 | 32
-        # ---+---
-        # 23 | 32
-        # 01 | 01
-        # TODO - implement
+        map_face(cube_polygons.north, "north")
+        map_face(cube_polygons.east, "east")
+        map_face(cube_polygons.south, "south")
+        map_face(cube_polygons.west, "west")
+        map_face(cube_polygons.up, "up")
+        map_face(cube_polygons.down, "down")
 
         return result, False

@@ -556,6 +556,58 @@ class CubePolygon(NamedTuple):
     orientation: Tuple[str, str, str, str]
     order: Tuple[int, int, int, int]
 
+    def uv_layer_coordinates(
+            self, uv_layer: bpy.types.MeshUVLoopLayer) -> np.array:
+        '''
+        Returns 4x2 numpy array with UV coordinates of this cube polygon loops
+        from the uv_layer. The order of the coordinates in the array is
+        defined by self.order (left bottm, right bottom, right top, left top)
+        '''
+        ordered_loop_indices = np.array(self.side.loop_indices)[[self.order]]
+        crds = np.array([uv_layer.data[i].uv for i in ordered_loop_indices])
+        return crds
+
+    @staticmethod
+    def validate_rectangle_uv(crds: np.ndarray) -> Tuple[bool, bool, bool]:
+        '''
+        Takes an 4x2 array with UV coordinates of 4 points (left bottom,
+        right bottom, right top, left top) and checks if they're mapped to
+        rectangular shape. The rectangle can have any width and height (
+        including negative values) but can't be rotated.
+
+        Returns 3 flags:
+
+            1. Whether the object is a cuboid.
+                - all vertices must be in the corners in the right order
+                - top/bottom vertices must be at the top/bottom
+                - left/right vertices must be at the left/right
+            2. Whether left and right vertices are flipped (object scaled with
+                negative value on U axis)
+            3. Whether top and bottom vertices are flipped (object scaled with
+                negative value on V axis)
+
+        Notes:
+
+        - When first flag is False the second and third flat is also False.
+        - Usually used in combination with CubePolygon.uv_layer_coordinates
+        '''
+        min_ = crds.min(axis=0)
+        max_ = crds.max(axis=0)
+        # All loops in the corners
+        if not (
+                np.isclose(crds, min_) | np.isclose(crds, max_)
+                ).all():
+            return False, False, False
+
+        lb, rb, rt, lt = crds
+        # Left to left, right to right, bottom to bottom, top to top
+        if (
+                lb[0] != lt[0] or rb[0] != rt[0] or
+                lt[1] != rt[1] or lb[1] != rb[1]):
+            return False, False, False
+        # is_valid, is_u_flipped, is_v_flipped
+        return True, lb[0] != min_[0], lb[1] != min_[1]
+
 class McblendObjectGroup:
     '''
     A group of :class:`McblendObject`s often used as a main datasource for

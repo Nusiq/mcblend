@@ -50,9 +50,7 @@ class CoordinatesConverter:
         :returns: converted vector.
         '''
         x = np.array(x).T
-        return tuple(  # type: ignore
-            (((x-self.space_a[0])/self.scale_a)*self.scale_b)+self.space_b[0]
-        )
+        return (((x-self.space_a[0])/self.scale_a)*self.scale_b)+self.space_b[0]
 
 
 # (U, V) - 0, 0 = top left
