@@ -41,7 +41,7 @@ class CoordinatesConverter:
         self.scale_a = self.space_a[1] - self.space_a[0]
         self.scale_b = self.space_b[1] - self.space_b[0]
 
-    def convert(self, x: Collection[float]) -> Collection[float]:
+    def convert(self, x: Collection[float]) -> np.ndarray:
         '''
         Performs a conversion on coordinates passed to the function with
         x argument (from space_a to space_b).
