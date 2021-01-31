@@ -557,7 +557,7 @@ class CubePolygon(NamedTuple):
     order: Tuple[int, int, int, int]
 
     def uv_layer_coordinates(
-            self, uv_layer: bpy.types.MeshUVLoopLayer) -> np.array:
+            self, uv_layer: bpy.types.MeshUVLoopLayer) -> np.ndarray:
         '''
         Returns 4x2 numpy array with UV coordinates of this cube polygon loops
         from the uv_layer. The order of the coordinates in the array is
@@ -810,7 +810,7 @@ def fix_cube_rotation(obj: bpy.types.Object):
     the cube rotation. The scale and rotation of the object must
     be in default position for this function to work.
 
-    :param obj: blender object with cuboid mesh. 
+    :param obj: blender object with cuboid mesh.
     '''
     # Get coordinates of 3 points (a,b and c) from any polygon
     # I'm assuming this is a cuboid so I also can assume that

@@ -2,21 +2,14 @@
 This module contains all of the panels for mcblend GUI.
 '''
 # don't import future annotations Blender needs that
-from .operator_func.common import MeshType
 from typing import List, Optional
 from dataclasses import dataclass
-from .custom_properties import EffectTypes
-
 
 import bpy
-from bpy.props import (
-    StringProperty, IntProperty, BoolProperty, FloatProperty,
-    FloatVectorProperty, CollectionProperty, EnumProperty, PointerProperty,
-    IntVectorProperty
-)
-from .operator_func.texture_generator import (
-    list_mask_types_as_blender_enum, UvMaskTypes,
-    list_mix_mask_modes_as_blender_enum)
+
+from .custom_properties import EffectTypes
+from .operator_func.common import MeshType
+from .operator_func.texture_generator import UvMaskTypes
 
 # GUI
 # UV-groups names list
@@ -376,7 +369,7 @@ class OBJECT_UL_NusiqMcblendEventsList(bpy.types.UIList):
             self, context, layout, data, item, icon, active_data,
             active_propname):
         '''
-        
+
         Drawing OBJECT_NusiqMcblendEventGroupProperties in a list.
 
         :param context: the contexts of operator

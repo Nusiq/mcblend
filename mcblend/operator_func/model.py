@@ -3,12 +3,12 @@ Functions related to exporting models.
 '''
 from __future__ import annotations
 
+from copy import copy
 from typing import List, Dict, Tuple, Any, Optional
 from dataclasses import dataclass, field
-import mathutils
 
 import numpy as np
-
+import mathutils
 import bpy
 import bpy_types
 
@@ -19,7 +19,6 @@ from .common import (
 from .json_tools import get_vect_json
 from .exception import NoCubePolygonsException, InvalidUvShape
 from .uv import CoordinatesConverter
-from copy import copy
 
 @dataclass
 class ModelExport:
@@ -200,6 +199,7 @@ class BoneExport:
                     )[[0, 2, 1]] + self.pivot
                     positions.append(list(transformed_vertex))
                 for loop in loops:
+                    # pylint: disable=assignment-from-no-return
                     transformed_normal = mathutils.Vector(
                             np.array(loop.normal)[[0, 2, 1]]
                     ).normalized()
@@ -241,7 +241,7 @@ class BoneExport:
             mcbone['cubes'] = []
             for cube in self.cubes:
                 mcbone['cubes'].append(cube.json())
-        if not self.poly_mesh.is_empty:
+        if len(self.poly_mesh.polys) > 0:  # If not empty
             mcbone['poly_mesh'] = self.poly_mesh.json()
         return mcbone
 
@@ -296,6 +296,10 @@ class PolyMesh:
             self, positions: List[List[float]], normals: List[List[float]],
             polys: List[List[Tuple[int, int, int]]],
             uvs: List[List[int]]):
+        '''
+        Extends the poly_mesh data with new vertices, normals, polys and uvs
+        from another mesh.
+        '''
         vertex_id_offset = len(self.positions)
         normal_id_offset = len(self.normals)
         loop_id_offset = len(self.uvs)
@@ -313,11 +317,8 @@ class PolyMesh:
                 ])
             self.polys.append(curr_poly)
 
-    @property
-    def is_empty(self) -> bool:
-        return len(self.polys) == 0
-
     def json(self):
+        '''Return part of the model JSON with poly_mesh object.'''
         poly_mesh = {
             'normalized_uvs': self.normalized_uvs,
             'positions': [get_vect_json(i) for i in self.positions],
@@ -386,7 +387,7 @@ class UvExportFactory:
 
     def _get_standard_cube_uv_export(
             self, cube_polygons: CubePolygons,
-            uv_layer: bpy.types.MeshUVLoopLayer, cube_size: np.array
+            uv_layer: bpy.types.MeshUVLoopLayer, cube_size: np.ndarray
         ) -> Tuple[Any, bool]:
         '''
         Attempts to return UV and mirror for standard UV-mapping. Raises
@@ -394,13 +395,13 @@ class UvExportFactory:
         given input.
         '''
         # Get min and max value of he loop coordinates
-        loop_crds_list: List[np.array] = []
+        loop_crds_list: List[np.ndarray] = []
         for loop in uv_layer.data:
             loop_crds_list.append(
                 self.blend_to_mc_converter.convert(np.array(loop.uv))
             )
         loop_crds_arr: np.ndarray = np.vstack(loop_crds_list)
-        min_loop_crds = loop_crds_arr.min(0)
+        min_loop_crds: np.ndarray = loop_crds_arr.min(0)  # type: ignore
         # max_loop_crds = loop_crds_arr.max(0)
 
         # Depth width height
@@ -495,7 +496,7 @@ class UvExportFactory:
             # If fully out of the texture
             if ((crds < 0) | (crds > 1)).all():
                 return
-            is_valid, is_u_flipped, is_v_flipped = (
+            is_valid, _, _ = (
                 CubePolygon.validate_rectangle_uv(crds))
             if not is_valid:
                 raise InvalidUvShape(

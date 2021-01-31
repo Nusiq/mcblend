@@ -1119,7 +1119,7 @@ class OBJECT_OT_NusiqMcblendExportUvGroupOperator(
 # UV Mask exporter
 class OBJECT_OT_NusiqMcblendImportUvGroupOperator(bpy.types.Operator, ImportHelper):
     '''Operator used for importing Minecraft models to Blender.'''
-    # pylint: disable=unused-argument, no-member
+    # pylint: disable=unused-argument, no-member, too-many-boolean-expressions
     bl_idname = "object.nusiq_mcblend_import_uv_group_operator"
     bl_label = "Import UV-group"
     bl_options = {'REGISTER'}
@@ -1133,6 +1133,7 @@ class OBJECT_OT_NusiqMcblendImportUvGroupOperator(bpy.types.Operator, ImportHelp
     )
 
     def _load_mask_data(self, mask_data, side) -> Optional[str]:
+        # pylint: disable=too-many-boolean-expressions, too-many-nested-blocks
         loading_warning: Optional[str] = None
         if "mask_type" not in mask_data:
             return (
@@ -1170,7 +1171,7 @@ class OBJECT_OT_NusiqMcblendImportUvGroupOperator(bpy.types.Operator, ImportHelp
             if 'children' in mask_data:
                 children = mask_data['children']
                 if not isinstance(children, int):
-                    loading_warning = f'Children property must be an integer'
+                    loading_warning = 'Children property must be an integer'
                 else:
                     mask.children = mask_data['children']
         if mask_type == UvMaskTypes.COLOR_PALLETTE_MASK.value:
@@ -1217,7 +1218,7 @@ class OBJECT_OT_NusiqMcblendImportUvGroupOperator(bpy.types.Operator, ImportHelp
             if relative_boundaries:
                 if 'p1' in mask_data:
                     if (
-                            isinstance(mask_data['p1'], list) and 
+                            isinstance(mask_data['p1'], list) and
                             len(mask_data['p1']) == 2 and
                             isinstance(mask_data['p1'][0], (float, int)) and
                             isinstance(mask_data['p1'][1], (float, int)) and
@@ -1230,7 +1231,7 @@ class OBJECT_OT_NusiqMcblendImportUvGroupOperator(bpy.types.Operator, ImportHelp
                             '1.0 if "relative_boundaries" are True')
                 if 'p2' in mask_data:
                     if (
-                            isinstance(mask_data['p2'], list) and 
+                            isinstance(mask_data['p2'], list) and
                             len(mask_data['p2']) == 2 and
                             isinstance(mask_data['p2'][0], (float, int)) and
                             isinstance(mask_data['p2'][1], (float, int)) and
@@ -1244,7 +1245,7 @@ class OBJECT_OT_NusiqMcblendImportUvGroupOperator(bpy.types.Operator, ImportHelp
             else:
                 if 'p1' in mask_data:
                     if (
-                            isinstance(mask_data['p1'], list) and 
+                            isinstance(mask_data['p1'], list) and
                             len(mask_data['p1']) == 2 and
                             isinstance(mask_data['p1'][0], int) and
                             isinstance(mask_data['p1'][1], int)):
@@ -1255,7 +1256,7 @@ class OBJECT_OT_NusiqMcblendImportUvGroupOperator(bpy.types.Operator, ImportHelp
                             '"relative_boundaries" are False')
                 if 'p2' in mask_data:
                     if (
-                            isinstance(mask_data['p2'], list) and 
+                            isinstance(mask_data['p2'], list) and
                             len(mask_data['p2']) == 2 and
                             isinstance(mask_data['p2'][0], int) and
                             isinstance(mask_data['p2'][1], int)):
@@ -1398,7 +1399,7 @@ class OBJECT_OT_NusiqMcblendImportUvGroupOperator(bpy.types.Operator, ImportHelp
             if version != 1:
                 self.report({'ERROR'}, "Unknown UV-group version.")
                 return {'CANCELLED'}
-        except (KeyError, TypeError, JSONDecodeError) as e:
+        except (KeyError, TypeError, JSONDecodeError):
             self.report({'ERROR'}, "Unable to to read the UV-group data.")
             return {'CANCELLED'}
 
@@ -1433,7 +1434,7 @@ class OBJECT_OT_NusiqMcblendImportUvGroupOperator(bpy.types.Operator, ImportHelp
         # If something didn't load propertly also display a warning
         if loading_warning is not None:
             self.report({'WARNING'}, loading_warning)
-        
+
         if context.area is not None:  # There is no area when running from CLI
             context.area.tag_redraw()
         return {'FINISHED'}
@@ -1460,7 +1461,7 @@ class OBJECT_OT_NusiqMcblendRemoveEvent(bpy.types.Operator):
     def poll(cls, context: bpy_types.Context):
         events = bpy.context.scene.nusiq_mcblend_events
         active_event_id = bpy.context.scene.nusiq_mcblend_active_event
-        if not (0 <= active_event_id < len(events)):
+        if not 0 <= active_event_id < len(events):
             return False
         return True
 
@@ -1489,7 +1490,7 @@ class OBJECT_OT_NusiqMcblendAddEffect(bpy.types.Operator):
     def poll(cls, context: bpy_types.Context):
         events = bpy.context.scene.nusiq_mcblend_events
         active_event_id = bpy.context.scene.nusiq_mcblend_active_event
-        if not (0 <= active_event_id < len(events)):
+        if not 0 <= active_event_id < len(events):
             return False
         return True
 
@@ -1514,7 +1515,7 @@ class OBJECT_OT_NusiqMcblendRemoveEffect(bpy.types.Operator):
     def poll(cls, context: bpy_types.Context):
         events = bpy.context.scene.nusiq_mcblend_events
         active_event_id = bpy.context.scene.nusiq_mcblend_active_event
-        if not (0 <= active_event_id < len(events)):
+        if not 0 <= active_event_id < len(events):
             return False
         event = events[active_event_id]
         effects = event.effects

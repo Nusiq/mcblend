@@ -830,13 +830,13 @@ class ModelLoader:
                 'literal string "quad_list" or "tri_list"')
         # Check if positions, normals and uvs are the same lengths
         pos_length = len(positions)
-        if not (pos_length == len(normals) == len(uvs)):
+        if not pos_length == len(normals) == len(uvs):
             raise FileIsNotAModelException(
                 f'{poly_mesh_path}::"positions", "normals" and "uvs" are not '
                 'the same lengths. They must be the same lengths in "tri_list"'
                 ' and "quad_list" polys grouping mode.')
         # Check if list length is divisible by the group_size
-        if not (pos_length % group_size == 0):
+        if not pos_length % group_size == 0:
             raise FileIsNotAModelException(
                 f'{poly_mesh_path}::"positions" list length must be '
                 f'divisible by {group_size} in {grouping_mode}.')
@@ -845,7 +845,7 @@ class ModelLoader:
             range(pos_length), 3
         ).reshape(
             -1, group_size, 3
-        ).to_list()
+        ).tolist()
         return result
 
     def _load_uv(

@@ -4,7 +4,7 @@ This module is used by Blender to register/unregister the plugin.
 # don't import future annotations Blender needs that
 import bpy
 from bpy.props import (
-    PointerProperty, BoolProperty, FloatVectorProperty, CollectionProperty,
+    PointerProperty, CollectionProperty,
     IntProperty, EnumProperty)
 
 
@@ -167,7 +167,7 @@ def register():
         default=0)
     bpy.types.Scene.nusiq_mcblend_animations = CollectionProperty(
         type=OBJECT_NusiqMcblendAnimationProperties)
-    
+
     # Events
     bpy.types.Scene.nusiq_mcblend_events = CollectionProperty(
         type=OBJECT_NusiqMcblendEventProperties)

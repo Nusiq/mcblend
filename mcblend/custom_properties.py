@@ -1,3 +1,6 @@
+'''
+Custom properties of objects, scenes etc. used by Mcblend.
+'''
 from enum import Enum
 from typing import Dict, List, Tuple
 
@@ -231,7 +234,7 @@ def _set_uv_group_name(self, value):
             except ValueError:
                 pass
             other_new_name = get_unused_uv_group_name(base_name, i)
-            _update_uv_group_name(other_group, other_new_name)
+            _update_uv_group_name(other_group, other_new_name, False)
             break
         _update_uv_group_name(self, value, update_references)
 
@@ -395,7 +398,7 @@ def get_unused_event_name(base_name: str, i=1):
 def _update_event_name(event, new_name: str):
     # Update the names of all of the meshes
 
-    pass  # TODO - update names of existing timeline markers
+    # TODO - update names of existing timeline markers
     # Update the name of the UV group
     event['name'] = new_name
 

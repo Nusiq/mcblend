@@ -10,9 +10,6 @@ from dataclasses import dataclass, field
 from itertools import filterfalse
 import numpy as np
 
-import bpy
-import bpy_types
-
 from .texture_generator import Mask
 from .exception import NotEnoughTextureSpace
 from .json_tools import get_vect_json

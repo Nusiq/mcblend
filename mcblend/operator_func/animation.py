@@ -6,7 +6,7 @@ from __future__ import annotations
 from typing import NamedTuple, Dict, Optional, List, Tuple, Set
 import math
 from dataclasses import dataclass, field
-from itertools import cycle, tee, islice
+from itertools import tee, islice
 
 import bpy
 import bpy_types
@@ -87,6 +87,8 @@ def _get_keyframes(context: bpy_types.Context) -> List[int]:
     :param context: the context of running the operator.
     :returns: the list of the keyframes for the animation.
     '''
+    # pylint: disable=too-many-nested-blocks
+
     def get_action_keyframes(action: bpy.types.Action) -> Set[int]:
         '''Gets set of keyframes from an action.'''
         if action.fcurves is None:
@@ -149,9 +151,9 @@ def _get_keyframes(context: bpy_types.Context) -> List[int]:
 class PoseBone(NamedTuple):
     '''Properties of a pose of single bone.'''
     name: str
-    location: np.array
-    rotation: np.array
-    scale: np.array
+    location: np.ndarray
+    rotation: np.ndarray
+    scale: np.ndarray
     parent_name: Optional[str] = None
 
     def relative(self, original: PoseBone) -> PoseBone:

@@ -142,7 +142,7 @@ class MultiplicativeMask(Mask):
         image[:,:,:] = image*mask
 
     @abstractmethod
-    def get_mask(self, image: np.array) -> np.array:
+    def get_mask(self, image: np.ndarray) -> np.ndarray:
         '''Returns 2D matrix with the filter array.'''
 
 
@@ -153,7 +153,7 @@ class DummyMask(MultiplicativeMask):
     def get_mask(self, image):
         w, h, _ = image.shape
         return np.ones((w, h))[:,:, np.newaxis]
-    
+
 
 class Stripe(NamedTuple):
     '''
@@ -343,7 +343,7 @@ class RectangleMask(TwoPointSurfaceMask):
         self.expotent = expotent
         self.hard_edge = hard_edge
 
-    def get_mask(self, image: np.array):
+    def get_mask(self, image: np.ndarray):
         w, h, u1, u2, v1, v2 = self.get_surface_properties(image)
 
         # Create basic mask array
@@ -421,7 +421,7 @@ class StripesMask(MultiplicativeMask):
         self.horizontal = horizontal
         self.relative_boundaries = relative_boundaries
 
-    def get_mask(self, image: np.array) -> np.array:
+    def get_mask(self, image: np.ndarray) -> np.ndarray:
         w, h, _ = image.shape
         mask = np.ones((w, h))
 
