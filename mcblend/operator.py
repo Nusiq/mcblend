@@ -27,11 +27,11 @@ from .operator_func.texture_generator import (
 from .custom_properties import get_unused_uv_group_name
 
 # Model exporter
-class OBJECT_OT_NusiqMcblendExportModelOperator(
+class NUSIQ_MCBLEND_OT_ExportModel(
         bpy.types.Operator, ExportHelper):
     '''Operator used for exporting minecraft models from blender.'''
     # pylint: disable=unused-argument, no-member
-    bl_idname = "object.nusiq_mcblend_export_operator"
+    bl_idname = "nusiq_mcblend.export_model"
     bl_label = "Export model"
     bl_options = {'REGISTER'}
     bl_description = "Exports selected objects from scene to bedrock model."
@@ -81,16 +81,16 @@ def menu_func_nusiq_mcblend_export_model(self, context):
     '''Registers ExportModel operator to the F3 menu.'''
     # pylint: disable=unused-argument
     self.layout.operator(
-        OBJECT_OT_NusiqMcblendExportModelOperator.bl_idname,
+        NUSIQ_MCBLEND_OT_ExportModel.bl_idname,
         text="Mcblend: Export model"
     )
 
 # Animation exporter
-class OBJECT_OT_NusiqMcblendExportAnimationOperator(
+class NUSIQ_MCBLEND_OT_ExportAnimation(
         bpy.types.Operator, ExportHelper):
     '''Operator used for exporting Minecraft animations from blender.'''
     # pylint: disable=unused-argument, no-member
-    bl_idname = "object.nusiq_mcblend_export_animation_operator"
+    bl_idname = "nusiq_mcblend.export_animation"
     bl_label = "Export animation"
     bl_options = {'REGISTER'}
     bl_description = (
@@ -144,23 +144,24 @@ def menu_func_nusiq_mcblend_export_animation(self, context):
     '''Registers ExportAnimation operator to the F3 menu.'''
     # pylint: disable=unused-argument
     self.layout.operator(
-        OBJECT_OT_NusiqMcblendExportAnimationOperator.bl_idname,
+        NUSIQ_MCBLEND_OT_ExportAnimation.bl_idname,
         text="Mcblend: Export animation"
     )
 
 # UV mapper
-class OBJECT_OT_NusiqMcblendMapUvOperator(bpy.types.Operator):
+class NUSIQ_MCBLEND_OT_MapUv(bpy.types.Operator):
     '''
     Operator used for creating UV-mapping and optionally the tamplate texture
     for Minecraft model.
     '''
     # pylint: disable=unused-argument, no-member
-    bl_idname = "object.nusiq_mcblend_map_uv_operator"
+    bl_idname = "nusiq_mcblend.map_uv"
     bl_label = "Map uv for bedrock model."
     bl_options = {'REGISTER', 'UNDO'}
     bl_description = (
         "Set UV-mapping for minecraft objects."
     )
+
 
     @classmethod
     def poll(cls, context: bpy_types.Context):
@@ -203,10 +204,10 @@ class OBJECT_OT_NusiqMcblendMapUvOperator(bpy.types.Operator):
         return {'FINISHED'}
 
 # UV grouping
-class OBJECT_OT_NusiqMcblendUvGroupOperator(bpy.types.Operator):
+class NUSIQ_MCBLEND_OT_UvGroup(bpy.types.Operator):
     '''Operator used for adding selected objects to an UV-group'''
     # pylint: disable=unused-argument, no-member
-    bl_idname = "object.nusiq_mcblend_uv_group_operator"
+    bl_idname = "nusiq_mcblend.uv_group"
     bl_label = "Set uv_group for object."
     bl_options = {'UNDO'}
     bl_description = (
@@ -252,10 +253,10 @@ class OBJECT_OT_NusiqMcblendUvGroupOperator(bpy.types.Operator):
                 area.tag_redraw()
         return {'FINISHED'}
 
-class OBJECT_OT_NusiqMcblendClearUvGroupOperator(bpy.types.Operator):
+class NUSIQ_MCBLEND_OT_ClearUvGroup(bpy.types.Operator):
     '''Operator used for removing selected objects from their UV-groups'''
     # pylint: disable=unused-argument, no-member
-    bl_idname = "object.nusiq_mcblend_clear_uv_group_operator"
+    bl_idname = "nusiq_mcblend.clear_uv_group"
     bl_label = "Clear uv_group for object."
     bl_options = {'UNDO'}
     bl_description = 'Clears the UV group from an object.'
@@ -284,12 +285,12 @@ class OBJECT_OT_NusiqMcblendClearUvGroupOperator(bpy.types.Operator):
         return {'FINISHED'}
 
 # Mirror property
-class OBJECT_OT_NusiqMcblendToggleMirrorOperator(bpy.types.Operator):
+class NUSIQ_MCBLEND_OT_ToggleMirror(bpy.types.Operator):
     '''
     Operator used for toggling custom "mirror" propert of selected objects.
     '''
     # pylint: disable=unused-argument, no-member
-    bl_idname = "object.nusiq_mcblend_toggle_mirror_operator"
+    bl_idname = "nusiq_mcblend.toggle_mirror"
     bl_label = "Toggle mirror for selected objects."
     bl_options = {'UNDO'}
     bl_description = (
@@ -335,12 +336,12 @@ class OBJECT_OT_NusiqMcblendToggleMirrorOperator(bpy.types.Operator):
         return {'FINISHED'}
 
 # is_bone property
-class OBJECT_OT_NusiqMcblendToggleIsBoneOperator(bpy.types.Operator):
+class NUSIQ_MCBLEND_OT_ToggleIsBone(bpy.types.Operator):
     '''
     Operator used for toggling custom "is_bone" property of selected objects.
     '''
     # pylint: disable=unused-argument, no-member
-    bl_idname = "object.nusiq_mcblend_toggle_is_bone_operator"
+    bl_idname = "nusiq_mcblend.toggle_is_bone"
     bl_label = "Toggle is_bone for selected objects."
     bl_options = {'UNDO'}
     bl_description = (
@@ -387,12 +388,12 @@ class OBJECT_OT_NusiqMcblendToggleIsBoneOperator(bpy.types.Operator):
         return {'FINISHED'}
 
 # Inflate property
-class OBJECT_OT_NusiqMcblendSetInflateOperator(bpy.types.Operator):
+class NUSIQ_MCBLEND_OT_SetInflate(bpy.types.Operator):
     '''
     Operator used for setting the inflate value of selected objects.
     '''
     # pylint: disable=unused-argument, no-member
-    bl_idname = "object.nusiq_mcblend_set_inflate_operator"
+    bl_idname = "nusiq_mcblend.set_inflate"
     bl_label = "Set inflate"
     bl_options = {'REGISTER', 'UNDO'}
     bl_description = (
@@ -429,14 +430,14 @@ class OBJECT_OT_NusiqMcblendSetInflateOperator(bpy.types.Operator):
         return {'FINISHED'}
 
 # Rounding dimensions
-class OBJECT_OT_NusiqMcblendRoundDimensionsOperator(bpy.types.Operator):
+class NUSIQ_MCBLEND_OT_RoundDimensions(bpy.types.Operator):
     '''
     Operator used for rounding the width, depth and height of selected objects
     in such way that they'll have integer dimensions in exported Minecraft
     model file.
     '''
     # pylint: disable=unused-argument, R0201, no-member
-    bl_idname = "object.nusiq_mcblend_round_dimensions_operator"
+    bl_idname = "nusiq_mcblend.round_dimensions"
     bl_label = "Round dimensions"
     bl_options = {'UNDO'}
     bl_description = (
@@ -458,14 +459,14 @@ class OBJECT_OT_NusiqMcblendRoundDimensionsOperator(bpy.types.Operator):
         return {'FINISHED'}
 
 # Separate mesh cubes
-class OBJECT_OT_NusiqMcblendSeparateMeshCubesOperator(bpy.types.Operator):
+class NUSIQ_MCBLEND_OT_SeparateMeshCubes(bpy.types.Operator):
     '''
     Separates object with mesh full of cuboids by the loose parts of the mesh.
     Adjusts the rotations of the newly created objects to match the rotations
     of the cubes inside of this object.
     '''
     # pylint: disable=unused-argument, R0201, no-member
-    bl_idname = "object.nusiq_mcblend_separate_mesh_cubes_operator"
+    bl_idname = "nusiq_mcblend.separate_mesh_cubes"
     bl_label = "Separate cubes"
     bl_options = {'UNDO'}
     bl_description = (
@@ -486,10 +487,10 @@ class OBJECT_OT_NusiqMcblendSeparateMeshCubesOperator(bpy.types.Operator):
         return {'FINISHED'}
 
 # Model Importer
-class OBJECT_OT_NusiqMcblendImport(bpy.types.Operator, ImportHelper):
+class NUSIQ_MCBLEND_OT_ImportModel(bpy.types.Operator, ImportHelper):
     '''Operator used for importing Minecraft models to Blender.'''
     # pylint: disable=unused-argument, no-member
-    bl_idname = "object.nusiq_mcblend_import_operator"
+    bl_idname = "nusiq_mcblend.import_model"
     bl_label = "Import model"
     bl_options = {'REGISTER'}
     bl_description = "Import model from json file."
@@ -532,17 +533,17 @@ class OBJECT_OT_NusiqMcblendImport(bpy.types.Operator, ImportHelper):
         return {'FINISHED'}
 
 # Animation (GUI)
-def menu_func_nusiq_mcblend_import(self, context):
+def menu_func_nusiq_mcblend_import_model(self, context):
     '''Registers Import operator to the F3 menu.'''
     # pylint: disable=unused-argument
     self.layout.operator(
-        OBJECT_OT_NusiqMcblendImport.bl_idname, text="Mcblend: Import model"
+        NUSIQ_MCBLEND_OT_ImportModel.bl_idname, text="Mcblend: Import model"
     )
 
 def save_animation_properties(animation, context):
     '''
     Saves animation properties from context to
-    OBJECT_NusiqMcblendAnimationProperties object.
+    NUSIQ_MCBLEND_AnimationProperties object.
     '''
     animation.frame_start = context.scene.frame_start
     animation.frame_end = context.scene.frame_end
@@ -556,7 +557,7 @@ def save_animation_properties(animation, context):
 
 def load_animation_properties(animation, context):
     '''
-    Saves animation properties from OBJECT_NusiqMcblendAnimationProperties
+    Saves animation properties from NUSIQ_MCBLEND_AnimationProperties
     object to the context.
     '''
     context.scene.frame_start = animation.frame_start
@@ -569,11 +570,11 @@ def load_animation_properties(animation, context):
             anim_timeline_marker.name,
             frame=anim_timeline_marker.frame)
 
-class OBJECT_OT_NusiqMcblendListAnimations(bpy.types.Operator):
+class NUSIQ_MCBLEND_OT_ListAnimations(bpy.types.Operator):
     '''
     Operator used for listing the animations for GUI.
     '''
-    bl_idname = "object.nusiq_mcblend_list_animations"
+    bl_idname = "nusiq_mcblend.list_animations"
     bl_label = "List animations and save them to Enum to display them in GUI"
 
     def _list_animations(self, context):
@@ -609,9 +610,9 @@ class OBJECT_OT_NusiqMcblendListAnimations(bpy.types.Operator):
                 context.scene.nusiq_mcblend_animations[new_anim_id], context)
         return {'FINISHED'}
 
-class OBJECT_OT_NusiqMcblendAddAnimation(bpy.types.Operator):
+class NUSIQ_MCBLEND_OT_AddAnimation(bpy.types.Operator):
     '''Operator used creating animation settings templates.'''
-    bl_idname = "object.nusiq_mcblend_add_animation"
+    bl_idname = "nusiq_mcblend.add_animation"
     bl_label = '''Adds new animation to the list.'''
     bl_options = {'UNDO'}
 
@@ -637,11 +638,11 @@ class OBJECT_OT_NusiqMcblendAddAnimation(bpy.types.Operator):
                 area.tag_redraw()
         return {'FINISHED'}
 
-class OBJECT_OT_NusiqMcblendRemoveAnimation(bpy.types.Operator):
+class NUSIQ_MCBLEND_OT_RemoveAnimation(bpy.types.Operator):
     '''
     Operator used for loading saved animation templates to the context.
     '''
-    bl_idname = "object.nusiq_mcblend_remove_animation"
+    bl_idname = "nusiq_mcblend.remove_animation"
     bl_label = "Remove current animation from the list."
     bl_options = {'UNDO'}
 
@@ -674,11 +675,11 @@ class OBJECT_OT_NusiqMcblendRemoveAnimation(bpy.types.Operator):
         return {'FINISHED'}
 
 # UV group (GUI)
-class OBJECT_OT_NusiqMcblendListUvGroups(bpy.types.Operator):
+class NUSIQ_MCBLEND_OT_ListUvGroups(bpy.types.Operator):
     '''
     Operator that used for listing the UV-groups for GUI.
     '''
-    bl_idname = "object.nusiq_mcblend_list_uv_groups"
+    bl_idname = "nusiq_mcblend.list_uv_groups"
     bl_label = "List UV groups and save them to Enum to display them in GUI"
 
     def _list_uv_groups(self, context):
@@ -702,9 +703,9 @@ class OBJECT_OT_NusiqMcblendListUvGroups(bpy.types.Operator):
 
         return {'FINISHED'}
 
-class OBJECT_OT_NusiqMcblendAddUvGroup(bpy.types.Operator):
+class NUSIQ_MCBLEND_OT_AddUvGroup(bpy.types.Operator):
     '''Operator used for creating new UV-groups.'''
-    bl_idname = "object.nusiq_mcblend_add_uv_group"
+    bl_idname = "nusiq_mcblend.add_uv_group"
     bl_label = '''Adds new uv_group to the list.'''
     bl_options = {'UNDO'}
 
@@ -733,9 +734,9 @@ class OBJECT_OT_NusiqMcblendAddUvGroup(bpy.types.Operator):
 
         return {'FINISHED'}
 
-class OBJECT_OT_NusiqMcblendRemoveUvGroup(bpy.types.Operator):
+class NUSIQ_MCBLEND_OT_RemoveUvGroup(bpy.types.Operator):
     '''Operator useful for removing UV-groups.'''
-    bl_idname = "object.nusiq_mcblend_remove_uv_group"
+    bl_idname = "nusiq_mcblend.remove_uv_group"
     bl_label = "Remove current uv_group from the list."
     bl_options = {'UNDO'}
 
@@ -761,9 +762,9 @@ class OBJECT_OT_NusiqMcblendRemoveUvGroup(bpy.types.Operator):
             context.scene.nusiq_mcblend_active_uv_group=group_id-1
         return {'FINISHED'}
 
-class OBJECT_OT_NusiqMcblendCopyUvGroupSide(bpy.types.Operator):
+class NUSIQ_MCBLEND_OT_CopyUvGroupSide(bpy.types.Operator):
     '''Operator used for copying sides of UV-groups.'''
-    bl_idname = "object.nusiq_mcblend_copy_uv_group_side"
+    bl_idname = "nusiq_mcblend.copy_uv_group_side"
     bl_label = 'Copy active UV group side other to UV group'
     bl_options = {'UNDO'}
 
@@ -886,9 +887,9 @@ def get_active_masks(context):
     masks = sides[int(context.scene.nusiq_mcblend_active_uv_groups_side)]
     return masks
 
-class OBJECT_OT_NusiqMcblendAddUvMask(bpy.types.Operator):
+class NUSIQ_MCBLEND_OT_AddUvMask(bpy.types.Operator):
     '''Operator used for adding UV-masks to UV groups.'''
-    bl_idname = "object.nusiq_mcblend_add_uv_mask"
+    bl_idname = "nusiq_mcblend.add_uv_mask"
     bl_label = '''Adds new mask to active uv group at active face.'''
     bl_options = {'UNDO'}
 
@@ -910,9 +911,9 @@ class OBJECT_OT_NusiqMcblendAddUvMask(bpy.types.Operator):
         new_mask.stripes.add()
         return {'FINISHED'}
 
-class OBJECT_OT_NusiqMcblendRemoveUvMask(bpy.types.Operator):
+class NUSIQ_MCBLEND_OT_RemoveUvMask(bpy.types.Operator):
     '''Operator used for removing UV-masks from UV-groups.'''
-    bl_idname = "object.nusiq_mcblend_remove_uv_mask"
+    bl_idname = "nusiq_mcblend.remove_uv_mask"
     bl_label = '''Removes mask from active face of active uv group.'''
     bl_options = {'UNDO'}
 
@@ -929,9 +930,9 @@ class OBJECT_OT_NusiqMcblendRemoveUvMask(bpy.types.Operator):
         masks.remove(self.target)
         return {'FINISHED'}
 
-class OBJECT_OT_NusiqMcblendMoveUvMask(bpy.types.Operator):
+class NUSIQ_MCBLEND_OT_MoveUvMask(bpy.types.Operator):
     '''Operator used for changing the order of UV-masks in UV groups.'''
-    bl_idname = "object.nusiq_mcblend_move_uv_mask"
+    bl_idname = "nusiq_mcblend.move_uv_mask"
     bl_label = (
         'Moves mask in active face of active uv group to different place on '
         'the list.')
@@ -952,9 +953,9 @@ class OBJECT_OT_NusiqMcblendMoveUvMask(bpy.types.Operator):
         return {'FINISHED'}
 
 # UV Mask side colors (GUI)
-class OBJECT_OT_NusiqMcblendAddUvMaskColor(bpy.types.Operator):
+class NUSIQ_MCBLEND_OT_AddUvMaskColor(bpy.types.Operator):
     '''Operator used for adding colors to UV-masks.'''
-    bl_idname = "object.nusiq_mcblend_add_uv_mask_color"
+    bl_idname = "nusiq_mcblend.add_uv_mask_color"
     bl_label = '''Adds new color to a mask.'''
     bl_options = {'UNDO'}
 
@@ -972,9 +973,9 @@ class OBJECT_OT_NusiqMcblendAddUvMaskColor(bpy.types.Operator):
         mask.colors.add()
         return {'FINISHED'}
 
-class OBJECT_OT_NusiqMcblendRemoveUvMaskColor(bpy.types.Operator):
+class NUSIQ_MCBLEND_OT_RemoveUvMaskColor(bpy.types.Operator):
     '''Operator used for removing colors from UV-masks.'''
-    bl_idname = "object.nusiq_mcblend_remove_uv_mask_color"
+    bl_idname = "nusiq_mcblend.remove_uv_mask_color"
     bl_label = 'Removes color from colors of active face of active uv group.'
     bl_options = {'UNDO'}
 
@@ -994,9 +995,9 @@ class OBJECT_OT_NusiqMcblendRemoveUvMaskColor(bpy.types.Operator):
         mask.colors.remove(self.color_index)
         return {'FINISHED'}
 
-class OBJECT_OT_NusiqMcblendMoveUvMaskColor(bpy.types.Operator):
+class NUSIQ_MCBLEND_OT_MoveUvMaskColor(bpy.types.Operator):
     '''Operator used for changing the order of the colors in UV-masks.'''
-    bl_idname = "object.nusiq_mcblend_move_uv_mask_color"
+    bl_idname = "nusiq_mcblend.move_uv_mask_color"
     bl_label = (
         'Moves color in active mask of active face  of active uv group to'
         'different place on the list.')
@@ -1019,9 +1020,9 @@ class OBJECT_OT_NusiqMcblendMoveUvMaskColor(bpy.types.Operator):
         return {'FINISHED'}
 
 # UV Mask side stripes (GUI)
-class OBJECT_OT_NusiqMcblendAddUvMaskStripe(bpy.types.Operator):
+class NUSIQ_MCBLEND_OT_AddUvMaskStripe(bpy.types.Operator):
     '''Operator used for adding stripes to UV-masks.'''
-    bl_idname = "object.nusiq_mcblend_add_uv_mask_stripe"
+    bl_idname = "nusiq_mcblend.add_uv_mask_stripe"
     bl_label = '''Adds new color to a mask.'''
     bl_options = {'UNDO'}
 
@@ -1039,9 +1040,9 @@ class OBJECT_OT_NusiqMcblendAddUvMaskStripe(bpy.types.Operator):
         mask.stripes.add()
         return {'FINISHED'}
 
-class OBJECT_OT_NusiqMcblendRemoveUvMaskStripe(bpy.types.Operator):
+class NUSIQ_MCBLEND_OT_RemoveUvMaskStripe(bpy.types.Operator):
     '''Operator used for removing UV-masks from UV-groups.'''
-    bl_idname = "object.nusiq_mcblend_remove_uv_mask_stripe"
+    bl_idname = "nusiq_mcblend.remove_uv_mask_stripe"
     bl_label = 'Removes color from colors of active face of active uv group.'
     bl_options = {'UNDO'}
 
@@ -1061,9 +1062,9 @@ class OBJECT_OT_NusiqMcblendRemoveUvMaskStripe(bpy.types.Operator):
         mask.stripes.remove(self.stripe_index)
         return {'FINISHED'}
 
-class OBJECT_OT_NusiqMcblendMoveUvMaskStripe(bpy.types.Operator):
+class NUSIQ_MCBLEND_OT_MoveUvMaskStripe(bpy.types.Operator):
     '''Operator used for changing the order of the stripes in UV-groups.'''
-    bl_idname = "object.nusiq_mcblend_move_uv_mask_stripe"
+    bl_idname = "nusiq_mcblend.move_uv_mask_stripe"
     bl_label = (
         'Moves color in active mask of active face  of active uv group to'
         'different place on the list.')
@@ -1086,11 +1087,11 @@ class OBJECT_OT_NusiqMcblendMoveUvMaskStripe(bpy.types.Operator):
         return {'FINISHED'}
 
 # UV Mask exporter
-class OBJECT_OT_NusiqMcblendExportUvGroupOperator(
+class NUSIQ_MCBLEND_OT_ExportUvGroup(
         bpy.types.Operator, ExportHelper):
     '''Operator used for exporting active UV-group from Blender.'''
     # pylint: disable=unused-argument, no-member
-    bl_idname = "object.nusiq_mcblend_export_uv_group_operator"
+    bl_idname = "nusiq_mcblend.export_uv_group"
     bl_label = "Export UV-group"
     bl_options = {'REGISTER'}
     bl_description = "Exports active UV-group"
@@ -1117,10 +1118,10 @@ class OBJECT_OT_NusiqMcblendExportUvGroupOperator(
         return {'FINISHED'}
 
 # UV Mask exporter
-class OBJECT_OT_NusiqMcblendImportUvGroupOperator(bpy.types.Operator, ImportHelper):
+class NUSIQ_MCBLEND_OT_ImportUvGroup(bpy.types.Operator, ImportHelper):
     '''Operator used for importing Minecraft models to Blender.'''
     # pylint: disable=unused-argument, no-member, too-many-boolean-expressions
-    bl_idname = "object.nusiq_mcblend_import_uv_group_operator"
+    bl_idname = "nusiq_mcblend.import_uv_group"
     bl_label = "Import UV-group"
     bl_options = {'REGISTER'}
     bl_description = "Import UV-group from JSON file."
@@ -1440,9 +1441,9 @@ class OBJECT_OT_NusiqMcblendImportUvGroupOperator(bpy.types.Operator, ImportHelp
         return {'FINISHED'}
 
 # Events
-class OBJECT_OT_NusiqMcblendAddEvent(bpy.types.Operator):
+class NUSIQ_MCBLEND_OT_AddEvent(bpy.types.Operator):
     '''Operator used for adding events to scene.'''
-    bl_idname = "object.nusiq_mcblend_add_event"
+    bl_idname = "nusiq_mcblend.add_event"
     bl_label = '''Adds new event to scene.'''
     bl_options = {'UNDO'}
 
@@ -1451,9 +1452,9 @@ class OBJECT_OT_NusiqMcblendAddEvent(bpy.types.Operator):
         event_new.name = get_unused_event_name('event')
         return {'FINISHED'}
 
-class OBJECT_OT_NusiqMcblendRemoveEvent(bpy.types.Operator):
+class NUSIQ_MCBLEND_OT_RemoveEvent(bpy.types.Operator):
     '''Operator used for removing events.'''
-    bl_idname = "object.nusiq_mcblend_remove_event"
+    bl_idname = "nusiq_mcblend.remove_event"
     bl_label = '''Removes event from scene.'''
     bl_options = {'UNDO'}
 
@@ -1476,9 +1477,9 @@ class OBJECT_OT_NusiqMcblendRemoveEvent(bpy.types.Operator):
             bpy.context.scene.nusiq_mcblend_active_event=active_event_id-1
         return {'FINISHED'}
 
-class OBJECT_OT_NusiqMcblendAddEffect(bpy.types.Operator):
+class NUSIQ_MCBLEND_OT_AddEffect(bpy.types.Operator):
     '''Operator used for adding effects to events.'''
-    bl_idname = "object.nusiq_mcblend_add_effect"
+    bl_idname = "nusiq_mcblend.add_effect"
     bl_label = '''Adds new effect to active event.'''
     bl_options = {'UNDO'}
 
@@ -1503,9 +1504,9 @@ class OBJECT_OT_NusiqMcblendAddEffect(bpy.types.Operator):
         effect.effect_type = self.effect_type
         return {'FINISHED'}
 
-class OBJECT_OT_NusiqMcblendRemoveEffect(bpy.types.Operator):
+class NUSIQ_MCBLEND_OT_RemoveEffect(bpy.types.Operator):
     '''Operator used for removeing effects effects from events.'''
-    bl_idname = "object.nusiq_mcblend_remove_effect"
+    bl_idname = "nusiq_mcblend.remove_effect"
     bl_label = '''Remove effect from active event.'''
     bl_options = {'UNDO'}
 

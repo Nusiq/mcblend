@@ -9,147 +9,147 @@ from bpy.props import (
 
 
 from .operator import (
-    OBJECT_OT_NusiqMcblendExportModelOperator, OBJECT_OT_NusiqMcblendExportAnimationOperator,
-    OBJECT_OT_NusiqMcblendMapUvOperator, OBJECT_OT_NusiqMcblendUvGroupOperator,
-    OBJECT_OT_NusiqMcblendClearUvGroupOperator,
-    OBJECT_OT_NusiqMcblendToggleIsBoneOperator,
-    OBJECT_OT_NusiqMcblendToggleMirrorOperator,
-    OBJECT_OT_NusiqMcblendSetInflateOperator,
+    NUSIQ_MCBLEND_OT_ExportModel, NUSIQ_MCBLEND_OT_ExportAnimation,
+    NUSIQ_MCBLEND_OT_MapUv, NUSIQ_MCBLEND_OT_UvGroup,
+    NUSIQ_MCBLEND_OT_ClearUvGroup,
+    NUSIQ_MCBLEND_OT_ToggleIsBone,
+    NUSIQ_MCBLEND_OT_ToggleMirror,
+    NUSIQ_MCBLEND_OT_SetInflate,
     menu_func_nusiq_mcblend_export_model, menu_func_nusiq_mcblend_export_animation,
-    OBJECT_OT_NusiqMcblendRoundDimensionsOperator,
-    OBJECT_OT_NusiqMcblendSeparateMeshCubesOperator,
-    OBJECT_OT_NusiqMcblendImport, menu_func_nusiq_mcblend_import,
+    NUSIQ_MCBLEND_OT_RoundDimensions,
+    NUSIQ_MCBLEND_OT_SeparateMeshCubes,
+    NUSIQ_MCBLEND_OT_ImportModel, menu_func_nusiq_mcblend_import_model,
 
-    OBJECT_OT_NusiqMcblendListAnimations,
-    OBJECT_OT_NusiqMcblendAddAnimation,
-    OBJECT_OT_NusiqMcblendRemoveAnimation,
+    NUSIQ_MCBLEND_OT_ListAnimations,
+    NUSIQ_MCBLEND_OT_AddAnimation,
+    NUSIQ_MCBLEND_OT_RemoveAnimation,
 
 
-    OBJECT_OT_NusiqMcblendListUvGroups,
-    OBJECT_OT_NusiqMcblendAddUvGroup,
-    OBJECT_OT_NusiqMcblendRemoveUvGroup,
-    OBJECT_OT_NusiqMcblendAddUvMask,
-    OBJECT_OT_NusiqMcblendRemoveUvMask,
-    OBJECT_OT_NusiqMcblendMoveUvMask,
-    OBJECT_OT_NusiqMcblendCopyUvGroupSide,
-    OBJECT_OT_NusiqMcblendAddUvMaskColor,
-    OBJECT_OT_NusiqMcblendRemoveUvMaskColor,
-    OBJECT_OT_NusiqMcblendMoveUvMaskColor,
-    OBJECT_OT_NusiqMcblendAddUvMaskStripe,
-    OBJECT_OT_NusiqMcblendRemoveUvMaskStripe,
-    OBJECT_OT_NusiqMcblendMoveUvMaskStripe,
+    NUSIQ_MCBLEND_OT_ListUvGroups,
+    NUSIQ_MCBLEND_OT_AddUvGroup,
+    NUSIQ_MCBLEND_OT_RemoveUvGroup,
+    NUSIQ_MCBLEND_OT_AddUvMask,
+    NUSIQ_MCBLEND_OT_RemoveUvMask,
+    NUSIQ_MCBLEND_OT_MoveUvMask,
+    NUSIQ_MCBLEND_OT_CopyUvGroupSide,
+    NUSIQ_MCBLEND_OT_AddUvMaskColor,
+    NUSIQ_MCBLEND_OT_RemoveUvMaskColor,
+    NUSIQ_MCBLEND_OT_MoveUvMaskColor,
+    NUSIQ_MCBLEND_OT_AddUvMaskStripe,
+    NUSIQ_MCBLEND_OT_RemoveUvMaskStripe,
+    NUSIQ_MCBLEND_OT_MoveUvMaskStripe,
 
-    OBJECT_OT_NusiqMcblendExportUvGroupOperator,
-    OBJECT_OT_NusiqMcblendImportUvGroupOperator,
+    NUSIQ_MCBLEND_OT_ExportUvGroup,
+    NUSIQ_MCBLEND_OT_ImportUvGroup,
 
-    OBJECT_OT_NusiqMcblendAddEvent,
-    OBJECT_OT_NusiqMcblendRemoveEvent,
-    OBJECT_OT_NusiqMcblendAddEffect,
-    OBJECT_OT_NusiqMcblendRemoveEffect,
+    NUSIQ_MCBLEND_OT_AddEvent,
+    NUSIQ_MCBLEND_OT_RemoveEvent,
+    NUSIQ_MCBLEND_OT_AddEffect,
+    NUSIQ_MCBLEND_OT_RemoveEffect,
 )
 from .custom_properties import (
-    OBJECT_NusiqMcblendExporterProperties,
-    OBJECT_NusiqMcblendTimelineMarkerProperties,
-    OBJECT_NusiqMcblendAnimationProperties,
-    OBJECT_NusiqMcblendObjectProperties,
-    OBJECT_NusiqMcblendStripeProperties,
-    OBJECT_NusiqMcblendColorProperties,
-    OBJECT_NusiqMcblendUvMaskProperties,
-    OBJECT_NusiqMcblendUvGroupProperties,
-    OBJECT_NusiqMcblendEffectProperties,
-    OBJECT_NusiqMcblendEventProperties,
+    NUSIQ_MCBLEND_ExporterProperties,
+    NUSIQ_MCBLEND_TimelineMarkerProperties,
+    NUSIQ_MCBLEND_AnimationProperties,
+    NUSIQ_MCBLEND_ObjectProperties,
+    NUSIQ_MCBLEND_StripeProperties,
+    NUSIQ_MCBLEND_ColorProperties,
+    NUSIQ_MCBLEND_UvMaskProperties,
+    NUSIQ_MCBLEND_UvGroupProperties,
+    NUSIQ_MCBLEND_EffectProperties,
+    NUSIQ_MCBLEND_EventProperties,
 )
 
 from .panel import (
-    OBJECT_PT_NusiqMcblendObjectPropertiesPanel,
-    OBJECT_PT_NusiqMcblendExportPanel,
-    OBJECT_PT_NusiqMcblendExportAnimationPanel,
-    OBJECT_PT_NusiqMcblendSetUvsPanel,
-    OBJECT_PT_NusiqMcblendOperatorsPanel,
-    OBJECT_PT_NusiqMcblendImportPanel,
-    OBJECT_PT_NusiqMcblendUVGroupPanel,
-    OBJECT_UL_NusiqMcblendUVGroupList,
-    OBJECT_PT_NusiqMcblendEventsPanel,
-    OBJECT_UL_NusiqMcblendEventsList,
+    NUSIQ_MCBLEND_PT_ObjectPropertiesPanel,
+    NUSIQ_MCBLEND_PT_ExportPanel,
+    NUSIQ_MCBLEND_PT_ExportAnimationPanel,
+    NUSIQ_MCBLEND_PT_SetUvsPanel,
+    NUSIQ_MCBLEND_PT_OperatorsPanel,
+    NUSIQ_MCBLEND_PT_ImportPanel,
+    NUSIQ_MCBLEND_PT_UVGroupPanel,
+    NUSIQ_MCBLEND_UL_UVGroupList,
+    NUSIQ_MCBLEND_PT_EventsPanel,
+    NUSIQ_MCBLEND_UL_EventsList,
 )
 
 
 bl_info = {
     "name": "Mcblend",
     "author": "Artur",
-    "description": "",
+    "description": "Minecraft Bedrock Edition addon for creating entity models and animations.",
     "blender": (2, 80, 0),
     "version": (6, 4, 1),  # COMPATIBILITY BREAKING CHANGE, NEW FEATURE, BUGFIX
     "location": "",
     "warning": "",
-    "category": "Generic"
+    "category": "Object"
 }
 
 
 classes = (
-    OBJECT_NusiqMcblendExporterProperties,
+    NUSIQ_MCBLEND_ExporterProperties,
 
-    OBJECT_NusiqMcblendEffectProperties,
-    OBJECT_NusiqMcblendEventProperties,
-    OBJECT_NusiqMcblendTimelineMarkerProperties,
-    OBJECT_NusiqMcblendAnimationProperties,
+    NUSIQ_MCBLEND_EffectProperties,
+    NUSIQ_MCBLEND_EventProperties,
+    NUSIQ_MCBLEND_TimelineMarkerProperties,
+    NUSIQ_MCBLEND_AnimationProperties,
 
-    OBJECT_PT_NusiqMcblendObjectPropertiesPanel,
-    OBJECT_OT_NusiqMcblendExportModelOperator,
-    OBJECT_OT_NusiqMcblendExportAnimationOperator,
-    OBJECT_PT_NusiqMcblendExportAnimationPanel,
-    OBJECT_PT_NusiqMcblendExportPanel,
-    OBJECT_OT_NusiqMcblendMapUvOperator,
-    OBJECT_PT_NusiqMcblendSetUvsPanel,
-    OBJECT_OT_NusiqMcblendUvGroupOperator,
-    OBJECT_OT_NusiqMcblendClearUvGroupOperator,
-    OBJECT_OT_NusiqMcblendToggleIsBoneOperator,
-    OBJECT_OT_NusiqMcblendToggleMirrorOperator,
-    OBJECT_PT_NusiqMcblendOperatorsPanel,
-    OBJECT_OT_NusiqMcblendSetInflateOperator,
-    OBJECT_OT_NusiqMcblendRoundDimensionsOperator,
-    OBJECT_OT_NusiqMcblendSeparateMeshCubesOperator,
-    OBJECT_OT_NusiqMcblendImport,
-    OBJECT_PT_NusiqMcblendImportPanel,
-    OBJECT_PT_NusiqMcblendUVGroupPanel,
-    OBJECT_UL_NusiqMcblendUVGroupList,
-
-
-    OBJECT_OT_NusiqMcblendAddEvent,
-    OBJECT_OT_NusiqMcblendRemoveEvent,
-    OBJECT_OT_NusiqMcblendAddEffect,
-    OBJECT_OT_NusiqMcblendRemoveEffect,
-    OBJECT_PT_NusiqMcblendEventsPanel,
-    OBJECT_UL_NusiqMcblendEventsList,
+    NUSIQ_MCBLEND_PT_ObjectPropertiesPanel,
+    NUSIQ_MCBLEND_OT_ExportModel,
+    NUSIQ_MCBLEND_OT_ExportAnimation,
+    NUSIQ_MCBLEND_PT_ExportAnimationPanel,
+    NUSIQ_MCBLEND_PT_ExportPanel,
+    NUSIQ_MCBLEND_OT_MapUv,
+    NUSIQ_MCBLEND_PT_SetUvsPanel,
+    NUSIQ_MCBLEND_OT_UvGroup,
+    NUSIQ_MCBLEND_OT_ClearUvGroup,
+    NUSIQ_MCBLEND_OT_ToggleIsBone,
+    NUSIQ_MCBLEND_OT_ToggleMirror,
+    NUSIQ_MCBLEND_PT_OperatorsPanel,
+    NUSIQ_MCBLEND_OT_SetInflate,
+    NUSIQ_MCBLEND_OT_RoundDimensions,
+    NUSIQ_MCBLEND_OT_SeparateMeshCubes,
+    NUSIQ_MCBLEND_OT_ImportModel,
+    NUSIQ_MCBLEND_PT_ImportPanel,
+    NUSIQ_MCBLEND_PT_UVGroupPanel,
+    NUSIQ_MCBLEND_UL_UVGroupList,
 
 
-    OBJECT_OT_NusiqMcblendListAnimations,
-    OBJECT_OT_NusiqMcblendAddAnimation,
-    OBJECT_OT_NusiqMcblendRemoveAnimation,
+    NUSIQ_MCBLEND_OT_AddEvent,
+    NUSIQ_MCBLEND_OT_RemoveEvent,
+    NUSIQ_MCBLEND_OT_AddEffect,
+    NUSIQ_MCBLEND_OT_RemoveEffect,
+    NUSIQ_MCBLEND_PT_EventsPanel,
+    NUSIQ_MCBLEND_UL_EventsList,
 
-    OBJECT_OT_NusiqMcblendListUvGroups,
-    OBJECT_OT_NusiqMcblendAddUvGroup,
-    OBJECT_OT_NusiqMcblendRemoveUvGroup,
-    OBJECT_OT_NusiqMcblendAddUvMask,
-    OBJECT_OT_NusiqMcblendRemoveUvMask,
-    OBJECT_OT_NusiqMcblendMoveUvMask,
-    OBJECT_OT_NusiqMcblendCopyUvGroupSide,
-    OBJECT_OT_NusiqMcblendAddUvMaskColor,
-    OBJECT_OT_NusiqMcblendRemoveUvMaskColor,
-    OBJECT_OT_NusiqMcblendMoveUvMaskColor,
-    OBJECT_OT_NusiqMcblendAddUvMaskStripe,
-    OBJECT_OT_NusiqMcblendRemoveUvMaskStripe,
-    OBJECT_OT_NusiqMcblendMoveUvMaskStripe,
 
-    OBJECT_NusiqMcblendObjectProperties,
+    NUSIQ_MCBLEND_OT_ListAnimations,
+    NUSIQ_MCBLEND_OT_AddAnimation,
+    NUSIQ_MCBLEND_OT_RemoveAnimation,
 
-    OBJECT_NusiqMcblendStripeProperties,
-    OBJECT_NusiqMcblendColorProperties,
-    OBJECT_NusiqMcblendUvMaskProperties,  # must be before UvGroupProperties
-    OBJECT_NusiqMcblendUvGroupProperties,
+    NUSIQ_MCBLEND_OT_ListUvGroups,
+    NUSIQ_MCBLEND_OT_AddUvGroup,
+    NUSIQ_MCBLEND_OT_RemoveUvGroup,
+    NUSIQ_MCBLEND_OT_AddUvMask,
+    NUSIQ_MCBLEND_OT_RemoveUvMask,
+    NUSIQ_MCBLEND_OT_MoveUvMask,
+    NUSIQ_MCBLEND_OT_CopyUvGroupSide,
+    NUSIQ_MCBLEND_OT_AddUvMaskColor,
+    NUSIQ_MCBLEND_OT_RemoveUvMaskColor,
+    NUSIQ_MCBLEND_OT_MoveUvMaskColor,
+    NUSIQ_MCBLEND_OT_AddUvMaskStripe,
+    NUSIQ_MCBLEND_OT_RemoveUvMaskStripe,
+    NUSIQ_MCBLEND_OT_MoveUvMaskStripe,
 
-    OBJECT_OT_NusiqMcblendExportUvGroupOperator,
-    OBJECT_OT_NusiqMcblendImportUvGroupOperator,
+    NUSIQ_MCBLEND_ObjectProperties,
+
+    NUSIQ_MCBLEND_StripeProperties,
+    NUSIQ_MCBLEND_ColorProperties,
+    NUSIQ_MCBLEND_UvMaskProperties,  # must be before UvGroupProperties
+    NUSIQ_MCBLEND_UvGroupProperties,
+
+    NUSIQ_MCBLEND_OT_ExportUvGroup,
+    NUSIQ_MCBLEND_OT_ImportUvGroup,
 )
 
 def register():
@@ -160,17 +160,17 @@ def register():
 
     # Model export properties (the scope is the whole scene)
     bpy.types.Scene.nusiq_mcblend = PointerProperty(
-        type=OBJECT_NusiqMcblendExporterProperties)
+        type=NUSIQ_MCBLEND_ExporterProperties)
 
     # Animation properties
     bpy.types.Scene.nusiq_mcblend_active_animation = IntProperty(
         default=0)
     bpy.types.Scene.nusiq_mcblend_animations = CollectionProperty(
-        type=OBJECT_NusiqMcblendAnimationProperties)
+        type=NUSIQ_MCBLEND_AnimationProperties)
 
     # Events
     bpy.types.Scene.nusiq_mcblend_events = CollectionProperty(
-        type=OBJECT_NusiqMcblendEventProperties)
+        type=NUSIQ_MCBLEND_EventProperties)
     bpy.types.Scene.nusiq_mcblend_active_event = IntProperty(
         default=0)
 
@@ -178,7 +178,7 @@ def register():
     bpy.types.Scene.nusiq_mcblend_active_uv_group = IntProperty(
         default=0)
     bpy.types.Scene.nusiq_mcblend_uv_groups = CollectionProperty(
-        type=OBJECT_NusiqMcblendUvGroupProperties)
+        type=NUSIQ_MCBLEND_UvGroupProperties)
 
     sides = [(str(i), f'side{i+1}', f'side{i+1}') for i in range(6)]
     bpy.types.Scene.nusiq_mcblend_active_uv_groups_side = EnumProperty(
@@ -186,7 +186,7 @@ def register():
 
     # Object properties
     bpy.types.Object.nusiq_mcblend_object_properties = PointerProperty(
-        type=OBJECT_NusiqMcblendObjectProperties)
+        type=NUSIQ_MCBLEND_ObjectProperties)
 
     # Append operators to the F3 menu
     bpy.types.TOPBAR_MT_file_export.append(
@@ -196,7 +196,7 @@ def register():
         menu_func_nusiq_mcblend_export_animation
     )
     bpy.types.TOPBAR_MT_file_import.append(
-        menu_func_nusiq_mcblend_import
+        menu_func_nusiq_mcblend_import_model
     )
 
 def unregister():
@@ -212,5 +212,5 @@ def unregister():
         menu_func_nusiq_mcblend_export_animation
     )
     bpy.types.TOPBAR_MT_file_import.remove(
-        menu_func_nusiq_mcblend_import
+        menu_func_nusiq_mcblend_import_model
     )

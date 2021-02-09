@@ -18,7 +18,7 @@ def main(scene_name: str, target_path: str):
     '''Main function.'''
     bpy.context.window.scene = bpy.data.scenes[scene_name]
     bpy.ops.object.select_all(action='SELECT')
-    bpy.ops.object.nusiq_mcblend_export_operator(filepath=target_path)
+    bpy.ops.nusiq_mcblend.export_model(filepath=target_path)
 
 if __name__ == "__main__":
     main(argv[0], argv[1])

@@ -17,7 +17,7 @@ from .operator_func.texture_generator import (
 from .operator_func.common import MeshType
 
 # UV-mask stripe properties
-class OBJECT_NusiqMcblendStripeProperties(bpy.types.PropertyGroup):
+class NUSIQ_MCBLEND_StripeProperties(bpy.types.PropertyGroup):
     '''Properties of a UV-mask stripe.'''
     width: IntProperty(  # type: ignore
         name='Width', default=1)
@@ -39,7 +39,7 @@ class OBJECT_NusiqMcblendStripeProperties(bpy.types.PropertyGroup):
 
 
 # UV-mask color properties
-class OBJECT_NusiqMcblendColorProperties(bpy.types.PropertyGroup):
+class NUSIQ_MCBLEND_ColorProperties(bpy.types.PropertyGroup):
     '''Properties of a UV-mask color.'''
     color: FloatVectorProperty(  # type: ignore
         name='Color',  subtype='COLOR',
@@ -53,7 +53,7 @@ class OBJECT_NusiqMcblendColorProperties(bpy.types.PropertyGroup):
         return [round(i, 8) for i in self.color]
 
 # UV-mask properties
-class OBJECT_NusiqMcblendUvMaskProperties(bpy.types.PropertyGroup):
+class NUSIQ_MCBLEND_UvMaskProperties(bpy.types.PropertyGroup):
     '''Properties of UV-mask.'''
     ui_hidden: BoolProperty(  # type: ignore
         name='Hide', default=False)
@@ -72,7 +72,7 @@ class OBJECT_NusiqMcblendUvMaskProperties(bpy.types.PropertyGroup):
         name='Number of children', min=1, default=2)
     # colors: List[Color]  # ColorPaletteMask
     colors: CollectionProperty(  # type: ignore
-        type=OBJECT_NusiqMcblendColorProperties,
+        type=NUSIQ_MCBLEND_ColorProperties,
         name='Colors')
     # interpolate: bool  # ColorPaletteMask
     interpolate: BoolProperty(  # type: ignore
@@ -94,7 +94,7 @@ class OBJECT_NusiqMcblendUvMaskProperties(bpy.types.PropertyGroup):
         name='Point B', default=(0.9, 0.9), size=2)
     # stripes: List[Stripe]  # GradientMask StripesMask
     stripes: CollectionProperty(  # type: ignore
-        type=OBJECT_NusiqMcblendStripeProperties,
+        type=NUSIQ_MCBLEND_StripeProperties,
         name='Stripes')
     # relative_boundaries: bool  # GradientMask EllipseMask RectangleMask
     # StripesMask
@@ -121,7 +121,7 @@ class OBJECT_NusiqMcblendUvMaskProperties(bpy.types.PropertyGroup):
         name='Seed')
     # color: Tuple[float, float, float]  # ColorMask
     color: PointerProperty(  # type: ignore
-        type=OBJECT_NusiqMcblendColorProperties,
+        type=NUSIQ_MCBLEND_ColorProperties,
         name='Color')
 
     def json(self) -> Dict:
@@ -243,7 +243,7 @@ def _get_uv_group_name(self):
         return ''
     return self['name']
 
-class OBJECT_NusiqMcblendUvGroupProperties(bpy.types.PropertyGroup):
+class NUSIQ_MCBLEND_UvGroupProperties(bpy.types.PropertyGroup):
     '''Properties of UV-group.'''
     name: StringProperty(  # type: ignore
         name="Name",
@@ -253,22 +253,22 @@ class OBJECT_NusiqMcblendUvGroupProperties(bpy.types.PropertyGroup):
         default='',
         maxlen=1024, set=_set_uv_group_name, get=_get_uv_group_name)
     side1: CollectionProperty(  # type: ignore
-        type=OBJECT_NusiqMcblendUvMaskProperties,
+        type=NUSIQ_MCBLEND_UvMaskProperties,
         description='Collection of the filters for side1 of the cuboid.')
     side2: CollectionProperty(  # type: ignore
-        type=OBJECT_NusiqMcblendUvMaskProperties,
+        type=NUSIQ_MCBLEND_UvMaskProperties,
         description='Collection of the filters for side2 of the cuboid.')
     side3: CollectionProperty(  # type: ignore
-        type=OBJECT_NusiqMcblendUvMaskProperties,
+        type=NUSIQ_MCBLEND_UvMaskProperties,
         description='Collection of the filters for side3 of the cuboid.')
     side4: CollectionProperty(  # type: ignore
-        type=OBJECT_NusiqMcblendUvMaskProperties,
+        type=NUSIQ_MCBLEND_UvMaskProperties,
         description='Collection of the filters for side4 of the cuboid.')
     side5: CollectionProperty(  # type: ignore
-        type=OBJECT_NusiqMcblendUvMaskProperties,
+        type=NUSIQ_MCBLEND_UvMaskProperties,
         description='Collection of the filters for side5 of the cuboid.')
     side6: CollectionProperty(  # type: ignore
-        type=OBJECT_NusiqMcblendUvMaskProperties,
+        type=NUSIQ_MCBLEND_UvMaskProperties,
         description='Collection of the filters for side6 of the cuboid.')
 
     def json(self) -> Dict:
@@ -305,7 +305,7 @@ def list_mesh_types_as_blender_enum(self, context):
     return [(i.value, i.value, i.value) for i in MeshType]
 
 
-class OBJECT_NusiqMcblendObjectProperties(bpy.types.PropertyGroup):
+class NUSIQ_MCBLEND_ObjectProperties(bpy.types.PropertyGroup):
     '''Custom properties of an object.'''
     mirror: BoolProperty(  # type: ignore
         name="Mirror",
@@ -350,7 +350,7 @@ def list_effect_types_as_blender_enum(self, context):
     # pylint: disable=unused-argument
     return [(i.value, i.value, i.value) for i in EffectTypes]
 
-class OBJECT_NusiqMcblendEffectProperties(bpy.types.PropertyGroup):
+class NUSIQ_MCBLEND_EffectProperties(bpy.types.PropertyGroup):
     '''
     An effect of an event (sound or particles)
     '''
@@ -435,7 +435,7 @@ def _get_event_name(self):
     return self['name']
 
 
-class OBJECT_NusiqMcblendEventProperties(bpy.types.PropertyGroup):
+class NUSIQ_MCBLEND_EventProperties(bpy.types.PropertyGroup):
     '''
     A collection of sound and particle events.
     '''
@@ -449,7 +449,7 @@ class OBJECT_NusiqMcblendEventProperties(bpy.types.PropertyGroup):
         default='',
         maxlen=1024, set=_set_event_name, get=_get_event_name)
     effects: CollectionProperty(  # type: ignore
-        type=OBJECT_NusiqMcblendEffectProperties,
+        type=NUSIQ_MCBLEND_EffectProperties,
         description='Collection of effects triggered of this event.',
         name='Sound effects')
 
@@ -477,7 +477,7 @@ class OBJECT_NusiqMcblendEventProperties(bpy.types.PropertyGroup):
         return sound_effects, particle_effects
 
 # Animation properties
-class OBJECT_NusiqMcblendTimelineMarkerProperties(bpy.types.PropertyGroup):
+class NUSIQ_MCBLEND_TimelineMarkerProperties(bpy.types.PropertyGroup):
     '''Saves the data about a timeline marker.'''
     name: StringProperty(  # type: ignore
         name="Name",
@@ -490,7 +490,7 @@ class OBJECT_NusiqMcblendTimelineMarkerProperties(bpy.types.PropertyGroup):
         default=0
     )
 
-class OBJECT_NusiqMcblendAnimationProperties(bpy.types.PropertyGroup):
+class NUSIQ_MCBLEND_AnimationProperties(bpy.types.PropertyGroup):
     '''Properties of an animation template.'''
     name: StringProperty(  # type: ignore
         name="Name",
@@ -539,13 +539,13 @@ class OBJECT_NusiqMcblendAnimationProperties(bpy.types.PropertyGroup):
         min=0
     )
     timeline_markers: CollectionProperty(  # type: ignore
-        type=OBJECT_NusiqMcblendTimelineMarkerProperties, name='Timeline Markers',
+        type=NUSIQ_MCBLEND_TimelineMarkerProperties, name='Timeline Markers',
         description='Timeline markers related to this animation.'
     )
 
 
 # Mcblend properties
-class OBJECT_NusiqMcblendExporterProperties(bpy.types.PropertyGroup):
+class NUSIQ_MCBLEND_ExporterProperties(bpy.types.PropertyGroup):
     '''Global properties of Mcblend.'''
     model_name: StringProperty(  # type: ignore
         name="",

@@ -216,7 +216,7 @@ class AnimationExport:
         animation.
     :param fps: The FPS setting of the scene.
     :param effect_events: The events of the animation from
-        OBJECT_NusiqMcblendEventProperties.
+        NUSIQ_MCBLEND_EventProperties.
     :param original_pose: Optional - the base pose of the animated object.
         The pose is empty by default after object creation until it's loaded.
     :param single_frame: Optional - whether the animation should be exported as
