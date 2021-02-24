@@ -117,6 +117,8 @@ class NUSIQ_MCBLEND_OT_ExportAnimation(
         if len(context.selected_objects) < 1:
             return False
         len_anims = len(context.scene.nusiq_mcblend_animations)
+        if len_anims == 0:
+            return False
         curr_anim_id = context.scene.nusiq_mcblend_active_animation
         if 0 > curr_anim_id >= len_anims:
             return False
