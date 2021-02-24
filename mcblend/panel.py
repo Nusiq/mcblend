@@ -632,7 +632,11 @@ class NUSIQ_MCBLEND_PT_OperatorsPanel(bpy.types.Panel):
         col = self.layout.column()
         col.operator(
             "nusiq_mcblend.toggle_mirror",
-            text="Toggle mirror for UV mapping"
+            text="Toggle UV mirror"
+        )
+        col.operator(
+            "nusiq_mcblend.fix_uv",
+            text="Fix invalid cube UV"
         )
         col.operator(
             "nusiq_mcblend.uv_group",

@@ -3,7 +3,7 @@ Functions used directly by the blender operators.
 '''
 from __future__ import annotations
 
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, Tuple
 
 import numpy as np
 
@@ -14,7 +14,7 @@ from .uv import UvMapper, CoordinatesConverter
 from .animation import AnimationExport
 from .model import ModelExport
 from .common import (
-    MINECRAFT_SCALE_FACTOR, McblendObjectGroup, MeshType,
+    CubePolygon, MINECRAFT_SCALE_FACTOR, McblendObject, McblendObjectGroup, MeshType,
     apply_obj_transform_keep_origin, fix_cube_rotation)
 from .importer import ImportGeometry, ModelLoader
 
@@ -94,12 +94,11 @@ def set_uvs(context: bpy_types.Context):
     resolution = context.scene.nusiq_mcblend.texture_template_resolution
 
     object_properties = McblendObjectGroup(context)
-    mapper = UvMapper(width, height)
-    mapper.load_uv_boxes(object_properties)
+    mapper = UvMapper(width, height, object_properties)
     mapper.plan_uv(allow_expanding)
 
     # Replace old mappings
-    for objprop in mapper:
+    for objprop in mapper.uv_boxes:
         objprop.clear_uv_layers()
 
 
@@ -146,6 +145,81 @@ def set_uvs(context: bpy_types.Context):
     for curr_uv in mapper.uv_boxes:
         curr_uv.new_uv_layer()
         curr_uv.set_blender_uv(converter)
+
+def fix_uvs(context: bpy_types.Context) -> Tuple[int, int]:
+    '''
+    Fixes the UV-mapping of selected objects.
+
+    Raises NoCubePolygonsException when one of the is not a cuboid.
+
+    :param context: the execution context.
+
+    :returns: The number of fixed cubes and the number of fixed faces.
+    '''
+    object_properties = McblendObjectGroup(context)
+    total_fixed_uv_faces = 0
+    total_fixed_cubes = 0
+
+    for objprop in object_properties.values():
+        if (
+                objprop.obj_type != 'MESH' or
+                objprop.mesh_type != MeshType.CUBE or
+                objprop.obj_data.uv_layers.active is None):
+            continue
+        polygons = objprop.cube_polygons()
+        uv_layer = objprop.obj_data.uv_layers.active
+        fixed_faces = 0
+        for polygon in polygons:
+            crds = polygon.uv_layer_coordinates(uv_layer)
+            if CubePolygon.validate_rectangle_uv(crds)[0]:
+                continue  # The UVs are correct already
+
+            # left down, right down, right up, left up
+            max_ = crds.max(axis=0)
+            min_ = crds.min(axis=0)
+            expected = np.array([
+                min_, [max_[0], min_[1]],
+                max_, [min_[0], max_[1]]
+            ])
+            # Try connecting crds to the closest corners of the "bound box"
+            # of the UV
+            new_crds = np.empty((4,2))
+            first_index: Optional[int] = None
+            for i in range(4):
+                distances = np.linalg.norm(expected-crds[i], axis=1)
+                # First result of where, first (and only) coordinate -> [0][0]
+                index = np.where(distances == np.min(distances))[0][0]
+                if first_index is None:
+                    first_index = index
+                new_crds[i] = expected[index]
+
+            if not (  # Still not valid. Rearrange based on left down
+                np.allclose(new_crds, expected) or
+                np.allclose(new_crds, expected[[1, 0, 3, 2]]) or  # flip left right
+                np.allclose(new_crds, expected[[2, 3, 0, 1]]) or  # flip up down
+                np.allclose(new_crds, expected[[3, 2, 1, 0]])  # flip both
+            ):
+                if first_index == 0:
+                    new_crds = expected
+                elif first_index == 1:
+                    new_crds = expected[[1, 0, 3, 2]]
+                elif first_index == 2:
+                    new_crds = expected[[2, 3, 0, 1]]
+                elif first_index == 3:
+                    new_crds = expected[[3, 2, 1, 0]]
+                else:
+                    raise RuntimeError('Invalid state')
+            # Apply new_crds to the UV
+            ordered_loop_indices = np.array(
+                polygon.side.loop_indices)[[polygon.order]]
+            for i, loop_index in enumerate(ordered_loop_indices):
+                uv_layer.data[loop_index].uv =  new_crds[i]
+            fixed_faces += 1
+        if fixed_faces > 0:
+            total_fixed_cubes += 1
+            total_fixed_uv_faces += fixed_faces
+    return total_fixed_cubes, total_fixed_uv_faces
+
 
 def round_dimensions(context: bpy_types.Context) -> int:
     '''

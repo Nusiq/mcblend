@@ -183,6 +183,10 @@ class BoneExport:
                 polygons = cubeprop.obj_data.polygons  # loop ids and vertices
                 vertices = cubeprop.obj_data.vertices  # crds
                 loops = cubeprop.obj_data.loops  # normals
+                if cubeprop.obj_data.uv_layers.active is None:
+                    raise InvalidUvShape(
+                        f'{cubeprop.thisobj.name} - exporting polymesh '
+                        'objects without UV-layer is not supported')
                 uv_data = cubeprop.obj_data.uv_layers.active.data  # uv
 
                 inv_bone_matrix = cubeprop.get_local_matrix(thisobj)
@@ -365,8 +369,12 @@ class UvExportFactory:
             return self._get_standard_cube_uv_export(
                 polygons, layer, cube_size)
         except InvalidUvShape:
-            return self._get_per_face_uv_export(polygons, layer)
-        return [0, 0], False
+            try:
+                return self._get_per_face_uv_export(polygons, layer)
+            except InvalidUvShape as e:
+                raise InvalidUvShape(
+                    f'{mcobj.thisobj.name} - {str(e)} - impossible to export'
+                ) from e
 
     def _get_uv(
             self, uv_layer: bpy.types.MeshUVLoopLayer,

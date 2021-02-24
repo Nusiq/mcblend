@@ -11,6 +11,7 @@ from bpy.props import (
 from .operator import (
     NUSIQ_MCBLEND_OT_ExportModel, NUSIQ_MCBLEND_OT_ExportAnimation,
     NUSIQ_MCBLEND_OT_MapUv, NUSIQ_MCBLEND_OT_UvGroup,
+    NUSIQ_MCBLEND_OT_FixUv, menu_func_nusiq_mcblend_fix_uv,
     NUSIQ_MCBLEND_OT_ClearUvGroup,
     NUSIQ_MCBLEND_OT_ToggleIsBone,
     NUSIQ_MCBLEND_OT_ToggleMirror,
@@ -100,6 +101,7 @@ classes = (
     NUSIQ_MCBLEND_PT_ExportAnimationPanel,
     NUSIQ_MCBLEND_PT_ExportPanel,
     NUSIQ_MCBLEND_OT_MapUv,
+    NUSIQ_MCBLEND_OT_FixUv,
     NUSIQ_MCBLEND_PT_SetUvsPanel,
     NUSIQ_MCBLEND_OT_UvGroup,
     NUSIQ_MCBLEND_OT_ClearUvGroup,

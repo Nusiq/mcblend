@@ -7,7 +7,7 @@ from ctypes import c_int
 import math
 from enum import Enum
 from typing import (
-    Dict, NamedTuple, List, Optional, Tuple, Any, Iterable, Sequence)
+    Dict, Iterator, NamedTuple, List, Optional, Tuple, Any, Iterable, Sequence)
 
 import numpy as np
 
@@ -538,6 +538,14 @@ class CubePolygons(NamedTuple):
                 f'Object "{cube.name}" is not a cube.'
             ) from e
 
+    def __iter__(self) -> Iterator[CubePolygon]:
+        yield self.east
+        yield self.north
+        yield self.west
+        yield self.south
+        yield self.up
+        yield self.down
+
 class CubePolygon(NamedTuple):
     '''
     Single face in :class:`CubePolygons`.
@@ -561,7 +569,7 @@ class CubePolygon(NamedTuple):
         '''
         Returns 4x2 numpy array with UV coordinates of this cube polygon loops
         from the uv_layer. The order of the coordinates in the array is
-        defined by self.order (left bottm, right bottom, right top, left top)
+        defined by self.order (left bottom, right bottom, right top, left top)
         '''
         ordered_loop_indices = np.array(self.side.loop_indices)[[self.order]]
         crds = np.array([uv_layer.data[i].uv for i in ordered_loop_indices])
@@ -595,15 +603,18 @@ class CubePolygon(NamedTuple):
         max_ = crds.max(axis=0)
         # All loops in the corners
         if not (
-                np.isclose(crds, min_) | np.isclose(crds, max_)
-                ).all():
+            np.isclose(crds, min_) | np.isclose(crds, max_)
+        ).all():
             return False, False, False
 
         lb, rb, rt, lt = crds
         # Left to left, right to right, bottom to bottom, top to top
         if (
-                lb[0] != lt[0] or rb[0] != rt[0] or
-                lt[1] != rt[1] or lb[1] != rb[1]):
+                not np.isclose(lb[0], lt[0]) or
+                not np.isclose(rb[0], rt[0]) or
+                not np.isclose(lt[1], rt[1]) or
+                not np.isclose(lb[1], rb[1])
+        ):
             return False, False, False
         # is_valid, is_u_flipped, is_v_flipped
         return True, lb[0] != min_[0], lb[1] != min_[1]

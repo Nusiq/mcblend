@@ -4,9 +4,8 @@ Functions related to creating UV map.
 from __future__ import annotations
 
 from typing import (
-    Dict, Tuple, List, Iterator, Collection, NamedTuple, Sequence)
+    Dict, Tuple, List, Collection, NamedTuple, Sequence)
 from enum import Enum
-from dataclasses import dataclass, field
 from itertools import filterfalse
 import numpy as np
 
@@ -489,16 +488,17 @@ class UvGroup(McblendObjUvBox):
         for obj in self._objects:
             obj.new_uv_layer()
 
-@dataclass
 class UvMapper:
     '''
     A class that helps with UV-mapping.
     '''
-    width: int
-    height: int
-    uv_boxes: List[McblendObjUvBox] = field(default_factory=list)
+    def __init__(self, width: int, height: int, object_properties: McblendObjectGroup):
+        self.width: int = width
+        self.height: int = height
+        self.uv_boxes: List[McblendObjUvBox] = []
+        self._load_uv_boxes(object_properties)
 
-    def load_uv_boxes(self, object_properties: McblendObjectGroup):
+    def _load_uv_boxes(self, object_properties: McblendObjectGroup):
         '''
         Populates the uv_boxes dictionary.
 
@@ -509,7 +509,6 @@ class UvMapper:
         # Dictionary identified by width, depth, height, group name
         cube_uv_groups: Dict[Tuple[int, int, int, str], UvGroup] = {}
 
-        objprop: McblendObject
         for objprop in object_properties.values():
             if (
                     objprop.obj_type != 'MESH' or
@@ -610,7 +609,3 @@ class UvMapper:
             else:  # No good suggestion found for current box.
                 box.uv = (0, 0)
                 raise NotEnoughTextureSpace()
-
-    def __iter__(self) -> Iterator[McblendObjUvBox]:
-        for i in self.uv_boxes:
-            yield i

@@ -15,11 +15,11 @@ from bpy_extras.io_utils import ExportHelper, ImportHelper
 from .custom_properties import (
     get_unused_event_name, list_effect_types_as_blender_enum)
 from .operator_func import (
-    export_model, export_animation, separate_mesh_cubes, set_uvs, round_dimensions,
+    export_model, export_animation, fix_uvs, separate_mesh_cubes, set_uvs, round_dimensions,
     import_model, inflate_objects)
 from .operator_func.json_tools import CompactEncoder
 from .operator_func.exception import (
-    NameConflictException, NotEnoughTextureSpace,)
+    InvalidUvShape, NameConflictException, NotEnoughTextureSpace,)
 from .operator_func.jsonc_decoder import JSONCDecoder
 from .operator_func.texture_generator import (
     list_mask_types_as_blender_enum, UvMaskTypes, MixMaskMode)
@@ -66,7 +66,10 @@ class NUSIQ_MCBLEND_OT_ExportModel(
                     return {'FINISHED'}
             result = export_model(context)
         except NameConflictException as e:
-            self.report({'WARNING'}, str(e))
+            self.report({'ERROR'}, str(e))
+            return {'FINISHED'}
+        except InvalidUvShape as e:
+            self.report({'ERROR'}, f'{str(e)}')
             return {'FINISHED'}
         finally:
             context.scene.frame_set(original_frame)
@@ -131,7 +134,7 @@ class NUSIQ_MCBLEND_OT_ExportAnimation(
         try:
             animation_dict = export_animation(context, old_dict)
         except NameConflictException as e:
-            self.report({'WARNING'}, str(e))
+            self.report({'ERROR'}, str(e))
             return {'FINISHED'}
 
         # Save file and finish
@@ -190,7 +193,7 @@ class NUSIQ_MCBLEND_OT_MapUv(bpy.types.Operator):
                 "Not enough texture space to create UV-mapping.")
             return {'FINISHED'}
         except NameConflictException as e:
-            self.report({'WARNING'}, str(e))
+            self.report({'ERROR'}, str(e))
             return {'FINISHED'}
         finally:
             context.scene.frame_set(original_frame)
@@ -202,6 +205,56 @@ class NUSIQ_MCBLEND_OT_MapUv(bpy.types.Operator):
             f'UV map created successfully for {width}x{height} texture.'
         )
         return {'FINISHED'}
+
+class NUSIQ_MCBLEND_OT_FixUv(bpy.types.Operator):
+    '''
+    Fixes the UV-mapping of selected cubes. After this operator the faces of
+    the cube on the UV-map are rectangular and properly rotated.
+    '''
+    # pylint: disable=unused-argument, no-member
+    bl_idname = "nusiq_mcblend.fix_uv"
+    bl_label = "Fix bedrock UV-map."
+    bl_options = {'REGISTER', 'UNDO'}
+    bl_description = (
+        "Fix UV-map of selected cubes."
+    )
+
+
+    @classmethod
+    def poll(cls, context: bpy_types.Context):
+        if context.mode != 'OBJECT':
+            return False
+        if len(context.selected_objects) < 1:
+            return False
+        return True
+
+    def execute(self, context):
+        try:
+            for obj in context.selected_objects:
+                if obj.type == 'MESH' and any(map(lambda x: x < 0, obj.scale)):
+                    self.report(
+                        {'ERROR'},
+                        "Negative object scale is not supported. "
+                        f"Object: {obj.name}; Frame: 0.")
+                    return {'FINISHED'}
+            fixed_cubes, fixed_faces = fix_uvs(context)
+        except NameConflictException as e:
+            self.report({'ERROR'}, str(e))
+            return {'FINISHED'}
+        self.report(
+            {'INFO'},
+            'Successfully fixed the UV-mapping of selected '
+            f'objects - {fixed_faces} faces of {fixed_cubes} cubes.'
+        )
+        return {'FINISHED'}
+
+def menu_func_nusiq_mcblend_fix_uv(self, context):
+    '''Registers FixUv operator to the F3 menu.'''
+    # pylint: disable=unused-argument
+    self.layout.operator(
+        NUSIQ_MCBLEND_OT_FixUv.bl_idname,
+        text="Mcblend: Fix UV-mapping"
+    )
 
 # UV grouping
 class NUSIQ_MCBLEND_OT_UvGroup(bpy.types.Operator):
