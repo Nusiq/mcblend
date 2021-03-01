@@ -136,7 +136,7 @@ You can adjust the UV-mapping using [UV-groups](../uv_groups/) to get best.
     you're doing. The faces on the UV must remain rectangles, or the UV of the
     exported model may have unexpected shapes.
 
-## Modifying Mcblend properties
+## Other operators
 
 The "Operators" panel gives access to operators that modify various
 properties used by Mcblend.
@@ -152,6 +152,21 @@ this property are mapped as if they had the Minecraft mirror property.
 Using this operator doesn't remap the UV. If you want to change
 the UV of the object, you must also use the operator from the
 [Set bedrock UVs](#uv-mapping) panel to update the UVs.
+
+### Fix invalid cube UV
+
+Fix invalid cube UV operator - as the name suggests - is used to fix invalid
+UV-mapping of the cubes. All faces of the cubes in the Minecraft model must
+be rectangular and have certain rotation. This operator ensures that this
+conditions are true. It's particularly useful when you get an error message
+which says that certain object has invalid UV-mapping and is impossible to
+export.
+
+!!! note
+
+    This operator affects only the selected objects with *Cube*
+    [mesh type](../gui_changes#object-properties).
+
 ### Set the UV group
 Adds selected objects to one of the existing [UV-groups](../uv_groups).
 ### Clear the UV group
@@ -169,7 +184,7 @@ independent bone, you need to use this operator.
     The best way of using Mcblend is to have one rig for the model and
     parenting the meshes to bones of that rig. This allows you to take the
     advantage of features like inverse kinematics and also creates a
-    model in which it's really easy to distinguish which Blender object becames
+    model in which it's really easy to distinguish which Blender object becomes
     what in Minecraft model. Bones will be translated into Minecraft
     bones and meshes into cubes. If you add some empties without children
     they will become the locators.
@@ -185,3 +200,31 @@ viewport. You can use this panel to adjust the "inflate" value.
 ### Round dimensions
 Rounds the dimensions of the object in such way that
 they become integers in exported Minecraft model.
+
+### Separate cubes
+
+Separate cubes can detect cubes grouped in a single mesh and separate them into
+multiple objects. Unlike the *Mesh: Separate* operator (vanilla blender
+operator), the *Separate cubes* from Mcblend is designed for working with
+cuboids and can detect their rotations. This is important because the cubes
+(meshes) of the models from Mcblend must be aligned to rotations of the object
+that contain them.
+
+!!! note
+
+    If you happen to have a mesh with single cube rotated in edit mode 
+    (mesh not aligned to object rotation), you can use this operator to fix the
+    problem. The operator won't create new objects if there is only one cube
+    in the mesh but it will fix the rotation problem.
+
+Images below show the difference between applying *Separate cubes* and
+*Mesh: Separate* operators:
+
+*Before separating cubes:*
+![](../img/separate_cubes_before.png)
+
+*After separating cubes:*
+![](../img/separate_cubes_after.png)
+
+*Separated objects after using default blender Mesh->Separate operator:*
+![](../img/separate_cubes_using_mesh_separate.png)

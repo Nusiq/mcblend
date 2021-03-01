@@ -10,14 +10,18 @@ should be turned into bone, locator or cube.
 
 1. An empty or mesh with custom
   [_export as bone_](../basic_operators/#toggle-export-as-bones) property
-  always creates a a bone or a bone with cube, respectively.
+  always creates a a bone or a bone with cube/polymesh, respectively.
 2. A Blender bone is converted into a Minecraft bone unless it has no children
   and no parents. In this case it isn't converted at all. This behavior is to
   prevent the exporting of inverse kinematics bones.
 3. An empty becomes a bone unless it has a parent but no children. In this case
   it creates a locator.
-4. Mesh without parent becomes a bone with a cube inside. Mesh with a parent
-  becomes a cube.
+4. Mesh without parent becomes a bone with a cube/polymesh inside. Mesh with a parent
+  becomes a cube/polymesh.
+
+!!! note
+    The [mesh type](../gui_changes#object-properties) property decides whether
+    the mesh should be exported as cube or polymesh.
 
 **The conversion rules can also be represented with this table:**
 
@@ -25,5 +29,4 @@ should be turned into bone, locator or cube.
 |---|---|---|---|---|---|
 |__Bone__ |N/A|NONE|bone|bone|bone|
 |__Empty__|bone|bone|locator|bone|bone|
-|__Mesh__ |bone & cube|bone & cube|cube| bone & cube|cube|
-
+|__Mesh__ |bone & cube/polymesh|bone & cube/polymesh|cube/polymesh| bone & cube/polymesh|cube/polymesh|

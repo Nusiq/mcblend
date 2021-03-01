@@ -34,11 +34,31 @@ Scene properties tab has two new panels:
 ## Object properties
 
 Object properties tab has new panel - _Mcblend object properties_.
-It lets you view and edit
-[custom object properties](../basic_operators/#modifying-mcblend-properties)
-used by Mcblend.
+It lets you view and edit custom object properties used by
+[Mcblend operators]((../basic_operators/#modifying-mcblend-properties)).
 
 ![](../img/object_properties.png)
+
+- *Export as bone* - whether the object should be always exported as
+  independent bone or it can be exported as cube/polymesh and grouped with
+  other objects.
+- *Mesh type (dropdown list)* - *Cube* or *Poly mesh*. Decides if the object
+  should be exported as a cube or polymesh. Objects with non-cuboid shapes must
+  be polymesh type or you won't be able to export them.
+
+!!! note
+
+    Polymesh models are still experimental Minecraft feature and they could
+    even be removed from Minecraft. Experimental features are not allowed on
+    marketplace map so keep that in mind if you're making a map for
+    marketplace.
+
+- *UV Group (textfield)* - displays the [UV-group](../uv_groups) name of the
+  selected object.
+- *Mirror* - the mirror property is used only during the
+  [UV-mapping](../basic_operators/#uv-mapping). It affects how to map the faces
+  of the object in a same way as Minecraft mirror property of a cube.
+- *Inflate* - stores the Minecraft inflate property value of the cube.
 
 !!! note
 

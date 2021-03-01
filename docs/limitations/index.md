@@ -1,26 +1,18 @@
 # Limitations
 
-## Cuboids only
-Minecraft Bedrock Edition models must only be made of cuboids (unless you are
-using an experimental feature that is not yet supported). You cannot use other
-shapes in your model.
+## Every cube must be a separate Blender object
+If you are creating a traditional Minecraft model with all parts made out of
+cubes you mast make sure that every cube is an separate object (separate mesh).
 
-Each cube in the model must be a separate mesh. The mesh must be exactly the
-same shape as its bounding box. If the model shape is different from the
-bounding box, Mcblend may fail on export, and if not, the exported
-model will only be an approximation of what you see in the viewport.
+You can use the edit mode to rotate, scale and move your cubes to your preference
+however, they mast be separated before you export the model
+(see *[separate cubes operator](../basic_operators#separate-cubes)*)
 
-!!! note
-
-    The best way to avoid problems with invalid meshes is to always use the
-    "Object mode" for editing the model and always scaling the cuboids in their
-    local space.
-
-    Additionally, you can enable drawing of an object boundary in:
-    `Object properties -> Viewport display -> Bounds`
+If you don't want to be restricted to using only cuboids for your model you can
+also mark your objects as [polymesh](../gui_changes#object-properties).
 
 ## No wide angles in animations
-There must be no more than 180° rotation between two keyframes.
+There must be no more than 180° rotation between two key frames.
 
 This issue is caused by the way Mcblend computes Minecraft's rotations
 internally.
@@ -40,17 +32,18 @@ Unfortunately, the quaternion number system has only one unique representation
 for each rotation orientation, so one cannot distinguish full rotation from no
 rotation (360° == 0°).
 
-Therefore, you cannot use angles greater than 180° between two keyframes.
+Therefore, you cannot use angles greater than 180° between two key frames
+because Mcblend will always try to export as short rotation as possible.
 
 !!! note
 
-    A quick fix to this problem is adding additional keyframes for wide
+    A quick fix to this problem is adding additional key frames for wide angle
     rotations.
 
 
 ## No dots in names names
 The add-on does not allow the use of names that have periods. Anything after
 the first dot in the object name is ignored during the conversion. You can use
-dots in the names of the objects that aren't converted to bones in exported 
+dots in the names of the objects that aren't converted to bones of exported 
 Minecraft model. The conversion rules are described in the
-[next](../conversion_rules/) section of the user documentation.
+[conversion rules](../conversion_rules/) section of the user manual.

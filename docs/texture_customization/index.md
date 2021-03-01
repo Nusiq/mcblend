@@ -1,4 +1,4 @@
-# Texture customization (advanced)
+# Texture generator customization
 
 ![](../img/customized_uv_groups.png)
 

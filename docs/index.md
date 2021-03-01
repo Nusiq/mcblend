@@ -2,15 +2,11 @@
 A Blender addon for creating and animating Minecraft Bedrock Edition models.
 
 ## Features
-- Importing Minecraft Bedrock Edition models.
-- Tools that support Minecraft models:
-  - Generating Minecraft style UV-mapping (default and per-face UV-mapping),
-  - Generating textures.
-- Exporting keyframe animations.
-- Exporting poses of models as a single frame looped animations.
-- Mcblend supports models that use Armatures so it's possible to use
-features such as inverse kinematics to your advantage to create animating
-easier. You can also use baked animations with physics.
+- Importing and exporting Minecraft Bedrock Edition polymesh and cube based models
+- Generating UV-maps and textures for Minecraft models
+- Exporting animations
+- Exporting poses
+- The animated models can use armatures and constraints to make animating easier. Mcblend can detect parts moved by the constraints and add that to Minecraft animations even though they Minecraft don't have this kind of features.
 
 ## Planned features
 The improvements planned for this Blender plugin are often listed as
@@ -27,3 +23,24 @@ The improvements planned for this Blender plugin are often listed as
 5. Search for "Mcblend" in Add-ons and select the check box to enable the add-on
 ![](./img/blender_addons_checkbox.png)
 
+## Updating
+Currently there is no system for updating Mcblend. If you want to update than you
+must uninstall the old version of the addon and than install the new one.
+
+## Which version should I install
+### Pre-release vs Latest release
+The top first two releases at the top of the list of releases for Mcblend - *Pre-release*
+and *Latest release*. The Pre-release versions are used to quickly deploy a new version
+of Mcblend before updating this user manual. This means that Pre-release versions usually
+have more features and some additional bug-fixes but they are not documented. When
+this user manual is updated the *Pre-release* is changed to *Latest release*.
+### Versioning system
+The Mcblend version numbers are created with 3 dot-separated numbers: A.B.C
+
+- A - Compatibility breaking change (some change in the code which may make some
+of the data from the project to be lost in case of upgrading from older version of
+Mcblend)
+- B - New features
+- C - Bug fixes
+
+Changing A resets B and C. Changing B resets C.
