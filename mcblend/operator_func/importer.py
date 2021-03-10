@@ -117,22 +117,28 @@ class ModelLoader:
         :param data: JSON dict with model file.
         '''
         # pylint: disable=no-self-use
-        _assert_has_required_keys(
-            'model file', set(data.keys()), {'format_version'}, [])
-        parser_version = pick_version_parser(
-            ('1.12.0', '1.8.0'), data['format_version'])
+        # _assert_has_required_keys(
+        #     'model file', set(data.keys()), {'format_version'}, [])
+        if 'format_version' in data:
+            parser_version = pick_version_parser(
+                ('1.12.0', '1.8.0'), data['format_version'])
+            true_format_version = data['format_version']
+        elif 'minecraft:geometry' in data:  # Based on files structure
+            parser_version = '1.12.0'
+            true_format_version = '1.12.0'
+        else:  # Based on files structure
+            parser_version = '1.8.0'
+            true_format_version = '1.8.0'
         if parser_version == '1.12.0':
             _assert_has_required_keys(
                 'model file', set(data.keys()),
-
-                {'minecraft:geometry', 'format_version'},
-                [])
+                {'minecraft:geometry'}, [])
             _assert_has_accepted_keys_only(
                 'model file', set(data.keys()),
                 {'minecraft:geometry', 'format_version', 'cape'}, [])
             if 'cape' in data.keys():
                 raise ImportingNotImplementedError('cape', [])
-            return data['format_version']
+            return true_format_version
 
         if parser_version == '1.8.0':
             # All geometries must start with geometry.
@@ -147,7 +153,7 @@ class ModelLoader:
                 )
             if 'debug' in data.keys():
                 raise ImportingNotImplementedError('debug', [])
-            return data['format_version']
+            return true_format_version
         raise FileIsNotAModelException('Unsupported format version')
 
     def _load_geometry(
