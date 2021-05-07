@@ -1,4 +1,9 @@
 site_name: Mcblend
+site_url: https://nusiq.github.io/mcblend/
+repo_url: https://github.com/Nusiq/mcblend
+edit_uri: ""
+site_description: A Blender addon for creating and animating Minecraft Bedrock Edition models.
+site_author: Nusiq
 
 nav:
     - Overview: index.md
