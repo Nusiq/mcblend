@@ -398,7 +398,7 @@ class McblendObject:
             else:  # aptr.value is None and bptr.value is None
                 groups[b] = aptr
                 aptr.value = min(a, b)
-        return tuple([i.value for i in groups])
+        return tuple(i.value for i in groups)
 
 # key (side, is_mirrored) : value (names of the vertices)
 # Used in CubePolygons constructor

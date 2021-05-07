@@ -34,7 +34,7 @@ def _assert_is_vector(
         len(obj) == length,
         f'{json_path}::{name} has invalid length {len(obj)} != {length}')
     _assert(
-        all([isinstance(i, types) for i in obj]),
+        all(isinstance(i, types) for i in obj),
         f'{json_path}::{name} is not instance of List[{types}]')
 
 def _assert_has_required_keys(
