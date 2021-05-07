@@ -262,16 +262,25 @@ class UvMcCubeFace(UvBox):
         :param resolution: the resolution of the Minecraft texture. Where 1 is
             standard Minecraft texture resolution (16 pixels for one block).
         '''
-        min1 = int(arr.shape[0]/resolution)-int(self.uv[1]+self.size[1])
-        max1 = int(arr.shape[0]/resolution)-int(self.uv[1])
-        min2, max2 = int(self.uv[0]), int(self.uv[0]+self.size[0])
-        min1 = min1 * resolution
-        min2 = min2 * resolution
-        max1 = max1 * resolution
-        max2 = max2 * resolution
+        u1 = int(arr.shape[0]/resolution)-int(self.uv[1]+self.size[1])
+        u2 = int(arr.shape[0]/resolution)-int(self.uv[1])
+        v1, v2 = int(self.uv[0]), int(self.uv[0]+self.size[0])
+        u1 = u1 * resolution
+        v1 = v1 * resolution
+        u2 = u2 * resolution
+        v2 = v2 * resolution
+        # In most cases u1 and v1 are the smaller coordinates but in case of
+        # the bottom face in standard UV-mapping the bottom face is flipped
+        # on the top to bottom axis (v axis?) so the second coordinate is
+        # smaller - sorting them makes sure that the array slice works as
+        # intended
+        if u1 > u2:
+            u1, u2 = u2, u1
+        if v1 > v2:
+            v1, v2 = v2, v1
 
         # Alway paint white
-        texture_part = arr[min1:max1, min2:max2]
+        texture_part = arr[u1:u2, v1:v2]
         texture_part[...] = 1.0  # Set RGBA white
 
         texture_part = texture_part[..., :3]  # No alpha channel filters yet
@@ -323,8 +332,8 @@ class UvMcCube(McblendObjUvBox):
             thisobj.side5_uv_masks, uv=(depth, 0))
         # bottom
         self.side6 = UvMcCubeFace(
-            self, cube_polygons.down, (width, depth),
-            thisobj.side6_uv_masks, uv=(depth + width, 0))
+            self, cube_polygons.down, (width, -depth),
+            thisobj.side6_uv_masks, uv=(depth + width, depth))
         super().__init__(size, None)
 
     @property  # type: ignore
@@ -341,7 +350,7 @@ class UvMcCube(McblendObjUvBox):
         self.side4.uv = (uv[0] + 2*self.depth + self.width, uv[1] + self.depth)
 
         self.side5.uv = (uv[0] + self.depth, uv[1])
-        self.side6.uv = (uv[0] + self.depth + self.width, uv[1])
+        self.side6.uv = (uv[0] + self.depth + self.width, uv[1] + self.depth)
 
     def collides(self, other: UvBox):
         for i in [
