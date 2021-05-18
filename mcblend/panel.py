@@ -487,14 +487,14 @@ class NUSIQ_MCBLEND_PT_ObjectPropertiesPanel(bpy.types.Panel):
                     col.prop(object_properties, "inflate", text="Inflate")
 
 
-# Model export panel
-class NUSIQ_MCBLEND_PT_ExportPanel(bpy.types.Panel):
+# Model properties panel
+class NUSIQ_MCBLEND_PT_ModelPropertiesPanel(bpy.types.Panel):
     '''
     Panel used for launching the model export operator and changing its
     settings.
     '''
     # pylint: disable=unused-argument
-    bl_label = "Export bedrock model"
+    bl_label = "Model properties"
     bl_category = "Mcblend"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
@@ -517,32 +517,15 @@ class NUSIQ_MCBLEND_PT_ExportPanel(bpy.types.Panel):
             context.scene.nusiq_mcblend, "visible_bounds_offset",
             text="Visible bounds offset"
         )
-        self.layout.row().operator(
-            "nusiq_mcblend.export_model", text="Export model"
-        )
 
-# Model import panel
-class NUSIQ_MCBLEND_PT_ImportPanel(bpy.types.Panel):
-    '''Panel used for launching the model import operator.'''
-    # pylint: disable=unused-argument
-    bl_label = "Import bedrock model"
-    bl_category = "Mcblend"
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-
-    def draw(self, context):
-        self.layout.row().operator(
-            "nusiq_mcblend.import_model", text="Import model"
-        )
-
-# Animation export panel
-class NUSIQ_MCBLEND_PT_ExportAnimationPanel(bpy.types.Panel):
+# Animation properties panel
+class NUSIQ_MCBLEND_PT_AnimationPropertiesPanel(bpy.types.Panel):
     '''
     Panel used launching the animation export operator and changing its
     settings.
     '''
     # pylint: disable=unused-argument
-    bl_label = "Export bedrock animation"
+    bl_label = "Animation properties"
     bl_category = "Mcblend"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
@@ -580,17 +563,13 @@ class NUSIQ_MCBLEND_PT_ExportAnimationPanel(bpy.types.Panel):
                 col.prop(bpy.context.scene, "frame_start", text="Frame start")
                 col.prop(bpy.context.scene, "frame_end", text="Frame end")
 
-            col.operator(
-                "nusiq_mcblend.export_animation",
-                text="Export animation")
-
 # UV-mapper panel
-class NUSIQ_MCBLEND_PT_SetUvsPanel(bpy.types.Panel):
+class NUSIQ_MCBLEND_PT_UvMappingPanel(bpy.types.Panel):
     '''
     Panel used for launching the UV-mapping operator and changing its settings.
     '''
     # pylint: disable=unused-argument
-    bl_label = "Set bedrock UVs"
+    bl_label = "UV-mapping"
     bl_category = "Mcblend"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
