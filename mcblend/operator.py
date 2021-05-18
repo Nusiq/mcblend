@@ -17,10 +17,10 @@ from .custom_properties import (
 from .operator_func import (
     export_model, export_animation, fix_uvs, separate_mesh_cubes, set_uvs, round_dimensions,
     import_model, inflate_objects)
-from .operator_func.json_tools import CompactEncoder
+from .bedrock_packs.json import CompactEncoder
 from .operator_func.exception import (
     InvalidUvShape, NameConflictException, NotEnoughTextureSpace,)
-from .operator_func.jsonc_decoder import JSONCDecoder
+from .bedrock_packs.json import JSONCDecoder
 from .operator_func.texture_generator import (
     list_mask_types_as_blender_enum, UvMaskTypes, MixMaskMode)
 

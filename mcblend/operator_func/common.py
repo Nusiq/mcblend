@@ -870,3 +870,17 @@ def fix_cube_rotation(obj: bpy.types.Object):
         mathutils.Matrix.Scale(scl[2],4,(0,0,1)))
 
     obj.matrix_local = loc_mat @ counter_rotation @ rot_mat @ scl_mat
+
+def get_vect_json(arr: Iterable) -> List[float]:
+    '''
+    Changes the iterable of numbers into basic python list of floats.
+    Values from the original iterable are rounded to the 3rd deimal
+    digit.
+
+    :param arr: an iterable of numbers.
+    '''
+    result = [round(i, 3) for i in arr]
+    for i, _ in enumerate(result):
+        if result[i] == -0.0:
+            result[i] = 0.0
+    return result
