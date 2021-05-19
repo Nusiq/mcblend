@@ -11,7 +11,7 @@ from typing import (
     Generic, Union)
 from pathlib import Path
 
-from .json import JSONCDecoder, JsonSplitWalker, JsonWalker
+from .json import JSONCDecoder, JsonSplitWalker, JsonWalker, SKIP_LIST
 
 # Package version
 VERSION = (1, 2)
@@ -2149,7 +2149,7 @@ class BpRecipe(_McFileJsonMulti['BpRecipes']):
                         BpRecipe.ConnectItemType.INPUT,
                         recipe_key.parent_key,  # type: ignore
                         item))
-            for item in recipe / 'result' // ... / 'item':
+            for item in recipe / 'result' // SKIP_LIST / 'item':
                 if isinstance(item, str):
                     result.append(BpRecipe.ConnectItem(
                         item.data, 'minecraft:recipe_shaped',
@@ -2158,13 +2158,13 @@ class BpRecipe(_McFileJsonMulti['BpRecipes']):
         # RECIPE_SHAPELESS
         recipe = self.json /'minecraft:recipe_shapeless'
         if isinstance(recipe.data, dict):
-            for item in recipe / 'ingredients' // ... / 'item':
+            for item in recipe / 'ingredients' // SKIP_LIST / 'item':
                 if isinstance(item, str):
                     result.append(BpRecipe.ConnectItem(
                         item.data, 'minecraft:recipe_shapeless',
                         BpRecipe.ConnectItemType.INPUT,
                         None, item))
-            for item in recipe / 'result' // ... / 'item':
+            for item in recipe / 'result' // SKIP_LIST / 'item':
                 if isinstance(item, str):
                     result.append(BpRecipe.ConnectItem(
                         item.data, 'minecraft:recipe_shapeless',

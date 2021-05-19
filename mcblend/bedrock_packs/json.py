@@ -413,10 +413,14 @@ class CompactEncoder(json.JSONEncoder):
 
 # JSON path
 
+
+class SKIP_LIST:
+    '''Used as literal value for JsonSplitWalker paths'''
+
 ## Type definitions
 JSON = Union[Dict, List, str, float, int, bool, None]
 JSON_KEY = Union[str, int]
-JSON_SPLIT_KEY = Union[str, Type[int], Type[str], None, type(Ellipsis)]
+JSON_SPLIT_KEY = Union[str, Type[int], Type[str], None, Type[SKIP_LIST]]
 JSON_WALKER_DATA = Union[Dict, List, str, float, int, bool, None, Exception]
 
 class JsonWalker:
@@ -499,9 +503,9 @@ class JsonWalker:
 
     def create_path(
         self, data: JSON, *,
-        exists_ok=True,
-        can_break_data_structure=True,
-        can_create_empty_list_items=True,
+        exists_ok: bool=True,
+        can_break_data_structure: bool=True,
+        can_create_empty_list_items: bool=True,
         empty_list_item_factory: Optional[Callable[[], JSON]]=None):
         '''
         Creates path to the part of Json file pointed by this JsonWalker.
@@ -531,9 +535,8 @@ class JsonWalker:
                 return
             else:
                 raise ValueError("Path already exists")
-        if empty_list_item_factory == None:
-            def empty_list_item_factory():
-                return None
+        if empty_list_item_factory is None:
+            empty_list_item_factory = lambda: None
         curr_item = self.root
         path = self.path
         for key in path:
@@ -583,11 +586,11 @@ class JsonWalker:
                 root = root.parent
         except KeyError:
             pass
-        keys = tuple(reversed(keys))
+        keys = list(reversed(keys))
         root_data = root.data
         try:
             for key in keys:
-                root_data = root_data[key]
+                root_data = root_data[key]  # type: ignore
         except:
             return False
         return True
@@ -690,7 +693,7 @@ class JsonWalker:
                             v, parent=self, parent_key=k))
                 return JsonSplitWalker(result)
         # IF it's a list use ing key ELSE return split walker with self
-        elif key is ...:
+        elif key is SKIP_LIST:
             if isinstance(self.data, list):
                 return self // int
             else:
