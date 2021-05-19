@@ -24,7 +24,7 @@ Here are some code examples:
     # the content of the file
     print(walker.data)
     # output:
-    # {'a': 1, 'b': [{'x': 1, 'y': 2}, {'x': 4, 'y': 5}], 
+    # {'a': 1, 'b': [{'x': 1, 'y': 2}, {'x': 4, 'y': 5}],
     # 'c': {'c1': {'x': 11, 'y': 22}, 'c2': {'x': 44, 'y': 55}}}
 
     # the value of 'a' property
@@ -63,13 +63,13 @@ Here are some code examples:
     # {"a": {"b": "Hello"}, "c": ["abc", "abc", "abc", "Test"]}
 '''
 from __future__ import annotations
-from typing import Callable, Dict, Generic, IO, Iterator, List, NewType, Tuple, Type, TypeVar, Union, Optional
-import re
+
 import json
-from json import scanner, JSONDecodeError  # type: ignore
+import re
+from json import JSONDecodeError, scanner  # type: ignore
 from json.decoder import WHITESPACE, WHITESPACE_STR, scanstring  # type: ignore
-
-
+from typing import (
+    IO, Callable, Dict, Iterator, List, Optional, Tuple, Type, Union)
 
 # JSON Decoder
 FLAGS = re.VERBOSE | re.MULTILINE | re.DOTALL
@@ -89,6 +89,7 @@ def parse_object(
     Modified json.decoder.JSONObject function from standard json module
     (python 3.7.7).
     '''
+    # pylint: disable=invalid-name, no-else-return, no-else-break
     s, end = s_and_end
     pairs = []
     pairs_append = pairs.append
@@ -216,6 +217,7 @@ def parse_array(
     Modified json.decoder.JSONArray function from standard module json
     (python 3.7.7).
     '''
+    # pylint: disable=invalid-name, no-else-return, no-else-break
     s, end = s_and_end
     values = []
     nextchar = s[end:end + 1]
@@ -280,6 +282,7 @@ class JSONCDecoder(json.JSONDecoder):
     JSONDecoder with support for C-style comments. Similar to JSONC files from
     Visual Studio code but without support for trailing commas.
     '''
+    # pylint: disable=arguments-differ
     def __init__(self, *args, **kwargs):
         json.JSONDecoder.__init__(self, *args, **kwargs)
         self.parse_object = parse_object
@@ -289,11 +292,11 @@ class JSONCDecoder(json.JSONDecoder):
         self.scan_once = scanner.py_make_scanner(self)
 
     def decode(
-        self, s, _w=WHITESPACE.match,
-        _ws=WHITESPACE_STR,
-        _ilcs=INLINE_COMMENT_STRING_START, _ilc=INLINE_COMMENT.match,
-        _mlcs=MULTILINE_COMMENT_STRING_START, _mlc=MULTILINE_COMMENT.match
-    ):
+            self, s, _w=WHITESPACE.match,
+            _ws=WHITESPACE_STR,
+            _ilcs=INLINE_COMMENT_STRING_START, _ilc=INLINE_COMMENT.match,
+            _mlcs=MULTILINE_COMMENT_STRING_START,
+            _mlc=MULTILINE_COMMENT.match):
         idx = 0
         try:
             while True:  # Handle comments and whitespaces
@@ -320,6 +323,7 @@ class CompactEncoder(json.JSONEncoder):
     formatting from standard python json module. Creates relatively compact
     file which is also easy to read.
     '''
+    # pylint: disable=arguments-differ
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.indent = -1
@@ -337,7 +341,7 @@ class CompactEncoder(json.JSONEncoder):
         >>> CompactEncoder().encode({"foo": ["bar", "baz"]})
         '{\\n\\t"foo": ["bar", "baz"]\\n}'
         '''
-        return ''.join([i for i in self.iterencode(obj)])
+        return ''.join(i for i in self.iterencode(obj))
 
     def iterencode(self, obj):
         '''
@@ -386,13 +390,13 @@ class CompactEncoder(json.JSONEncoder):
                 body = []
                 self.respect_indent = False
                 for i in obj:
-                    body.extend([j for j in self.iterencode(i)])
+                    body.extend(j for j in self.iterencode(i))
                 self.respect_indent = True
                 yield f'{ind}[{", ".join(body)}]'
             else:
                 body = []
                 for i in obj:
-                    body.extend([j for j in self.iterencode(i)])
+                    body.extend(j for j in self.iterencode(i))
                 body_str = ",\n".join(body)
                 yield (
                     f'{ind}[\n'
@@ -488,13 +492,13 @@ class JsonWalker:
 
     @property
     def data(self) -> JSON_WALKER_DATA:
+        '''
+        The part of the JSON file related to this :class:`JsonWalker`.
+        '''
         return self._data
 
     @data.setter
     def data(self, value: JSON):
-        '''
-        The part of the JSON file related to this :class:`JsonWalker`.
-        '''
         if self._parent is not None:
             self.parent.data[  # type: ignore
                 self.parent_key  # type: ignore
@@ -509,12 +513,12 @@ class JsonWalker:
         empty_list_item_factory: Optional[Callable[[], JSON]]=None):
         '''
         Creates path to the part of Json file pointed by this JsonWalker.
-        
+
         :param data: the data to put at the end of the path.
         :param exists_ok: if False, the ValueError will be risen if the path
             to this item already exists.
         :param can_break_data_structure: if True than the function will be able
-            to replace certain existing paths with dicts or lists. Example - 
+            to replace certain existing paths with dicts or lists. Example -
             if path "a"/"b"/"c" points at integer, creating path
             "a"/"b"/"c"/"d" will replace this integer with a dict in order to
             make "d" a valid key. Setting this to false will cause a KeyError
@@ -533,8 +537,7 @@ class JsonWalker:
         if self.exists:
             if exists_ok:
                 return
-            else:
-                raise ValueError("Path already exists")
+            raise ValueError("Path already exists")
         if empty_list_item_factory is None:
             empty_list_item_factory = lambda: None
         curr_item = self.root
@@ -544,8 +547,7 @@ class JsonWalker:
                 if not isinstance(curr_item.data, dict):
                     if not can_break_data_structure:
                         raise KeyError(key)
-                    else:
-                        curr_item.data = {}
+                    curr_item.data = {}
                 if key not in curr_item.data:
                     can_break_data_structure = True  # Creating new data
                 curr_item = curr_item / key
@@ -555,17 +557,15 @@ class JsonWalker:
                 if not isinstance(curr_item.data, list):
                     if not can_break_data_structure:
                         raise KeyError(key)
-                    else:
-                        curr_item.data = []
+                    curr_item.data = []
                 if len(curr_item.data)-1 < key:
                     if not can_create_empty_list_items:
                         raise KeyError(key)
-                    else:
-                        curr_item.data += [
-                            empty_list_item_factory()
-                            for _ in range(1+key-len(curr_item.data))
-                        ]
-                        can_break_data_structure = True  # Creating new data
+                    curr_item.data += [
+                        empty_list_item_factory()
+                        for _ in range(1+key-len(curr_item.data))
+                    ]
+                    can_break_data_structure = True  # Creating new data
                 curr_item = curr_item / key
             else:
                 raise KeyError(key)
@@ -591,7 +591,7 @@ class JsonWalker:
         try:
             for key in keys:
                 root_data = root_data[key]  # type: ignore
-        except:
+        except:  # pylint: disable=bare-except
             return False
         return True
 
@@ -637,7 +637,7 @@ class JsonWalker:
             return JsonWalker(
                 self.data[key],  # type: ignore
                 parent=self, parent_key=key)
-        except Exception as e:  # index out of list bounds
+        except Exception as e:  # pylint: disable=broad-except
             return JsonWalker(e, parent=self, parent_key=key)
 
     def __floordiv__(self, key: JSON_SPLIT_KEY) -> JsonSplitWalker:
@@ -657,6 +657,7 @@ class JsonWalker:
 
             :class:`re.error` - invlid regular expression.
         '''
+        # pylint: disable=too-many-return-statements
         # ANYTHING
         if key is None:
             if isinstance(self.data, dict):
@@ -664,7 +665,7 @@ class JsonWalker:
                     JsonWalker(v, parent=self, parent_key=k)
                     for k, v in self.data.items()
                 ])
-            elif isinstance(self.data, list):
+            if isinstance(self.data, list):
                 return JsonSplitWalker([
                     JsonWalker(v, parent=self, parent_key=i)
                     for i, v in enumerate(self.data)
@@ -696,8 +697,7 @@ class JsonWalker:
         elif key is SKIP_LIST:
             if isinstance(self.data, list):
                 return self // int
-            else:
-                return JsonSplitWalker([self])
+            return JsonSplitWalker([self])
         else:  # INVALID KEY TYPE
             raise TypeError(
                 'Key must be a regular expression or one of the values: '

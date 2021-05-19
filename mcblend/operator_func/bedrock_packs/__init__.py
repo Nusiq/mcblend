@@ -1,17 +1,19 @@
 '''
 Python module for working with Minecraft bedrock edition projects.
 '''
+# Pylint doesn't get the inherited members for some reason
+# pylint: disable=no-member
 from __future__ import annotations
+
+import re
 from abc import ABC, abstractmethod, abstractproperty
 from enum import Enum, auto
-import re
-
-from typing import (
-    ClassVar, Dict, Iterator, List, NamedTuple, Optional, Reversible, Sequence, Tuple, Type, TypeVar,
-    Generic, Union)
 from pathlib import Path
+from typing import (
+    ClassVar, Dict, Generic, Iterator, List, NamedTuple, Optional, Reversible,
+    Sequence, Tuple, Type, TypeVar, Union)
 
-from .json import JSONCDecoder, JsonSplitWalker, JsonWalker, SKIP_LIST
+from .json import SKIP_LIST, JSONCDecoder, JsonSplitWalker, JsonWalker
 
 # Package version
 VERSION = (1, 2)
@@ -380,7 +382,7 @@ class _Pack(ABC):
             try:
                 with manifest_path.open('r') as f:
                     self._manifest = JsonWalker.load(f)
-            except:
+            except:  # pylint: disable=bare-except
                 return None
         return self._manifest
 
@@ -759,7 +761,7 @@ class _McFileCollection(Generic[MCPACK, MCFILE], ABC):
         # The return statement
         if index is not None:
             return obj_list[index]
-        elif len(obj_list) == 1:
+        if len(obj_list) == 1:
             return obj_list[0]
         raise KeyError(key)
 
@@ -789,7 +791,7 @@ class _McFileCollection(Generic[MCPACK, MCFILE], ABC):
         for collection in reversed(collections):
             try:
                 return collection[key]
-            except:
+            except: # pylint: disable=bare-except
                 pass
         raise KeyError(key)
 
@@ -896,6 +898,7 @@ class _McFileJsonSingle(_McFileSingle[MCFILE_COLLECTION]):
     A JSON file that can contain only one object of certain type from a pack.
     :class:`McFile` that has JSON in it, with single Minecraft object.
     '''
+    # pylint: disable=abstract-method
     def __init__(
             self, path: Path,
             owning_collection: Optional[MCFILE_COLLECTION]=None
@@ -905,7 +908,7 @@ class _McFileJsonSingle(_McFileSingle[MCFILE_COLLECTION]):
         try:
             with path.open('r') as f:
                 self._json = JsonWalker.load(f, cls=JSONCDecoder)
-        except:
+        except:  # pylint: disable=bare-except
             pass  # self._json remains None walker
 
     @property
@@ -940,7 +943,7 @@ class _McFileJsonMulti(_McFileMulti[MCFILE_COLLECTION]):
         try:
             with path.open('r') as f:
                 self._json = JsonWalker.load(f, cls=JSONCDecoder)
-        except:
+        except: # pylint: disable=bare-except
             pass  # self._json remains None walker
 
     @property
@@ -1023,6 +1026,7 @@ class BpEntity(_McFileJsonSingle['BpEntities']):
 
     @property
     def identifier(self) -> Optional[str]:
+        # pylint: disable=missing-function-docstring
         id_walker = (
             self.json / "minecraft:entity" / "description" / "identifier")
         if isinstance(id_walker.data, str):
@@ -1072,7 +1076,7 @@ class BpEntity(_McFileJsonSingle['BpEntities']):
     @property
     def loot_tables(self) -> Tuple[BpEntity.ConnectLoot, ...]:
         '''
-        Returns a list of the references to a loot table from this file.
+        Returns a list of the references to loot tables from this file.
         '''
         if self._loot_tables is not None:
             return self._loot_tables
@@ -1103,7 +1107,7 @@ class BpEntity(_McFileJsonSingle['BpEntities']):
             try_add_result(i, BpEntity.ConnectLootType.BARTER)
         # INTERACT_ADD_ITEMS
         # INTERACT_SPAWN_ITEMS
-        interact = all_components / 'minecraft:interact' 
+        interact = all_components / 'minecraft:interact'
         for i in (
                 (interact / "interactions") +
                 (interact / "interactions" // int)):
@@ -1118,6 +1122,9 @@ class BpEntity(_McFileJsonSingle['BpEntities']):
 
     @property
     def trade_tables(self) -> Tuple[BpEntity.ConnectTrade, ...]:
+        '''
+        Returns a list of the references to trade tables from this file.
+        '''
         if self._trade_tables is not None:
             return self._trade_tables
         entity = self.json / 'minecraft:entity'
@@ -1170,6 +1177,7 @@ class RpEntity(_McFileJsonSingle['RpEntities']):
         json: JsonWalker
 
     class ConnectRc(NamedTuple):
+        '''A reference from this entity to a render controller'''
         identifier: str
         condition: Optional[str]
         json: JsonWalker
@@ -1181,6 +1189,7 @@ class RpEntity(_McFileJsonSingle['RpEntities']):
         json: JsonWalker
 
     class ConnectSpawnEggTexture(NamedTuple):
+        '''A reference from this entity to a spawn egg'''
         identifier: str
         json: JsonWalker
 
@@ -1202,6 +1211,7 @@ class RpEntity(_McFileJsonSingle['RpEntities']):
 
     @property
     def identifier(self) -> Optional[str]:
+        # pylint: disable=missing-function-docstring
         id_walker = (
             self.json / "minecraft:client_entity" / "description" /
             "identifier")
@@ -1387,7 +1397,7 @@ class _AnimationController(_McFileJsonMulti[MCFILE_COLLECTION]):  # GENERIC
         for ac in self:
             if not isinstance(ac.parent_key, str):
                 continue
-            for animation in (ac / 'states' // str / 'animations' // int):
+            for animation in ac / 'states' // str / 'animations' // int:
                 if isinstance(animation.data, str):
                     anim_name = animation.data
                     state_name = animation.path[-3]
@@ -1412,10 +1422,11 @@ class _AnimationController(_McFileJsonMulti[MCFILE_COLLECTION]):  # GENERIC
         return self._animations
 
     def keys(self) -> Tuple[str, ...]:
+        # pylint: disable=missing-function-docstring
         id_walker = (self.json / "animation_controllers")
         if isinstance(id_walker.data, dict):
             return tuple(
-                [k for k in id_walker.data.keys() if isinstance(k, str)])
+                k for k in id_walker.data.keys() if isinstance(k, str))
         return tuple()
 
     def __getitem__(self, key: str) -> JsonWalker:
@@ -1514,10 +1525,11 @@ class RpAnimationController(_AnimationController['RpAnimationControllers']):
 class _Animation(_McFileJsonMulti[MCFILE_COLLECTION]):  # GENERIC
     '''Generic type for resource pack/behavior pack animations.'''
     def keys(self) -> Tuple[str, ...]:
+        # pylint: disable=missing-function-docstring
         id_walker = (self.json / "animations")
         if isinstance(id_walker.data, dict):
             return tuple(
-                [k for k in id_walker.data.keys() if isinstance(k, str)])
+                k for k in id_walker.data.keys() if isinstance(k, str))
         return tuple()
 
     def __getitem__(self, key: str) -> JsonWalker:
@@ -1554,7 +1566,7 @@ class RpAnimation(_Animation['RpAnimations']):
             Tuple[RpAnimation.ConnectSound, ...]] = None
         self._particle_effects: Optional[
             Tuple[RpAnimation.ConnectParticle, ...]] = None
-    
+
     @property
     def particle_effects(self) -> Tuple[ConnectParticle, ...]:
         '''
@@ -1568,7 +1580,7 @@ class RpAnimation(_Animation['RpAnimations']):
         for ac in self:
             for timestamp in (
                     ac / 'animations' // str / 'particle_effects' //
-                    '^(\d+\.\d+|\d+)$'):
+                    r'^(\d+\.\d+|\d+)$'):
                 animation_name = timestamp.path[-3]
                 if not isinstance(animation_name, str):
                     continue
@@ -1600,7 +1612,7 @@ class RpAnimation(_Animation['RpAnimations']):
         for ac in self:
             for timestamp in (
                     ac / 'animations' // str / 'sound_effects' //
-                    '^(\d+\.\d+|\d+)$'):
+                    r'^(\d+\.\d+|\d+)$'):
                 animation_name = timestamp.path[-3]
                 if not isinstance(animation_name, str):
                     continue
@@ -1627,6 +1639,7 @@ class BpBlock(_McFileJsonSingle['BpBlocks']):
     '''Behavior pack block file.'''
     @property
     def identifier(self) -> Optional[str]:
+        # pylint: disable=missing-function-docstring
         id_walker = (
             self.json / "minecraft:block" / "description" / "identifier")
         if isinstance(id_walker.data, str):
@@ -1637,6 +1650,7 @@ class BpItem(_McFileJsonSingle['BpItems']):
     '''Behavior pack item file.'''
     @property
     def identifier(self) -> Optional[str]:
+        # pylint: disable=missing-function-docstring
         id_walker = (
             self.json / "minecraft:item" / "description" / "identifier")
         if isinstance(id_walker.data, str):
@@ -1647,6 +1661,7 @@ class RpItem(_McFileJsonSingle['RpItems']):
     '''Resource pack item file.'''
 
     class ConnectItemTexture(NamedTuple):
+        '''A reference fom this item to an item texture'''
         identifier: str
         json: JsonWalker
 
@@ -1658,6 +1673,7 @@ class RpItem(_McFileJsonSingle['RpItems']):
 
     @property
     def identifier(self) -> Optional[str]:
+        # pylint: disable=missing-function-docstring
         id_walker = (
             self.json / "minecraft:item" / "description" / "identifier")
         if isinstance(id_walker.data, str):
@@ -1677,10 +1693,12 @@ class RpItem(_McFileJsonSingle['RpItems']):
 class BpLootTable(_McFileJsonSingle['BpLootTables']):
     '''Behavior pack loot table file.'''
     class ConnectLootTable(NamedTuple):
+        '''A reference from this loot table to another loot table'''
         identifier: str
         json: JsonWalker
-    
+
     class ConnectItem(NamedTuple):
+        '''A reference from this loot table to an item'''
         identifier: str
         json: JsonWalker
 
@@ -1695,6 +1713,7 @@ class BpLootTable(_McFileJsonSingle['BpLootTables']):
 
     @property
     def identifier(self) -> Optional[str]:
+        # pylint: disable=missing-function-docstring
         if (
                 self.owning_collection is None or
                 self.owning_collection.pack is None):
@@ -1705,21 +1724,21 @@ class BpLootTable(_McFileJsonSingle['BpLootTables']):
 
     @staticmethod
     def _access_entries(
-            walkers: JsonSplitWalker, type: str) -> JsonSplitWalker:
+            walkers: JsonSplitWalker, resource_type: str) -> JsonSplitWalker:
         '''
         Recursively access the entries from the loot table (used to access the
         item and loot table references).
 
         :param walkers: usually the json split walker with root json walker
             of this file inside
-        :type: the type of the entry ('item' or 'loot_table')
+        :resource_type: the type of the entry ('item' or 'loot_table')
         '''
         good_walkers: List[JsonWalker] = []
         for walker in walkers:
             walker_type = walker / 'type'
             if not (
                     isinstance(walker_type.data, str) and
-                    walker_type.data == type):
+                    walker_type.data == resource_type):
                 continue
             walker_name = walker / 'name'
             if isinstance(walker_name.data, str):
@@ -1727,7 +1746,8 @@ class BpLootTable(_McFileJsonSingle['BpLootTables']):
         result = JsonSplitWalker(good_walkers)
         more_results = walkers / 'pools' // int / 'entries' // int
         if len(more_results.data) != 0:
-            return result + BpLootTable._access_entries(more_results, type)
+            return result + BpLootTable._access_entries(
+                more_results, resource_type)
         return result
 
     @property
@@ -1737,7 +1757,7 @@ class BpLootTable(_McFileJsonSingle['BpLootTables']):
             return self._items
         result: List[BpLootTable.ConnectItem] = []
         for i in BpLootTable._access_entries(
-                JsonSplitWalker([self.json]), type='item'):
+                JsonSplitWalker([self.json]), resource_type='item'):
             name = (i / 'name').data
             if not isinstance(name ,str):
                 continue
@@ -1752,7 +1772,7 @@ class BpLootTable(_McFileJsonSingle['BpLootTables']):
             return self._loot_tables
         result: List[BpLootTable.ConnectLootTable] = []
         for i in BpLootTable._access_entries(
-                JsonSplitWalker([self.json]), type='loot_table'):
+                JsonSplitWalker([self.json]), resource_type='loot_table'):
             name = (i / 'name').data
             if not isinstance(name, str):
                 continue
@@ -1764,6 +1784,7 @@ class BpFunction(_McFileSingle['BpFunctions']):
     '''A minecraft function file.'''
     @property
     def identifier(self) -> Optional[str]:
+        # pylint: disable=missing-function-docstring
         if (
                 self.owning_collection is None or
                 self.owning_collection.pack is None):
@@ -1776,6 +1797,7 @@ class RpSoundFile(_McFileSingle['RpSoundFiles']):
     '''A sound file.'''
     @property
     def identifier(self) -> Optional[str]:
+        # pylint: disable=missing-function-docstring
         if (
                 self.owning_collection is None or
                 self.owning_collection.pack is None):
@@ -1788,6 +1810,7 @@ class RpTextureFile(_McFileSingle['RpTextureFiles']):
     '''The texture file.'''
     @property
     def identifier(self) -> Optional[str]:
+        # pylint: disable=missing-function-docstring
         if (
                 self.owning_collection is None or
                 self.owning_collection.pack is None):
@@ -1800,6 +1823,7 @@ class BpSpawnRule(_McFileJsonSingle['BpSpawnRules']):
     '''The spawn rule file.'''
     @property
     def identifier(self) -> Optional[str]:
+        # pylint: disable=missing-function-docstring
         id_walker = (
             self.json / "minecraft:spawn_rules" / "description" / "identifier")
         if isinstance(id_walker.data, str):
@@ -1809,6 +1833,7 @@ class BpSpawnRule(_McFileJsonSingle['BpSpawnRules']):
 class BpTrade(_McFileJsonSingle['BpTrades']):
     '''The trade file.'''
     class ConnectItem(NamedTuple):
+        '''A reference from this trade to an item'''
         identifier: str
         trade_wants: bool
         json: JsonWalker
@@ -1821,6 +1846,7 @@ class BpTrade(_McFileJsonSingle['BpTrades']):
 
     @property
     def identifier(self) -> Optional[str]:
+        # pylint: disable=missing-function-docstring
         if (
                 self.owning_collection is None or
                 self.owning_collection.pack is None):
@@ -1857,14 +1883,15 @@ class RpModel(_McFileJsonMulti['RpModels']):
             id_walker = self.json / 'format_version'
             if isinstance(id_walker.data, str):
                 format_version = tuple(
-                    [int(i) for i in id_walker.data.split('.')])
-        except:  # Guessing the format version instead
+                    int(i) for i in id_walker.data.split('.'))
+        except:  # pylint: disable=bare-except
             id_walker = self.json / 'minecraft:geometry'
             if isinstance(id_walker.data, list):
                 format_version = (1, 16, 0)
         return format_version
 
     def keys(self) -> Tuple[str, ...]:
+        # pylint: disable=missing-function-docstring
         result: List[str] = []
         if self.format_version <= (1, 10, 0):
             if isinstance(self.json.data, dict):
@@ -1900,11 +1927,13 @@ class RpModel(_McFileJsonMulti['RpModels']):
 class RpParticle(_McFileJsonSingle['RpParticles']):
     '''The particle file.'''
     class ConnectParticle(NamedTuple):
+        '''A connection from this particle file to another particle'''
         identifier: str
         event: str
         json: JsonWalker
 
     class ConnectTexture(NamedTuple):
+        '''A connection from this particle file to a texture'''
         identifier: str
         json: JsonWalker
 
@@ -1918,6 +1947,7 @@ class RpParticle(_McFileJsonSingle['RpParticles']):
 
     @property
     def identifier(self) -> Optional[str]:
+        # pylint: disable=missing-function-docstring
         id_walker = (
             self.json / "particle_effect" / "description" / "identifier")
         if isinstance(id_walker.data, str):
@@ -2093,10 +2123,11 @@ class RpRenderController(_McFileJsonMulti['RpRenderControllers']):
         return self._materials
 
     def keys(self) -> Tuple[str, ...]:
+        # pylint: disable=missing-function-docstring
         id_walker = (self.json / "render_controllers")
         if isinstance(id_walker.data, dict):
             return tuple(
-                [k for k in id_walker.data.keys() if isinstance(k, str)])
+                k for k in id_walker.data.keys() if isinstance(k, str))
         return tuple()
 
     def __getitem__(self, key: str) -> JsonWalker:
@@ -2211,6 +2242,7 @@ class BpRecipe(_McFileJsonMulti['BpRecipes']):
         return self._items
 
     def keys(self) -> Tuple[str, ...]:
+        # pylint: disable=missing-function-docstring
         id_walker = (
             self.json / 'minecraft:recipe_shaped' +
             self.json /'minecraft:recipe_furnace' +
@@ -2231,7 +2263,7 @@ class BpRecipe(_McFileJsonMulti['BpRecipes']):
             self.json /'minecraft:recipe_shapeless' +
             self.json /'minecraft:recipe_brewing_mix' +
             self.json /'minecraft:recipe_brewing_container'
-        ) 
+        )
         for recipe in recipes:
             if (recipe / "description"  / "identifier").data == key:
                 return recipe
@@ -2240,10 +2272,11 @@ class BpRecipe(_McFileJsonMulti['BpRecipes']):
 # OBJECT COLLECTIONS (IMPLEMENTATIONS)
 class _McFileCollectionSingle(_McFileCollection[MCPACK, MCFILE_SINGLE]):
     '''
-    Collection of files where each file represent exactly one object of certain type
-    (a collection of :class:`_McFileSingle` objects).
+    Collection of files where each file represent exactly one object of
+    certain type (a collection of :class:`_McFileSingle` objects).
     '''
     def keys(self) -> Tuple[str, ...]:
+        # pylint: disable=missing-function-docstring
         result: List[str] = []
         for obj in self.objects:
             if obj.identifier is not None:
@@ -2271,10 +2304,11 @@ class _McFileCollectionSingle(_McFileCollection[MCPACK, MCFILE_SINGLE]):
 
 class _McFileCollectionMulti(_McFileCollection[MCPACK, MCFILE_MULTI]):
     '''
-    Collection of files where each file can represent multiple objects of certain type
-    (a collection of :class:`_McFileMulti` objects).
+    Collection of files where each file can represent multiple objects of
+    certain type (a collection of :class:`_McFileMulti` objects).
     '''
     def keys(self) -> Tuple[str, ...]:
+        # pylint: disable=missing-function-docstring
         result: List[str] = []
         for obj in self.objects:
             result.extend(obj.keys())
@@ -2439,8 +2473,8 @@ class BpRecipes(_McFileCollectionMulti[BehaviorPack, BpRecipe]):
 # SPECIAL PACK FILES - ONE FILE PER PACK (GENERICS)
 class _UniqueMcFile(Generic[MCPACK], ABC):
     '''
-    A file which is unique from a pack. E.g. You can have only one blocks.json file in
-    a resource pack.
+    A file which is unique from a pack. E.g. You can have only one blocks.json
+    file in a resource pack.
     '''
     pack_path: ClassVar[str]
 
@@ -2485,7 +2519,7 @@ class _UniqueMcFileJson(_UniqueMcFile[MCPACK]):
         try:
             with self.path.open('r') as f:
                 self._json = JsonWalker.load(f, cls=JSONCDecoder)
-        except:
+        except:  # pylint: disable=bare-except
             pass  # self._json remains None walker
 
     @property
@@ -2534,7 +2568,7 @@ class _UniqueMcFileJsonMultiQuery(Generic[UNIQUE_MC_FILE_JSON_MULTI]):
             try:
                 aaa=  pack_file[key]
                 return aaa
-            except:
+            except:  # pylint: disable=bare-except
                 pass
         raise KeyError(key)
 
@@ -2565,8 +2599,8 @@ class RpSoundDefinitionsJson(_UniqueMcFileJsonMulti[ResourcePack]):
             id_walker = self.json / 'format_version'
             if isinstance(id_walker.data, str):
                 format_version = tuple(
-                    [int(i) for i in id_walker.data.split('.')])
-        except:  # Guessing the format version instead
+                    int(i) for i in id_walker.data.split('.'))
+        except:  # pylint: disable=bare-except
             id_walker = self.json / 'sound_definitions'
             if isinstance(id_walker.data, dict):
                 format_version = (1, 14, 0)
@@ -2717,13 +2751,12 @@ def _get_float_tuple_range(
         data: Union[JsonWalker, float, List[float]], default: Tuple[float, float]
 ) -> Tuple[float, float]:
     '''
-    Takes a value which can be a single number or a range (list with two numbers)
-    and returns a tuple with two numbers to represent the range.
+    Takes a value which can be a single number or a range (list with two
+    numbers) and returns a tuple with two numbers to represent the range.
     '''
     if isinstance(data, JsonWalker):
         data = data.data  # type: ignore
     if isinstance(data, list):
-        data = data
         if (
                 len(data) == 2 and isinstance(data[0], (float, int)) and
                 isinstance(data[1], (float, int))):
@@ -2815,7 +2848,8 @@ class SjBlockSoundsBlock(_PermanentJsonWalkerContainer):
     A class with :class:`JsonWalker` with the content of
     sounds.json->block_sounds->[block].
     '''
-    def __init__(self, json: JsonWalker, owning_collection: SjBlockSounds) -> None:
+    def __init__(
+            self, json: JsonWalker, owning_collection: SjBlockSounds) -> None:
         super().__init__(json)
         self._owning_collection: SjBlockSounds = owning_collection
 
@@ -2825,7 +2859,7 @@ class SjBlockSoundsBlock(_PermanentJsonWalkerContainer):
         '''
         events = self.json / 'events'
         if isinstance(events.data, dict):
-            return tuple([k for k in events.data.keys() if k != 'default'])
+            return tuple(k for k in events.data.keys() if k != 'default')
         return tuple()
 
     def __getitem__(self, key: str) -> SjBlockSoundsBlockEvent:
@@ -2883,7 +2917,9 @@ class SjBlockSoundsBlockEvent(_PermanentJsonWalkerContainer):
     A class with :class:`JsonWalker` with the content of
     sounds.json->block_sounds->[block]->events->[event].
     '''
-    def __init__(self, json: JsonWalker, owning_collection: SjBlockSoundsBlock) -> None:
+    def __init__(
+            self, json: JsonWalker,
+            owning_collection: SjBlockSoundsBlock) -> None:
         super().__init__(json)
         self._owning_collection: SjBlockSoundsBlock = owning_collection
 
@@ -2979,7 +3015,8 @@ class SjEntitySoundsDefaults(_PermanentJsonWalkerContainer):
     A class with :class:`JsonWalker` with the content of
     sounds.json->entity_sounds->defaults.
     '''
-    def __init__(self, json: JsonWalker, owning_collection: SjEntitySounds) -> None:
+    def __init__(
+            self, json: JsonWalker, owning_collection: SjEntitySounds) -> None:
         super().__init__(json)
         self._owning_collection = owning_collection
 
@@ -3013,7 +3050,8 @@ class SjEntitySoundsDefaults(_PermanentJsonWalkerContainer):
         Returns specific sound event of this object based on the key.
         '''
         if key in self.keys():
-            return SjEntitySoundsDefaultsEvent(self.json / 'events' / key, self)
+            return SjEntitySoundsDefaultsEvent(
+                self.json / 'events' / key, self)
         raise KeyError()
 
     @property
@@ -3037,7 +3075,9 @@ class SjEntitySoundsDefaultsEvent(_PermanentJsonWalkerContainer):
     A class with :class:`JsonWalker` with the content of
     sounds.json->entity_sounds->defaults->events->[event].
     '''
-    def __init__(self, json: JsonWalker, owning_collection: SjEntitySoundsDefaults) -> None:
+    def __init__(
+            self, json: JsonWalker,
+            owning_collection: SjEntitySoundsDefaults) -> None:
         super().__init__(json)
         self._owning_collection = owning_collection
 
@@ -3057,7 +3097,7 @@ class SjEntitySoundsDefaultsEvent(_PermanentJsonWalkerContainer):
         '''
         if isinstance(self.json.data, str):
             return self.owning_collection.pitch
-        elif isinstance(self.json.data, dict):
+        if isinstance(self.json.data, dict):
             pitch = _get_float_tuple_range(
                 self.json / 'pitch',
                 self.owning_collection.pitch)
@@ -3072,7 +3112,7 @@ class SjEntitySoundsDefaultsEvent(_PermanentJsonWalkerContainer):
         '''
         if isinstance(self.json.data, str):
             return self.owning_collection.volume
-        elif isinstance(self.json.data, dict):
+        if isinstance(self.json.data, dict):
             volume = _get_float_tuple_range(
                 self.json / 'volume', self.owning_collection.volume)
             return volume
@@ -3085,7 +3125,7 @@ class SjEntitySoundsDefaultsEvent(_PermanentJsonWalkerContainer):
         '''
         if isinstance(self.json.data, str):
             return self.json.data
-        elif isinstance(self.json.data, dict):
+        if isinstance(self.json.data, dict):
             sound = (self.json / 'sound').data
             if isinstance(sound, str):
                 return sound
@@ -3096,7 +3136,8 @@ class SjEntitySoundsEntity(_PermanentJsonWalkerContainer):
     A class with :class:`JsonWalker` with the content of
     sounds.json->entity_sounds->entities->[entity]
     '''
-    def __init__(self, json: JsonWalker, owning_collection: SjEntitySounds) -> None:
+    def __init__(
+            self, json: JsonWalker, owning_collection: SjEntitySounds) -> None:
         super().__init__(json)
         self._owning_collection = owning_collection
 
@@ -3153,7 +3194,9 @@ class SjEntitySoundsEntityEvent(_PermanentJsonWalkerContainer):
     A class with :class:`JsonWalker` with the content of
     sounds.json->entity_sounds->entities->[entity]->events->[event]
     '''
-    def __init__(self, json: JsonWalker, owning_collection: SjEntitySoundsEntity) -> None:
+    def __init__(
+            self, json: JsonWalker,
+            owning_collection: SjEntitySoundsEntity) -> None:
         super().__init__(json)
         self._owning_collection = owning_collection
 
@@ -3173,7 +3216,7 @@ class SjEntitySoundsEntityEvent(_PermanentJsonWalkerContainer):
         '''
         if isinstance(self.json.data, str):
             return self.owning_collection.pitch
-        elif isinstance(self.json.data, dict):
+        if isinstance(self.json.data, dict):
             pitch = _get_float_tuple_range(
                 self.json / 'pitch', self.owning_collection.pitch)
             return pitch
@@ -3188,7 +3231,7 @@ class SjEntitySoundsEntityEvent(_PermanentJsonWalkerContainer):
         '''
         if isinstance(self.json.data, str):
             return self.owning_collection.volume
-        elif isinstance(self.json.data, dict):
+        if isinstance(self.json.data, dict):
             volume = _get_float_tuple_range(
                 self.json / 'volume', self.owning_collection.volume)
             return volume
@@ -3201,7 +3244,7 @@ class SjEntitySoundsEntityEvent(_PermanentJsonWalkerContainer):
         '''
         if isinstance(self.json.data, str):
             return self.json.data
-        elif isinstance(self.json.data, dict):
+        if isinstance(self.json.data, dict):
             sound = (self.json / 'sound').data
             if isinstance(sound, str):
                 return sound
@@ -3254,10 +3297,12 @@ class SjIndividualEventSoundsEvent(_PermanentJsonWalkerContainer):
     A class with :class:`JsonWalker` with the content of
     sounds.json->individual_event_sounds->events->[event]
     '''
-    def __init__(self, json: JsonWalker, owning_collection: SjIndividualEventSounds) -> None:
+    def __init__(
+            self, json: JsonWalker,
+            owning_collection: SjIndividualEventSounds) -> None:
         super().__init__(json)
         self._owning_collection = owning_collection
-    
+
     @property
     def owning_collection(self) -> SjIndividualEventSounds:
         '''
@@ -3336,7 +3381,9 @@ class SjInteractiveBlockSoundsBlock(_PermanentJsonWalkerContainer):
     A class with :class:`JsonWalker` with the content of
     sounds.json->interactive_sounds->block_sounds->[block]
     '''
-    def __init__(self, json: JsonWalker, owning_collection: SjInteractiveBlockSounds) -> None:
+    def __init__(
+            self, json: JsonWalker,
+            owning_collection: SjInteractiveBlockSounds) -> None:
         super().__init__(json)
         self._owning_collection = owning_collection
 
@@ -3379,7 +3426,7 @@ class SjInteractiveBlockSoundsBlock(_PermanentJsonWalkerContainer):
         '''
         events = self.json / 'events'
         if isinstance(events.data, dict):
-            return tuple([k for k in events.data.keys() if k != 'default'])
+            return tuple(k for k in events.data.keys() if k != 'default')
         return tuple()
 
     def __iter__(self) -> Iterator[SjInteractiveBlockSoundsBlockEvent]:
@@ -3402,7 +3449,9 @@ class SjInteractiveBlockSoundsBlockEvent(_PermanentJsonWalkerContainer):
     A class with :class:`JsonWalker` with the content of
     sounds.json->interactive_sounds->block_sounds->[block]->events->[event]
     '''
-    def __init__(self, json: JsonWalker, owning_collection: SjInteractiveBlockSoundsBlock) -> None:
+    def __init__(
+            self, json: JsonWalker,
+            owning_collection: SjInteractiveBlockSoundsBlock) -> None:
         super().__init__(json)
         self._owning_collection = owning_collection
 
@@ -3436,7 +3485,7 @@ class SjInteractiveBlockSoundsBlockEvent(_PermanentJsonWalkerContainer):
     @property
     def sound(self) -> str:
         '''
-        The name of the 
+        The name of the
         '''
         sound = (self.json / 'sound').data
         if not isinstance(sound, str):
@@ -3463,7 +3512,7 @@ class SjInteractiveEntitySounds(_RpSoundsJsonPart):
         sounds.json->interactive_sounds->entity_sounds->defaults.
         '''
         return SjInteractiveEntitySoundsDefaults(self.json / "defaults", self)
-    
+
     def keys(self) -> Tuple[str, ...]:
         '''
         List of identifiers that can be used to access data of specific
@@ -3490,7 +3539,8 @@ class SjInteractiveEntitySounds(_RpSoundsJsonPart):
             (one of the items from the keys() list)
         '''
         if key in self.keys():
-            return SjInteractiveEntitySoundsEntity(self.json / 'entities' / key, self)
+            return SjInteractiveEntitySoundsEntity(
+                self.json / 'entities' / key, self)
         raise KeyError()
 
 class SjInteractiveEntitySoundsDefaults(_PermanentJsonWalkerContainer):
@@ -3498,7 +3548,9 @@ class SjInteractiveEntitySoundsDefaults(_PermanentJsonWalkerContainer):
     A class with :class:`JsonWalker` with the content of
     sounds.json->interactive_sounds->entity_sounds->defaults
     '''
-    def __init__(self, json: JsonWalker, owning_collection: SjInteractiveEntitySounds) -> None:
+    def __init__(
+            self, json: JsonWalker,
+            owning_collection: SjInteractiveEntitySounds) -> None:
         super().__init__(json)
         self._owning_collection = owning_collection
 
@@ -3532,7 +3584,8 @@ class SjInteractiveEntitySoundsDefaults(_PermanentJsonWalkerContainer):
         :param key: the identifier of the sound event
         '''
         if key in self.keys():
-            return SjInteractiveEntitySoundsDefaultsEvent(self.json / 'events' / key, self)
+            return SjInteractiveEntitySoundsDefaultsEvent(
+                self.json / 'events' / key, self)
         raise KeyError()
 
     @property
@@ -3556,7 +3609,9 @@ class SjInteractiveEntitySoundsDefaultsEvent(_PermanentJsonWalkerContainer):
     A class with :class:`JsonWalker` with the content of
     sounds.json->interactive_sounds->entity_sounds->defaults->events->[event]
     '''
-    def __init__(self, json: JsonWalker, owning_collection: SjInteractiveEntitySoundsDefaults) -> None:
+    def __init__(
+            self, json: JsonWalker,
+            owning_collection: SjInteractiveEntitySoundsDefaults) -> None:
         super().__init__(json)
         self._owning_collection = owning_collection
 
@@ -3576,7 +3631,7 @@ class SjInteractiveEntitySoundsDefaultsEvent(_PermanentJsonWalkerContainer):
         '''
         if isinstance(self.json.data, str):
             return self.owning_collection.pitch
-        elif isinstance(self.json.data, dict):
+        if isinstance(self.json.data, dict):
             pitch = _get_float_tuple_range(
                 self.json / 'default' / 'pitch', self.owning_collection.pitch)
             return pitch
@@ -3591,7 +3646,7 @@ class SjInteractiveEntitySoundsDefaultsEvent(_PermanentJsonWalkerContainer):
         '''
         if isinstance(self.json.data, str):
             return self.owning_collection.volume
-        elif isinstance(self.json.data, dict):
+        if isinstance(self.json.data, dict):
             volume = _get_float_tuple_range(
                 self.json / 'default' / 'volume',
                 self.owning_collection.volume)
@@ -3605,7 +3660,7 @@ class SjInteractiveEntitySoundsDefaultsEvent(_PermanentJsonWalkerContainer):
         '''
         if isinstance(self.json.data, str):
             return self.json.data
-        elif isinstance(self.json.data, dict):
+        if isinstance(self.json.data, dict):
             sound = (self.json / 'default' / 'sound').data
             if isinstance(sound, str):
                 return sound
@@ -3616,7 +3671,9 @@ class SjInteractiveEntitySoundsEntity(_PermanentJsonWalkerContainer):
     A class with :class:`JsonWalker` with the content of
     sounds.json->interactive_sounds->entity_sounds->entities->[entity]
     '''
-    def __init__(self, json: JsonWalker, owning_collection: SjInteractiveEntitySounds) -> None:
+    def __init__(
+            self, json: JsonWalker,
+            owning_collection: SjInteractiveEntitySounds) -> None:
         super().__init__(json)
         self._owning_collection = owning_collection
 
@@ -3667,7 +3724,8 @@ class SjInteractiveEntitySoundsEntity(_PermanentJsonWalkerContainer):
         '''
         if key not in self.keys():
             raise KeyError()
-        return SjInteractiveEntitySoundsEntityEvent(self.json / 'events' / key, self)
+        return SjInteractiveEntitySoundsEntityEvent(
+            self.json / 'events' / key, self)
 
 class SjInteractiveEntitySoundsEntityEvent(_PermanentJsonWalkerContainer):
     '''
@@ -3675,7 +3733,9 @@ class SjInteractiveEntitySoundsEntityEvent(_PermanentJsonWalkerContainer):
     sounds.json->interactive_sounds->entity_sounds->entities->[entity]->
     events->[event]
     '''
-    def __init__(self, json: JsonWalker, owning_collection: SjInteractiveEntitySoundsEntity) -> None:
+    def __init__(
+            self, json: JsonWalker,
+            owning_collection: SjInteractiveEntitySoundsEntity) -> None:
         super().__init__(json)
         self._owning_collection = owning_collection
 
@@ -3703,7 +3763,7 @@ class SjInteractiveEntitySoundsEntityEvent(_PermanentJsonWalkerContainer):
         sound event.
         '''
         if isinstance(self.json.data, dict):
-            return tuple([i for i in self.json.data.keys() if i != 'default'])
+            return tuple(i for i in self.json.data.keys() if i != 'default')
         return tuple()
 
     def __iter__(self) -> Iterator[SjInteractiveEntitySoundsEntityEventBlock]:
@@ -3714,7 +3774,8 @@ class SjInteractiveEntitySoundsEntityEvent(_PermanentJsonWalkerContainer):
         for k in self.keys():
             yield self[k]
 
-    def __getitem__(self, key: str) -> SjInteractiveEntitySoundsEntityEventBlock:
+    def __getitem__(
+            self, key: str) -> SjInteractiveEntitySoundsEntityEventBlock:
         '''
         Returns specific block with special sound defined for this sound event
         based on the key.
@@ -3731,7 +3792,9 @@ class SjInteractiveEntitySoundsEntityEventBlock(_PermanentJsonWalkerContainer):
     sounds.json->interactive_sounds->entity_sounds->entities->[entity]->
     events->[event]->[block]
     '''
-    def __init__(self, json: JsonWalker, owning_collection: SjInteractiveEntitySoundsEntityEvent) -> None:
+    def __init__(
+            self, json: JsonWalker,
+            owning_collection: SjInteractiveEntitySoundsEntityEvent) -> None:
         super().__init__(json)
         self._owning_collection = owning_collection
 
