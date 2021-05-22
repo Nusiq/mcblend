@@ -16,7 +16,7 @@ from .custom_properties import (
     get_unused_event_name, list_effect_types_as_blender_enum)
 from .operator_func import (
     export_model, export_animation, fix_uvs, separate_mesh_cubes, set_uvs, round_dimensions,
-    import_model, inflate_objects)
+    import_model, inflate_objects, reload_rp_entities, import_model_form_project)
 from .operator_func.bedrock_packs.json import CompactEncoder
 from .operator_func.exception import (
     InvalidUvShape, NameConflictException, NotEnoughTextureSpace,)
@@ -547,7 +547,7 @@ class NUSIQ_MCBLEND_OT_ImportModel(bpy.types.Operator, ImportHelper):
     # pylint: disable=unused-argument, no-member
     bl_idname = "nusiq_mcblend.import_model"
     bl_label = "Import model"
-    bl_options = {'REGISTER'}
+    bl_options = {'REGISTER', 'UNDO'}
     bl_description = "Import model from json file."
     # ImportHelper mixin class uses this
     filename_ext = ".json"
@@ -1585,4 +1585,38 @@ class NUSIQ_MCBLEND_OT_RemoveEffect(bpy.types.Operator):
         event = events[active_event_id]
         event.effects.remove(self.effect_index)
 
+        return {'FINISHED'}
+
+# Project - RP entity import
+class NUSIQ_MCBLEND_OT_ReloadRp(bpy.types.Operator):
+    '''Imports entity form Minecraft project into blender'''
+    # pylint: disable=unused-argument, no-member
+    bl_idname = "nusiq_mcblend.reload_rp"
+    bl_label = "Import entity"
+    bl_options = {'REGISTER'}
+    bl_description = "Reloads the list of the entities from the resource pack."
+
+    def execute(self, context):
+        reload_rp_entities(context)
+        return {'FINISHED'}
+
+class NUSIQ_MCBLEND_OT_ImportRpEntity(bpy.types.Operator):
+    '''Imports entity form Minecraft project into blender'''
+    # pylint: disable=unused-argument, no-member
+    bl_idname = "nusiq_mcblend.import_rp_entity"
+    bl_label = "Import entity from pack"
+    bl_options = {'UNDO'}
+    bl_description = "Import entity by it's name from the resource pack."
+
+    replace_bones_with_empties: BoolProperty(  # type: ignore
+        default=False,
+        description='Creates empties instead of armature and bones',
+        name='Replace bones with empties'
+    )
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self)
+
+    def execute(self, context):
+        import_model_form_project(self.replace_bones_with_empties, context)
         return {'FINISHED'}

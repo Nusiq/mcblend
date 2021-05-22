@@ -3,20 +3,22 @@ Functions used directly by the blender operators.
 '''
 from __future__ import annotations
 
-from typing import Dict, Optional, List, Tuple
-
-import numpy as np
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
 
 import bpy
 import bpy_types
+import numpy as np
 
-from .uv import UvMapper, CoordinatesConverter
 from .animation import AnimationExport
-from .model import ModelExport
+from .bedrock_packs import Project, ResourcePack
 from .common import (
-    CubePolygon, MINECRAFT_SCALE_FACTOR, McblendObject, McblendObjectGroup, MeshType,
+    MINECRAFT_SCALE_FACTOR, CubePolygon, McblendObjectGroup, MeshType,
     apply_obj_transform_keep_origin, fix_cube_rotation)
 from .importer import ImportGeometry, ModelLoader
+from .material import create_material
+from .model import ModelExport
+from .uv import CoordinatesConverter, UvMapper
 
 
 def export_model(context: bpy_types.Context) -> Dict:
@@ -378,3 +380,205 @@ def inflate_objects(
 
             counter += 1
     return counter
+
+def reload_rp_entities(context: bpy_types.Context):
+    '''
+    Loads the names of the entities used in the resource pack.
+
+    :param context: the context of running the operator.
+    '''
+    project = context.scene.nusiq_mcblend_project
+    project_entities = project.entities
+    rp_path: Path = Path(context.scene.nusiq_mcblend_project.rp_path)
+
+    # context.scene.nusiq_mcblend_project.active_entity = -1
+    project_entities.clear()
+
+    if not rp_path.exists() or rp_path.is_file():
+        return
+    p = Project()
+    p.add_rp(ResourcePack(rp_path))
+    for rp_entity in p.rp_entities:
+        new_entity = project_entities.add()
+        new_entity.name = rp_entity.identifier
+        for t in  rp_entity.textures:
+            new_texture = new_entity.textures.add()
+            new_texture.name = t.short_name
+            new_texture.value = t.identifier
+        for g in rp_entity.geometries:
+            new_geometry = new_entity.geometries.add()
+            new_geometry.name = g.short_name
+            new_geometry.value = g.identifier
+        for m in rp_entity.materials:
+            new_material = new_entity.materials.add()
+            new_material.name = m.short_name
+            new_material.value = m.identifier
+        for rc in rp_entity.render_controllers:
+            new_rc = new_entity.render_controllers.add()
+            new_rc.name = rc.identifier
+
+    # Set the project enum values to existing enum members
+    if len(project_entities) > 0:
+        entity = project_entities[0]
+        project.entity_names = entity.name
+        if len(entity.render_controllers) > 0:
+            project.render_controller_names = entity.render_controllers[0].name
+        if len(entity.geometries) > 0:
+            project.geometry_names = entity.geometries[0].name
+        if len(entity.textures) > 0:
+            project.texture_names = entity.textures[0].name
+
+
+# TODO - maybe move some of this code somewhere else... it's getting pretty
+# long and hard to read. This files is meant to be short and contain only
+# the most important functions for operators
+def star_pattern_match(text: str, pattern: str) -> bool:
+    '''
+    Matches text with a pattern that uses "*" as a wildcard which
+    can represent any number of characters.
+
+    :param pattern: the pattern
+    :param text: the text being matched with pattern
+    '''
+    lenp, lent = len(pattern), len(text)
+
+    # Only empty text can match empty pattern
+    if lenp == 0:
+        return lent == 0
+
+    # The table that represents matching smaller patterns to
+    # parts of the text. Row 0 is for empty pattern, column 0
+    # represents empty text: matches[text+1][pattern+1]
+    matches = [[False for i in range(lenp + 1)] for j in range(lent + 1)]
+
+    # Empty pattern matches the empty string
+    matches[0][0] = True
+
+    # Only paterns made out of '*' can match empty stirng
+    for p in range(1, lenp+1):
+        # Propagate matching apttern as long as long as the
+        # pattern uses only '*'
+        if pattern[p - 1] == '*':
+            matches[0][p] = matches[0][p - 1]
+        else:
+            break
+    # Fill the pattern matching table (solutions to
+    # shorter patterns/texts are used to solve
+    # other patterns with increasing complexity).
+    for t in range(1, lent + 1):
+        for p in range(1, lenp + 1):
+            if pattern[p - 1] == '*':
+                # Two wys to propagate matching value
+                # A) Same pattern without '*' worked so this also works
+                # B) Shorter text matched this pattern, and it ends with '*'
+                # so adding characters doesn't change anything
+                matches[t][p] = (
+                    matches[t][p - 1] or
+                    matches[t - 1][p]
+                )
+            elif pattern[p -1] == text[t - 1]:
+                # One way to propagate matching value
+                # If the pattern with one less character matched the text
+                # with one less character (and we have a matching pair now)
+                # then this pattern also matches
+                matches[t][p] = matches[t - 1][p - 1]
+            else:
+                matches[t][p] = False  # no match, always false
+    return matches[lent][lenp]  # return last matched pattern
+
+
+def import_model_form_project(
+        replace_bones_with_empties: bool, context: bpy_types.Context):
+    '''
+    Imports model using data selected in Project menu.
+    '''
+    project = context.scene.nusiq_mcblend_project
+    # project_entities = project.entities
+
+    rp_path: Path = Path(context.scene.nusiq_mcblend_project.rp_path)
+    if not rp_path.exists() or rp_path.is_file():
+        raise ValueError("Invalid resource pack path.")
+    p = Project()
+    p.add_rp(ResourcePack(rp_path))
+
+    entity_name: str = project.entity_names
+    entity = project.entities[entity_name]
+    geo_short_name: str = project.geometry_names
+    geo_name = entity.geometries[geo_short_name].value
+    render_controller_name: str = project.render_controller_names
+    texture_short_name: str = project.texture_names
+    texture_name: str = entity.textures[texture_short_name].value
+
+    # Find model
+    geometry_data: Dict = p.rp_models[:geo_name:0].json.data  # type: ignore
+    # Find render controller and it's materials
+    material_map: Dict[str, str] = {}
+    try:
+        rc_data = p.rp_render_controllers[
+            :render_controller_name:0]  # type: ignore
+        for mat in rc_data.materials:
+            if mat.array is not None:
+                continue  # array reference to material (not supported)
+            if mat.render_controller != render_controller_name:
+                continue  # different render controller from the same file
+            mat_pattern: str = mat.json.parent_key  # type: ignore
+            if mat.short_name[9:] in entity.materials:
+                mat_name: str = (
+                    entity.materials[mat.short_name[9:]].value)
+            else:
+                mat_name = 'entity_alphatest'  # default material
+            material_map[mat_pattern] = mat_name
+    except KeyError:  # unable to load render controller
+        pass
+
+    if len(material_map) == 0:
+        material_map = {"*": "entity_alphatest"}
+
+
+    # Import model
+    geometry = ImportGeometry(ModelLoader(geometry_data, geo_name))
+    if replace_bones_with_empties:
+        geometry.build_with_empties(context)
+    else:
+        geometry.build_with_armature(context)
+
+    context.scene.nusiq_mcblend.texture_width = geometry.texture_width
+    context.scene.nusiq_mcblend.texture_height = geometry.texture_height
+    context.scene.nusiq_mcblend.visible_bounds_offset = geometry.visible_bounds_offset
+    context.scene.nusiq_mcblend.visible_bounds_width = geometry.visible_bounds_width
+    context.scene.nusiq_mcblend.visible_bounds_height = geometry.visible_bounds_height
+    # Import texture
+    try:
+        texture_file = p.rp_texture_files[
+            :texture_name:0]  # type: ignore
+        texture = bpy.data.images.load(str(texture_file.path))
+    except KeyError:
+        texture = None # unable to find texture file
+
+    # Create blender materials
+    blender_materials = {}
+    for v in material_map.values():
+        if v in blender_materials:
+            continue
+        blender_materials[v] = create_material(v, texture)
+
+    if geometry.identifier.startswith('geometry.'):
+        context.scene.nusiq_mcblend.model_name = geometry.identifier[9:]
+    else:
+        context.scene.nusiq_mcblend.model_name = geometry.identifier
+    # Connect materials to the model
+    for bone_name, bone in geometry.bones.items():
+        matched_material = ''
+        for pattern, material in material_map.items():
+            # If nothing matches just use the first material
+            if matched_material is None:
+                matched_material = material
+            elif star_pattern_match(bone_name, pattern):
+                # Later materials can overwrite
+                matched_material = material
+        for c in bone.cubes:
+            if c.blend_cube is None:
+                continue
+            c.blend_cube.data.materials.append(
+                blender_materials[matched_material]
+            )

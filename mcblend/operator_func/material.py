@@ -1,8 +1,11 @@
 '''
 Everything related to creating materials for the model.
 '''
+from typing import Optional
+
 import bpy
-from bpy.types import Material
+from bpy.types import Image, Material
+
 
 def _create_material_defaults(material_name: str) -> Material:
     # type: ignore
@@ -16,7 +19,7 @@ def _create_material_defaults(material_name: str) -> Material:
     image_node.interpolation = 'Closest'
     return material
 
-def create_entity_alphatest(material_name: str) -> Material:
+def create_entity_alphatest(material_name: str, image: Optional[Image]=None) -> Material:
     '''
     Creates and returns Blender material that resembles Minecraft's
     entity_alphatest material.
@@ -30,11 +33,12 @@ def create_entity_alphatest(material_name: str) -> Material:
     material.blend_method = 'CLIP'
     bsdf_node = material.node_tree.nodes["Principled BSDF"]
     image_node = material.node_tree.nodes["Image Texture"]
+    image_node.image = image
     material.node_tree.links.new(bsdf_node.inputs['Base Color'], image_node.outputs['Color'])
     material.node_tree.links.new(bsdf_node.inputs['Alpha'], image_node.outputs['Alpha'])
     return material
 
-def create_entity_alphablend(material_name: str) -> Material:
+def create_entity_alphablend(material_name: str, image: Optional[Image]=None) -> Material:
     '''
     Creates and returns Blender material that resembles Minecraft's
     entity_alphablend material.
@@ -48,11 +52,12 @@ def create_entity_alphablend(material_name: str) -> Material:
     material.blend_method = 'BLEND'
     bsdf_node = material.node_tree.nodes["Principled BSDF"]
     image_node = material.node_tree.nodes["Image Texture"]
+    image_node.image = image
     material.node_tree.links.new(bsdf_node.inputs['Base Color'], image_node.outputs['Color'])
     material.node_tree.links.new(bsdf_node.inputs['Alpha'], image_node.outputs['Alpha'])
     return material
 
-def create_entity_emissive(material_name: str) -> Material:
+def create_entity_emissive(material_name: str, image: Optional[Image]=None) -> Material:
     '''
     Creates and returns Blender material that resembles Minecraft's
     entity_emissive/blaze_body material.
@@ -64,6 +69,7 @@ def create_entity_emissive(material_name: str) -> Material:
     material = _create_material_defaults(material_name)
     bsdf_node = material.node_tree.nodes["Principled BSDF"]
     image_node = material.node_tree.nodes["Image Texture"]
+    image_node.image = image
 
     math_1_node = material.node_tree.nodes.new('ShaderNodeMath')
     math_1_node.operation = 'MULTIPLY'
@@ -83,7 +89,7 @@ def create_entity_emissive(material_name: str) -> Material:
 
     return material
 
-def create_entity_emissive_alpha(material_name: str) -> Material:
+def create_entity_emissive_alpha(material_name: str, image: Optional[Image]=None) -> Material:
     '''
     Creates and returns Blender material that resembles Minecraft's
     entity_emissive_alpha/enderman/spider material.
@@ -97,6 +103,7 @@ def create_entity_emissive_alpha(material_name: str) -> Material:
     material.blend_method = 'CLIP'
     bsdf_node = material.node_tree.nodes["Principled BSDF"]
     image_node = material.node_tree.nodes["Image Texture"]
+    image_node.image = image
 
     math_1_node = material.node_tree.nodes.new('ShaderNodeMath')
     math_1_node.operation = 'MULTIPLY'
@@ -120,3 +127,26 @@ def create_entity_emissive_alpha(material_name: str) -> Material:
     material.node_tree.links.new(math_3_node.inputs[0], image_node.outputs['Alpha'])
 
     return material
+
+def create_material(material_name: str, image: Optional[Image]) -> Material:
+    '''
+    Creates a material based on it's name. If the name is unknown
+    creates entity_alphatest material.
+
+    :param material_name: the name of the material to create and the identifier
+        used to select one of the known Minecraft materials.
+    '''
+    materials_map = {
+        'entity_alphatest': create_entity_alphatest,
+        'entity_alphablend': create_entity_alphablend,
+
+        'entity_emissive': create_entity_emissive,
+        'blaze_body': create_entity_emissive,
+
+        'entity_emissive_alpha': create_entity_emissive_alpha,
+        'enderman': create_entity_emissive_alpha,
+        'spider': create_entity_emissive_alpha,
+    }
+    if material_name not in materials_map:
+        return create_entity_alphatest(material_name)
+    return materials_map[material_name](material_name, image)

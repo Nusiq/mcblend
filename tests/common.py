@@ -289,7 +289,6 @@ def compare_json_files(
         if not np.isclose(source, target, rtol=rtol, atol=atol):
             raise NoMatchError(f'{path}: Unequal items {source} != {target}')
 
-
 def run_import_export_comparison(
         source: str, tmp: str, use_empties: bool
     ) -> Tuple[Dict, Dict, str]:

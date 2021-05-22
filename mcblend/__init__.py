@@ -47,9 +47,16 @@ from .operator import (
     NUSIQ_MCBLEND_OT_RemoveEvent,
     NUSIQ_MCBLEND_OT_AddEffect,
     NUSIQ_MCBLEND_OT_RemoveEffect,
+
+    NUSIQ_MCBLEND_OT_ImportRpEntity,
+    NUSIQ_MCBLEND_OT_ReloadRp,
 )
 from .custom_properties import (
+    NUSIQ_MCBLEND_JustName,
+    NUSIQ_MCBLEND_NameValuePair,
     NUSIQ_MCBLEND_ExporterProperties,
+    NUSIQ_MCBLEND_ProjectEntitiesProperties,
+    NUSIQ_MCBLEND_ProjectProperties,
     NUSIQ_MCBLEND_TimelineMarkerProperties,
     NUSIQ_MCBLEND_AnimationProperties,
     NUSIQ_MCBLEND_ObjectProperties,
@@ -71,6 +78,7 @@ from .panel import (
     NUSIQ_MCBLEND_UL_UVGroupList,
     NUSIQ_MCBLEND_PT_EventsPanel,
     NUSIQ_MCBLEND_UL_EventsList,
+    NUSIQ_MCBLEND_PT_ProjectPanel,
 )
 
 
@@ -87,7 +95,13 @@ bl_info = {
 
 
 classes = (
+    NUSIQ_MCBLEND_JustName,
+    NUSIQ_MCBLEND_NameValuePair,
+
     NUSIQ_MCBLEND_ExporterProperties,
+
+    NUSIQ_MCBLEND_ProjectEntitiesProperties,
+    NUSIQ_MCBLEND_ProjectProperties,
 
     NUSIQ_MCBLEND_EffectProperties,
     NUSIQ_MCBLEND_EventProperties,
@@ -150,6 +164,10 @@ classes = (
 
     NUSIQ_MCBLEND_OT_ExportUvGroup,
     NUSIQ_MCBLEND_OT_ImportUvGroup,
+
+    NUSIQ_MCBLEND_OT_ImportRpEntity,
+    NUSIQ_MCBLEND_OT_ReloadRp,
+    NUSIQ_MCBLEND_PT_ProjectPanel,
 )
 
 def register():
@@ -161,6 +179,11 @@ def register():
     # Model export properties (the scope is the whole scene)
     bpy.types.Scene.nusiq_mcblend = PointerProperty(
         type=NUSIQ_MCBLEND_ExporterProperties)
+
+    # Project properties
+    bpy.types.Scene.nusiq_mcblend_project = PointerProperty(
+        type=NUSIQ_MCBLEND_ProjectProperties
+    )
 
     # Animation properties
     bpy.types.Scene.nusiq_mcblend_active_animation = IntProperty(

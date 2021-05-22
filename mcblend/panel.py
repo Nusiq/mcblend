@@ -641,3 +641,68 @@ class NUSIQ_MCBLEND_PT_OperatorsPanel(bpy.types.Panel):
             "nusiq_mcblend.separate_mesh_cubes",
             text="Separate cubes"
         )
+
+class NUSIQ_MCBLEND_UL_RpEntitiesList(bpy.types.UIList):
+    '''GUI item used for drawing list of names of events.'''
+    def draw_item(
+            self, context, layout, data, item, icon, active_data,
+            active_propname):
+        '''
+
+        Drawing NUSIQ_MCBLEND_ProjectEntitiesProperties in a list.
+
+        :param context: the contexts of operator
+        :param layout: layout in which the object is drawn
+        :param data: the RNA object containing the collection
+        :param item: the item currently drawn in the collection
+        :param icon: not used - "the "computed" icon for the item" (?)
+        :param active_data: the RNA object containing the active property for the
+          collection.
+        :param active_propname: the name of the active property.
+        '''
+        # pylint: disable=arguments-differ, unused-argument
+        if self.layout_type in {'DEFAULT', 'COMPACT', 'CENTER'}:
+            # No rename functionality:
+            # layout.label(text=item.name, translate=False)
+
+            # With rename functionality:
+            layout.prop(item, "name", text="", emboss=False)
+
+class NUSIQ_MCBLEND_PT_ProjectPanel(bpy.types.Panel):
+    '''
+    Panel that represents a connection of the blender project with
+    a Minecraft project (resource- and behavior- pack)
+    '''
+    # pylint: disable=unused-argument
+    bl_label = "Project"
+    bl_category = "Mcblend"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+
+    def draw(self, context):
+        col = self.layout.column()
+        row = col.row()
+        row.prop(
+            context.scene.nusiq_mcblend_project, "rp_path", text="Resource Pack"
+        )
+        row.operator(
+            "nusiq_mcblend.reload_rp",
+            text="", icon='FILE_REFRESH'
+        )
+        col.prop(
+            context.scene.nusiq_mcblend_project, "entity_names", text="Entity"
+        )
+        col.prop(
+            context.scene.nusiq_mcblend_project, "render_controller_names", text="Render Controller"
+        )
+        col.prop(
+            context.scene.nusiq_mcblend_project, "geometry_names", text="Geometry"
+        )
+        col.prop(
+            context.scene.nusiq_mcblend_project, "texture_names", text="Texture"
+        )
+
+        col.operator(
+            "nusiq_mcblend.import_rp_entity",
+            text="Import from project"
+        )

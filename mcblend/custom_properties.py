@@ -6,15 +6,15 @@ from typing import Dict, List, Tuple
 
 import bpy
 from bpy.props import (
-    StringProperty, IntProperty, BoolProperty, FloatProperty,
-    FloatVectorProperty, CollectionProperty, EnumProperty, PointerProperty,
-    IntVectorProperty
-)
+    BoolProperty, CollectionProperty, EnumProperty, FloatProperty,
+    FloatVectorProperty, IntProperty, IntVectorProperty,
+    PointerProperty, StringProperty)
 
-from .operator_func.texture_generator import (
-    list_mask_types_as_blender_enum, UvMaskTypes,
-    list_mix_mask_modes_as_blender_enum)
 from .operator_func.common import MeshType
+from .operator_func.texture_generator import (
+    UvMaskTypes, list_mask_types_as_blender_enum,
+    list_mix_mask_modes_as_blender_enum)
+
 
 # UV-mask stripe properties
 class NUSIQ_MCBLEND_StripeProperties(bpy.types.PropertyGroup):
@@ -543,6 +543,95 @@ class NUSIQ_MCBLEND_AnimationProperties(bpy.types.PropertyGroup):
         description='Timeline markers related to this animation.'
     )
 
+
+# Minecraft project
+class NUSIQ_MCBLEND_JustName(bpy.types.PropertyGroup):
+    name: StringProperty(  # type: ignore
+        name="",
+        description="The identifier of the object",
+        default="", maxlen=1024)
+
+class NUSIQ_MCBLEND_NameValuePair(bpy.types.PropertyGroup):
+    name: StringProperty(  # type: ignore
+        name="",
+        description="The identifier of the object",
+        default="", maxlen=1024)
+    value: StringProperty(  # type: ignore
+        name="", description="The value of the object",
+        default="", maxlen=1024
+    )
+
+class NUSIQ_MCBLEND_ProjectEntitiesProperties(bpy.types.PropertyGroup):
+    name: StringProperty(  # type: ignore
+        name="", description="Name of the entity from the project",
+        default="", maxlen=1024)
+
+    render_controllers: CollectionProperty(  # type: ignore
+        type=NUSIQ_MCBLEND_JustName, name='Textures')
+    textures: CollectionProperty(  # type: ignore
+        type=NUSIQ_MCBLEND_NameValuePair, name='Textures')
+    geometries: CollectionProperty(  # type: ignore
+        type=NUSIQ_MCBLEND_NameValuePair, name='Geometries')
+    materials: CollectionProperty(  # type: ignore
+        type=NUSIQ_MCBLEND_NameValuePair, name='Materials')
+
+
+def enum_project_entities(self, context):
+    return [
+        (i, i, i)for i in
+        sorted(j.name for j in context.scene.nusiq_mcblend_project.entities)
+    ]
+
+def enum_project_entity_rc(self, context):
+    # entity_names is an enum property (returns string)
+    entity_name = self.entity_names
+    result: List[Tuple[str, str, str]] = []
+    if entity_name == "":
+        return result
+    for i in sorted(self.entities[entity_name].render_controllers.keys()):
+        result.append((i, i, i))
+    return result
+
+def enum_project_entity_geo(self, context):
+    # entity_names is an enum property (returns string)
+    entity_name = self.entity_names
+    result: List[Tuple[str, str, str]] = []
+    if entity_name == "":
+        return result
+    for i in sorted(self.entities[entity_name].geometries.keys()):
+        result.append((i, i, i))
+    return result
+
+def enum_project_entity_texture(self, context):
+    # entity_names is an enum property (returns string)
+    entity_name = self.entity_names
+    result: List[Tuple[str, str, str]] = []
+    if entity_name == "":
+        return result
+    for i in sorted(self.entities[entity_name].textures.keys()):
+        result.append((i, i, i))
+    return result
+
+class NUSIQ_MCBLEND_ProjectProperties(bpy.types.PropertyGroup):
+    rp_path: StringProperty(  # type: ignore
+        name="Resource pack path",
+        description="Path to resource pack connected to this project",
+        default="", subtype="DIR_PATH")
+    entities: CollectionProperty(  # type: ignore
+        type=NUSIQ_MCBLEND_ProjectEntitiesProperties,
+        name='Project entities')
+    entity_names: EnumProperty(  # type: ignore
+        items=enum_project_entities,
+        name='Project entities')
+    render_controller_names: EnumProperty(  # type: ignore
+        items=enum_project_entity_rc,
+        name='Project entities')
+    geometry_names: EnumProperty(  # type: ignore
+        items=enum_project_entity_geo,
+        name='Project entities')
+    texture_names: EnumProperty(  # type: ignore
+        items=enum_project_entity_texture,
+        name='Project entities')
 
 # Mcblend properties
 class NUSIQ_MCBLEND_ExporterProperties(bpy.types.PropertyGroup):
