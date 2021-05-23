@@ -546,12 +546,17 @@ class NUSIQ_MCBLEND_AnimationProperties(bpy.types.PropertyGroup):
 
 # Minecraft project
 class NUSIQ_MCBLEND_JustName(bpy.types.PropertyGroup):
+    '''Custom property group which has only the "name" property'''
     name: StringProperty(  # type: ignore
         name="",
         description="The identifier of the object",
         default="", maxlen=1024)
 
 class NUSIQ_MCBLEND_NameValuePair(bpy.types.PropertyGroup):
+    '''
+    Custom property group which has only the "name" and "value" string
+    properties.
+    '''
     name: StringProperty(  # type: ignore
         name="",
         description="The identifier of the object",
@@ -562,6 +567,9 @@ class NUSIQ_MCBLEND_NameValuePair(bpy.types.PropertyGroup):
     )
 
 class NUSIQ_MCBLEND_ProjectEntitiesProperties(bpy.types.PropertyGroup):
+    '''
+    Cached properties of an entity from resource pack.
+    '''
     name: StringProperty(  # type: ignore
         name="", description="Name of the entity from the project",
         default="", maxlen=1024)
@@ -577,12 +585,16 @@ class NUSIQ_MCBLEND_ProjectEntitiesProperties(bpy.types.PropertyGroup):
 
 
 def enum_project_entities(self, context):
+    '''List project entities as blender enum list.'''
+    # pylint: disable=unused-argument
     return [
         (i, i, i)for i in
         sorted(j.name for j in context.scene.nusiq_mcblend_project.entities)
     ]
 
 def enum_project_entity_rc(self, context):
+    '''List entity render controllers as blender enum list.'''
+    # pylint: disable=unused-argument
     # entity_names is an enum property (returns string)
     entity_name = self.entity_names
     result: List[Tuple[str, str, str]] = []
@@ -593,6 +605,8 @@ def enum_project_entity_rc(self, context):
     return result
 
 def enum_project_entity_geo(self, context):
+    '''List geometries as blender enum lists.'''
+    # pylint: disable=unused-argument
     # entity_names is an enum property (returns string)
     entity_name = self.entity_names
     result: List[Tuple[str, str, str]] = []
@@ -603,6 +617,8 @@ def enum_project_entity_geo(self, context):
     return result
 
 def enum_project_entity_texture(self, context):
+    '''List textures of an entity as blender enum list.'''
+    # pylint: disable=unused-argument
     # entity_names is an enum property (returns string)
     entity_name = self.entity_names
     result: List[Tuple[str, str, str]] = []
@@ -613,6 +629,11 @@ def enum_project_entity_texture(self, context):
     return result
 
 def _update_entity_names(self, context):
+    '''
+    Called on update of project.entity_names. Resets the values of the entity
+    properties like geometries, textures and render controllers.
+    '''
+    # pylint: disable=unused-argument
     entity_name = self.entity_names
     rcs = self.entities[entity_name].render_controllers
     if len(rcs) > 0:
@@ -625,6 +646,7 @@ def _update_entity_names(self, context):
         self.texture_names = textures[0].name
 
 class NUSIQ_MCBLEND_ProjectProperties(bpy.types.PropertyGroup):
+    '''The properties of the Resource Pack opened in this Blender project.'''
     rp_path: StringProperty(  # type: ignore
         name="Resource pack path",
         description="Path to resource pack connected to this project",
