@@ -14,7 +14,7 @@ from .operator_func.common import MeshType
 from .operator_func.texture_generator import (
     UvMaskTypes, list_mask_types_as_blender_enum,
     list_mix_mask_modes_as_blender_enum)
-
+from .operator_func import reload_rp_entities
 
 # UV-mask stripe properties
 class NUSIQ_MCBLEND_StripeProperties(bpy.types.PropertyGroup):
@@ -616,7 +616,8 @@ class NUSIQ_MCBLEND_ProjectProperties(bpy.types.PropertyGroup):
     rp_path: StringProperty(  # type: ignore
         name="Resource pack path",
         description="Path to resource pack connected to this project",
-        default="", subtype="DIR_PATH")
+        default="", subtype="DIR_PATH",
+        update=lambda self, context: reload_rp_entities(context))
     entities: CollectionProperty(  # type: ignore
         type=NUSIQ_MCBLEND_ProjectEntitiesProperties,
         name='Project entities')
