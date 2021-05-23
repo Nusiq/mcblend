@@ -674,7 +674,7 @@ class NUSIQ_MCBLEND_PT_ProjectPanel(bpy.types.Panel):
     a Minecraft project (resource- and behavior- pack)
     '''
     # pylint: disable=unused-argument
-    bl_label = "Project"
+    bl_label = "Resource Pack"
     bl_category = "Mcblend"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
@@ -689,18 +689,25 @@ class NUSIQ_MCBLEND_PT_ProjectPanel(bpy.types.Panel):
             "nusiq_mcblend.reload_rp",
             text="", icon='FILE_REFRESH'
         )
-        col.prop(
-            context.scene.nusiq_mcblend_project, "entity_names", text="Entity"
-        )
-        col.prop(
-            context.scene.nusiq_mcblend_project, "render_controller_names", text="Render Controller"
-        )
-        col.prop(
-            context.scene.nusiq_mcblend_project, "geometry_names", text="Geometry"
-        )
-        col.prop(
-            context.scene.nusiq_mcblend_project, "texture_names", text="Texture"
-        )
+        project = context.scene.nusiq_mcblend_project
+        # Don't draw dropdown lists if they're empty
+        if project.entity_names != '':
+            col.prop(
+                project, "entity_names", text="Entity"
+            )
+            if project.render_controller_names != '':
+                col.prop(
+                    project, "render_controller_names",
+                    text="Render Controller"
+                )
+            if project.geometry_names != '':
+                col.prop(
+                    project, "geometry_names", text="Geometry"
+                )
+            if project.texture_names != '':
+                col.prop(
+                    project, "texture_names", text="Texture"
+                )
 
         col.operator(
             "nusiq_mcblend.import_rp_entity",

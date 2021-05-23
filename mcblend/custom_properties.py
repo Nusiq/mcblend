@@ -612,6 +612,18 @@ def enum_project_entity_texture(self, context):
         result.append((i, i, i))
     return result
 
+def _update_entity_names(self, context):
+    entity_name = self.entity_names
+    rcs = self.entities[entity_name].render_controllers
+    if len(rcs) > 0:
+        self.render_controller_names = rcs[0].name
+    geo = self.entities[entity_name].geometries
+    if len(geo) > 0:
+        self.geometry_names = geo[0].name
+    textures = self.entities[entity_name].textures
+    if len(textures) > 0:
+        self.texture_names = textures[0].name
+
 class NUSIQ_MCBLEND_ProjectProperties(bpy.types.PropertyGroup):
     rp_path: StringProperty(  # type: ignore
         name="Resource pack path",
@@ -623,7 +635,7 @@ class NUSIQ_MCBLEND_ProjectProperties(bpy.types.PropertyGroup):
         name='Project entities')
     entity_names: EnumProperty(  # type: ignore
         items=enum_project_entities,
-        name='Project entities')
+        name='Project entities', update=_update_entity_names)
     render_controller_names: EnumProperty(  # type: ignore
         items=enum_project_entity_rc,
         name='Project entities')
