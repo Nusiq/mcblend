@@ -692,8 +692,10 @@ class NUSIQ_MCBLEND_PT_ProjectPanel(bpy.types.Panel):
         project = context.scene.nusiq_mcblend_project
         # Don't draw dropdown lists if they're empty
         if project.entity_names != '':
-            col.prop(
-                project, "entity_names", text="Entity"
+            col.prop_search(
+                data=project, property="entity_names",
+                search_data=project, search_property="entities",
+                text="Entity"
             )
             if project.render_controller_names != '':
                 col.prop(
