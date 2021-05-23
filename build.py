@@ -29,7 +29,7 @@ def main():
         raise Exception("Unable to read project version.")
 
     # Create mapping SOURCE:TARGET (in zip file)
-    file_mapping = {'LICENSE': 'LICENSE'}
+    file_mapping = {'LICENSE': 'mcblend/LICENSE'}
     for dir_name, _, files in os.walk(SRC_PATH):
         for file_name in files:
             match = False
