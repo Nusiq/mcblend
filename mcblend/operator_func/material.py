@@ -148,5 +148,5 @@ def create_material(material_name: str, image: Optional[Image]) -> Material:
         'spider': create_entity_emissive_alpha,
     }
     if material_name not in materials_map:
-        return create_entity_alphatest(material_name)
+        return create_entity_alphatest(material_name, image)
     return materials_map[material_name](material_name, image)

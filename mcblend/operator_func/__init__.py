@@ -503,9 +503,12 @@ def import_model_form_project(
 
     entity_name: str = project.entity_names
     entity = project.entities[entity_name]
+
     geo_short_name: str = project.geometry_names
     geo_name = entity.geometries[geo_short_name].value
+
     render_controller_name: str = project.render_controller_names
+
     texture_short_name: str = project.texture_names
     texture_name: str = entity.textures[texture_short_name].value
 
