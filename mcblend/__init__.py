@@ -51,21 +51,30 @@ from .operator import (
     NUSIQ_MCBLEND_OT_ImportRpEntity,
     NUSIQ_MCBLEND_OT_ReloadRp,
 )
-from .custom_properties import (
+
+from .resource_pack_data import (
     NUSIQ_MCBLEND_JustName,
     NUSIQ_MCBLEND_NameValuePair,
-    NUSIQ_MCBLEND_ExporterProperties,
     NUSIQ_MCBLEND_ProjectEntitiesProperties,
     NUSIQ_MCBLEND_ProjectProperties,
+)
+from .animation_data import (
     NUSIQ_MCBLEND_TimelineMarkerProperties,
     NUSIQ_MCBLEND_AnimationProperties,
+    NUSIQ_MCBLEND_EffectProperties,
+    NUSIQ_MCBLEND_EventProperties
+)
+from .exporter_data import (
+    NUSIQ_MCBLEND_ExporterProperties
+)
+from .object_data import (
     NUSIQ_MCBLEND_ObjectProperties,
+)
+from .uv_data import (
     NUSIQ_MCBLEND_StripeProperties,
     NUSIQ_MCBLEND_ColorProperties,
     NUSIQ_MCBLEND_UvMaskProperties,
     NUSIQ_MCBLEND_UvGroupProperties,
-    NUSIQ_MCBLEND_EffectProperties,
-    NUSIQ_MCBLEND_EventProperties,
 )
 
 from .panel import (
@@ -81,7 +90,6 @@ from .panel import (
     NUSIQ_MCBLEND_PT_ProjectPanel,
 )
 
-
 bl_info = {
     "name": "Mcblend",
     "author": "Artur",
@@ -92,7 +100,6 @@ bl_info = {
     "warning": "",
     "category": "Object"
 }
-
 
 classes = (
     NUSIQ_MCBLEND_JustName,

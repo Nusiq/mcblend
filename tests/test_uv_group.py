@@ -56,7 +56,6 @@ def make_comparison_files(
 # PYTEST FUNCTIONS
 UV_GROUP_FILES = [
     # Import empties
-    # TODO - The names of the test files here
     "test.uvgroup.json"
 ]
 

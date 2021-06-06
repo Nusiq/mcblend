@@ -233,7 +233,6 @@ def create_entity_alphatest(material_name: str, image: Optional[Image]=None) -> 
         an created material can have additional index)
     :returns: newly created Blender material
     '''
-    # TODO - use the node group from create_entity_alphatest_node_group
     material = _create_material_defaults(material_name)
     material.use_backface_culling = False
     material.blend_method = 'CLIP'
@@ -253,7 +252,6 @@ def create_entity_alphablend(material_name: str, image: Optional[Image]=None) ->
         an created material can have additional index)
     :returns: newly created Blender material
     '''
-    # TODO - use the node group from create_entity_alphablend_node_group
     material = _create_material_defaults(material_name)
     material.use_backface_culling = True
     material.blend_method = 'BLEND'
@@ -273,7 +271,6 @@ def create_entity_emissive(material_name: str, image: Optional[Image]=None) -> M
         an created material can have additional index)
     :returns: newly created Blender material
     '''
-    # TODO - use the node group from create_entity_emissive_node_group
     material = _create_material_defaults(material_name)
     bsdf_node = material.node_tree.nodes["Principled BSDF"]
     image_node = material.node_tree.nodes["Image Texture"]
@@ -306,7 +303,6 @@ def create_entity_emissive_alpha(material_name: str, image: Optional[Image]=None
         an created material can have additional index)
     :returns: newly created Blender material
     '''
-    # TODO - use the node group from create_entity_emissive_alpha_node_group
     material = _create_material_defaults(material_name)
     material.use_backface_culling = False
     material.blend_method = 'CLIP'

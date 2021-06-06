@@ -3,7 +3,6 @@ Import UV-group from source_path and export it to target_path.
 
 This script is used for testing the import and export UV-group operators.
 '''
-# TODO - implement
 import sys
 import bpy
 

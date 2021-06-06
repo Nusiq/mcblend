@@ -795,8 +795,6 @@ def cyclic_equiv(u: List, v: List) -> bool:
             j += k
     return False
 
-# TODO - maybe find a better place for this code
-
 def apply_obj_transform_keep_origin(obj: bpy.types.Object):
     '''
     Apply object transformations but keep the origin in place. Resets object

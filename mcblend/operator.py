@@ -12,8 +12,10 @@ from bpy.props import (
     StringProperty, FloatProperty, EnumProperty, BoolProperty, IntProperty)
 from bpy_extras.io_utils import ExportHelper, ImportHelper
 
-from .custom_properties import (
+from .animation_data import (
     get_unused_event_name, list_effect_types_as_blender_enum)
+from .uv_data import get_unused_uv_group_name
+
 from .operator_func import (
     export_model, export_animation, fix_uvs, separate_mesh_cubes, set_uvs, round_dimensions,
     import_model, inflate_objects, reload_rp_entities, import_model_form_project)
@@ -23,8 +25,6 @@ from .operator_func.exception import (
 from .operator_func.bedrock_packs.json import JSONCDecoder
 from .operator_func.texture_generator import (
     list_mask_types_as_blender_enum, UvMaskTypes, MixMaskMode)
-
-from .custom_properties import get_unused_uv_group_name
 
 # Model exporter
 class NUSIQ_MCBLEND_OT_ExportModel(

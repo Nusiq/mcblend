@@ -7,7 +7,7 @@ from dataclasses import dataclass
 
 import bpy
 
-from .custom_properties import EffectTypes
+from .animation_data import EffectTypes
 from .operator_func.common import MeshType
 from .operator_func.texture_generator import UvMaskTypes
 
