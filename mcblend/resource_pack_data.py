@@ -31,7 +31,7 @@ class NUSIQ_MCBLEND_NameValuePair(bpy.types.PropertyGroup):
         default="", maxlen=1024
     )
 
-class NUSIQ_MCBLEND_ProjectEntitiesProperties(bpy.types.PropertyGroup):
+class NUSIQ_MCBLEND_EntityProperties(bpy.types.PropertyGroup):
     '''
     Cached properties of an entity from resource pack.
     '''
@@ -117,7 +117,7 @@ class NUSIQ_MCBLEND_ProjectProperties(bpy.types.PropertyGroup):
         default="", subtype="DIR_PATH",
         update=lambda self, context: reload_rp_entities(context))
     entities: CollectionProperty(  # type: ignore
-        type=NUSIQ_MCBLEND_ProjectEntitiesProperties,
+        type=NUSIQ_MCBLEND_EntityProperties,
         name='Project entities')
     entity_names: EnumProperty(  # type: ignore
         items=enum_project_entities,

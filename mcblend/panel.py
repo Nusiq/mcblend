@@ -649,7 +649,7 @@ class NUSIQ_MCBLEND_UL_RpEntitiesList(bpy.types.UIList):
             active_propname):
         '''
 
-        Drawing NUSIQ_MCBLEND_ProjectEntitiesProperties in a list.
+        Drawing NUSIQ_MCBLEND_EntityProperties in a list.
 
         :param context: the contexts of operator
         :param layout: layout in which the object is drawn
