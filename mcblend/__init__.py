@@ -55,7 +55,11 @@ from .operator import (
 from .resource_pack_data import (
     NUSIQ_MCBLEND_JustName,
     NUSIQ_MCBLEND_NameValuePair,
+    NUSIQ_MCBLEND_EnumCache,
     NUSIQ_MCBLEND_EntityProperties,
+    NUSIQ_MCBLEND_MaterialProperties,
+    NUSIQ_MCBLEND_RenderControllerArrayProperties,
+    NUSIQ_MCBLEND_RenderControllersProperties,
     NUSIQ_MCBLEND_ProjectProperties,
 )
 from .animation_data import (
@@ -104,11 +108,14 @@ bl_info = {
 classes = (
     NUSIQ_MCBLEND_JustName,
     NUSIQ_MCBLEND_NameValuePair,
+    NUSIQ_MCBLEND_EnumCache,
+    NUSIQ_MCBLEND_EntityProperties,
+    NUSIQ_MCBLEND_MaterialProperties,
+    NUSIQ_MCBLEND_RenderControllerArrayProperties,
+    NUSIQ_MCBLEND_RenderControllersProperties,
+    NUSIQ_MCBLEND_ProjectProperties,
 
     NUSIQ_MCBLEND_ExporterProperties,
-
-    NUSIQ_MCBLEND_EntityProperties,
-    NUSIQ_MCBLEND_ProjectProperties,
 
     NUSIQ_MCBLEND_EffectProperties,
     NUSIQ_MCBLEND_EventProperties,

@@ -5,8 +5,11 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
+from dataclasses import dataclass, field
+from collections import defaultdict
 
 import bpy
+from bpy.types import Image, Material
 import bpy_types
 import numpy as np
 
@@ -16,7 +19,7 @@ from .common import (
     MINECRAFT_SCALE_FACTOR, CubePolygon, McblendObjectGroup, MeshType,
     apply_obj_transform_keep_origin, fix_cube_rotation)
 from .importer import ImportGeometry, ModelLoader
-from .material import create_material
+from .material import create_bone_material
 from .model import ModelExport
 from .uv import CoordinatesConverter, UvMapper
 
@@ -389,45 +392,87 @@ def reload_rp_entities(context: bpy_types.Context):
     '''
     project = context.scene.nusiq_mcblend_project
     project_entities = project.entities
+    project_rcs = project.render_controllers
     rp_path: Path = Path(context.scene.nusiq_mcblend_project.rp_path)
 
     # context.scene.nusiq_mcblend_project.active_entity = -1
     project_entities.clear()
+    project_rcs.clear()
 
     if not rp_path.exists() or rp_path.is_file():
         return
     p = Project()
     p.add_rp(ResourcePack(rp_path))
+    # Loud entity data into project
     for rp_entity in p.rp_entities:
         new_entity = project_entities.add()
         new_entity.name = rp_entity.identifier
+
+        # new_entity.textures: Collection[NameValuePair]
         for t in  rp_entity.textures:
             new_texture = new_entity.textures.add()
-            new_texture.name = t.short_name
+            new_texture.name = 'texture.' + t.short_name
             new_texture.value = t.identifier
+        # new_entity.geometries: Collection[NameValuePair]
         for g in rp_entity.geometries:
             new_geometry = new_entity.geometries.add()
-            new_geometry.name = g.short_name
+            new_geometry.name = 'geometry.' + g.short_name
             new_geometry.value = g.identifier
+        # new_entity.materials: Collection[NameValuePair]
         for m in rp_entity.materials:
             new_material = new_entity.materials.add()
-            new_material.name = m.short_name
+            new_material.name = 'material.' + m.short_name
             new_material.value = m.identifier
+        # new_entity.render_controllers: Collection[JustName]
         for rc in rp_entity.render_controllers:
             new_rc = new_entity.render_controllers.add()
             new_rc.name = rc.identifier
 
-    # Set the project enum values to existing enum members
+    # Select existing entity for the entity_names enum of the Project
     if len(project_entities) > 0:
         entity = project_entities[0]
         project.entity_names = entity.name
-        if len(entity.render_controllers) > 0:
-            project.render_controller_names = entity.render_controllers[0].name
-        if len(entity.geometries) > 0:
-            project.geometry_names = entity.geometries[0].name
-        if len(entity.textures) > 0:
-            project.texture_names = entity.textures[0].name
 
+    # Load render controller data into project
+    for rc_file in p.rp_render_controllers:
+        for rc in rc_file:
+            new_rc = project_rcs.add()
+            # new_rc.name: String
+            new_rc.name = rc.json.parent_key
+            # new_rc.geometry_molang: String
+            new_rc.geometry_molang = rc.geometry
+            # new_rc.texture_molang: String
+            if len(rc.textures) > 0:  # Currently only one texture is allowed
+                new_rc.texture_molang =  rc.textures[0]
+            else:
+                new_rc.texture_molang = ''
+            # new_rc.materials: Collection[MaterialProperties]
+            for k, v in rc.materials.items():
+                material = new_rc.materials.add()
+                material.name = k  # pattern
+                material.value_molang = v
+                material.owner_name = new_rc.name
+            # new_rc.geometry_arrays: Collection[ArrayProperties]
+            for array_name, array_v in rc.geometry_arrays.items():
+                geo_array = new_rc.geometry_arrays.add()
+                geo_array.name = array_name
+                for i in array_v:
+                    item = geo_array.items.add()
+                    item.name = i
+            # new_rc.texture_arrays: Collection[ArrayProperties]
+            for array_name, array_v in rc.texture_arrays.items():
+                texture_array = new_rc.texture_arrays.add()
+                texture_array.name = array_name
+                for i in array_v:
+                    item = texture_array.items.add()
+                    item.name = i
+            # new_rc.material_arrays: Collection[ArrayProperties]
+            for array_name, array_v in rc.material_arrays.items():
+                material_array = new_rc.material_arrays.add()
+                material_array.name = array_name
+                for i in array_v:
+                    item = material_array.items.add()
+                    item.name = i
 
 # TODO - maybe move some of this code somewhere else... it's getting pretty
 # long and hard to read. This files is meant to be short and contain only
@@ -486,102 +531,114 @@ def star_pattern_match(text: str, pattern: str) -> bool:
                 matches[t][p] = False  # no match, always false
     return matches[lent][lenp]  # return last matched pattern
 
+@dataclass
+class RcStackItem:
+    '''
+    Properties of a render controller.
+    '''
+    texture: Image
+    '''The image with the textue'''
+    materials: Dict[str, str] = field(default_factory=dict)
+    '''Materials dict with pattern keys and full material names values.'''
 
 def import_model_form_project(
         replace_bones_with_empties: bool, context: bpy_types.Context):
     '''
     Imports model using data selected in Project menu.
     '''
-    project = context.scene.nusiq_mcblend_project
-    # project_entities = project.entities
-
-    rp_path: Path = Path(context.scene.nusiq_mcblend_project.rp_path)
+    # 1. Load cached data
+    cached_project = context.scene.nusiq_mcblend_project
+    # 2. Open project
+    rp_path: Path = Path(cached_project.rp_path)
     if not rp_path.exists() or rp_path.is_file():
         raise ValueError("Invalid resource pack path.")
     p = Project()
     p.add_rp(ResourcePack(rp_path))
 
-    entity_name: str = project.entity_names
-    entity = project.entities[entity_name]
-
-    geo_short_name: str = project.geometry_names
-    geo_name = entity.geometries[geo_short_name].value
-
-    render_controller_name: str = project.render_controller_names
-
-    texture_short_name: str = project.texture_names
-    texture_name: str = entity.textures[texture_short_name].value
-
-    # Find model
-    geometry_data: Dict = p.rp_models[:geo_name:0].json.data  # type: ignore
-    # Find render controller and it's materials
-    material_map: Dict[str, str] = {}
-    try:
-        rc_data = p.rp_render_controllers[
-            :render_controller_name:0]  # type: ignore
-        for mat in rc_data.materials:
-            if mat.array is not None:
-                continue  # array reference to material (not supported)
-            if mat.render_controller != render_controller_name:
-                continue  # different render controller from the same file
-            mat_pattern: str = mat.json.parent_key  # type: ignore
-            if mat.short_name[9:] in entity.materials:
-                mat_name: str = (
-                    entity.materials[mat.short_name[9:]].value)
+    # 3. Load the cached entity data
+    cached_entity = cached_project.entities[cached_project.entity_names]
+    # 5. Unpack the data (get full IDs instead of short names) from render
+    # controllers into a single object and group it by used geometry.
+    geo_rc_stacks: Dict[str, List[RcStackItem]] = defaultdict(list)
+    for rc_name in cached_entity.render_controllers.keys():
+        if rc_name in cached_project.render_controllers.keys():
+            cached_rc = cached_project.render_controllers[rc_name]
+        else:
+            cached_rc = cached_project.fake_render_controllers[rc_name]
+        texture_keys = cached_entity.textures.keys()
+        if cached_rc.texture in cached_entity.textures.keys():
+            texture_name = cached_entity.textures[cached_rc.texture].value
+            texture = bpy.data.images.load(
+                p.rp_texture_files[:texture_name:0].path.as_posix())
+        new_rc_stack_item = RcStackItem(texture)
+        if cached_rc.geometry not in cached_entity.geometries:
+            raise ValueError(
+                f"The render controller uses a geometry {cached_rc.geometry} "
+                "undefined by the selected entity")
+        geo_rc_stacks[
+            cached_entity.geometries[cached_rc.geometry].value
+        ].append(new_rc_stack_item)
+        for material in cached_rc.materials:
+            if material.value in cached_entity.materials.keys():
+                material_full_name = cached_entity.materials[
+                    material.value].value
             else:
-                mat_name = 'entity_alphatest'  # default material
-            material_map[mat_pattern] = mat_name
-    except KeyError:  # unable to load render controller
-        pass
+                material_full_name = "entity_alphatest"  # default
+            # (pattern: full identifier) pair
+            new_rc_stack_item.materials[material.name] = material_full_name
 
-    if len(material_map) == 0:
-        material_map = {"*": "entity_alphatest"}
-
-
-    # Import model
-    geometry = ImportGeometry(ModelLoader(geometry_data, geo_name))
-    if replace_bones_with_empties:
-        geometry.build_with_empties(context)
-    else:
+    # 7. Load every geometry
+    # blender_materials - Prevents creating same material multiple times
+    # it's a dictionary of materials which uses a tuple with pairs of
+    # names of the texutes and minecraft materials as the identifiers
+    # of the material to create.
+    blender_materials: Dict[Tuple[Tuple[str, str], ...], Material] = {}
+    for geo_name, rc_stack in geo_rc_stacks.items():
+        geometry_data: Dict = p.rp_models[:geo_name:0].json.data  # type: ignore
+        # Import model
+        geometry = ImportGeometry(ModelLoader(geometry_data, geo_name))
         geometry.build_with_armature(context)
 
-    context.scene.nusiq_mcblend.texture_width = geometry.texture_width
-    context.scene.nusiq_mcblend.texture_height = geometry.texture_height
-    context.scene.nusiq_mcblend.visible_bounds_offset = geometry.visible_bounds_offset
-    context.scene.nusiq_mcblend.visible_bounds_width = geometry.visible_bounds_width
-    context.scene.nusiq_mcblend.visible_bounds_height = geometry.visible_bounds_height
-    # Import texture
-    try:
-        texture_file = p.rp_texture_files[
-            :texture_name:0]  # type: ignore
-        texture = bpy.data.images.load(str(texture_file.path))
-    except KeyError:
-        texture = None # unable to find texture file
+        # TODO - 7.1. Set proper textures resolution and model bounds
+        # TODO - this must be applied to the armature instead of the model.
+        nusiq_mcblend = context.scene.nusiq_mcblend
+        nusiq_mcblend.texture_width = geometry.texture_width
+        nusiq_mcblend.texture_height = geometry.texture_height
+        nusiq_mcblend.visible_bounds_offset = geometry.visible_bounds_offset
+        nusiq_mcblend.visible_bounds_width = geometry.visible_bounds_width
+        nusiq_mcblend.visible_bounds_height = geometry.visible_bounds_height
+        if geometry.identifier.startswith('geometry.'):
+            nusiq_mcblend.model_name = geometry.identifier[9:]
+        else:
+            nusiq_mcblend.model_name = geometry.identifier
 
-    # Create blender materials
-    blender_materials = {}
-    for v in material_map.values():
-        if v in blender_materials:
-            continue
-        blender_materials[v] = create_material(v, texture)
-
-    if geometry.identifier.startswith('geometry.'):
-        context.scene.nusiq_mcblend.model_name = geometry.identifier[9:]
-    else:
-        context.scene.nusiq_mcblend.model_name = geometry.identifier
-    # Connect materials to the model
-    for bone_name, bone in geometry.bones.items():
-        matched_material = ''
-        for pattern, material in material_map.items():
-            # If nothing matches just use the first material
-            if matched_material is None:
-                matched_material = material
-            elif star_pattern_match(bone_name, pattern):
-                # Later materials can overwrite
-                matched_material = material
-        for c in bone.cubes:
-            if c.blend_cube is None:
+        # 7.2. For every bone of geometry, create blender material from.
+        # Materials are created from a list of pairs:
+        # (Image, minecraft material)
+        for bone_name, bone in geometry.bones.items():
+            # Create a list of materials applicable for this bone
+            bone_materials: List[Tuple[Image, str]] = []
+            bone_materials_id: List[Tuple[Image, str]] = []
+            for rc_stack_item in rc_stack:
+                matched_material: Optional[str] = None
+                for pattern, material in rc_stack_item.materials.items():
+                    if star_pattern_match(bone_name, pattern):
+                        matched_material = material
+                # Add material to bone_materials only if something matched
+                if matched_material is not None:
+                    bone_materials.append(
+                        (rc_stack_item.texture, matched_material))
+                    bone_materials_id.append(
+                        (rc_stack_item.texture.name, matched_material))
+            if len(bone_materials) == 0:  # No material for this bone!
                 continue
-            c.blend_cube.data.materials.append(
-                blender_materials[matched_material]
-            )
+            try:  # try to use existing material
+                material = blender_materials[tuple(bone_materials_id)]
+            except:  # create material
+                material = create_bone_material("MC_Material", bone_materials)
+                blender_materials[tuple(bone_materials_id)] = material
+            for c in bone.cubes:
+                if c.blend_cube is None:
+                    continue
+                c.blend_cube.data.materials.append(
+                    blender_materials[tuple(bone_materials_id)])

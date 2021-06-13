@@ -953,23 +953,31 @@ class _McFileJsonMulti(_McFileMulti[MCFILE_COLLECTION]):
         '''
         return self._json
 
-    @abstractmethod
-    def __getitem__(self, key: str) -> JsonWalker:
-        '''
-        Returns part of this JSON file which is related to Minecraft object
-        that uses the key as the identifier.
+    # TODO - fix this:
+    # This part of code was removed because the _McFileJsonMulti should return
+    # an object that represents Minecraft object that belongs to the file
+    # (not just JsonWalker) but at this point it's hard to change the structure
+    # of this module due to really complicated use of generic classes. Whole
+    # thing should be stripped down to only necessary for Mcblend parts of
+    # bedrock_packs. Maybe replacing "bedrock_packs" with something else would
+    # be a good idea.
+    # @abstractmethod
+    # def __getitem__(self, key: str) -> JsonWalker:
+    #     '''
+    #     Returns part of this JSON file which is related to Minecraft object
+    #     that uses the key as the identifier.
 
-        :class key: the identifier of a Minecraft object contained in this
-            file.
-        '''
+    #     :class key: the identifier of a Minecraft object contained in this
+    #         file.
+    #     '''
 
-    def __iter__(self) -> Iterator[JsonWalker]:
-        '''
-        Returns an iterator which yields parts of the JSON file which are
-        related to Minecraft objects in this file.
-        '''
-        for k in self.keys():
-            yield self[k]
+    # def __iter__(self) -> Iterator[JsonWalker]:
+    #     '''
+    #     Returns an iterator which yields parts of the JSON file which are
+    #     related to Minecraft objects in this file.
+    #     '''
+    #     for k in self.keys():
+    #         yield self[k]
 
 # OBJECTS (IMPLEMENTATION)
 class BpEntity(_McFileJsonSingle['BpEntities']):
@@ -1986,141 +1994,10 @@ class RpParticle(_McFileJsonSingle['RpParticles']):
 
 class RpRenderController(_McFileJsonMulti['RpRenderControllers']):
     '''The render controller file.'''
-    class ConnectGeo(NamedTuple):
-        '''A reference from this render controller to a geometry'''
-        short_name: str
-        render_controller:str
-        array: Optional[str]
-        json: JsonWalker
-
-    class ConnectTexture(NamedTuple):
-        '''A reference from this render controller to a texture'''
-        short_name: str
-        render_controller:str
-        array: Optional[str]
-        json: JsonWalker
-
-    class ConnectMaterial(NamedTuple):
-        '''A reference from this render controller to a material.'''
-        short_name: str
-        render_controller:str
-        array: Optional[str]
-        json: JsonWalker
-
     def __init__(
             self, path: Path,
             owning_collection: Optional[RpRenderControllers]) -> None:
         super().__init__(path, owning_collection=owning_collection)
-        self._geometries: Optional[
-            Tuple[RpRenderController.ConnectGeo, ...]] = None
-        self._textures: Optional[
-            Tuple[RpRenderController.ConnectTexture, ...]] = None
-        self._materials: Optional[
-            Tuple[RpRenderController.ConnectMaterial, ...]] = None
-
-    @property
-    def geometries(self) -> Tuple[ConnectGeo, ...]:
-        '''Returns a list of references to models from this file.'''
-        if self._geometries is not None:
-            return self._geometries
-        result: List[RpRenderController.ConnectGeo] = []
-        rcs = self.json / "render_controllers" // str
-        for rc in rcs:
-            # Direct reference
-            geometry = rc / "geometry"
-            if not isinstance(rc.parent_key, str):
-                continue
-            if (
-                    isinstance(geometry.data, str) and
-                    re.fullmatch(r'(?i)geometry.(\w|\.)+', geometry.data)):
-                result.append(RpRenderController.ConnectGeo(
-                    geometry.data.lower(), rc.parent_key, None, geometry))
-            # Reference using an array
-            arrays = rc / "arrays" / "geometries" // r'(?i)array.(\w|\.)+'
-            for array in arrays:
-                if not isinstance(array, str):
-                    continue
-                for geometry in array // int:
-                    if not isinstance(geometry.data, str):
-                        continue
-                    if not re.fullmatch(
-                            r'(?i)geometry.(\w|\.)+', geometry.data):
-                        continue
-                    result.append(RpRenderController.ConnectGeo(
-                        geometry.data.lower(), rc.parent_key, array.parent_key,
-                        geometry))
-        self._geometries = tuple(result)
-        return self._geometries
-
-    @property
-    def textures(self) -> Tuple[ConnectTexture, ...]:
-        '''Returns a list of references to textures from this file.'''
-        if self._textures is not None:
-            return self._textures
-        result: List[RpRenderController.ConnectTexture] = []
-        rcs = self.json / "render_controllers" // str
-        for rc in rcs:
-            # Direct reference
-            textures = rc / "textures" // int
-            if not isinstance(rc.parent_key, str):
-                continue
-            for texture in textures:
-                if (
-                        isinstance(texture.data, str) and
-                        re.fullmatch(r'(?i)texture.(\w|\.)+', texture.data)):
-                    result.append(RpRenderController.ConnectTexture(
-                        texture.data.lower(), rc.parent_key, None, texture))
-            # Reference using an array
-            arrays = rc / "arrays" / "textures" // r'(?i)array.(\w|\.)+'
-            for array in arrays:
-                if not isinstance(array, str):
-                    continue
-                for texture in array // int:
-                    if not isinstance(texture.data, str):
-                        continue
-                    if not re.fullmatch(
-                            r'(?i)texture.(\w|\.)+', texture.data):
-                        continue
-                    result.append(RpRenderController.ConnectTexture(
-                        texture.data.lower(), rc.parent_key, array.parent_key,
-                        texture))
-        self._textures = tuple(result)
-        return self._textures
-
-    @property
-    def materials(self) -> Tuple[ConnectMaterial, ...]:
-        '''Returns a list of references to materials from this file.'''
-        if self._materials is not None:
-            return self._materials
-        result: List[RpRenderController.ConnectMaterial] = []
-        rcs = self.json / "render_controllers" // str
-        for rc in rcs:
-            # Direct reference
-            materials = rc / "materials" // int // str
-            if not isinstance(rc.parent_key, str):
-                continue
-            for material in materials:
-                if (
-                        isinstance(material.data, str) and
-                        re.fullmatch(r'(?i)material.(\w|\.)+', material.data)):
-                    result.append(RpRenderController.ConnectMaterial(
-                        material.data.lower(), rc.parent_key, None, material))
-            # Reference using an array
-            arrays = rc / "arrays" / "materials" // r'(?i)array.(\w|\.)+'
-            for array in arrays:
-                if not isinstance(array.parent_key, str):
-                    continue
-                for material in array // int:
-                    if not isinstance(material.data, str):
-                        continue
-                    if not re.fullmatch(
-                            r'(?i)material.(\w|\.)+', material.data):
-                        continue
-                    result.append(RpRenderController.ConnectMaterial(
-                        material.data.lower(), rc.parent_key, array.parent_key,
-                        material))
-        self._materials = tuple(result)
-        return self._materials
 
     def keys(self) -> Tuple[str, ...]:
         # pylint: disable=missing-function-docstring
@@ -2130,12 +2007,112 @@ class RpRenderController(_McFileJsonMulti['RpRenderControllers']):
                 k for k in id_walker.data.keys() if isinstance(k, str))
         return tuple()
 
-    def __getitem__(self, key: str) -> JsonWalker:
+    def __getitem__(self, key: str) -> RpRenderControllerInstance:
         id_walker = (self.json / "render_controllers")
         if isinstance(id_walker.data, dict):
             if key in id_walker.data:
-                return id_walker / key
+                return RpRenderControllerInstance(id_walker / key)
         raise KeyError(key)
+
+    def __iter__(self) -> Iterator[RpRenderControllerInstance]:
+        for k in self.keys():
+            yield self[k]
+
+class RpRenderControllerInstance:
+    def __init__(self, json: JsonWalker):
+        self.json: JsonWalker = json
+        self._geometry: Optional[str] = None
+        self._geometry_arrays: Optional[Dict[str, Tuple[str, ...]]] = None
+        self._textures: Optional[Tuple[str, ...]] = None
+        self._texture_arrays: Optional[Dict[str, Tuple[str, ...]]] = None
+        self._materials: Optional[Dict[str, str]] = None
+        self._materials_arrays: Optional[Dict[str, Tuple[str, ...]]] = None
+
+    @property
+    def geometry(self) -> Optional[str]:
+        if self._geometry is not None:
+            return self._geometry
+        rc = self.json
+        geometry = rc / "geometry"
+        if isinstance(geometry.data, str):
+            self._geometry = geometry.data.lower()
+        return self._geometry
+
+    @property
+    def geometry_arrays(self) -> Dict[str, Tuple[str, ...]]:
+        if self._geometry_arrays is not None:
+            return self._geometry_arrays
+        result: Dict[str, Tuple[str, ...]] = {}
+        arrays = self.json / "arrays" / "geometries" // r'(?i)array.(\w|\.)+'
+        for array in arrays:
+            geometries_list: List[str] = []
+            for geometry in array // int:
+                if not isinstance(geometry.data, str):
+                    continue
+                geometries_list.append(geometry.data.lower())
+            result[array.parent_key.lower()] = tuple(geometries_list)
+        self._geometry_arrays = result
+        return self._geometry_arrays
+
+    @property
+    def textures(self) -> Tuple[str, ...]:
+        if self._textures is not None:
+            return self._textures
+        result: List[str] = []
+        rc = self.json
+        textures = rc / "textures" // int
+        for texture in textures:
+            if isinstance(texture.data, str):
+                result.append(texture.data.lower())
+        self._textures = tuple(result)
+        return self._textures
+
+    @property
+    def texture_arrays(self) -> Dict[str, Tuple[str, ...]]:
+        if self._texture_arrays is not None:
+            return self._texture_arrays
+        result: Dict[str, Tuple[str, ...]] = {}
+        rc = self.json
+        arrays = rc / "arrays" / "textures" // r'(?i)array.(\w|\.)+'
+        for array in arrays:
+            texture_list = []
+            for texture in array // int:
+                if not isinstance(texture.data, str):
+                    continue
+                texture_list.append(texture.data.lower())
+            result[array.parent_key.lower()] = tuple(texture_list)
+        self._texture_arrays = result
+        return self._texture_arrays
+
+    @property
+    def material_arrays(self) -> Dict[str, Tuple[str, ...]]:
+        if self._materials_arrays is not None:
+            return self._materials_arrays
+        result: Dict[str, Tuple[str, ...]] = {}
+        arrays = self.json / "arrays" / "materials" // r'(?i)array.(\w|\.)+'
+        for array in arrays:
+            materials_list: List[str] = []
+            for material in array // int:
+                if not isinstance(material.data, str):
+                    continue
+                materials_list.append(material.data.lower())
+            result[array.parent_key.lower()] = tuple(materials_list)
+        self._materials_arrays = result
+        return self._materials_arrays
+
+    @property
+    def materials(self) -> Dict[str, str]:
+        if self._materials is not None:
+            return self._materials
+        result: Dict[str, str] = {}
+        rc = self.json
+        # Direct reference
+        materials = rc / "materials" // int // str
+        for material in materials:
+            if isinstance(material.data, str):
+                result[material.parent_key.lower()] = material.data.lower()
+        self._materials = result
+        return self._materials
 
 class BpRecipe(_McFileJsonMulti['BpRecipes']):
     '''The recipe file.'''

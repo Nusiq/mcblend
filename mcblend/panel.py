@@ -486,7 +486,6 @@ class NUSIQ_MCBLEND_PT_ObjectPropertiesPanel(bpy.types.Panel):
                     col.prop(object_properties, "mirror", text="Mirror")
                     col.prop(object_properties, "inflate", text="Inflate")
 
-
 # Model properties panel
 class NUSIQ_MCBLEND_PT_ModelPropertiesPanel(bpy.types.Panel):
     '''
@@ -642,32 +641,7 @@ class NUSIQ_MCBLEND_PT_OperatorsPanel(bpy.types.Panel):
             text="Separate cubes"
         )
 
-class NUSIQ_MCBLEND_UL_RpEntitiesList(bpy.types.UIList):
-    '''GUI item used for drawing list of names of events.'''
-    def draw_item(
-            self, context, layout, data, item, icon, active_data,
-            active_propname):
-        '''
-
-        Drawing NUSIQ_MCBLEND_EntityProperties in a list.
-
-        :param context: the contexts of operator
-        :param layout: layout in which the object is drawn
-        :param data: the RNA object containing the collection
-        :param item: the item currently drawn in the collection
-        :param icon: not used - "the "computed" icon for the item" (?)
-        :param active_data: the RNA object containing the active property for the
-          collection.
-        :param active_propname: the name of the active property.
-        '''
-        # pylint: disable=arguments-differ, unused-argument
-        if self.layout_type in {'DEFAULT', 'COMPACT', 'CENTER'}:
-            # No rename functionality:
-            # layout.label(text=item.name, translate=False)
-
-            # With rename functionality:
-            layout.prop(item, "name", text="", emboss=False)
-
+# Resource pack panel
 class NUSIQ_MCBLEND_PT_ProjectPanel(bpy.types.Panel):
     '''
     Panel that represents a connection of the blender project with
@@ -678,6 +652,51 @@ class NUSIQ_MCBLEND_PT_ProjectPanel(bpy.types.Panel):
     bl_category = "Mcblend"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
+
+    def draw_render_controller(
+            self, rc, col: bpy.types.UILayout):
+        '''
+        Draws single render controller GUI
+        '''
+        geo_cache = rc.geometry_cache
+        texture_cache = rc.texture_cache
+        geo_choice = geo_cache.is_cached and len(geo_cache.values) > 1
+        texture_choice = texture_cache.is_cached and len(texture_cache.values) > 1
+        material_choice = False
+        for mat in rc.materials:
+            mat_cache = mat.value_cache
+            # Not cached (shouldn't happen) -> assume you can select something
+            # Cached -> check if there are at least 2 items (a choice for user)
+            if (
+                    not mat_cache.is_cached or
+                    (mat_cache.is_cached and len(mat_cache.values) > 1)):
+                material_choice = True
+                break
+        if (not geo_choice and not texture_choice and not material_choice):
+            return  # Nothing to draw
+        box = col.box()
+        col = box.column()
+        row = col.row()
+        row.label(text=f'{rc.name}')
+        if geo_choice:
+            col.prop(
+                rc, "geometry", text="Geometry"
+            )
+        if texture_choice:
+            col.prop(
+                rc, "texture", text="Texture"
+            )
+        if material_choice:
+            box = col.box()
+            col = box.column()
+            row = col.row()
+            row.label(text="Materials")
+            for mat in rc.materials:
+                mat_cache = mat.value_cache
+                if (
+                        not mat_cache.is_cached or
+                        (mat_cache.is_cached and len(mat_cache.values) > 1)):
+                    col.prop(mat, "value", text=mat.name)
 
     def draw(self, context):
         col = self.layout.column()
@@ -697,19 +716,14 @@ class NUSIQ_MCBLEND_PT_ProjectPanel(bpy.types.Panel):
                 search_data=project, search_property="entities",
                 text="Entity"
             )
-            if project.render_controller_names != '':
-                col.prop(
-                    project, "render_controller_names",
-                    text="Render Controller"
-                )
-            if project.geometry_names != '':
-                col.prop(
-                    project, "geometry_names", text="Geometry"
-                )
-            if project.texture_names != '':
-                col.prop(
-                    project, "texture_names", text="Texture"
-                )
+        entity = project.entities[project.entity_names]
+        for rc_name in entity.render_controllers.keys():
+            if rc_name not in project.render_controllers:
+                # The definition should be on the list of fake RC
+                rc = project.fake_render_controllers[rc_name]
+            else:
+                rc = project.render_controllers[rc_name]
+            self.draw_render_controller(rc, col)
 
         col.operator(
             "nusiq_mcblend.import_rp_entity",

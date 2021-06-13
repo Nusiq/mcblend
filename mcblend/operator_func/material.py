@@ -4,6 +4,7 @@ Everything related to creating materials for the model.
 from typing import Optional, List, Tuple
 
 import bpy
+from collections import deque
 from bpy.types import Image, Material
 
 PADDING = 300
@@ -40,16 +41,11 @@ def create_entity_alphatest_node_group():
     # In: Color-> Out: Color
     group.links.new(outputs.inputs[0], inputs.outputs[0])
     # In: Alpha -> Math[ADD] -> Math[FLOOR] -> Out: Alpha
-    math_1_node = group.nodes.new('ShaderNodeMath')
-    math_1_node.operation = 'ADD'
-    math_1_node.location = (1*PADDING, -1*PADDING)
-    math_2_node = group.nodes.new('ShaderNodeMath')
-    math_2_node.operation = 'FLOOR'
-    math_2_node.use_clamp = True
-    math_2_node.location = (2*PADDING, -1*PADDING)
-    group.links.new(math_1_node.inputs[0], inputs.outputs[1])
-    group.links.new(math_2_node.inputs[0], math_1_node.outputs[0])
-    group.links.new(outputs.inputs[1], math_2_node.outputs[0])
+    math_node = group.nodes.new('ShaderNodeMath')
+    math_node.operation = 'GREATER_THAN'
+    math_node.location = (1*PADDING, -1*PADDING)
+    group.links.new(math_node.inputs[0], inputs.outputs[1])
+    group.links.new(outputs.inputs[1], math_node.outputs[0])
     # RGB (black) -> Out: Emission
     rgb_node = group.nodes.new("ShaderNodeRGB")
     rgb_node.outputs['Color'].default_value = (0, 0, 0, 1)  # black
@@ -195,9 +191,9 @@ def create_material_mix_node_group():
 
     # Mix alpha (Add and clamp aplha)
     math_node = group.nodes.new('ShaderNodeMath')
-    math_node.operation = 'ADD'
+    math_node.operation = 'MAXIMUM'
     math_node.location = (1*PADDING, 0)
-    math_node.use_clamp = True
+    # math_node.use_clamp = True
     group.links.new(math_node.inputs[0], inputs.outputs['Alpha1'])
     group.links.new(math_node.inputs[1], inputs.outputs['Alpha2'])
     group.links.new(outputs.inputs['Alpha'], math_node.outputs[0])
@@ -333,43 +329,7 @@ def create_entity_emissive_alpha(material_name: str, image: Optional[Image]=None
 
     return material
 
-def create_material(material_name: str, image: Optional[Image]) -> Material:
-    '''
-    Creates a material based on it's name. If the name is unknown
-    creates entity_alphatest material.
-
-    :param material_name: the name of the material to create and the identifier
-        used to select one of the known Minecraft materials.
-    '''
-    materials_map = {
-        'entity_alphatest': create_entity_alphatest,
-        'entity_alphablend': create_entity_alphablend,
-
-        'entity_emissive': create_entity_emissive,
-        'blaze_body': create_entity_emissive,
-
-        'entity_emissive_alpha': create_entity_emissive_alpha,
-        'enderman': create_entity_emissive_alpha,
-        'spider': create_entity_emissive_alpha,
-    }
-    if material_name not in materials_map:
-        return create_entity_alphatest(material_name, image)
-    return materials_map[material_name](material_name, image)
-
-def build_bone_material(
-        material_name: str,
-        data: List[Tuple[Optional[Image], str]]) -> Material:
-    '''
-    Creates Blender material for a Minecraft bone based on a list of textures
-    and Minecraft materials used by the render controllers that dispay this
-    bone.
-
-    :param data: The list of tuples where every item is a pair of a texture and
-        material name used by render controllers that display the bone.
-
-    :returns: Material for Blender object that represent Minecraft bone.
-    '''
-    materials_map = {
+MATERIALS_MAP = {
         'entity_alphatest': create_entity_alphatest_node_group,
         'entity_alphablend': create_entity_alphablend_node_group,
 
@@ -381,30 +341,82 @@ def build_bone_material(
         'spider': create_entity_emissive_alpha_node_group,
     }
 
+def create_bone_material(
+        material_name: str,
+        data: List[Tuple[Image, str]]) -> Material:
+    '''
+    Creates Blender material for a Minecraft bone based on a list of textures
+    and Minecraft materials used by the render controllers that dispay this
+    bone.
+
+    :param data: The list of tuples where every item is a pair of a texture and
+        material name used by render controllers that display the bone.
+    :returns: Material for Blender object that represent Minecraft bone.
+    '''
+
     material: Material = bpy.data.materials.new(material_name)
     material.use_nodes = True
+    material.blend_method = 'OPAQUE'
+    if len(data) > 0:
+        _, name = data[0]
+        if name in (
+                'entity_alphatest', 'entity_emissive_alpha', 'enderman',
+                'spider'):
+            material.blend_method = 'CLIP'
+        elif name in 'entity_alphablend':
+            material.blend_method = 'BLEND'
+
     node_tree = material.node_tree
+    output_node = node_tree.nodes['Material Output']
     bsdf_node = node_tree.nodes["Principled BSDF"]
     bsdf_node.inputs['Specular'].default_value = 0
     bsdf_node.inputs['Sheen Tint'].default_value = 0
     bsdf_node.inputs['Roughness'].default_value = 1
 
-    node_groups = []
+    node_groups = deque()
 
     for i, item in enumerate(data):
         img, name = item
         try:
-            node_group_data = materials_map[name]()
+            node_group_data = MATERIALS_MAP[name]()
         except:
             node_group_data = create_entity_alphatest_node_group()  # default
         node_group = node_tree.nodes.new('ShaderNodeGroup')
         node_group.node_tree = node_group_data
-        node_group.location = (PADDING, -i*PADDING)
+        node_group.location = (-3*PADDING, -i*PADDING)
         image_node = node_tree.nodes.new('ShaderNodeTexImage')
         image_node.interpolation = 'Closest'
         image_node.image = img
-        node_group.location = (0, -i*PADDING)
+        image_node.location = (-4*PADDING, -i*PADDING)
         node_tree.links.new(node_group.inputs[0], image_node.outputs[0])
         node_tree.links.new(node_group.inputs[1], image_node.outputs[1])
         node_groups.append(node_group)
+    # Join node groups using mix node groups
+    i = 0
+    while True:
+        if len(node_groups) > 1:
+            connection = node_tree.nodes.new('ShaderNodeGroup')
+            connection.node_tree = create_material_mix_node_group()
+            connection.location = ((i-2)*PADDING, -i*PADDING)
+            bottom = node_groups.popleft()
+            top = node_groups.popleft()
+            node_groups.appendleft(connection)
+            
+            node_tree.links.new(connection.inputs['Color1'], bottom.outputs['Color'])
+            node_tree.links.new(connection.inputs['Alpha1'], bottom.outputs['Alpha'])
+            node_tree.links.new(connection.inputs['Emission1'], bottom.outputs['Emission'])
+            node_tree.links.new(connection.inputs['Color2'], top.outputs['Color'])
+            node_tree.links.new(connection.inputs['Alpha2'], top.outputs['Alpha'])
+            node_tree.links.new(connection.inputs['Emission2'], top.outputs['Emission'])
+            i += 1
+        elif len(node_groups) == 1:
+            final_node = node_groups[0]
+            node_tree.links.new(bsdf_node.inputs['Base Color'], final_node.outputs['Color'])
+            node_tree.links.new(bsdf_node.inputs['Alpha'], final_node.outputs['Alpha'])
+            node_tree.links.new(bsdf_node.inputs['Emission'], final_node.outputs['Emission'])
+            break
+        else:  # shouldn't happen if bone uses any materials
+            break
+    bsdf_node.location = [(i-1)*PADDING, 0]
+    output_node.location = [i*PADDING, 0]
     return material
