@@ -108,6 +108,16 @@ class McblendObject:
         self.thisobj.nusiq_mcblend_object_properties.inflate = inflate
 
     @property
+    def min_uv_size(self) -> np.ndarray:
+        '''The lower UV-size limit of this object.'''
+        return np.array(
+            self.thisobj.nusiq_mcblend_object_properties.min_uv_size)
+
+    @min_uv_size.setter
+    def min_uv_size(self, min_uv_size: np.ndarray):
+        self.thisobj.nusiq_mcblend_object_properties.min_uv_size = min_uv_size
+
+    @property
     def mesh_type(self) -> MeshType:
         '''Mesh type of this object'''
         return MeshType(self.thisobj.nusiq_mcblend_object_properties.mesh_type)

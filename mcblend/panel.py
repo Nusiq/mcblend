@@ -485,6 +485,7 @@ class NUSIQ_MCBLEND_PT_ObjectPropertiesPanel(bpy.types.Panel):
                         col.label(text="This object doesn't have a UV group")
                     col.prop(object_properties, "mirror", text="Mirror")
                     col.prop(object_properties, "inflate", text="Inflate")
+                    col.prop(object_properties, "min_uv_size", text="Min UV bound")
 
 # Model properties panel
 class NUSIQ_MCBLEND_PT_ModelPropertiesPanel(bpy.types.Panel):

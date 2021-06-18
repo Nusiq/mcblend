@@ -3,7 +3,7 @@ Custom Blender objects with additional data for the objects and empties.
 '''
 import bpy
 from bpy.props import (
-    BoolProperty, EnumProperty, FloatProperty, StringProperty)
+    BoolProperty, EnumProperty, FloatProperty, IntVectorProperty, StringProperty, IntProperty)
 
 from .operator_func.common import MeshType
 
@@ -42,3 +42,10 @@ class NUSIQ_MCBLEND_ObjectProperties(bpy.types.PropertyGroup):
     )
     mesh_type: EnumProperty(  # type: ignore
         items=list_mesh_types_as_blender_enum, name='Mesh type')
+    min_uv_size: IntVectorProperty(
+        name="Min UV size", default=(0.0, 0.0, 0.0), min=0,
+        description=(
+            "The lower UV boundary of the length of X dimension of a cube. If "
+            "it's greater than the actual X, then the UV-mapper will act as "
+            "if the X were equal to this value.")
+    )

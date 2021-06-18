@@ -48,7 +48,6 @@ class CoordinatesConverter:
         x = np.array(x).T
         return (((x-self.space_a[0])/self.scale_a)*self.scale_b)+self.space_b[0]
 
-
 # (U, V) - 0, 0 = top left
 class UvCorner(Enum):
     '''
@@ -525,13 +524,16 @@ class UvMapper:
                 continue
             scale = (
                 objprop.mcube_size *
-                # scale
-                np.array(objprop.obj_matrix_world.decompose()[2].xzy) *
+                np.array(objprop.obj_matrix_world.decompose()[2].xzy) * # scale
                 MINECRAFT_SCALE_FACTOR
             )
-
             if objprop.inflate != 0:
                 scale = scale - objprop.inflate * 2
+            # Apply the min boundaries to the effective scale value
+            scale_abs = np.maximum(np.abs(scale), objprop.min_uv_size)
+            # Add the sign to the scale again
+            scale_abs[scale < 0] *= -1
+            scale = scale_abs
 
             # width, height, depth - rounded down to int
             # first round with get_json_vect to avoid numerical errors and
