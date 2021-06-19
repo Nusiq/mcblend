@@ -83,7 +83,6 @@ from .uv_data import (
 
 from .panel import (
     NUSIQ_MCBLEND_PT_ObjectPropertiesPanel,
-    NUSIQ_MCBLEND_PT_ModelPropertiesPanel,
     NUSIQ_MCBLEND_PT_AnimationPropertiesPanel,
     NUSIQ_MCBLEND_PT_UvMappingPanel,
     NUSIQ_MCBLEND_PT_OperatorsPanel,
@@ -126,7 +125,6 @@ classes = (
     NUSIQ_MCBLEND_OT_ExportModel,
     NUSIQ_MCBLEND_OT_ExportAnimation,
     NUSIQ_MCBLEND_PT_AnimationPropertiesPanel,
-    NUSIQ_MCBLEND_PT_ModelPropertiesPanel,
     NUSIQ_MCBLEND_OT_MapUv,
     NUSIQ_MCBLEND_OT_FixUv,
     NUSIQ_MCBLEND_PT_UvMappingPanel,

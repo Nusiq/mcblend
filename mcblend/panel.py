@@ -461,62 +461,49 @@ class NUSIQ_MCBLEND_PT_ObjectPropertiesPanel(bpy.types.Panel):
     @classmethod
     def poll(cls, context):
         if context.active_object:
-            return (
-                context.active_object.type == "MESH" or
-                context.active_object.type == "EMPTY")
+            return context.active_object.type in [
+                "MESH", "EMPTY", "ARMATURE"]
         return False
 
     def draw(self, context):
         col = self.layout.column(align=True)
+        if not context.mode == "OBJECT" or context.object is None:
+            return
 
-        if context.mode == "OBJECT" and context.object is not None:
+        if context.object.type == 'EMPTY':
             object_properties = context.object.nusiq_mcblend_object_properties
             col.prop(object_properties, "is_bone", text="Export as bone")
-            if context.object.type == 'MESH':
-                col.prop(object_properties, "mesh_type", text="")
+        elif context.object.type == 'MESH':
+            object_properties = context.object.nusiq_mcblend_object_properties
+            col.prop(object_properties, "is_bone", text="Export as bone")
+            col.prop(object_properties, "mesh_type", text="")
 
-                mesh_type = (
-                    context.object.nusiq_mcblend_object_properties.mesh_type)
-                if mesh_type == MeshType.CUBE.value:
-                    if object_properties.uv_group != '':
-                        col.label(
-                            text=f'UV Group: {object_properties.uv_group}')
-                    else:
-                        col.label(text="This object doesn't have a UV group")
-                    col.prop(object_properties, "mirror", text="Mirror")
-                    col.prop(object_properties, "inflate", text="Inflate")
-                    col.prop(object_properties, "min_uv_size", text="Min UV bound")
-
-# Model properties panel
-class NUSIQ_MCBLEND_PT_ModelPropertiesPanel(bpy.types.Panel):
-    '''
-    Panel used for launching the model export operator and changing its
-    settings.
-    '''
-    # pylint: disable=unused-argument
-    bl_label = "Model properties"
-    bl_category = "Mcblend"
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-
-    def draw(self, context):
-        col = self.layout.column(align=True)
-        # col.prop(context.scene.nusiq_mcblend, "path", text="")
-        col.prop(
-            context.scene.nusiq_mcblend, "model_name", text="Name"
-        )
-        col.prop(
-            context.scene.nusiq_mcblend, "visible_bounds_width",
-            text="Visible bounds width"
-        )
-        col.prop(
-            context.scene.nusiq_mcblend, "visible_bounds_height",
-            text="Visible bounds height"
-        )
-        col.prop(
-            context.scene.nusiq_mcblend, "visible_bounds_offset",
-            text="Visible bounds offset"
-        )
+            mesh_type = (
+                context.object.nusiq_mcblend_object_properties.mesh_type)
+            if mesh_type == MeshType.CUBE.value:
+                if object_properties.uv_group != '':
+                    col.label(
+                        text=f'UV Group: {object_properties.uv_group}')
+                else:
+                    col.label(text="This object doesn't have a UV group")
+                col.prop(object_properties, "mirror", text="Mirror")
+                col.prop(object_properties, "inflate", text="Inflate")
+                col.prop(
+                    object_properties, "min_uv_size", text="Min UV bound")
+        elif context.object.type == 'ARMATURE':
+            # col.prop(context.scene.nusiq_mcblend, "path", text="")
+            col.prop(
+                context.object.nusiq_mcblend_object_properties,
+                "model_name", text="Name")
+            col.prop(
+                context.object.nusiq_mcblend_object_properties,
+                "visible_bounds_width", text="Visible bounds width")
+            col.prop(
+                context.object.nusiq_mcblend_object_properties,
+                "visible_bounds_height", text="Visible bounds height")
+            col.prop(
+                context.object.nusiq_mcblend_object_properties,
+                "visible_bounds_offset", text="Visible bounds offset")
 
 # Animation properties panel
 class NUSIQ_MCBLEND_PT_AnimationPropertiesPanel(bpy.types.Panel):
