@@ -271,35 +271,38 @@ def round_dimensions(context: bpy_types.Context) -> int:
             counter += 1
     return counter
 
-def import_model(
-        data: Dict, geometry_name: str, replace_bones_with_empties: bool,
-        context: bpy_types.Context
-    ):
+def import_model(data: Dict, geometry_name: str, context: bpy_types.Context):
     '''
     Import and build model from JSON dict.
 
     :param data: JSON dict with minecraft model.
     :param geometry_name: the name of the geometry to load from the model.
-    :param replace_bones_with_empties: Whether to import bones as empties
-        (True) or as armature and bones (False).
     :param context: the context of running the operator.
     '''
-    geometry = ImportGeometry(ModelLoader(data, geometry_name))
-    if replace_bones_with_empties:
-        geometry.build_with_empties(context)
-    else:
-        geometry.build_with_armature(context)
+    # :param replace_bones_with_empties: Whether to import bones as empties
+    #     (True) or as armature and bones (False).
 
-    context.scene.nusiq_mcblend.texture_width = geometry.texture_width
-    context.scene.nusiq_mcblend.texture_height = geometry.texture_height
-    context.scene.nusiq_mcblend.visible_bounds_offset = geometry.visible_bounds_offset
-    context.scene.nusiq_mcblend.visible_bounds_width = geometry.visible_bounds_width
-    context.scene.nusiq_mcblend.visible_bounds_height = geometry.visible_bounds_height
+    geometry = ImportGeometry(ModelLoader(data, geometry_name))
+    # TODO - add support for empties as bones again
+    # if replace_bones_with_empties:
+    #     geometry.build_with_empties(context)
+    # else:
+    armature = geometry.build_with_armature(context)
+    model_properties = armature.nusiq_mcblend_object_properties
+
+    model_properties.texture_width = geometry.texture_width
+    model_properties.texture_height = geometry.texture_height
+    model_properties.visible_bounds_offset = geometry.visible_bounds_offset
+    model_properties.visible_bounds_width = geometry.visible_bounds_width
+    model_properties.visible_bounds_height = geometry.visible_bounds_height
 
     if geometry.identifier.startswith('geometry.'):
-        context.scene.nusiq_mcblend.model_name = geometry.identifier[9:]
+        # TODO - maybe just use the amrature name instead of that property?
+        model_properties.model_name = geometry.identifier[9:]
+        armature.name = geometry.identifier[9:]
     else:
-        context.scene.nusiq_mcblend.model_name = geometry.identifier
+        model_properties.model_name = geometry.identifier
+        armature.name = geometry.identifier
 
 def separate_mesh_cubes(context: bpy_types.Context):
     '''
@@ -541,8 +544,7 @@ class RcStackItem:
     materials: Dict[str, str] = field(default_factory=dict)
     '''Materials dict with pattern keys and full material names values.'''
 
-def import_model_form_project(
-        replace_bones_with_empties: bool, context: bpy_types.Context):
+def import_model_form_project(context: bpy_types.Context):
     '''
     Imports model using data selected in Project menu.
     '''
@@ -597,20 +599,22 @@ def import_model_form_project(
         geometry_data: Dict = p.rp_models[:geo_name:0].json.data  # type: ignore
         # Import model
         geometry = ImportGeometry(ModelLoader(geometry_data, geo_name))
-        geometry.build_with_armature(context)
+        armature = geometry.build_with_armature(context)
 
-        # TODO - 7.1. Set proper textures resolution and model bounds
-        # TODO - this must be applied to the armature instead of the model.
-        nusiq_mcblend = context.scene.nusiq_mcblend
-        nusiq_mcblend.texture_width = geometry.texture_width
-        nusiq_mcblend.texture_height = geometry.texture_height
-        nusiq_mcblend.visible_bounds_offset = geometry.visible_bounds_offset
-        nusiq_mcblend.visible_bounds_width = geometry.visible_bounds_width
-        nusiq_mcblend.visible_bounds_height = geometry.visible_bounds_height
+        # 7.1. Set proper textures resolution and model bounds
+        model_properties = armature.nusiq_mcblend_object_properties
+
+        model_properties.texture_width = geometry.texture_width
+        model_properties.texture_height = geometry.texture_height
+        model_properties.visible_bounds_offset = geometry.visible_bounds_offset
+        model_properties.visible_bounds_width = geometry.visible_bounds_width
+        model_properties.visible_bounds_height = geometry.visible_bounds_height
         if geometry.identifier.startswith('geometry.'):
-            nusiq_mcblend.model_name = geometry.identifier[9:]
+            model_properties.model_name = geometry.identifier[9:]
+            armature.name = geometry.identifier[9:]
         else:
-            nusiq_mcblend.model_name = geometry.identifier
+            model_properties.model_name = geometry.identifier
+            armature.name = geometry.identifier
 
         # 7.2. For every bone of geometry, create blender material from.
         # Materials are created from a list of pairs:

@@ -563,20 +563,19 @@ class NUSIQ_MCBLEND_OT_ImportModel(bpy.types.Operator, ImportHelper):
         name='Geometry name'
     )
 
-    replace_bones_with_empties: BoolProperty(  # type: ignore
-        default=False,
-        description='Creates empties instead of armature and bones',
-        name='Replace bones with empties'
-    )
+    # TODO - add the support for Empties as bones again
+    # replace_bones_with_empties: BoolProperty(  # type: ignore
+    #     default=False,
+    #     description='Creates empties instead of armature and bones',
+    #     name='Replace bones with empties'
+    # )
 
     def execute(self, context):
         # Save file and finish
         with open(self.filepath, 'r') as f:
             data = json.load(f, cls=JSONCDecoder)
         try:
-            import_model(
-                data, self.geometry_name, self.replace_bones_with_empties,
-                context)
+            import_model(data, self.geometry_name, context)
         except AssertionError as e:
             self.report(
                 {'ERROR'}, f'Invalid model: {e}'
@@ -1608,15 +1607,16 @@ class NUSIQ_MCBLEND_OT_ImportRpEntity(bpy.types.Operator):
     bl_options = {'UNDO'}
     bl_description = "Import entity by it's name from the resource pack."
 
-    replace_bones_with_empties: BoolProperty(  # type: ignore
-        default=False,
-        description='Creates empties instead of armature and bones',
-        name='Replace bones with empties'
-    )
+    # TODO - add the support from empties as bones
+    # replace_bones_with_empties: BoolProperty(  # type: ignore
+    #     default=False,
+    #     description='Creates empties instead of armature and bones',
+    #     name='Replace bones with empties'
+    # )
 
-    def invoke(self, context, event):
-        return context.window_manager.invoke_props_dialog(self)
+    # def invoke(self, context, event):
+    #     return context.window_manager.invoke_props_dialog(self)
 
     def execute(self, context):
-        import_model_form_project(self.replace_bones_with_empties, context)
+        import_model_form_project(context)
         return {'FINISHED'}

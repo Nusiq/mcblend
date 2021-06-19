@@ -1173,13 +1173,28 @@ class ImportGeometry:
             import_bone = ImportBone(bone)
             self.bones[import_bone.name] = import_bone
 
-    def build_with_empties(self, context: bpy_types.Context):
+    def build_with_empties(
+            self, context: bpy_types.Context) -> bpy.types.Object:
         '''
         Builds the geometry in Blender. Uses empties to represent Minecraft
         bones.
 
         :param context: The context of running the operator.
+        :returns: the armature which represents imported model. Root parent
+            of created objects
         '''
+        # Build armature:
+        # Create empty armature and enter edit mode:
+        bpy.ops.object.armature_add(enter_editmode=True, align='WORLD', location=(0, 0, 0))
+        bpy.ops.armature.select_all(action='SELECT')
+        bpy.ops.armature.delete()
+        bpy.ops.object.mode_set(mode='OBJECT')
+        # TODO - the build the armature without using bpy.ops for better
+        # performance
+
+        # Save the armature
+        armature = context.object
+
         # Create objects - and set their pivots
         for bone in self.bones.values():
             # 1. Spawn bone (empty)
@@ -1333,23 +1348,24 @@ class ImportGeometry:
                 cube_obj = cube.blend_cube
                 _mc_rotate(cube_obj, cube.rotation)
 
+        # TODO - the objects without parents should be parented to armature
+        # (implementing this may break the build_with_armature method)
+        return armature
+
     def build_with_armature(self, context: bpy_types.Context):
         '''
         Builds the geometry in Blender. Uses armature and bones to represent
         the Minecraft bones.
 
         :param context: The context of running the operator.
+        :returns: the armature which represents imported model. Root parent
+            of created objects
         '''
         # Build everything using empties
-        self.build_with_empties(context)
+        armature = self.build_with_empties(context)
+        context.view_layer.objects.active = armature
+        bpy.ops.object.mode_set(mode='EDIT')
 
-        # Build armature
-        # Create empty armature and enter edit mode:
-        bpy.ops.object.armature_add(enter_editmode=True, align='WORLD', location=(0, 0, 0))
-        bpy.ops.armature.select_all(action='SELECT')
-        bpy.ops.armature.delete()
-        # Save the armature
-        armature = context.object
         edit_bones = armature.data.edit_bones
         # Create bones
         for bone in self.bones.values():
@@ -1417,6 +1433,7 @@ class ImportGeometry:
             # remove the locators
             bpy.data.objects.remove(bone_obj)
 
+        return armature
 
 def _mc_translate(
         obj: bpy.types.Object, mctranslation: Tuple[float, float, float],
