@@ -200,12 +200,7 @@ class NUSIQ_MCBLEND_OT_MapUv(bpy.types.Operator):
         finally:
             context.scene.frame_set(original_frame)
 
-        width = context.scene.nusiq_mcblend.texture_width
-        height = context.scene.nusiq_mcblend.texture_height
-        self.report(
-            {'INFO'},
-            f'UV map created successfully for {width}x{height} texture.'
-        )
+        self.report({'INFO'}, 'UV maps created successfully.')
         return {'FINISHED'}
 
 class NUSIQ_MCBLEND_OT_FixUv(bpy.types.Operator):

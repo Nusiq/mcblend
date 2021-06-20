@@ -100,66 +100,68 @@ def set_uvs(context: bpy_types.Context):
 
     :param context: the execution context.
     '''
-    width = context.scene.nusiq_mcblend.texture_width
-    height = context.scene.nusiq_mcblend.texture_height
-    allow_expanding = context.scene.nusiq_mcblend.allow_expanding
-    generate_texture = context.scene.nusiq_mcblend.generate_texture
-    resolution = context.scene.nusiq_mcblend.texture_template_resolution
+    for object in context.selected_objects:
+        if object.type != 'ARMATURE':
+            continue
+        model_properties = object.nusiq_mcblend_object_properties
+        width = model_properties.texture_width
+        height = model_properties.texture_height
+        allow_expanding = model_properties.allow_expanding
+        generate_texture = model_properties.generate_texture
+        resolution = model_properties.texture_template_resolution
 
-    # TODO - now McblendObjectGroup is created from armature object not from
-    # context. This exporter needs to be changed.
-    object_properties = McblendObjectGroup(context)
-    mapper = UvMapper(width, height, object_properties)
-    mapper.plan_uv(allow_expanding)
+        mcblend_obj_group = McblendObjectGroup(object)
+        mapper = UvMapper(width, height, mcblend_obj_group)
+        mapper.plan_uv(allow_expanding)
 
-    # Replace old mappings
-    for objprop in mapper.uv_boxes:
-        objprop.clear_uv_layers()
+        # Replace old mappings
+        for objprop in mapper.uv_boxes:
+            objprop.clear_uv_layers()
 
 
-    # Update height and width
-    if allow_expanding:
-        widths = [width]
-        heights = [height]
-        for box in mapper.uv_boxes:
-            widths.append(box.uv[0] + box.size[0])
-            heights.append(box.uv[1] + box.size[1])
-        height = max(heights)
-        width = max(widths)
+        # Update height and width
+        if allow_expanding:
+            widths = [width]
+            heights = [height]
+            for box in mapper.uv_boxes:
+                widths.append(box.uv[0] + box.size[0])
+                heights.append(box.uv[1] + box.size[1])
+            height = max(heights)
+            width = max(widths)
 
-        context.scene.nusiq_mcblend.texture_height = height
-        context.scene.nusiq_mcblend.texture_width = width
+            model_properties.texture_height = height
+            model_properties.texture_width = width
 
-    if generate_texture:
-        old_image = None
-        if "template" in bpy.data.images:
-            old_image = bpy.data.images['template']
-        image = bpy.data.images.new(
-            "template", width*resolution, height*resolution, alpha=True
+        if generate_texture:
+            old_image = None
+            if "template" in bpy.data.images:
+                old_image = bpy.data.images['template']
+            image = bpy.data.images.new(
+                "template", width*resolution, height*resolution, alpha=True
+            )
+            if old_image is not None:
+                # If exists remap users of old image and remove it
+                old_image.user_remap(image)
+                bpy.data.images.remove(old_image)
+                image.name = "template"
+
+
+            # This array represents new texture
+            # DIM0:up axis DIM1:right axis DIM2:rgba axis
+            arr = np.zeros([image.size[1], image.size[0], 4])
+
+            for uv_cube in mapper.uv_boxes:
+                uv_cube.paint_texture(arr, resolution)
+            image.pixels = arr.ravel()  # Apply texture pixels values
+
+        # Set blender UVs
+        converter = CoordinatesConverter(
+            np.array([[0, width], [0, height]]),
+            np.array([[0, 1], [1, 0]])
         )
-        if old_image is not None:
-            # If exists remap users of old image and remove it
-            old_image.user_remap(image)
-            bpy.data.images.remove(old_image)
-            image.name = "template"
-
-
-        # This array represents new texture
-        # DIM0:up axis DIM1:right axis DIM2:rgba axis
-        arr = np.zeros([image.size[1], image.size[0], 4])
-
-        for uv_cube in mapper.uv_boxes:
-            uv_cube.paint_texture(arr, resolution)
-        image.pixels = arr.ravel()  # Apply texture pixels values
-
-    # Set blender UVs
-    converter = CoordinatesConverter(
-        np.array([[0, width], [0, height]]),
-        np.array([[0, 1], [1, 0]])
-    )
-    for curr_uv in mapper.uv_boxes:
-        curr_uv.new_uv_layer()
-        curr_uv.set_blender_uv(converter)
+        for curr_uv in mapper.uv_boxes:
+            curr_uv.new_uv_layer()
+            curr_uv.set_blender_uv(converter)
 
 def fix_uvs(context: bpy_types.Context) -> Tuple[int, int]:
     '''
@@ -635,7 +637,7 @@ def import_model_form_project(context: bpy_types.Context):
             # Create a list of materials applicable for this bone
             bone_materials: List[Tuple[Image, str]] = []
             bone_materials_id: List[Tuple[Image, str]] = []
-            for rc_stack_item in rc_stack:
+            for rc_stack_item in reversed(rc_stack):
                 matched_material: Optional[str] = None
                 for pattern, material in rc_stack_item.materials.items():
                     if star_pattern_match(bone_name, pattern):

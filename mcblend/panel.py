@@ -504,6 +504,23 @@ class NUSIQ_MCBLEND_PT_ObjectPropertiesPanel(bpy.types.Panel):
             col.prop(
                 context.object.nusiq_mcblend_object_properties,
                 "visible_bounds_offset", text="Visible bounds offset")
+            col.separator()
+            col.prop(
+                context.object.nusiq_mcblend_object_properties,
+                "texture_width", text="Texture width")
+            col.prop(
+                context.object.nusiq_mcblend_object_properties,
+                "texture_height", text="Texture height")
+            col.prop(
+                context.object.nusiq_mcblend_object_properties,
+                "allow_expanding", text="Allow texture expanding")
+            col.prop(
+                context.object.nusiq_mcblend_object_properties,
+                "generate_texture", text="Generate Texture")
+            if context.object.nusiq_mcblend_object_properties.generate_texture:
+                col.prop(
+                    context.object.nusiq_mcblend_object_properties,
+                    "texture_template_resolution", text="Template resolution")
 
 # Animation properties panel
 class NUSIQ_MCBLEND_PT_AnimationPropertiesPanel(bpy.types.Panel):
@@ -564,21 +581,6 @@ class NUSIQ_MCBLEND_PT_UvMappingPanel(bpy.types.Panel):
 
     def draw(self, context):
         col = self.layout.column(align=True)
-        col.prop(
-            context.scene.nusiq_mcblend, "texture_width", text="Texture width")
-        col.prop(
-            context.scene.nusiq_mcblend, "texture_height",
-            text="Texture height")
-        col.prop(
-            context.scene.nusiq_mcblend, "allow_expanding",
-            text="Allow texture expanding")
-        col.prop(
-            context.scene.nusiq_mcblend, "generate_texture",
-            text="Generate Texture")
-        if context.scene.nusiq_mcblend.generate_texture:
-            col.prop(
-                context.scene.nusiq_mcblend, "texture_template_resolution",
-                text="Template resolution")
         self.layout.row().operator(
             "nusiq_mcblend.map_uv", text="Set minecraft UVs")
 
