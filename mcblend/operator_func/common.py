@@ -10,6 +10,7 @@ from typing import (
     Dict, Iterator, NamedTuple, List, Optional, Tuple, Any, Iterable, Sequence)
 
 import numpy as np
+from collections import deque
 
 import bpy_types
 import bpy
@@ -636,13 +637,13 @@ class McblendObjectGroup:
     The objects can be accessed with ObjectId with __getitem__ method like
     from a dict.
 
-    :param context: the context of runing an operator.
+    :param armature: the armature used as a root of the object group.
     '''
-    def __init__(self, context: bpy_types.Context):
+    def __init__(self, armature: bpy.types.Object):
         self.data: Dict[ObjectId, McblendObject] = {}
         '''the content of the group.'''
 
-        self._load_objects(context)
+        self._load_objects(armature)
         self._check_name_conflicts()
 
     def __len__(self):
@@ -669,14 +670,14 @@ class McblendObjectGroup:
         '''Iterator going through pairs of keys and values of this group.'''
         return self.data.items()
 
-    def _load_objects(self, context: bpy_types.Context):
+    def _load_objects(self, armature: bpy.types.Object):
         '''
-        Loops through selected objects and and creates :class:`McblendObjects`
+        Loops offspring of an armature and and creates :class:`McblendObjects`
         for this group. Used by constructor.
 
-        :param context: the context of running an operator.
+        :param armature: the armature used as a root of the object group.
         '''
-        for obj_id, obj in self._loop_objects(context.selected_objects):
+        for obj_id, obj in self._loop_armature_objects(armature):
             curr_obj_mc_type: MCObjType
             curr_obj_mc_parent: Optional[ObjectId] = None
             if obj.type == 'EMPTY':
@@ -698,8 +699,9 @@ class McblendObjectGroup:
             elif obj.type == 'ARMATURE':
                 bone = obj.data.bones[obj_id.bone_name]
                 if (
+                        # No parent and children and...
                         bone.parent is None and len(bone.children) == 0 and
-                        len([  # Children of a bone which are not other bones.
+                        len([  # ...this bone is not a parent of any other bone
                             c for c in obj.children
                             if c.parent_bone == bone.name
                         ]) == 0
@@ -738,23 +740,34 @@ class McblendObjectGroup:
                 )
             names.append(objprop.obj_name)
 
+    # TODO -  since now I'm looping using parend-child relations maybe there
+    # is a room for optimization of setting parents for exported model
+    # in _load_objects. I'm not sure, I don't remember how it works.
     @staticmethod
-    def _loop_objects(objects: List) -> Iterable[Tuple[ObjectId, Any]]:
+    def _loop_armature_objects(
+            armature: bpy.context.object
+            ) -> Iterator[Tuple[ObjectId, bpy.types.Object]]:
         '''
-        Loops over the empties, meshes and armature objects from the list and
-        yields them and their ids. If object is an armature than it also loops
-        over every bone and yields the pair of armature and the id of the bone.
-        Used in the constructor.
-
-        :param objects: The list of blender objects.
-        :returns: Iterable that goes through objects and bones.
+        Yields the offspring of the armature (the bones,
+        objects parented to the bones, and the children of the objects).
         '''
-        for obj in objects:
-            if obj.type in ['MESH', 'EMPTY']:
-                yield ObjectId(obj.name, ''), obj
-            elif obj.type == 'ARMATURE':
-                for bone in obj.data.bones:
-                    yield ObjectId(obj.name, bone.name), obj
+        for bone in armature.data.bones:  # BONES
+            yield ObjectId(armature.name, bone.name), armature
+        offspring = deque()
+        for child in armature.children:  # ARMATURE CHILDREN
+            if child.type not in ['MESH', 'EMPTY']:
+                continue
+            if child.parent_type == 'BONE':
+                yield ObjectId(child.name, ''), child
+                offspring.extend(child.children)
+        while offspring:  # FURTHER CHILDREN
+            child = offspring.pop()
+            if child.type not in ['MESH', 'EMPTY']:
+                continue
+            if child.parent_type != 'OBJECT':
+                continue
+            yield ObjectId(child.name, ''), child
+            offspring.extend(child.children)
 
     @staticmethod
     def _get_parent_mc_bone(obj: bpy.types.Object) -> Optional[ObjectId]:

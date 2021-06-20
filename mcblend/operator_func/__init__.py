@@ -33,19 +33,25 @@ def export_model(context: bpy_types.Context) -> Dict:
     :param context: the context of running the operator.
     :returns: JSON dict with Minecraft model.
     '''
-    object_properties = McblendObjectGroup(context)
+    result = ModelExport.json_outer()
+    for object in context.selected_objects:
+        if object.type != 'ARMATURE':
+            continue
+        mcblend_obj_group = McblendObjectGroup(object)
+        model_properties = object.nusiq_mcblend_object_properties
 
-    model = ModelExport(
-        texture_width=context.scene.nusiq_mcblend.texture_width,
-        texture_height=context.scene.nusiq_mcblend.texture_height,
-        visible_bounds_offset=tuple(  # type: ignore
-            context.scene.nusiq_mcblend.visible_bounds_offset),
-        visible_bounds_width=context.scene.nusiq_mcblend.visible_bounds_width,
-        visible_bounds_height=context.scene.nusiq_mcblend.visible_bounds_height,
-        model_name=context.scene.nusiq_mcblend.model_name,
-    )
-    model.load(object_properties)
-    return model.json()
+        model = ModelExport(
+            texture_width=model_properties.texture_width,
+            texture_height=model_properties.texture_height,
+            visible_bounds_offset=tuple(  # type: ignore
+                model_properties.visible_bounds_offset),
+            visible_bounds_width=model_properties.visible_bounds_width,
+            visible_bounds_height=model_properties.visible_bounds_height,
+            model_name=model_properties.model_name,
+        )
+        model.load(mcblend_obj_group)
+        result['minecraft:geometry'].append(model.json_inner())
+    return result
 
 def export_animation(
         context: bpy_types.Context, old_dict: Optional[Dict]
@@ -60,6 +66,8 @@ def export_animation(
     :returns: JSON dict of Minecraft animations.
     '''
     # Check and create object properties
+    # TODO - now McblendObjectGroup is created from armature object not from
+    # context. This exporter needs to be changed.
     object_properties = McblendObjectGroup(context)
 
     anim_data = context.scene.nusiq_mcblend_animations[
@@ -98,6 +106,8 @@ def set_uvs(context: bpy_types.Context):
     generate_texture = context.scene.nusiq_mcblend.generate_texture
     resolution = context.scene.nusiq_mcblend.texture_template_resolution
 
+    # TODO - now McblendObjectGroup is created from armature object not from
+    # context. This exporter needs to be changed.
     object_properties = McblendObjectGroup(context)
     mapper = UvMapper(width, height, object_properties)
     mapper.plan_uv(allow_expanding)
@@ -161,6 +171,8 @@ def fix_uvs(context: bpy_types.Context) -> Tuple[int, int]:
 
     :returns: The number of fixed cubes and the number of fixed faces.
     '''
+    # TODO - now McblendObjectGroup is created from armature object not from
+    # context. This operator needs to be changed.
     object_properties = McblendObjectGroup(context)
     total_fixed_uv_faces = 0
     total_fixed_cubes = 0

@@ -55,32 +55,39 @@ class ModelExport:
             if objprop.mctype in [MCObjType.BONE, MCObjType.BOTH]:
                 self.bones.append(BoneExport(objprop, self))
 
-    def json(self) -> Dict:
+    @staticmethod
+    def json_outer() -> Dict:
         '''
-        Creates a dict that represents the Minecraft model JSON file.
+        Returns the outer part of the Minecraft model 1.12.0 JSON file
+        without any geometries.
+        '''
+        model: Dict = {
+            "format_version": "1.12.0",
+            "minecraft:geometry": []
+        }
+        return model
+
+    def json_inner(self) -> Dict:
+        '''
+        Creates a dict with a geometry for the Minecraft 1.12.0 model JSON
+        file (JSON path: [ROOT]->"minecraft:geometry"->int).
 
         :returns: Minecraft model JSON dict.
         '''
         result: Dict = {
-            "format_version": "1.12.0",
-            "minecraft:geometry": [
-                {
-                    "description": {
-                        "identifier": f"geometry.{self.model_name}",
-                        "visible_bounds_width": round(self.visible_bounds_width, 3),
-                        "visible_bounds_height": round(self.visible_bounds_height, 3),
-                        "visible_bounds_offset": get_vect_json(self.visible_bounds_offset)
-                    },
-                    "bones": [bone.json() for bone in self.bones]
-                }
-            ]
+            "description": {
+                "identifier": f"geometry.{self.model_name}",
+                "visible_bounds_width": round(self.visible_bounds_width, 3),
+                "visible_bounds_height": round(self.visible_bounds_height, 3),
+                "visible_bounds_offset": get_vect_json(
+                    self.visible_bounds_offset)
+            },
+            "bones": [bone.json() for bone in self.bones]
         }
         if self.texture_width > 0:  # Don't export invalid values
-            result["minecraft:geometry"][0]["description"][
-                "texture_width"] = self.texture_width
+            result["description"]["texture_width"] = self.texture_width
         if self.texture_height > 0:  # Don't export invalid values
-            result["minecraft:geometry"][0]["description"][
-                "texture_height"] = self.texture_height
+            result["description"]["texture_height"] = self.texture_height
         return result
 
 class BoneExport:

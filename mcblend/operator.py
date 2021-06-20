@@ -29,7 +29,7 @@ from .operator_func.texture_generator import (
 # Model exporter
 class NUSIQ_MCBLEND_OT_ExportModel(
         bpy.types.Operator, ExportHelper):
-    '''Operator used for exporting minecraft models from blender.'''
+    '''Operator used for exporting Minecraft models from blender.'''
     # pylint: disable=unused-argument, no-member
     bl_idname = "nusiq_mcblend.export_model"
     bl_label = "Export model"
