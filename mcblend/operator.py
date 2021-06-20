@@ -36,7 +36,7 @@ class NUSIQ_MCBLEND_OT_ExportModel(
     bl_options = {'REGISTER'}
     bl_description = "Exports selected objects from scene to bedrock model."
 
-    filename_ext = '.geo.json'
+    filename_ext = '.json'
 
     filter_glob: StringProperty(  # type: ignore
         default='*.json',
@@ -102,7 +102,7 @@ class NUSIQ_MCBLEND_OT_ExportAnimation(
     )
 
 
-    filename_ext = '.animation.json'
+    filename_ext = '.json'
 
     filter_glob: StringProperty(  # type: ignore
         default='*.json',
@@ -1150,7 +1150,7 @@ class NUSIQ_MCBLEND_OT_ExportUvGroup(
     bl_options = {'REGISTER'}
     bl_description = "Exports active UV-group"
 
-    filename_ext = '.uvgroup.json'
+    filename_ext = '.json'
 
     filter_glob: StringProperty(  # type: ignore
         default='*.uvgroup.json',
