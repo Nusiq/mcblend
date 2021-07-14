@@ -38,7 +38,7 @@ def export_model(context: bpy_types.Context) -> Dict:
         if object.type != 'ARMATURE':
             continue
         mcblend_obj_group = McblendObjectGroup(object)
-        model_properties = object.mcblend_object_properties
+        model_properties = object.mcblend
 
         model = ModelExport(
             texture_width=model_properties.texture_width,
@@ -103,7 +103,7 @@ def set_uvs(context: bpy_types.Context):
     for object in context.selected_objects:
         if object.type != 'ARMATURE':
             continue
-        model_properties = object.mcblend_object_properties
+        model_properties = object.mcblend
         width = model_properties.texture_width
         height = model_properties.texture_height
         allow_expanding = model_properties.allow_expanding
@@ -261,17 +261,17 @@ def round_dimensions(context: bpy_types.Context) -> int:
             # Set new dimensions
             dimensions = np.array(obj.dimensions)
 
-            if obj.mcblend_object_properties.inflate != 0.0:
+            if obj.mcblend.inflate != 0.0:
                 dimensions -= (
-                    obj.mcblend_object_properties.inflate * 2 /
+                    obj.mcblend.inflate * 2 /
                     MINECRAFT_SCALE_FACTOR
                 )
             dimensions = np.array(
                 dimensions * MINECRAFT_SCALE_FACTOR
             ).round() / MINECRAFT_SCALE_FACTOR
-            if obj.mcblend_object_properties.inflate != 0.0:
+            if obj.mcblend.inflate != 0.0:
                 dimensions += (
-                    obj.mcblend_object_properties.inflate * 2 /
+                    obj.mcblend.inflate * 2 /
                     MINECRAFT_SCALE_FACTOR
                 )
             obj.dimensions = dimensions
@@ -295,7 +295,7 @@ def import_model(data: Dict, geometry_name: str, context: bpy_types.Context):
     '''
     geometry = ImportGeometry(ModelLoader(data, geometry_name))
     armature = geometry.build_with_armature(context)
-    model_properties = armature.mcblend_object_properties
+    model_properties = armature.mcblend
 
     model_properties.texture_width = geometry.texture_width
     model_properties.texture_height = geometry.texture_height
@@ -352,21 +352,21 @@ def inflate_objects(
     for obj in objects:
         if (
                 obj.type == 'MESH' and
-                obj.mcblend_object_properties.mesh_type ==
+                obj.mcblend.mesh_type ==
                 MeshType.CUBE.value):
-            if obj.mcblend_object_properties.inflate != 0.0:
+            if obj.mcblend.inflate != 0.0:
                 if relative:
                     effective_inflate = (
-                        obj.mcblend_object_properties.inflate + inflate)
+                        obj.mcblend.inflate + inflate)
                 else:
                     effective_inflate = inflate
                 delta_inflate = (
                     effective_inflate -
-                    obj.mcblend_object_properties.inflate)
-                obj.mcblend_object_properties.inflate = effective_inflate
+                    obj.mcblend.inflate)
+                obj.mcblend.inflate = effective_inflate
             else:
                 delta_inflate = inflate
-                obj.mcblend_object_properties.inflate = inflate
+                obj.mcblend.inflate = inflate
             # Clear parent from children for a moment
             children = obj.children
             for child in children:
@@ -554,7 +554,7 @@ def import_model_form_project(context: bpy_types.Context):
         armature = geometry.build_with_armature(context)
 
         # 7.1. Set proper textures resolution and model bounds
-        model_properties = armature.mcblend_object_properties
+        model_properties = armature.mcblend
 
         model_properties.texture_width = geometry.texture_width
         model_properties.texture_height = geometry.texture_height
@@ -569,7 +569,7 @@ def import_model_form_project(context: bpy_types.Context):
             armature.name = geometry.identifier
         # 7.2. Save render controller properties in the armature
         for rc_stack_item in rc_stack:
-            armature_rc = armature.mcblend_object_properties.\
+            armature_rc = armature.mcblend.\
                 render_controllers.add()
             armature_rc.texture = rc_stack_item.texture.name
             for pattern, material in rc_stack_item.materials.items():
@@ -618,7 +618,7 @@ def apply_materials(context: bpy.types.Context):
     armature = context.object
 
     mcblend_obj_group = McblendObjectGroup(armature)
-    armature_properties = armature.mcblend_object_properties
+    armature_properties = armature.mcblend
 
     model = ModelExport(
         texture_width=armature_properties.texture_width,

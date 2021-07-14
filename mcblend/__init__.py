@@ -240,7 +240,7 @@ def register():
         items=sides, name="Face")
 
     # Object properties
-    bpy.types.Object.mcblend_object_properties = PointerProperty(
+    bpy.types.Object.mcblend = PointerProperty(
         type=MCBLEND_ObjectProperties)
 
     # Append operators to the F3 menu

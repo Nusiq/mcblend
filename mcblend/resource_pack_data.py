@@ -1,7 +1,7 @@
 '''
 Custom Blender objects with properties of the resource pack.
 '''
-from typing import Any, List, Tuple
+from typing import Any
 
 import bpy
 from bpy.props import (

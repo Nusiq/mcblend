@@ -1203,7 +1203,7 @@ class ImportGeometry:
             bone_obj = bone.blend_empty = context.object
             _mc_pivot(bone_obj, bone.pivot)  # 2. Apply translation
             bone_obj.name = bone.name  # 3. Apply custom properties
-            bone_obj.mcblend_object_properties.is_bone = True
+            bone_obj.mcblend.is_bone = True
             for cube in bone.cubes:
                 cube_obj: bpy.types.Object
                 # 1. Spawn cube
@@ -1216,14 +1216,14 @@ class ImportGeometry:
                 # warning! Moving this code below cube transformation would
                 # break it because bound_box is not getting updated properly
                 # before the end of running of the opperator.
-                cube_obj.mcblend_object_properties.mirror = cube.mirror
+                cube_obj.mcblend.mirror = cube.mirror
                 _set_uv(
                     self.uv_converter,
                     CubePolygons.build(cube_obj, cube.mirror),
                     cube.uv, cube_obj.data.uv_layers.active)
 
                 # 3. Set size & inflate
-                cube.blend_cube.mcblend_object_properties.inflate = (
+                cube.blend_cube.mcblend.inflate = (
                     cube.inflate)
                 _mc_set_size(cube_obj, cube.size, inflate=cube.inflate)
                 _mc_pivot(cube_obj, cube.pivot)  # 4. Move pivot
@@ -1275,7 +1275,7 @@ class ImportGeometry:
                     poly_mesh_obj = bpy.data.objects.new('poly_mesh', mesh)
                     context.collection.objects.link(poly_mesh_obj)
                     bone.poly_mesh.blend_object = poly_mesh_obj
-                    poly_mesh_obj.mcblend_object_properties.mesh_type = (
+                    poly_mesh_obj.mcblend.mesh_type = (
                         MeshType.POLY_MESH.value)
 
                     # 4. Set mesh normals and UVs

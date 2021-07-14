@@ -291,7 +291,7 @@ class MCBLEND_OT_UvGroup(bpy.types.Operator):
     def execute(self, context):
         for obj in context.selected_objects:
             if obj.type == 'MESH':
-                obj.mcblend_object_properties.uv_group = (
+                obj.mcblend.uv_group = (
                     self.uv_groups_enum)
         self.report(
             {'INFO'},
@@ -325,7 +325,7 @@ class MCBLEND_OT_ClearUvGroup(bpy.types.Operator):
     def execute(self, context):
         for obj in context.selected_objects:
             if obj.type == 'MESH':
-                obj.mcblend_object_properties.uv_group = ''
+                obj.mcblend.uv_group = ''
         self.report({'INFO'}, 'Cleared UV group of selected objects.')
 
         # The object properties display the property edited by this operator
@@ -361,20 +361,20 @@ class MCBLEND_OT_ToggleMirror(bpy.types.Operator):
         is_clearing = False
         for obj in context.selected_objects:
             if obj.type == "MESH":
-                if obj.mcblend_object_properties.mirror:
+                if obj.mcblend.mirror:
                     is_clearing = True
                     break
         if is_clearing:
             for obj in context.selected_objects:
                 if obj.type == "MESH":
-                    (obj.mcblend_object_properties
+                    (obj.mcblend
                         ).mirror = False
             self.report({'INFO'}, 'Disabled the mirror for generating UV for '
                 'selected objects.')
         else:
             for obj in context.selected_objects:
                 if obj.type == "MESH":
-                    (obj.mcblend_object_properties
+                    (obj.mcblend
                         ).mirror = True
             self.report({'INFO'}, 'Enabled the mirror for generating UV for '
                 'selected objects.')
@@ -416,19 +416,19 @@ class MCBLEND_OT_ToggleIsBone(bpy.types.Operator):
         is_clearing = False
         for obj in context.selected_objects:
             if obj.type == "MESH":
-                if obj.mcblend_object_properties.is_bone:
+                if obj.mcblend.is_bone:
                     is_clearing = True
                     break
         if is_clearing:
             for obj in context.selected_objects:
                 if obj.type == "MESH" or obj.type == "EMPTY":
-                    obj.mcblend_object_properties.is_bone = False
+                    obj.mcblend.is_bone = False
             self.report(
                 {'INFO'}, 'Objects are not market to export as bones anymore.')
         else:
             for obj in context.selected_objects:
                 if obj.type == "MESH" or obj.type == "EMPTY":
-                    obj.mcblend_object_properties.is_bone = True
+                    obj.mcblend.is_bone = True
             self.report({'INFO'}, 'Marked selected objects to export as bones')
 
         # The object properties display the property edited by this operator
@@ -796,7 +796,7 @@ class MCBLEND_OT_RemoveUvGroup(bpy.types.Operator):
         # Update the names of all of the meshes
         for obj in bpy.data.objects:
             if obj.type == "MESH":
-                obj_props = obj.mcblend_object_properties
+                obj_props = obj.mcblend
                 if obj_props.uv_group == group_name:
                     obj_props.uv_group = ''
 
@@ -1617,7 +1617,7 @@ class MCBLEND_OT_AddFakeRc(bpy.types.Operator):
 
     def execute(self, context):
         obj = context.object
-        rc = obj.mcblend_object_properties.render_controllers.add()
+        rc = obj.mcblend.render_controllers.add()
         material = rc.materials.add()
         material.pattern = '*'
         material.material = 'entity_alphatest'
@@ -1636,7 +1636,7 @@ class MCBLEND_OT_RemoveFakeRc(bpy.types.Operator):
         return context.object.type == 'ARMATURE'
 
     def execute(self, context):
-        rcs = context.object.mcblend_object_properties.render_controllers
+        rcs = context.object.mcblend.render_controllers
         rcs.remove(self.rc_index)
         return {'FINISHED'}
 
@@ -1654,7 +1654,7 @@ class MCBLEND_OT_MoveFakeRc(bpy.types.Operator):
         return context.object.type == 'ARMATURE'
 
     def execute(self, context):
-        rcs = context.object.mcblend_object_properties.render_controllers
+        rcs = context.object.mcblend.render_controllers
         rcs.move(self.rc_index, self.move_to)
         return {'FINISHED'}
 
@@ -1683,7 +1683,7 @@ class MCBLEND_OT_FakeRcSelectTexture(bpy.types.Operator):
         return context.object.type == 'ARMATURE'
 
     def execute(self, context):
-        rc = context.object.mcblend_object_properties.\
+        rc = context.object.mcblend.\
             render_controllers[self.rc_index].texture = self.image
         return {'FINISHED'}
 
@@ -1703,7 +1703,7 @@ class MCBLEND_OT_AddFakeRcMaterial(bpy.types.Operator):
         return context.object.type == 'ARMATURE'
 
     def execute(self, context):
-        rc = context.object.mcblend_object_properties.render_controllers[
+        rc = context.object.mcblend.render_controllers[
             self.rc_index]
         material = rc.materials.add()
         material.pattern = '*'
@@ -1726,7 +1726,7 @@ class MCBLEND_OT_RemoveFakeRcMaterial(bpy.types.Operator):
         return context.object.type == 'ARMATURE'
 
     def execute(self, context):
-        context.object.mcblend_object_properties.render_controllers[
+        context.object.mcblend.render_controllers[
             self.rc_index].materials.remove(self.material_index)
         return {'FINISHED'}
 
@@ -1748,7 +1748,7 @@ class MCBLEND_OT_MoveFakeRcMaterial(bpy.types.Operator):
         return context.object.type == 'ARMATURE'
 
     def execute(self, context):
-        context.object.mcblend_object_properties.render_controllers[
+        context.object.mcblend.render_controllers[
             self.rc_index].materials.move(self.material_index, self.move_to)
         return {'FINISHED'}
 
@@ -1782,7 +1782,7 @@ class MCBLEND_OT_FakeRcSMaterailSelectTemplate(bpy.types.Operator):
         return context.object.type == 'ARMATURE'
 
     def execute(self, context):
-        context.object.mcblend_object_properties.render_controllers[
+        context.object.mcblend.render_controllers[
             self.rc_index].materials[
                 self.material_index].material = self.material
         return {'FINISHED'}

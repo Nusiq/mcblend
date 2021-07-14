@@ -194,7 +194,7 @@ def _update_uv_group_name(uv_group, new_name: str, update_references: bool):
     if update_references:
         for obj in bpy.data.objects:
             if obj.type == "MESH":
-                obj_props = obj.mcblend_object_properties
+                obj_props = obj.mcblend
                 if obj_props.uv_group == uv_group.name:
                     obj_props.uv_group = new_name
     # Update the name of the UV group

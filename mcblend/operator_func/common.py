@@ -102,58 +102,58 @@ class McblendObject:
     @property
     def inflate(self) -> float:
         '''Inflate value of this object'''
-        return self.thisobj.mcblend_object_properties.inflate
+        return self.thisobj.mcblend.inflate
 
     @inflate.setter
     def inflate(self, inflate: float):
-        self.thisobj.mcblend_object_properties.inflate = inflate
+        self.thisobj.mcblend.inflate = inflate
 
     @property
     def min_uv_size(self) -> np.ndarray:
         '''The lower UV-size limit of this object.'''
         return np.array(
-            self.thisobj.mcblend_object_properties.min_uv_size)
+            self.thisobj.mcblend.min_uv_size)
 
     @min_uv_size.setter
     def min_uv_size(self, min_uv_size: np.ndarray):
-        self.thisobj.mcblend_object_properties.min_uv_size = min_uv_size
+        self.thisobj.mcblend.min_uv_size = min_uv_size
 
     @property
     def mesh_type(self) -> MeshType:
         '''Mesh type of this object'''
-        return MeshType(self.thisobj.mcblend_object_properties.mesh_type)
+        return MeshType(self.thisobj.mcblend.mesh_type)
 
     @mesh_type.setter
     def mesh_type(self, mesh_type: MeshType):
-        self.thisobj.mcblend_object_properties.mesh_type = (
+        self.thisobj.mcblend.mesh_type = (
             mesh_type.value)
 
     @property
     def mirror(self) -> bool:
         '''Whether the objects UV is mirrored.'''
-        return self.thisobj.mcblend_object_properties.mirror
+        return self.thisobj.mcblend.mirror
 
     @mirror.setter
     def mirror(self, mirror: bool):
-        self.thisobj.mcblend_object_properties.mirror = mirror
+        self.thisobj.mcblend.mirror = mirror
 
     @property
     def is_bone(self) -> bool:
         '''Whether the object should be exported as bone to Minecraft model.'''
-        return self.thisobj.mcblend_object_properties.is_bone
+        return self.thisobj.mcblend.is_bone
 
     @is_bone.setter
     def is_bone(self, is_bone: bool):
-        self.thisobj.mcblend_object_properties.is_bone = is_bone
+        self.thisobj.mcblend.is_bone = is_bone
 
     @property
     def uv_group(self) -> str:
         '''The name of the UV-group of this object.'''
-        return self.thisobj.mcblend_object_properties.uv_group
+        return self.thisobj.mcblend.uv_group
 
     @uv_group.setter
     def uv_group(self, uv_group: str):
-        self.thisobj.mcblend_object_properties.uv_group = uv_group
+        self.thisobj.mcblend.uv_group = uv_group
 
     @property
     def obj_data(self) -> Any:
@@ -683,14 +683,14 @@ class McblendObjectGroup:
             if obj.type == 'EMPTY':
                 curr_obj_mc_type = MCObjType.BONE
                 if (obj.parent is not None and len(obj.children) == 0 and
-                        not obj.mcblend_object_properties.is_bone):
+                        not obj.mcblend.is_bone):
                     curr_obj_mc_type = MCObjType.LOCATOR
 
                 if obj.parent is not None:
                     curr_obj_mc_parent = self._get_parent_mc_bone(obj)
             elif obj.type == 'MESH':
                 if (obj.parent is None or
-                        obj.mcblend_object_properties.is_bone):
+                        obj.mcblend.is_bone):
                     curr_obj_mc_type = MCObjType.BOTH
                 else:
                     curr_obj_mc_type = MCObjType.CUBE
@@ -789,7 +789,7 @@ class McblendObjectGroup:
                 obj = obj.parent
                 obj_id = ObjectId(obj.name, '')
                 if (obj.type == 'EMPTY' or
-                        obj.mcblend_object_properties.is_bone):
+                        obj.mcblend.is_bone):
                     return obj_id
             else:
                 raise Exception(f'Unsupported parent type {obj.parent_type}')

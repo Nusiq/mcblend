@@ -471,15 +471,15 @@ class MCBLEND_PT_ObjectPropertiesPanel(bpy.types.Panel):
             return
 
         if context.object.type == 'EMPTY':
-            object_properties = context.object.mcblend_object_properties
+            object_properties = context.object.mcblend
             col.prop(object_properties, "is_bone", text="Export as bone")
         elif context.object.type == 'MESH':
-            object_properties = context.object.mcblend_object_properties
+            object_properties = context.object.mcblend
             col.prop(object_properties, "is_bone", text="Export as bone")
             col.prop(object_properties, "mesh_type", text="")
 
             mesh_type = (
-                context.object.mcblend_object_properties.mesh_type)
+                context.object.mcblend.mesh_type)
             if mesh_type == MeshType.CUBE.value:
                 if object_properties.uv_group != '':
                     col.label(
@@ -492,7 +492,7 @@ class MCBLEND_PT_ObjectPropertiesPanel(bpy.types.Panel):
                     object_properties, "min_uv_size", text="Min UV bound")
         elif context.object.type == 'ARMATURE':
             # col.prop(context.scene.mcblend, "path", text="")
-            object_properties = context.object.mcblend_object_properties
+            object_properties = context.object.mcblend
             col.prop(
                 object_properties, "model_name", text="Name")
             col.prop(
@@ -540,7 +540,7 @@ class MCBLEND_PT_ArmatureRenderControllersPanel(bpy.types.Panel):
             return
 
         row = col.row()
-        object_properties = context.object.mcblend_object_properties
+        object_properties = context.object.mcblend
         row.operator(
             "mcblend.fake_rc_apply_materials", icon='FILE_REFRESH',
             text='Apply Materials')
