@@ -293,7 +293,7 @@ def run_import_export_comparison(
         source: str, tmp: str, use_empties: bool
     ) -> Tuple[Dict, Dict, str]:
     '''
-    Loads model from source to blender using nusiq_mcblend_import
+    Loads model from source to blender using mcblend_import
     Exports this model to tmp (to a file with the same name as source file).
 
     Returns two dictionaries and a string:

@@ -13,13 +13,13 @@ from .operator_func.texture_generator import UvMaskTypes
 
 # GUI
 # UV-groups names list
-class NUSIQ_MCBLEND_UL_UVGroupList(bpy.types.UIList):
+class MCBLEND_UL_UVGroupList(bpy.types.UIList):
     '''GUI item used for drawing list of names of UV-groups.'''
     def draw_item(
             self, context, layout, data, item, icon, active_data,
             active_propname):
         '''
-        Drawing NUSIQ_MCBLEND_UvGroupProperties in a list.
+        Drawing MCBLEND_UvGroupProperties in a list.
 
         :param context: the contexts of operator
         :param layout: layout in which the object is drawn
@@ -44,13 +44,13 @@ class NUSIQ_MCBLEND_UL_UVGroupList(bpy.types.UIList):
 @dataclass
 class _UIStackItem():
     '''
-    Object used in NUSIQ_MCBLEND_PT_UVGroupPanel for saving the
+    Object used in MCBLEND_PT_UVGroupPanel for saving the
     information about nested UV-groups in stack data structure.
     '''
     ui: Optional[bpy.types.UILayout]  # None if parent is collapsed
     depth: int
 
-class NUSIQ_MCBLEND_PT_UVGroupPanel(bpy.types.Panel):
+class MCBLEND_PT_UVGroupPanel(bpy.types.Panel):
     '''Panel used for editing UV-groups.'''
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
@@ -63,7 +63,7 @@ class NUSIQ_MCBLEND_PT_UVGroupPanel(bpy.types.Panel):
         row = box.row()
         row.label(text='Colors')
         op_props = row.operator(
-            "nusiq_mcblend.add_uv_mask_color", text="", icon='ADD')
+            "mcblend.add_uv_mask_color", text="", icon='ADD')
         op_props.mask_index = mask_index
 
         colors_len = len(mask.colors)
@@ -74,7 +74,7 @@ class NUSIQ_MCBLEND_PT_UVGroupPanel(bpy.types.Panel):
             # Move down
             if color_index - 1 >= 0:
                 op_props = up_down_row.operator(
-                    "nusiq_mcblend.move_uv_mask_color", icon='TRIA_UP',
+                    "mcblend.move_uv_mask_color", icon='TRIA_UP',
                     text='')
                 op_props.mask_index = mask_index
                 op_props.move_from = color_index
@@ -82,14 +82,14 @@ class NUSIQ_MCBLEND_PT_UVGroupPanel(bpy.types.Panel):
             # Move up
             if color_index + 1 < colors_len:
                 op_props = up_down_row.operator(
-                    "nusiq_mcblend.move_uv_mask_color", icon='TRIA_DOWN',
+                    "mcblend.move_uv_mask_color", icon='TRIA_DOWN',
                     text='')
                 op_props.mask_index = mask_index
                 op_props.move_from = color_index
                 op_props.move_to = color_index + 1
             # Delete button
             op_props = row.operator(
-                "nusiq_mcblend.remove_uv_mask_color", icon='X', text='')
+                "mcblend.remove_uv_mask_color", icon='X', text='')
             op_props.mask_index = mask_index
             op_props.color_index = color_index
 
@@ -99,7 +99,7 @@ class NUSIQ_MCBLEND_PT_UVGroupPanel(bpy.types.Panel):
         row = box.row()
         row.label(text='Stripes')
         op_props = row.operator(
-            "nusiq_mcblend.add_uv_mask_stripe", text="", icon='ADD')
+            "mcblend.add_uv_mask_stripe", text="", icon='ADD')
         op_props.mask_index = mask_index
 
         stripes_len = len(mask.stripes)
@@ -117,7 +117,7 @@ class NUSIQ_MCBLEND_PT_UVGroupPanel(bpy.types.Panel):
             # Move down
             if stripe_index - 1 >= 0:
                 op_props = up_down_row.operator(
-                    "nusiq_mcblend.move_uv_mask_stripe", icon='TRIA_UP',
+                    "mcblend.move_uv_mask_stripe", icon='TRIA_UP',
                     text='')
                 op_props.mask_index = mask_index
                 op_props.move_from = stripe_index
@@ -125,14 +125,14 @@ class NUSIQ_MCBLEND_PT_UVGroupPanel(bpy.types.Panel):
             # Move up
             if stripe_index + 1 < stripes_len:
                 op_props = up_down_row.operator(
-                    "nusiq_mcblend.move_uv_mask_stripe", icon='TRIA_DOWN',
+                    "mcblend.move_uv_mask_stripe", icon='TRIA_DOWN',
                     text='')
                 op_props.mask_index = mask_index
                 op_props.move_from = stripe_index
                 op_props.move_to = stripe_index + 1
             # Delete button
             op_props = row.operator(
-                "nusiq_mcblend.remove_uv_mask_stripe", icon='X',
+                "mcblend.remove_uv_mask_stripe", icon='X',
                 text='')
             op_props.mask_index = mask_index
             op_props.stripe_index = stripe_index
@@ -214,14 +214,14 @@ class NUSIQ_MCBLEND_PT_UVGroupPanel(bpy.types.Panel):
             # Move down
             if index - 1 >= 0:
                 op_props = up_down_row.operator(
-                    "nusiq_mcblend.move_uv_mask", icon='TRIA_UP',
+                    "mcblend.move_uv_mask", icon='TRIA_UP',
                     text='')
                 op_props.move_from = index
                 op_props.move_to = index - 1
             # Move up
             if index + 1 < masks_len:
                 op_props = up_down_row.operator(
-                    "nusiq_mcblend.move_uv_mask", icon='TRIA_DOWN',
+                    "mcblend.move_uv_mask", icon='TRIA_DOWN',
                     text='')
                 op_props.move_from = index
                 op_props.move_to = index + 1
@@ -236,7 +236,7 @@ class NUSIQ_MCBLEND_PT_UVGroupPanel(bpy.types.Panel):
                     emboss=False)
             # Delete button
             op_props = row.operator(
-                "nusiq_mcblend.remove_uv_mask", icon='X', text='')
+                "mcblend.remove_uv_mask", icon='X', text='')
             op_props.target = index
 
             # Drawing the mask itself unless collapsed
@@ -298,47 +298,47 @@ class NUSIQ_MCBLEND_PT_UVGroupPanel(bpy.types.Panel):
         # Add group
         row = col.row()
         row.operator(
-            "nusiq_mcblend.add_uv_group", text="New UV group",
+            "mcblend.add_uv_group", text="New UV group",
             icon='ADD'
         )
         row_import_export = col.row()
         row_import_export.operator(
-            "nusiq_mcblend.import_uv_group",
+            "mcblend.import_uv_group",
             text="Import UV group", icon='IMPORT'
         )
-        active_uv_group_id = bpy.context.scene.nusiq_mcblend_active_uv_group
-        uv_groups = bpy.context.scene.nusiq_mcblend_uv_groups
+        active_uv_group_id = bpy.context.scene.mcblend_active_uv_group
+        uv_groups = bpy.context.scene.mcblend_uv_groups
         col.template_list(
-            listtype_name="NUSIQ_MCBLEND_UL_UVGroupList",
+            listtype_name="MCBLEND_UL_UVGroupList",
             list_id="", dataptr=context.scene,
-            propname="nusiq_mcblend_uv_groups",
+            propname="mcblend_uv_groups",
             active_dataptr=context.scene,
-            active_propname="nusiq_mcblend_active_uv_group")
+            active_propname="mcblend_active_uv_group")
         if active_uv_group_id < len(uv_groups):
             active_uv_group = uv_groups[active_uv_group_id]
 
             # Delete group
             row.operator(
-                "nusiq_mcblend.remove_uv_group",
+                "mcblend.remove_uv_group",
                 text="Delete this UV group", icon='X')
             row_import_export.operator(
-                "nusiq_mcblend.export_uv_group",
+                "mcblend.export_uv_group",
                 text="Export UV group", icon='EXPORT'
             )
             # Select side
             row = col.row()
             row.label(text='Side:')
             row.prop(
-                context.scene, "nusiq_mcblend_active_uv_groups_side",
+                context.scene, "mcblend_active_uv_groups_side",
                 text="")
             col.separator()
             col.operator(
-                'nusiq_mcblend.copy_uv_group_side',
+                'mcblend.copy_uv_group_side',
                 text='Copy current UV face', icon='DUPLICATE')
 
             # Add mask
             col.operator_menu_enum(
-                "nusiq_mcblend.add_uv_mask", "mask_type",
+                "mcblend.add_uv_mask", "mask_type",
                 text="Add mask", icon="ADD")
             # Draw selected side
             sides = [
@@ -347,7 +347,7 @@ class NUSIQ_MCBLEND_PT_UVGroupPanel(bpy.types.Panel):
                 active_uv_group.side5, active_uv_group.side6
             ]
             masks = sides[
-                int(context.scene.nusiq_mcblend_active_uv_groups_side)]
+                int(context.scene.mcblend_active_uv_groups_side)]
             # Stack of UI items to draw in
             ui_stack: List[_UIStackItem] = [
                 _UIStackItem(col, 0)]
@@ -363,14 +363,14 @@ class NUSIQ_MCBLEND_PT_UVGroupPanel(bpy.types.Panel):
                         break
 
 # Event group panel
-class NUSIQ_MCBLEND_UL_EventsList(bpy.types.UIList):
+class MCBLEND_UL_EventsList(bpy.types.UIList):
     '''GUI item used for drawing list of names of events.'''
     def draw_item(
             self, context, layout, data, item, icon, active_data,
             active_propname):
         '''
 
-        Drawing NUSIQ_MCBLEND_EventGroupProperties in a list.
+        Drawing MCBLEND_EventGroupProperties in a list.
 
         :param context: the contexts of operator
         :param layout: layout in which the object is drawn
@@ -389,7 +389,7 @@ class NUSIQ_MCBLEND_UL_EventsList(bpy.types.UIList):
             # With rename functionality:
             layout.prop(item, "name", text="", emboss=False)
 
-class NUSIQ_MCBLEND_PT_EventsPanel(bpy.types.Panel):
+class MCBLEND_PT_EventsPanel(bpy.types.Panel):
     '''Panel used for editing events.'''
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
@@ -408,7 +408,7 @@ class NUSIQ_MCBLEND_PT_EventsPanel(bpy.types.Panel):
 
         # Delete button
         op_props = row.operator(
-            "nusiq_mcblend.remove_effect", icon='X', text='')
+            "mcblend.remove_effect", icon='X', text='')
         op_props.effect_index = index
         if effect.effect_type == EffectTypes.PARTICLE_EFFECT.value:
             col.prop(effect, "effect", text="Effect")
@@ -423,27 +423,27 @@ class NUSIQ_MCBLEND_PT_EventsPanel(bpy.types.Panel):
         col = self.layout.column(align=True)
         row = col.row()
 
-        events = bpy.context.scene.nusiq_mcblend_events
-        active_event_id = bpy.context.scene.nusiq_mcblend_active_event
+        events = bpy.context.scene.mcblend_events
+        active_event_id = bpy.context.scene.mcblend_active_event
         col.template_list(
-            listtype_name="NUSIQ_MCBLEND_UL_EventsList",
+            listtype_name="MCBLEND_UL_EventsList",
             list_id="",
-            dataptr=bpy.context.scene, propname="nusiq_mcblend_events",
+            dataptr=bpy.context.scene, propname="mcblend_events",
             active_dataptr=bpy.context.scene,
-            active_propname="nusiq_mcblend_active_event")
+            active_propname="mcblend_active_event")
 
         row.operator(
-            "nusiq_mcblend.add_event", text="New event",
+            "mcblend.add_event", text="New event",
             icon='ADD')
 
         if 0 <= active_event_id < len(events):
             row.operator(
-                "nusiq_mcblend.remove_event",
+                "mcblend.remove_event",
                 text="Delete this UV group", icon='X')
             event = events[active_event_id]
             effects = event.effects
             col.operator_menu_enum(
-                "nusiq_mcblend.add_effect", "effect_type",
+                "mcblend.add_effect", "effect_type",
                 text="Add effect", icon="ADD")
             if len(effects) > 0:
                 for i, effect in enumerate(effects):
@@ -451,7 +451,7 @@ class NUSIQ_MCBLEND_PT_EventsPanel(bpy.types.Panel):
                     self.draw_effect(effect, i, col)
 
 # Custom object properties panel
-class NUSIQ_MCBLEND_PT_ObjectPropertiesPanel(bpy.types.Panel):
+class MCBLEND_PT_ObjectPropertiesPanel(bpy.types.Panel):
     '''Panel used for editing custom model object properties.'''
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
@@ -471,15 +471,15 @@ class NUSIQ_MCBLEND_PT_ObjectPropertiesPanel(bpy.types.Panel):
             return
 
         if context.object.type == 'EMPTY':
-            object_properties = context.object.nusiq_mcblend_object_properties
+            object_properties = context.object.mcblend_object_properties
             col.prop(object_properties, "is_bone", text="Export as bone")
         elif context.object.type == 'MESH':
-            object_properties = context.object.nusiq_mcblend_object_properties
+            object_properties = context.object.mcblend_object_properties
             col.prop(object_properties, "is_bone", text="Export as bone")
             col.prop(object_properties, "mesh_type", text="")
 
             mesh_type = (
-                context.object.nusiq_mcblend_object_properties.mesh_type)
+                context.object.mcblend_object_properties.mesh_type)
             if mesh_type == MeshType.CUBE.value:
                 if object_properties.uv_group != '':
                     col.label(
@@ -491,8 +491,8 @@ class NUSIQ_MCBLEND_PT_ObjectPropertiesPanel(bpy.types.Panel):
                 col.prop(
                     object_properties, "min_uv_size", text="Min UV bound")
         elif context.object.type == 'ARMATURE':
-            # col.prop(context.scene.nusiq_mcblend, "path", text="")
-            object_properties = context.object.nusiq_mcblend_object_properties
+            # col.prop(context.scene.mcblend, "path", text="")
+            object_properties = context.object.mcblend_object_properties
             col.prop(
                 object_properties, "model_name", text="Name")
             col.prop(
@@ -521,7 +521,7 @@ class NUSIQ_MCBLEND_PT_ObjectPropertiesPanel(bpy.types.Panel):
                     text="Template resolution")
 
 # Armature render controllers properties
-class NUSIQ_MCBLEND_PT_ArmatureRenderControllersPanel(bpy.types.Panel):
+class MCBLEND_PT_ArmatureRenderControllersPanel(bpy.types.Panel):
     '''Panel used for editing custom model object properties.'''
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
@@ -540,12 +540,12 @@ class NUSIQ_MCBLEND_PT_ArmatureRenderControllersPanel(bpy.types.Panel):
             return
 
         row = col.row()
-        object_properties = context.object.nusiq_mcblend_object_properties
+        object_properties = context.object.mcblend_object_properties
         row.operator(
-            "nusiq_mcblend.fake_rc_apply_materials", icon='FILE_REFRESH',
+            "mcblend.fake_rc_apply_materials", icon='FILE_REFRESH',
             text='Apply Materials')
         op_props = row.operator(
-            "nusiq_mcblend.add_fake_rc", icon='ADD',
+            "mcblend.add_fake_rc", icon='ADD',
             text='Add Render Controller')
         col.separator()
         len_rc = len(object_properties.render_controllers)
@@ -555,24 +555,24 @@ class NUSIQ_MCBLEND_PT_ArmatureRenderControllersPanel(bpy.types.Panel):
             up_down_row = box_col.row(align=True)
             if rc_index-1 >= 0:
                 op_props = up_down_row.operator(
-                    "nusiq_mcblend.move_fake_rc", icon='TRIA_UP',
+                    "mcblend.move_fake_rc", icon='TRIA_UP',
                     text='')
                 op_props.rc_index = rc_index
                 op_props.move_to = rc_index-1
             if rc_index+1 < len_rc:
                 op_props = up_down_row.operator(
-                    "nusiq_mcblend.move_fake_rc", icon='TRIA_DOWN',
+                    "mcblend.move_fake_rc", icon='TRIA_DOWN',
                     text='')
                 op_props.rc_index = rc_index
                 op_props.move_to = rc_index+1
             op_props = up_down_row.operator(
-                "nusiq_mcblend.remove_fake_rc", icon='X',
+                "mcblend.remove_fake_rc", icon='X',
                 text='')
             op_props.rc_index = rc_index
             row = box_col.row(align=True)
             row.prop(rc, "texture", text="Texture")
             op_props = row.operator(
-                "nusiq_mcblend.fake_rc_select_texture", icon='TEXTURE',
+                "mcblend.fake_rc_select_texture", icon='TEXTURE',
                 text='')
             
             op_props.rc_index = rc_index
@@ -580,7 +580,7 @@ class NUSIQ_MCBLEND_PT_ArmatureRenderControllersPanel(bpy.types.Panel):
             row = box_col.row()
             row.label(text="Materials:")
             op_props = row.operator(
-                "nusiq_mcblend.add_fake_rc_material", icon='ADD',
+                "mcblend.add_fake_rc_material", icon='ADD',
                 text='')
             op_props.rc_index = rc_index
             
@@ -590,33 +590,33 @@ class NUSIQ_MCBLEND_PT_ArmatureRenderControllersPanel(bpy.types.Panel):
                 row.prop(rc_material, "pattern", text="")
                 row.prop(rc_material, "material", text="")
                 op_props = row.operator(
-                    "nusiq_mcblend.fake_rc_material_select_template",
+                    "mcblend.fake_rc_material_select_template",
                     icon='NODE_MATERIAL', text='')
                 op_props.rc_index = rc_index
                 op_props.material_index = material_index
                 row.separator()
                 if material_index-1 >= 0:
                     op_props = row.operator(
-                        "nusiq_mcblend.move_fake_rc_material", icon='TRIA_UP',
+                        "mcblend.move_fake_rc_material", icon='TRIA_UP',
                         text='')
                     op_props.rc_index = rc_index
                     op_props.material_index = material_index
                     op_props.move_to = material_index - 1
                 if material_index+1 < len_rc_materials:
                     op_props = row.operator(
-                        "nusiq_mcblend.move_fake_rc_material", icon='TRIA_DOWN',
+                        "mcblend.move_fake_rc_material", icon='TRIA_DOWN',
                         text='')
                     op_props.rc_index = rc_index
                     op_props.material_index = material_index
                     op_props.move_to = material_index + 1
                 op_props = row.operator(
-                    "nusiq_mcblend.remove_fake_rc_material", icon='X',
+                    "mcblend.remove_fake_rc_material", icon='X',
                     text='')
                 op_props.rc_index = rc_index
                 op_props.material_index = material_index
 
 # Animation properties panel
-class NUSIQ_MCBLEND_PT_AnimationPropertiesPanel(bpy.types.Panel):
+class MCBLEND_PT_AnimationPropertiesPanel(bpy.types.Panel):
     '''
     Panel used launching the animation export operator and changing its
     settings.
@@ -632,18 +632,18 @@ class NUSIQ_MCBLEND_PT_AnimationPropertiesPanel(bpy.types.Panel):
 
         row = col.row()
         row.operator(
-            "nusiq_mcblend.add_animation", text="New animation"
+            "mcblend.add_animation", text="New animation"
         )
 
-        active_anim_id = bpy.context.scene.nusiq_mcblend_active_animation
-        anims = bpy.context.scene.nusiq_mcblend_animations
+        active_anim_id = bpy.context.scene.mcblend_active_animation
+        anims = bpy.context.scene.mcblend_animations
         if active_anim_id < len(anims):
             row.operator(
-                "nusiq_mcblend.remove_animation",
+                "mcblend.remove_animation",
                 text="Remove this animation"
             )
             col.operator_menu_enum(
-                "nusiq_mcblend.list_animations", "animations_enum",
+                "mcblend.list_animations", "animations_enum",
                 text="Select animation"
             )
 
@@ -661,7 +661,7 @@ class NUSIQ_MCBLEND_PT_AnimationPropertiesPanel(bpy.types.Panel):
                 col.prop(bpy.context.scene, "frame_end", text="Frame end")
 
 # UV-mapper panel
-class NUSIQ_MCBLEND_PT_UvMappingPanel(bpy.types.Panel):
+class MCBLEND_PT_UvMappingPanel(bpy.types.Panel):
     '''
     Panel used for launching the UV-mapping operator and changing its settings.
     '''
@@ -675,10 +675,10 @@ class NUSIQ_MCBLEND_PT_UvMappingPanel(bpy.types.Panel):
     def draw(self, context):
         col = self.layout.column(align=True)
         self.layout.row().operator(
-            "nusiq_mcblend.map_uv", text="Set minecraft UVs")
+            "mcblend.map_uv", text="Set minecraft UVs")
 
 # "Other" operators panel
-class NUSIQ_MCBLEND_PT_OperatorsPanel(bpy.types.Panel):
+class MCBLEND_PT_OperatorsPanel(bpy.types.Panel):
     '''
     Panel that gives the user access to various operators used by Mcblend.
     '''
@@ -692,40 +692,40 @@ class NUSIQ_MCBLEND_PT_OperatorsPanel(bpy.types.Panel):
     def draw(self, context):
         col = self.layout.column()
         col.operator(
-            "nusiq_mcblend.toggle_mirror",
+            "mcblend.toggle_mirror",
             text="Toggle UV mirror"
         )
         col.operator(
-            "nusiq_mcblend.fix_uv",
+            "mcblend.fix_uv",
             text="Fix invalid cube UV"
         )
         col.operator(
-            "nusiq_mcblend.uv_group",
+            "mcblend.uv_group",
             text="Set the UV group"
         )
         col.operator(
-            "nusiq_mcblend.clear_uv_group",
+            "mcblend.clear_uv_group",
             text="Clear UV group"
         )
         col.operator(
-            "nusiq_mcblend.toggle_is_bone",
+            "mcblend.toggle_is_bone",
             text="Toggle export as bones"
         )
         col.operator(
-            "nusiq_mcblend.set_inflate",
+            "mcblend.set_inflate",
             text="Inflate"
         )
         col.operator(
-            "nusiq_mcblend.round_dimensions",
+            "mcblend.round_dimensions",
             text="Round dimensions"
         )
         col.operator(
-            "nusiq_mcblend.separate_mesh_cubes",
+            "mcblend.separate_mesh_cubes",
             text="Separate cubes"
         )
 
 # Resource pack panel
-class NUSIQ_MCBLEND_PT_ProjectPanel(bpy.types.Panel):
+class MCBLEND_PT_ProjectPanel(bpy.types.Panel):
     '''
     Panel that represents a connection of the blender project with
     a Minecraft project (resource- and behavior- pack)
@@ -785,13 +785,13 @@ class NUSIQ_MCBLEND_PT_ProjectPanel(bpy.types.Panel):
         col = self.layout.column()
         row = col.row()
         row.prop(
-            context.scene.nusiq_mcblend_project, "rp_path", text="Resource Pack"
+            context.scene.mcblend_project, "rp_path", text="Resource Pack"
         )
         row.operator(
-            "nusiq_mcblend.reload_rp",
+            "mcblend.reload_rp",
             text="", icon='FILE_REFRESH'
         )
-        project = context.scene.nusiq_mcblend_project
+        project = context.scene.mcblend_project
         # Don't draw dropdown lists if they're empty
         if project.entity_names != '':
             col.prop_search(
@@ -809,6 +809,6 @@ class NUSIQ_MCBLEND_PT_ProjectPanel(bpy.types.Panel):
             self.draw_render_controller(rc, col)
 
         col.operator(
-            "nusiq_mcblend.import_rp_entity",
+            "mcblend.import_rp_entity",
             text="Import from project"
         )

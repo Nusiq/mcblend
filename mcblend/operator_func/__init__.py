@@ -38,7 +38,7 @@ def export_model(context: bpy_types.Context) -> Dict:
         if object.type != 'ARMATURE':
             continue
         mcblend_obj_group = McblendObjectGroup(object)
-        model_properties = object.nusiq_mcblend_object_properties
+        model_properties = object.mcblend_object_properties
 
         model = ModelExport(
             texture_width=model_properties.texture_width,
@@ -70,8 +70,8 @@ def export_animation(
     # context. This exporter needs to be changed.
     object_properties = McblendObjectGroup(context)
 
-    anim_data = context.scene.nusiq_mcblend_animations[
-        context.scene.nusiq_mcblend_active_animation]
+    anim_data = context.scene.mcblend_animations[
+        context.scene.mcblend_active_animation]
 
     animation = AnimationExport(
         name=anim_data.name,
@@ -82,7 +82,7 @@ def export_animation(
         fps=context.scene.render.fps,
         effect_events={
             event.name: event.get_effects_dict()
-            for event in context.scene.nusiq_mcblend_events
+            for event in context.scene.mcblend_events
         }
     )
     animation.load_poses(object_properties, context)
@@ -103,7 +103,7 @@ def set_uvs(context: bpy_types.Context):
     for object in context.selected_objects:
         if object.type != 'ARMATURE':
             continue
-        model_properties = object.nusiq_mcblend_object_properties
+        model_properties = object.mcblend_object_properties
         width = model_properties.texture_width
         height = model_properties.texture_height
         allow_expanding = model_properties.allow_expanding
@@ -261,17 +261,17 @@ def round_dimensions(context: bpy_types.Context) -> int:
             # Set new dimensions
             dimensions = np.array(obj.dimensions)
 
-            if obj.nusiq_mcblend_object_properties.inflate != 0.0:
+            if obj.mcblend_object_properties.inflate != 0.0:
                 dimensions -= (
-                    obj.nusiq_mcblend_object_properties.inflate * 2 /
+                    obj.mcblend_object_properties.inflate * 2 /
                     MINECRAFT_SCALE_FACTOR
                 )
             dimensions = np.array(
                 dimensions * MINECRAFT_SCALE_FACTOR
             ).round() / MINECRAFT_SCALE_FACTOR
-            if obj.nusiq_mcblend_object_properties.inflate != 0.0:
+            if obj.mcblend_object_properties.inflate != 0.0:
                 dimensions += (
-                    obj.nusiq_mcblend_object_properties.inflate * 2 /
+                    obj.mcblend_object_properties.inflate * 2 /
                     MINECRAFT_SCALE_FACTOR
                 )
             obj.dimensions = dimensions
@@ -302,7 +302,7 @@ def import_model(data: Dict, geometry_name: str, context: bpy_types.Context):
     #     geometry.build_with_empties(context)
     # else:
     armature = geometry.build_with_armature(context)
-    model_properties = armature.nusiq_mcblend_object_properties
+    model_properties = armature.mcblend_object_properties
 
     model_properties.texture_width = geometry.texture_width
     model_properties.texture_height = geometry.texture_height
@@ -360,21 +360,21 @@ def inflate_objects(
     for obj in objects:
         if (
                 obj.type == 'MESH' and
-                obj.nusiq_mcblend_object_properties.mesh_type ==
+                obj.mcblend_object_properties.mesh_type ==
                 MeshType.CUBE.value):
-            if obj.nusiq_mcblend_object_properties.inflate != 0.0:
+            if obj.mcblend_object_properties.inflate != 0.0:
                 if relative:
                     effective_inflate = (
-                        obj.nusiq_mcblend_object_properties.inflate + inflate)
+                        obj.mcblend_object_properties.inflate + inflate)
                 else:
                     effective_inflate = inflate
                 delta_inflate = (
                     effective_inflate -
-                    obj.nusiq_mcblend_object_properties.inflate)
-                obj.nusiq_mcblend_object_properties.inflate = effective_inflate
+                    obj.mcblend_object_properties.inflate)
+                obj.mcblend_object_properties.inflate = effective_inflate
             else:
                 delta_inflate = inflate
-                obj.nusiq_mcblend_object_properties.inflate = inflate
+                obj.mcblend_object_properties.inflate = inflate
             # Clear parent from children for a moment
             children = obj.children
             for child in children:
@@ -407,12 +407,12 @@ def reload_rp_entities(context: bpy_types.Context):
 
     :param context: the context of running the operator.
     '''
-    project = context.scene.nusiq_mcblend_project
+    project = context.scene.mcblend_project
     project_entities = project.entities
     project_rcs = project.render_controllers
-    rp_path: Path = Path(context.scene.nusiq_mcblend_project.rp_path)
+    rp_path: Path = Path(context.scene.mcblend_project.rp_path)
 
-    # context.scene.nusiq_mcblend_project.active_entity = -1
+    # context.scene.mcblend_project.active_entity = -1
     project_entities.clear()
     project_rcs.clear()
 
@@ -563,7 +563,7 @@ def import_model_form_project(context: bpy_types.Context):
     Imports model using data selected in Project menu.
     '''
     # 1. Load cached data
-    cached_project = context.scene.nusiq_mcblend_project
+    cached_project = context.scene.mcblend_project
     # 2. Open project
     rp_path: Path = Path(cached_project.rp_path)
     if not rp_path.exists() or rp_path.is_file():
@@ -616,7 +616,7 @@ def import_model_form_project(context: bpy_types.Context):
         armature = geometry.build_with_armature(context)
 
         # 7.1. Set proper textures resolution and model bounds
-        model_properties = armature.nusiq_mcblend_object_properties
+        model_properties = armature.mcblend_object_properties
 
         model_properties.texture_width = geometry.texture_width
         model_properties.texture_height = geometry.texture_height
@@ -631,7 +631,7 @@ def import_model_form_project(context: bpy_types.Context):
             armature.name = geometry.identifier
         # 7.2. Save render controller properties in the armature
         for rc_stack_item in rc_stack:
-            armature_rc = armature.nusiq_mcblend_object_properties.\
+            armature_rc = armature.mcblend_object_properties.\
                 render_controllers.add()
             armature_rc.texture = rc_stack_item.texture.name
             for pattern, material in rc_stack_item.materials.items():
@@ -681,7 +681,7 @@ def apply_materials(context: bpy.types.Context):
         if armature.type != 'ARMATURE':
             continue
         mcblend_obj_group = McblendObjectGroup(armature)
-        armature_properties = armature.nusiq_mcblend_object_properties
+        armature_properties = armature.mcblend_object_properties
 
         model = ModelExport(
             texture_width=armature_properties.texture_width,

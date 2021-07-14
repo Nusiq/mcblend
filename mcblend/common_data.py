@@ -6,14 +6,14 @@ import bpy
 from bpy.props import (
     CollectionProperty, StringProperty, BoolProperty)
 
-class NUSIQ_MCBLEND_JustName(bpy.types.PropertyGroup):
+class MCBLEND_JustName(bpy.types.PropertyGroup):
     '''Custom property group which has only the "name" property'''
     name: StringProperty(  # type: ignore
         name="",
         description="The identifier of the object",
         default="", maxlen=1024)
 
-class NUSIQ_MCBLEND_NameValuePair(bpy.types.PropertyGroup):
+class MCBLEND_NameValuePair(bpy.types.PropertyGroup):
     '''
     Custom property group which has only the "name" and "value" string
     properties.
@@ -27,10 +27,10 @@ class NUSIQ_MCBLEND_NameValuePair(bpy.types.PropertyGroup):
         default="", maxlen=1024
     )
 
-class NUSIQ_MCBLEND_EnumCache(bpy.types.PropertyGroup):
+class MCBLEND_EnumCache(bpy.types.PropertyGroup):
     is_cached: BoolProperty(  # type: ignore
         name="Single frame",
         description="Whether this object already stores cached values or not",
         default=False)
     values: CollectionProperty(  # type: ignore
-        type=NUSIQ_MCBLEND_JustName)
+        type=MCBLEND_JustName)

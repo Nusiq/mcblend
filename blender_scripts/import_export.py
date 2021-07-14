@@ -18,13 +18,13 @@ def main(source_path: str, target_path: str):
     bpy.ops.object.delete(use_global=False)
 
     # Load model from source file
-    bpy.ops.nusiq_mcblend.import_model(
+    bpy.ops.mcblend.import_model(
         filepath=source_path,
         replace_bones_with_empties="use_empties" in argv)
 
     # Save model to target file
     bpy.ops.object.select_all(action='SELECT')
-    bpy.ops.nusiq_mcblend.export_model(filepath=target_path)
+    bpy.ops.mcblend.export_model(filepath=target_path)
 
 
 if __name__ == "__main__":

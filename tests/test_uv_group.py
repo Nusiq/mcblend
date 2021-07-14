@@ -20,7 +20,7 @@ def make_comparison_files(
         source: str, tmp: str) -> tp.Tuple[tp.Dict, tp.Dict, str]:
     '''
     Loads UV-group from JSON to Blender using
-    nusiq_mcblend_import_uv_group. Exports this model to tmp
+    mcblend_import_uv_group. Exports this model to tmp
     (to a file with the same name as source file).
 
     Returns two dictionaries:

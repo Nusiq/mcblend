@@ -14,10 +14,10 @@ argv = argv[argv.index("--") + 1:]
 
 def main(source_path: str, target_path: str):
     # Load model from source file
-    bpy.ops.nusiq_mcblend.import_uv_group(
+    bpy.ops.mcblend.import_uv_group(
         filepath=source_path)
     # Save model to target file
-    bpy.ops.nusiq_mcblend.export_uv_group(
+    bpy.ops.mcblend.export_uv_group(
         filepath=target_path)
 
 if __name__ == "__main__":

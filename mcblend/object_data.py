@@ -15,9 +15,9 @@ def list_mesh_types_as_blender_enum(self, context):
     return [(i.value, i.value, i.value) for i in MeshType]
 
 
-class NUSIQ_MCBLEND_FakeRcMaterialProperties(bpy.types.PropertyGroup):
+class MCBLEND_FakeRcMaterialProperties(bpy.types.PropertyGroup):
     '''
-    Pattern-material pair for NUSIQ_MCBLEND_FakeRcProperties object.
+    Pattern-material pair for MCBLEND_FakeRcProperties object.
     '''
     pattern: StringProperty(  # type: ignore
         name="", description="The bone name pattern for assigning material.",
@@ -29,7 +29,7 @@ class NUSIQ_MCBLEND_FakeRcMaterialProperties(bpy.types.PropertyGroup):
         maxlen=1024
     )
 
-class NUSIQ_MCBLEND_FakeRcProperties(bpy.types.PropertyGroup):
+class MCBLEND_FakeRcProperties(bpy.types.PropertyGroup):
     '''
     Armature property group similar to Minecraft render controller used for
     generating Minecraft materials.
@@ -41,9 +41,9 @@ class NUSIQ_MCBLEND_FakeRcProperties(bpy.types.PropertyGroup):
         maxlen=1024
     )
     materials: CollectionProperty(  # type: ignore
-        type=NUSIQ_MCBLEND_FakeRcMaterialProperties, name='Materials')
+        type=MCBLEND_FakeRcMaterialProperties, name='Materials')
 
-class NUSIQ_MCBLEND_ObjectProperties(bpy.types.PropertyGroup):
+class MCBLEND_ObjectProperties(bpy.types.PropertyGroup):
     '''Custom properties of an object.'''
     # ARMATURE PROPERTIES (equivalent of minecraft model)
     model_name: StringProperty(  # type: ignore
@@ -107,7 +107,7 @@ class NUSIQ_MCBLEND_ObjectProperties(bpy.types.PropertyGroup):
     )
     # RENDER CONTROLLERS (armature properties used for generating materials)
     render_controllers: CollectionProperty(  # type: ignore
-        type=NUSIQ_MCBLEND_FakeRcProperties, name="Render Controllers"
+        type=MCBLEND_FakeRcProperties, name="Render Controllers"
     )
 
     # CUBE PROPERTIES

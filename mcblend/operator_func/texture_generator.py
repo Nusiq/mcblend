@@ -540,7 +540,7 @@ class MixMask(MultiplicativeMask):
 def _get_color_from_gui_color(color) -> Color:
     '''
     Returns Color object from definition created with the GUI.
-    (NUSIQ_MCBLEND_ColorProperties)
+    (MCBLEND_ColorProperties)
     '''
     #pylint: disable=singleton-comparison
     # convert linear rgb to srgb

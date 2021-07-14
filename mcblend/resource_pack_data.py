@@ -10,11 +10,11 @@ from bpy.props import (
 from .operator_func import reload_rp_entities
 from .operator_func.molang import find_resources
 from .common_data import (
-    NUSIQ_MCBLEND_EnumCache, NUSIQ_MCBLEND_JustName,
-    NUSIQ_MCBLEND_NameValuePair)
+    MCBLEND_EnumCache, MCBLEND_JustName,
+    MCBLEND_NameValuePair)
 
 # Resource pack (importer)
-class NUSIQ_MCBLEND_EntityProperties(bpy.types.PropertyGroup):
+class MCBLEND_EntityProperties(bpy.types.PropertyGroup):
     '''
     Cached properties of an entity from resource pack.
     '''
@@ -23,13 +23,13 @@ class NUSIQ_MCBLEND_EntityProperties(bpy.types.PropertyGroup):
         default="", maxlen=1024)
 
     render_controllers: CollectionProperty(  # type: ignore
-        type=NUSIQ_MCBLEND_JustName, name='Textures')
+        type=MCBLEND_JustName, name='Textures')
     textures: CollectionProperty(  # type: ignore
-        type=NUSIQ_MCBLEND_NameValuePair, name='Textures')
+        type=MCBLEND_NameValuePair, name='Textures')
     geometries: CollectionProperty(  # type: ignore
-        type=NUSIQ_MCBLEND_NameValuePair, name='Geometries')
+        type=MCBLEND_NameValuePair, name='Geometries')
     materials: CollectionProperty(  # type: ignore
-        type=NUSIQ_MCBLEND_NameValuePair, name='Materials')
+        type=MCBLEND_NameValuePair, name='Materials')
 
 def enum_rc_materials(self, context):
     # Loading values from cache (optimal solution)
@@ -39,14 +39,14 @@ def enum_rc_materials(self, context):
     # WARNING! The values can't be cached from this context. The
     # method that create cache must be called somewhere else or the enum will
     # always be generated from Molang string.
-    owner = context.scene.nusiq_mcblend_project.render_controllers[
+    owner = context.scene.mcblend_project.render_controllers[
         self.owner_name]
     return [
         (i, i, i) for i in
         sorted(find_resources(
             self.value_molang, 'material', owner.material_arrays))]
 
-class NUSIQ_MCBLEND_MaterialProperties(bpy.types.PropertyGroup):
+class MCBLEND_MaterialProperties(bpy.types.PropertyGroup):
     '''Properties of a material from a render controller'''
     name: StringProperty(  # type: ignore
         name="Pattern", description="Bone pattern of a material",
@@ -58,7 +58,7 @@ class NUSIQ_MCBLEND_MaterialProperties(bpy.types.PropertyGroup):
         name="Texture", description=(
             "The texture used by the importer for this render controller"),
         items=enum_rc_materials)
-    value_cache: PointerProperty(type=NUSIQ_MCBLEND_EnumCache)
+    value_cache: PointerProperty(type=MCBLEND_EnumCache)
     # Ugly hack to access the owner data
     owner_name: StringProperty(  # type: ignore
         name="Name", description=(
@@ -74,7 +74,7 @@ class NUSIQ_MCBLEND_MaterialProperties(bpy.types.PropertyGroup):
         '''
         if self.value_cache.is_cached:
             return  # nothing to do
-        owner = context.scene.nusiq_mcblend_project.render_controllers[
+        owner = context.scene.mcblend_project.render_controllers[
             self.owner_name]
         resources = find_resources(
             self.value_molang, 'material', owner.material_arrays)
@@ -83,12 +83,12 @@ class NUSIQ_MCBLEND_MaterialProperties(bpy.types.PropertyGroup):
             new_val.name = resource_name
         self.value_cache.is_cached = True
 
-class NUSIQ_MCBLEND_RenderControllerArrayProperties(bpy.types.PropertyGroup):
+class MCBLEND_RenderControllerArrayProperties(bpy.types.PropertyGroup):
     name: StringProperty(  # type: ignore
         name="Name", description="Name of the array",
         default="", maxlen=1024)
     items: CollectionProperty(
-        type=NUSIQ_MCBLEND_JustName,
+        type=MCBLEND_JustName,
         description="The list of molang variables from the array")
 
 def enum_rc_geometries(self, context):
@@ -113,17 +113,17 @@ def enum_rc_textures(self, context):
         sorted(find_resources(
             self.texture_molang, 'geometry', self.texture_arrays))]
 
-class NUSIQ_MCBLEND_RenderControllersProperties(bpy.types.PropertyGroup):
+class MCBLEND_RenderControllersProperties(bpy.types.PropertyGroup):
     '''Properties of a render controller from resource pack.'''
     name: StringProperty(  # type: ignore
         name="Name", description="Name of the render controller",
         default="", maxlen=1024)
     geometry_arrays: CollectionProperty(
-        type=NUSIQ_MCBLEND_RenderControllerArrayProperties)
+        type=MCBLEND_RenderControllerArrayProperties)
     texture_arrays: CollectionProperty(
-        type=NUSIQ_MCBLEND_RenderControllerArrayProperties)
+        type=MCBLEND_RenderControllerArrayProperties)
     material_arrays: CollectionProperty(
-        type=NUSIQ_MCBLEND_RenderControllerArrayProperties)
+        type=MCBLEND_RenderControllerArrayProperties)
     
     geometry_molang: StringProperty(  # type: ignore
         name="Geometry molang",
@@ -134,7 +134,7 @@ class NUSIQ_MCBLEND_RenderControllersProperties(bpy.types.PropertyGroup):
     geometry: EnumProperty(  # type: ignore
         name="Geometry", description="The geometry used by the importer",
         items=enum_rc_geometries)
-    geometry_cache: PointerProperty(type=NUSIQ_MCBLEND_EnumCache)
+    geometry_cache: PointerProperty(type=MCBLEND_EnumCache)
     texture_molang: StringProperty(  # type: ignore
         name="Texture molang",
         description=(
@@ -145,9 +145,9 @@ class NUSIQ_MCBLEND_RenderControllersProperties(bpy.types.PropertyGroup):
         name="Texture", description=(
             "The texture used by the importer for this render controller"),
         items=enum_rc_textures)
-    texture_cache: PointerProperty(type=NUSIQ_MCBLEND_EnumCache)
+    texture_cache: PointerProperty(type=MCBLEND_EnumCache)
     materials: CollectionProperty(  # type: ignore
-        type=NUSIQ_MCBLEND_MaterialProperties)
+        type=MCBLEND_MaterialProperties)
 
     def try_reload_cached_values(self):
         '''
@@ -178,7 +178,7 @@ def enum_project_entities(self, context):
     # pylint: disable=unused-argument
     return [
         (i, i, i)for i in
-        sorted(j.name for j in context.scene.nusiq_mcblend_project.entities)
+        sorted(j.name for j in context.scene.mcblend_project.entities)
     ]
 
 def update_entity_names(self, context):
@@ -211,7 +211,7 @@ def update_entity_names(self, context):
                 material.value = material.value_cache.values[0].name
 
 
-class NUSIQ_MCBLEND_ProjectProperties(bpy.types.PropertyGroup):
+class MCBLEND_ProjectProperties(bpy.types.PropertyGroup):
     '''
     The properties of the Resource Pack opened in this Blender project.
     '''
@@ -221,11 +221,11 @@ class NUSIQ_MCBLEND_ProjectProperties(bpy.types.PropertyGroup):
         default="", subtype="DIR_PATH",
         update=lambda self, context: reload_rp_entities(context))
     entities: CollectionProperty(  # type: ignore
-        type=NUSIQ_MCBLEND_EntityProperties)
+        type=MCBLEND_EntityProperties)
     render_controllers: CollectionProperty(  # type: ignore
-        type=NUSIQ_MCBLEND_RenderControllersProperties)
+        type=MCBLEND_RenderControllersProperties)
     fake_render_controllers: CollectionProperty(  # type: ignore
-        type=NUSIQ_MCBLEND_RenderControllersProperties,
+        type=MCBLEND_RenderControllersProperties,
         description=(
             "Render controllers not defined in the resource pack but with a "
             "reference from the active in GUI.")

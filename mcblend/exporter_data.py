@@ -8,6 +8,6 @@ from bpy.props import (
     StringProperty)
 
 # Main Mcblend properties
-class NUSIQ_MCBLEND_ExporterProperties(bpy.types.PropertyGroup):
+class MCBLEND_ExporterProperties(bpy.types.PropertyGroup):
     '''Global properties of Mcblend.'''
     # TODO - remove this class

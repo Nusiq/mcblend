@@ -15,7 +15,7 @@ from .operator_func.texture_generator import (
 from .operator_func import reload_rp_entities
 
 # UV-mask
-class NUSIQ_MCBLEND_StripeProperties(bpy.types.PropertyGroup):
+class MCBLEND_StripeProperties(bpy.types.PropertyGroup):
     '''Properties of a UV-mask stripe.'''
     width: IntProperty(  # type: ignore
         name='Width', default=1)
@@ -35,7 +35,7 @@ class NUSIQ_MCBLEND_StripeProperties(bpy.types.PropertyGroup):
             result['width'] = self.width
         return result
 
-class NUSIQ_MCBLEND_ColorProperties(bpy.types.PropertyGroup):
+class MCBLEND_ColorProperties(bpy.types.PropertyGroup):
     '''Properties of a UV-mask color.'''
     color: FloatVectorProperty(  # type: ignore
         name='Color',  subtype='COLOR',
@@ -48,7 +48,7 @@ class NUSIQ_MCBLEND_ColorProperties(bpy.types.PropertyGroup):
         # 1/256 = 0.00390625 (8 digits precision)
         return [round(i, 8) for i in self.color]
 
-class NUSIQ_MCBLEND_UvMaskProperties(bpy.types.PropertyGroup):
+class MCBLEND_UvMaskProperties(bpy.types.PropertyGroup):
     '''Properties of UV-mask.'''
     ui_hidden: BoolProperty(  # type: ignore
         name='Hide', default=False)
@@ -67,7 +67,7 @@ class NUSIQ_MCBLEND_UvMaskProperties(bpy.types.PropertyGroup):
         name='Number of children', min=1, default=2)
     # colors: List[Color]  # ColorPaletteMask
     colors: CollectionProperty(  # type: ignore
-        type=NUSIQ_MCBLEND_ColorProperties,
+        type=MCBLEND_ColorProperties,
         name='Colors')
     # interpolate: bool  # ColorPaletteMask
     interpolate: BoolProperty(  # type: ignore
@@ -89,7 +89,7 @@ class NUSIQ_MCBLEND_UvMaskProperties(bpy.types.PropertyGroup):
         name='Point B', default=(0.9, 0.9), size=2)
     # stripes: List[Stripe]  # GradientMask StripesMask
     stripes: CollectionProperty(  # type: ignore
-        type=NUSIQ_MCBLEND_StripeProperties,
+        type=MCBLEND_StripeProperties,
         name='Stripes')
     # relative_boundaries: bool  # GradientMask EllipseMask RectangleMask
     # StripesMask
@@ -116,7 +116,7 @@ class NUSIQ_MCBLEND_UvMaskProperties(bpy.types.PropertyGroup):
         name='Seed')
     # color: Tuple[float, float, float]  # ColorMask
     color: PointerProperty(  # type: ignore
-        type=NUSIQ_MCBLEND_ColorProperties,
+        type=MCBLEND_ColorProperties,
         name='Color')
 
     def json(self) -> Dict:
@@ -182,7 +182,7 @@ def get_unused_uv_group_name(base_name: str, i=1):
     the base name and adds number at the end of it to find unique name with
     pattern :code:`{base_name}.{number:04}`.
     '''
-    uv_groups = bpy.context.scene.nusiq_mcblend_uv_groups
+    uv_groups = bpy.context.scene.mcblend_uv_groups
     name = base_name  # f'{base_name}.{i:04}'
     while name in uv_groups.keys():
         name = f'{base_name}.{i:04}'
@@ -194,14 +194,14 @@ def _update_uv_group_name(uv_group, new_name: str, update_references: bool):
     if update_references:
         for obj in bpy.data.objects:
             if obj.type == "MESH":
-                obj_props = obj.nusiq_mcblend_object_properties
+                obj_props = obj.mcblend_object_properties
                 if obj_props.uv_group == uv_group.name:
                     obj_props.uv_group = new_name
     # Update the name of the UV group
     uv_group['name'] = new_name
 
 def _set_uv_group_name(self, value):
-    groups = bpy.context.scene.nusiq_mcblend_uv_groups
+    groups = bpy.context.scene.mcblend_uv_groups
 
     # Empty name is no allowed
     if value == '':
@@ -238,7 +238,7 @@ def _get_uv_group_name(self):
         return ''
     return self['name']
 
-class NUSIQ_MCBLEND_UvGroupProperties(bpy.types.PropertyGroup):
+class MCBLEND_UvGroupProperties(bpy.types.PropertyGroup):
     '''Properties of UV-group.'''
     name: StringProperty(  # type: ignore
         name="Name",
@@ -248,22 +248,22 @@ class NUSIQ_MCBLEND_UvGroupProperties(bpy.types.PropertyGroup):
         default='',
         maxlen=1024, set=_set_uv_group_name, get=_get_uv_group_name)
     side1: CollectionProperty(  # type: ignore
-        type=NUSIQ_MCBLEND_UvMaskProperties,
+        type=MCBLEND_UvMaskProperties,
         description='Collection of the filters for side1 of the cuboid.')
     side2: CollectionProperty(  # type: ignore
-        type=NUSIQ_MCBLEND_UvMaskProperties,
+        type=MCBLEND_UvMaskProperties,
         description='Collection of the filters for side2 of the cuboid.')
     side3: CollectionProperty(  # type: ignore
-        type=NUSIQ_MCBLEND_UvMaskProperties,
+        type=MCBLEND_UvMaskProperties,
         description='Collection of the filters for side3 of the cuboid.')
     side4: CollectionProperty(  # type: ignore
-        type=NUSIQ_MCBLEND_UvMaskProperties,
+        type=MCBLEND_UvMaskProperties,
         description='Collection of the filters for side4 of the cuboid.')
     side5: CollectionProperty(  # type: ignore
-        type=NUSIQ_MCBLEND_UvMaskProperties,
+        type=MCBLEND_UvMaskProperties,
         description='Collection of the filters for side5 of the cuboid.')
     side6: CollectionProperty(  # type: ignore
-        type=NUSIQ_MCBLEND_UvMaskProperties,
+        type=MCBLEND_UvMaskProperties,
         description='Collection of the filters for side6 of the cuboid.')
 
     def json(self) -> Dict:

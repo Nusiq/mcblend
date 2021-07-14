@@ -24,7 +24,7 @@ def list_effect_types_as_blender_enum(self, context):
     # pylint: disable=unused-argument
     return [(i.value, i.value, i.value) for i in EffectTypes]
 
-class NUSIQ_MCBLEND_EffectProperties(bpy.types.PropertyGroup):
+class MCBLEND_EffectProperties(bpy.types.PropertyGroup):
     '''
     An effect of an event (sound or particles)
     '''
@@ -60,7 +60,7 @@ def get_unused_event_name(base_name: str, i=1):
     This function assumes there is an active event and active animation. It
     will throw errors without asserting these conditions.
     '''
-    events = bpy.context.scene.nusiq_mcblend_events
+    events = bpy.context.scene.mcblend_events
 
     name = base_name
     while name in events.keys():
@@ -72,7 +72,7 @@ def _update_event_name(event, new_name: str):
     event['name'] = new_name
 
 def _set_event_name(self, value):
-    events = bpy.context.scene.nusiq_mcblend_events
+    events = bpy.context.scene.mcblend_events
 
     # Empty name is no allowed
     if value == '':
@@ -103,7 +103,7 @@ def _get_event_name(self):
         return ''
     return self['name']
 
-class NUSIQ_MCBLEND_EventProperties(bpy.types.PropertyGroup):
+class MCBLEND_EventProperties(bpy.types.PropertyGroup):
     '''
     A collection of sound and particle events.
     '''
@@ -117,7 +117,7 @@ class NUSIQ_MCBLEND_EventProperties(bpy.types.PropertyGroup):
         default='',
         maxlen=1024, set=_set_event_name, get=_get_event_name)
     effects: CollectionProperty(  # type: ignore
-        type=NUSIQ_MCBLEND_EffectProperties,
+        type=MCBLEND_EffectProperties,
         description='Collection of effects triggered of this event.',
         name='Sound effects')
 
@@ -145,7 +145,7 @@ class NUSIQ_MCBLEND_EventProperties(bpy.types.PropertyGroup):
         return sound_effects, particle_effects
 
 # Animations
-class NUSIQ_MCBLEND_TimelineMarkerProperties(bpy.types.PropertyGroup):
+class MCBLEND_TimelineMarkerProperties(bpy.types.PropertyGroup):
     '''Saves the data about a timeline marker.'''
     name: StringProperty(  # type: ignore
         name="Name",
@@ -158,7 +158,7 @@ class NUSIQ_MCBLEND_TimelineMarkerProperties(bpy.types.PropertyGroup):
         default=0
     )
 
-class NUSIQ_MCBLEND_AnimationProperties(bpy.types.PropertyGroup):
+class MCBLEND_AnimationProperties(bpy.types.PropertyGroup):
     '''Properties of an animation template.'''
     name: StringProperty(  # type: ignore
         name="Name",
@@ -207,6 +207,6 @@ class NUSIQ_MCBLEND_AnimationProperties(bpy.types.PropertyGroup):
         min=0
     )
     timeline_markers: CollectionProperty(  # type: ignore
-        type=NUSIQ_MCBLEND_TimelineMarkerProperties, name='Timeline Markers',
+        type=MCBLEND_TimelineMarkerProperties, name='Timeline Markers',
         description='Timeline markers related to this animation.'
     )

@@ -16,7 +16,7 @@ def find_resources(
 
     :param molang: the molang expression.
     :param resource_prefix: the prefix used to identify the type of resource
-    :param arrays: NUSIQ_MCBLEND_RenderControllerArrayProperties (can't have
+    :param arrays: MCBLEND_RenderControllerArrayProperties (can't have
         proper type annotation due to blender API abusing annotations for
         different purpose). This is basically a dictionary which uses the
         names of the arrays as keys and has lists of molang expressions as
