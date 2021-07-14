@@ -81,9 +81,6 @@ from .animation_data import (
     MCBLEND_EffectProperties,
     MCBLEND_EventProperties
 )
-from .exporter_data import (
-    MCBLEND_ExporterProperties
-)
 from .object_data import (
     MCBLEND_FakeRcMaterialProperties,
     MCBLEND_FakeRcProperties,
@@ -129,8 +126,6 @@ classes = (
     MCBLEND_RenderControllerArrayProperties,
     MCBLEND_RenderControllersProperties,
     MCBLEND_ProjectProperties,
-
-    MCBLEND_ExporterProperties,
 
     MCBLEND_EffectProperties,
     MCBLEND_EventProperties,
@@ -217,10 +212,6 @@ def register():
     for _class in classes:
         bpy.utils.register_class(_class)
 
-    # Model export properties (the scope is the whole scene)
-    bpy.types.Scene.mcblend = PointerProperty(
-        type=MCBLEND_ExporterProperties)
-
     # Project properties
     bpy.types.Scene.mcblend_project = PointerProperty(
         type=MCBLEND_ProjectProperties
@@ -268,7 +259,7 @@ def unregister():
     # pylint: disable=no-member
     for _class in reversed(classes):
         bpy.utils.unregister_class(_class)
-    del bpy.types.Scene.mcblend
+
     bpy.types.TOPBAR_MT_file_export.remove(
         menu_func_mcblend_export_model
     )
