@@ -66,12 +66,10 @@ def export_animation(
     :returns: JSON dict of Minecraft animations.
     '''
     # Check and create object properties
-    # TODO - now McblendObjectGroup is created from armature object not from
-    # context. This exporter needs to be changed.
-    object_properties = McblendObjectGroup(context)
+    object_properties = McblendObjectGroup(context.object)
 
-    anim_data = context.scene.mcblend_animations[
-        context.scene.mcblend_active_animation]
+    anim_data = context.object.mcblend.animations[
+        context.object.mcblend.active_animation]
 
     animation = AnimationExport(
         name=anim_data.name,
@@ -173,9 +171,7 @@ def fix_uvs(context: bpy_types.Context) -> Tuple[int, int]:
 
     :returns: The number of fixed cubes and the number of fixed faces.
     '''
-    # TODO - now McblendObjectGroup is created from armature object not from
-    # context. This operator needs to be changed.
-    object_properties = McblendObjectGroup(context)
+    object_properties = McblendObjectGroup(context.object)
     total_fixed_uv_faces = 0
     total_fixed_cubes = 0
 

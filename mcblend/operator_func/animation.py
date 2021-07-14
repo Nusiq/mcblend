@@ -145,9 +145,6 @@ def _get_keyframes(context: bpy_types.Context) -> List[int]:
                 keyframes.update(transformed_keyframes)
     return sorted(keyframes)  # Sorted list of ints
 
-
-
-
 class PoseBone(NamedTuple):
     '''Properties of a pose of single bone.'''
     name: str

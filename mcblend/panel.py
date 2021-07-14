@@ -7,7 +7,7 @@ from dataclasses import dataclass
 
 import bpy
 
-from .animation_data import EffectTypes
+from .object_data import EffectTypes
 from .operator_func.common import MeshType
 from .operator_func.texture_generator import UvMaskTypes
 
@@ -622,10 +622,17 @@ class MCBLEND_PT_AnimationPropertiesPanel(bpy.types.Panel):
     settings.
     '''
     # pylint: disable=unused-argument
-    bl_label = "Animation properties"
-    bl_category = "Mcblend"
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = 'object'
+    bl_label = "Mcblend Animation properties"
+
+
+    @classmethod
+    def poll(cls, context):
+        if context.active_object:
+            return context.active_object.type == "ARMATURE"
+        return False
 
     def draw(self, context):
         col = self.layout.column(align=True)
@@ -635,8 +642,8 @@ class MCBLEND_PT_AnimationPropertiesPanel(bpy.types.Panel):
             "mcblend.add_animation", text="New animation"
         )
 
-        active_anim_id = bpy.context.scene.mcblend_active_animation
-        anims = bpy.context.scene.mcblend_animations
+        active_anim_id = bpy.context.object.mcblend.active_animation
+        anims = bpy.context.object.mcblend.animations
         if active_anim_id < len(anims):
             row.operator(
                 "mcblend.remove_animation",

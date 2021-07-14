@@ -12,7 +12,7 @@ from bpy.props import (
     StringProperty, FloatProperty, EnumProperty, BoolProperty, IntProperty)
 from bpy_extras.io_utils import ExportHelper, ImportHelper
 
-from .animation_data import (
+from .object_data import (
     get_unused_event_name, list_effect_types_as_blender_enum)
 from .uv_data import get_unused_uv_group_name
 
@@ -115,12 +115,12 @@ class MCBLEND_OT_ExportAnimation(
     def poll(cls, context: bpy_types.Context):
         if context.mode != 'OBJECT':
             return False
-        if len(context.selected_objects) < 1:
+        if context.object.type != 'ARMATURE':
             return False
-        len_anims = len(context.scene.mcblend_animations)
+        len_anims = len(context.object.mcblend.animations)
         if len_anims == 0:
             return False
-        curr_anim_id = context.scene.mcblend_active_animation
+        curr_anim_id = context.object.mcblend.active_animation
         if 0 > curr_anim_id >= len_anims:
             return False
         return True
@@ -222,9 +222,7 @@ class MCBLEND_OT_FixUv(bpy.types.Operator):
     def poll(cls, context: bpy_types.Context):
         if context.mode != 'OBJECT':
             return False
-        if len(context.selected_objects) < 1:
-            return False
-        return True
+        return context.object.type == 'ARMATURE'
 
     def execute(self, context):
         try:
@@ -597,6 +595,11 @@ def save_animation_properties(animation, context):
         anim_timeline_marker = animation.timeline_markers.add()
         anim_timeline_marker.name = timeline_marker.name
         anim_timeline_marker.frame = timeline_marker.frame
+    animation.nla_tracks.clear()
+    for nla_track in context.object.animation_data.nla_tracks:
+        if not nla_track.mute:
+            cached_nla_track = animation.nla_tracks.add()
+            cached_nla_track.name = nla_track.name
 
 def load_animation_properties(animation, context):
     '''
@@ -612,6 +615,12 @@ def load_animation_properties(animation, context):
         context.scene.timeline_markers.new(
             anim_timeline_marker.name,
             frame=anim_timeline_marker.frame)
+    object_nla_tracks = context.object.animation_data.nla_tracks
+    for nla_track in object_nla_tracks:
+        nla_track.mute = True
+    for cached_nla_track in animation.nla_tracks:
+        if cached_nla_track.name in object_nla_tracks:
+            object_nla_tracks[cached_nla_track.name].mute = False
 
 class MCBLEND_OT_ListAnimations(bpy.types.Operator):
     '''
@@ -624,33 +633,44 @@ class MCBLEND_OT_ListAnimations(bpy.types.Operator):
         # pylint: disable=unused-argument
         items = [
             (str(i), x.name, x.name)
-            for i, x in enumerate(bpy.context.scene.mcblend_animations)]
+            for i, x in enumerate(bpy.context.object.mcblend.animations)]
         return items
 
     animations_enum: bpy.props.EnumProperty(  # type: ignore
         items=_list_animations, name="Animations")
 
-    # @classmethod
-    # def poll(cls, context):
-    #     return context.mode == 'OBJECT'
+    @classmethod
+    def poll(cls, context):
+        if context.mode != 'OBJECT':
+            return False
+        if context.object.type != 'ARMATURE':
+            return False
+        return True
 
     def execute(self, context):
         '''
         Runs when user picks an item from the dropdown menu in animations
         panel. Sets the active animation.
         '''
+        # Cancel operation if there is an action being edited
+        if context.object.animation_data.action is not None:
+            self.report(
+                {'WARNING'},
+                "Stash, push down or delete the active action before "
+                "selecting new animation")
+            return {'CANCELLED'}
         # If OK than save old animation state
-        len_anims = len(context.scene.mcblend_animations)
-        curr_anim_id = context.scene.mcblend_active_animation
+        len_anims = len(context.object.mcblend.animations)
+        curr_anim_id = context.object.mcblend.active_animation
         if 0 <= curr_anim_id < len_anims:
             save_animation_properties(
-                context.scene.mcblend_animations[curr_anim_id], context)
+                context.object.mcblend.animations[curr_anim_id], context)
 
         # Set new animation and load its state
         new_anim_id=int(self.animations_enum)
-        context.scene.mcblend_active_animation=new_anim_id
+        context.object.mcblend.active_animation=new_anim_id
         load_animation_properties(
-                context.scene.mcblend_animations[new_anim_id], context)
+                context.object.mcblend.animations[new_anim_id], context)
         return {'FINISHED'}
 
 class MCBLEND_OT_AddAnimation(bpy.types.Operator):
@@ -659,19 +679,34 @@ class MCBLEND_OT_AddAnimation(bpy.types.Operator):
     bl_label = '''Adds new animation to the list.'''
     bl_options = {'UNDO'}
 
+    @classmethod
+    def poll(cls, context):
+        if context.mode != 'OBJECT':
+            return False
+        if context.object.type != 'ARMATURE':
+            return False
+        return True
+
     def execute(self, context):
+        # Cancel operation if there is an action being edited
+        if context.object.animation_data.action is not None:
+            self.report(
+                {'WARNING'},
+                "Stash, push down or delete the active action before "
+                "adding new animation")
+            return {'CANCELLED'}
         # If OK save old animation
-        len_anims = len(context.scene.mcblend_animations)
-        curr_anim_id = context.scene.mcblend_active_animation
+        len_anims = len(context.object.mcblend.animations)
+        curr_anim_id = context.object.mcblend.active_animation
         if 0 <= curr_anim_id < len_anims:
             save_animation_properties(
-                context.scene.mcblend_animations[curr_anim_id], context)
+                context.object.mcblend.animations[curr_anim_id], context)
             context.scene.timeline_markers.clear()
 
         # Add new animation and set its properties
-        animation_new = context.scene.mcblend_animations.add()
-        len_anims = len(context.scene.mcblend_animations)
-        context.scene.mcblend_active_animation=len_anims-1
+        animation_new = context.object.mcblend.animations.add()
+        len_anims = len(context.object.mcblend.animations)
+        context.object.mcblend.active_animation=len_anims-1
         animation_new.name = f'animation{len_anims}'
 
         # The object properties display the property edited by this operator
@@ -691,24 +726,36 @@ class MCBLEND_OT_RemoveAnimation(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return len(context.scene.mcblend_animations) > 0
+        if context.mode != 'OBJECT':
+            return False
+        if context.object.type != 'ARMATURE':
+            return False
+        return len(context.object.mcblend.animations) > 0
 
     def execute(self, context):
+        # Cancel operation if there is an action being edited
+        if context.object.animation_data.action is not None:
+            self.report(
+                {'WARNING'},
+                "Stash, push down or delete the active action before "
+                "removing new animation")
+            return {'CANCELLED'}
+
         # Remove animation
-        context.scene.mcblend_animations.remove(
-            context.scene.mcblend_active_animation)
+        context.object.mcblend.animations.remove(
+            context.object.mcblend.active_animation)
 
         # Set new active animation
-        last_active=context.scene.mcblend_active_animation
-        len_anims=len(context.scene.mcblend_animations)
+        last_active=context.object.mcblend.active_animation
+        len_anims=len(context.object.mcblend.animations)
         if last_active > 0:
-            context.scene.mcblend_active_animation=last_active-1
+            context.object.mcblend.active_animation=last_active-1
 
         # Load data from new active animation
-        curr_anim_id=context.scene.mcblend_active_animation
+        curr_anim_id=context.object.mcblend.active_animation
         if 0 <= curr_anim_id < len_anims:
             load_animation_properties(
-                context.scene.mcblend_animations[curr_anim_id], context)
+                context.object.mcblend.animations[curr_anim_id], context)
 
         # The object properties display the property edited by this operator
         # redraw it.

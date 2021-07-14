@@ -75,13 +75,13 @@ from .resource_pack_data import (
     MCBLEND_RenderControllersProperties,
     MCBLEND_ProjectProperties,
 )
-from .animation_data import (
+
+from .object_data import (
+    MCBLEND_EffectProperties,
+    MCBLEND_EventProperties,
     MCBLEND_TimelineMarkerProperties,
     MCBLEND_AnimationProperties,
-    MCBLEND_EffectProperties,
-    MCBLEND_EventProperties
-)
-from .object_data import (
+
     MCBLEND_FakeRcMaterialProperties,
     MCBLEND_FakeRcProperties,
     MCBLEND_ObjectProperties,
@@ -126,11 +126,6 @@ classes = (
     MCBLEND_RenderControllerArrayProperties,
     MCBLEND_RenderControllersProperties,
     MCBLEND_ProjectProperties,
-
-    MCBLEND_EffectProperties,
-    MCBLEND_EventProperties,
-    MCBLEND_TimelineMarkerProperties,
-    MCBLEND_AnimationProperties,
 
     MCBLEND_PT_ObjectPropertiesPanel,
     MCBLEND_PT_ArmatureRenderControllersPanel,
@@ -179,6 +174,10 @@ classes = (
     MCBLEND_OT_RemoveUvMaskStripe,
     MCBLEND_OT_MoveUvMaskStripe,
 
+    MCBLEND_EffectProperties,
+    MCBLEND_EventProperties,
+    MCBLEND_TimelineMarkerProperties,
+    MCBLEND_AnimationProperties,
     MCBLEND_FakeRcMaterialProperties,
     MCBLEND_FakeRcProperties,
     MCBLEND_ObjectProperties,
@@ -216,12 +215,6 @@ def register():
     bpy.types.Scene.mcblend_project = PointerProperty(
         type=MCBLEND_ProjectProperties
     )
-
-    # Animation properties
-    bpy.types.Scene.mcblend_active_animation = IntProperty(
-        default=0)
-    bpy.types.Scene.mcblend_animations = CollectionProperty(
-        type=MCBLEND_AnimationProperties)
 
     # Events
     bpy.types.Scene.mcblend_events = CollectionProperty(
