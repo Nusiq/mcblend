@@ -50,12 +50,25 @@ from .operator import (
 
     NUSIQ_MCBLEND_OT_ImportRpEntity,
     NUSIQ_MCBLEND_OT_ReloadRp,
+
+    NUSIQ_MCBLEND_OT_AddFakeRc,
+    NUSIQ_MCBLEND_OT_RemoveFakeRc,
+    NUSIQ_MCBLEND_OT_MoveFakeRc,
+    NUSIQ_MCBLEND_OT_FakeRcSelectTexture,
+    NUSIQ_MCBLEND_OT_AddFakeRcMaterial,
+    NUSIQ_MCBLEND_OT_RemoveFakeRcMaterial,
+    NUSIQ_MCBLEND_OT_MoveFakeRcMaterial,
+    NUSIQ_MCBLEND_OT_FakeRcSMaterailSelectTemplate,
+    NUSIQ_MCBLEND_OT_FakeRcApplyMaterials,
 )
 
-from .resource_pack_data import (
+from .common_data import (
     NUSIQ_MCBLEND_JustName,
     NUSIQ_MCBLEND_NameValuePair,
     NUSIQ_MCBLEND_EnumCache,
+)
+
+from .resource_pack_data import (
     NUSIQ_MCBLEND_EntityProperties,
     NUSIQ_MCBLEND_MaterialProperties,
     NUSIQ_MCBLEND_RenderControllerArrayProperties,
@@ -72,6 +85,8 @@ from .exporter_data import (
     NUSIQ_MCBLEND_ExporterProperties
 )
 from .object_data import (
+    NUSIQ_MCBLEND_FakeRcMaterialProperties,
+    NUSIQ_MCBLEND_FakeRcProperties,
     NUSIQ_MCBLEND_ObjectProperties,
 )
 from .uv_data import (
@@ -83,6 +98,7 @@ from .uv_data import (
 
 from .panel import (
     NUSIQ_MCBLEND_PT_ObjectPropertiesPanel,
+    NUSIQ_MCBLEND_PT_ArmatureRenderControllersPanel,
     NUSIQ_MCBLEND_PT_AnimationPropertiesPanel,
     NUSIQ_MCBLEND_PT_UvMappingPanel,
     NUSIQ_MCBLEND_PT_OperatorsPanel,
@@ -122,6 +138,7 @@ classes = (
     NUSIQ_MCBLEND_AnimationProperties,
 
     NUSIQ_MCBLEND_PT_ObjectPropertiesPanel,
+    NUSIQ_MCBLEND_PT_ArmatureRenderControllersPanel,
     NUSIQ_MCBLEND_OT_ExportModel,
     NUSIQ_MCBLEND_OT_ExportAnimation,
     NUSIQ_MCBLEND_PT_AnimationPropertiesPanel,
@@ -167,6 +184,8 @@ classes = (
     NUSIQ_MCBLEND_OT_RemoveUvMaskStripe,
     NUSIQ_MCBLEND_OT_MoveUvMaskStripe,
 
+    NUSIQ_MCBLEND_FakeRcMaterialProperties,
+    NUSIQ_MCBLEND_FakeRcProperties,
     NUSIQ_MCBLEND_ObjectProperties,
 
     NUSIQ_MCBLEND_StripeProperties,
@@ -180,6 +199,16 @@ classes = (
     NUSIQ_MCBLEND_OT_ImportRpEntity,
     NUSIQ_MCBLEND_OT_ReloadRp,
     NUSIQ_MCBLEND_PT_ProjectPanel,
+
+    NUSIQ_MCBLEND_OT_AddFakeRc,
+    NUSIQ_MCBLEND_OT_RemoveFakeRc,
+    NUSIQ_MCBLEND_OT_MoveFakeRc,
+    NUSIQ_MCBLEND_OT_FakeRcSelectTexture,
+    NUSIQ_MCBLEND_OT_AddFakeRcMaterial,
+    NUSIQ_MCBLEND_OT_RemoveFakeRcMaterial,
+    NUSIQ_MCBLEND_OT_MoveFakeRcMaterial,
+    NUSIQ_MCBLEND_OT_FakeRcSMaterailSelectTemplate,
+    NUSIQ_MCBLEND_OT_FakeRcApplyMaterials,
 )
 
 def register():

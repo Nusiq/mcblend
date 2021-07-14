@@ -210,6 +210,7 @@ def create_material_mix_node_group():
 
 MATERIALS_MAP = {
         'entity_alphatest': create_entity_alphatest_node_group,
+
         'entity_alphablend': create_entity_alphablend_node_group,
 
         'entity_emissive': create_entity_emissive_node_group,

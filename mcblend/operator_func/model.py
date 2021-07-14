@@ -103,7 +103,7 @@ class BoneExport:
     - `cubes: List[CubeExport]` - list of cubes to export.
     - `locators: Dict[str, LocatorExport]` - list of locators to export.
       (if exists) or None
-
+    - `mcblend_obj: McblendObject` - McblendObject of this bone.
     '''
     def __init__(self, bone: McblendObject, model: ModelExport):
         '''
@@ -111,6 +111,7 @@ class BoneExport:
         than ValueError is raised.
         '''
         self.model = model
+        self.mcblend_obj = bone
         # Test if bone is valid input object
         if bone.mctype not in [MCObjType.BONE, MCObjType.BOTH]:
             raise ValueError('Input object is not a bone.')
@@ -161,7 +162,8 @@ class BoneExport:
                 locatorprop.mccube_position *
                 _l_scale * MINECRAFT_SCALE_FACTOR
             )
-            self.locators[locatorprop.obj_name] = LocatorExport(l_origin)
+            self.locators[locatorprop.obj_name] = LocatorExport(
+                l_origin, locatorprop)
 
         # Set cubes
         for cubeprop in cube_objs:
@@ -183,7 +185,7 @@ class BoneExport:
                 cube = CubeExport(
                     size=c_size, pivot=c_pivot, origin=c_origin,
                     rotation=c_rot, inflate=cubeprop.inflate, uv=uv,
-                    uv_mirror=uv_mirror)
+                    uv_mirror=uv_mirror, mcblend_obj=cubeprop)
                 self.cubes.append(cube)
             elif cubeprop.mesh_type is MeshType.POLY_MESH:
                 cubeprop.obj_data.calc_normals_split()
@@ -224,7 +226,8 @@ class BoneExport:
                     if len(curr_poly) == 3:
                         curr_poly.append(copy(curr_poly[2]))
                     polys.append(curr_poly)
-                self.poly_mesh.extend_mesh_data(positions, normals, polys, uvs)
+                self.poly_mesh.extend_mesh_data(
+                    positions, normals, polys, uvs, cubeprop)
 
     def json(self) -> Dict:
         '''
@@ -260,6 +263,7 @@ class BoneExport:
 class LocatorExport:
     '''Object that represents a Locator during model export.'''
     origin: np.ndarray
+    mcblend_obj: McblendObject
 
     def json(self):
         '''Returns JSON representation of this object'''
@@ -275,6 +279,7 @@ class CubeExport:
     inflate: float
     uv: Any
     uv_mirror: bool
+    mcblend_obj: McblendObject
 
     def json(self):
         '''Returns JSON representation of this object.'''
@@ -302,15 +307,17 @@ class PolyMesh:
         self.uvs: List[List[int]] = []
         self.polys: List[List[List[int]]] = []
         self.normalized_uvs: bool = True
+        self.mcblend_objs: List[McblendObject] = []
 
     def extend_mesh_data(
             self, positions: List[List[float]], normals: List[List[float]],
             polys: List[List[Tuple[int, int, int]]],
-            uvs: List[List[int]]):
+            uvs: List[List[int]], mcblend_obj: McblendObject):
         '''
         Extends the poly_mesh data with new vertices, normals, polys and uvs
         from another mesh.
         '''
+        self.mcblend_objs.append(mcblend_obj)
         vertex_id_offset = len(self.positions)
         normal_id_offset = len(self.normals)
         loop_id_offset = len(self.uvs)

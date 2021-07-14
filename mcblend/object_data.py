@@ -4,7 +4,7 @@ Custom Blender objects with additional data for the objects and empties.
 import bpy
 from bpy.props import (
     BoolProperty, EnumProperty, FloatProperty, IntVectorProperty,
-    StringProperty, IntProperty, FloatVectorProperty)
+    StringProperty, IntProperty, FloatVectorProperty, CollectionProperty)
 
 from .operator_func.common import MeshType
 
@@ -13,6 +13,35 @@ def list_mesh_types_as_blender_enum(self, context):
     '''List mesh types for EnumProperty.'''
     # pylint: disable=unused-argument
     return [(i.value, i.value, i.value) for i in MeshType]
+
+
+class NUSIQ_MCBLEND_FakeRcMaterialProperties(bpy.types.PropertyGroup):
+    '''
+    Pattern-material pair for NUSIQ_MCBLEND_FakeRcProperties object.
+    '''
+    pattern: StringProperty(  # type: ignore
+        name="", description="The bone name pattern for assigning material.",
+        default="", maxlen=1024)
+    material: StringProperty(  # type: ignore
+        name="",
+        description="Name of the material used by this render controller",
+        default="",
+        maxlen=1024
+    )
+
+class NUSIQ_MCBLEND_FakeRcProperties(bpy.types.PropertyGroup):
+    '''
+    Armature property group similar to Minecraft render controller used for
+    generating Minecraft materials.
+    '''
+    texture: StringProperty(  # type: ignore
+        name="",
+        description="Name of the texture used by this render controller",
+        default="",
+        maxlen=1024
+    )
+    materials: CollectionProperty(  # type: ignore
+        type=NUSIQ_MCBLEND_FakeRcMaterialProperties, name='Materials')
 
 class NUSIQ_MCBLEND_ObjectProperties(bpy.types.PropertyGroup):
     '''Custom properties of an object.'''
@@ -75,6 +104,10 @@ class NUSIQ_MCBLEND_ObjectProperties(bpy.types.PropertyGroup):
         ),
         default=64,
         min=1
+    )
+    # RENDER CONTROLLERS (armature properties used for generating materials)
+    render_controllers: CollectionProperty(  # type: ignore
+        type=NUSIQ_MCBLEND_FakeRcProperties, name="Render Controllers"
     )
 
     # CUBE PROPERTIES

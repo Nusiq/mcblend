@@ -492,35 +492,128 @@ class NUSIQ_MCBLEND_PT_ObjectPropertiesPanel(bpy.types.Panel):
                     object_properties, "min_uv_size", text="Min UV bound")
         elif context.object.type == 'ARMATURE':
             # col.prop(context.scene.nusiq_mcblend, "path", text="")
+            object_properties = context.object.nusiq_mcblend_object_properties
             col.prop(
-                context.object.nusiq_mcblend_object_properties,
-                "model_name", text="Name")
+                object_properties, "model_name", text="Name")
             col.prop(
-                context.object.nusiq_mcblend_object_properties,
-                "visible_bounds_width", text="Visible bounds width")
+                object_properties, "visible_bounds_width",
+                text="Visible bounds width")
             col.prop(
-                context.object.nusiq_mcblend_object_properties,
-                "visible_bounds_height", text="Visible bounds height")
+                object_properties, "visible_bounds_height",
+                text="Visible bounds height")
             col.prop(
-                context.object.nusiq_mcblend_object_properties,
-                "visible_bounds_offset", text="Visible bounds offset")
+                object_properties, "visible_bounds_offset",
+                text="Visible bounds offset")
             col.separator()
             col.prop(
-                context.object.nusiq_mcblend_object_properties,
-                "texture_width", text="Texture width")
+                object_properties, "texture_width", text="Texture width")
             col.prop(
-                context.object.nusiq_mcblend_object_properties,
-                "texture_height", text="Texture height")
+                object_properties, "texture_height", text="Texture height")
             col.prop(
-                context.object.nusiq_mcblend_object_properties,
-                "allow_expanding", text="Allow texture expanding")
+                object_properties, "allow_expanding",
+                text="Allow texture expanding")
             col.prop(
-                context.object.nusiq_mcblend_object_properties,
-                "generate_texture", text="Generate Texture")
-            if context.object.nusiq_mcblend_object_properties.generate_texture:
+                object_properties, "generate_texture",
+                text="Generate Texture")
+            if object_properties.generate_texture:
                 col.prop(
-                    context.object.nusiq_mcblend_object_properties,
-                    "texture_template_resolution", text="Template resolution")
+                    object_properties, "texture_template_resolution",
+                    text="Template resolution")
+
+# Armature render controllers properties
+class NUSIQ_MCBLEND_PT_ArmatureRenderControllersPanel(bpy.types.Panel):
+    '''Panel used for editing custom model object properties.'''
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = 'object'
+    bl_label = "Mcblend Render Controllers"
+
+    @classmethod
+    def poll(cls, context):
+        if context.active_object:
+            return context.active_object.type == "ARMATURE"
+        return False
+
+    def draw(self, context):
+        col = self.layout.column(align=True)
+        if not context.mode == "OBJECT" or context.object is None:
+            return
+
+        row = col.row()
+        object_properties = context.object.nusiq_mcblend_object_properties
+        row.operator(
+            "nusiq_mcblend.fake_rc_apply_materials", icon='FILE_REFRESH',
+            text='Apply Materials')
+        op_props = row.operator(
+            "nusiq_mcblend.add_fake_rc", icon='ADD',
+            text='Add Render Controller')
+        col.separator()
+        len_rc = len(object_properties.render_controllers)
+        for rc_index, rc in enumerate(object_properties.render_controllers):
+            box = col.box()
+            box_col = box.column()
+            up_down_row = box_col.row(align=True)
+            if rc_index-1 >= 0:
+                op_props = up_down_row.operator(
+                    "nusiq_mcblend.move_fake_rc", icon='TRIA_UP',
+                    text='')
+                op_props.rc_index = rc_index
+                op_props.move_to = rc_index-1
+            if rc_index+1 < len_rc:
+                op_props = up_down_row.operator(
+                    "nusiq_mcblend.move_fake_rc", icon='TRIA_DOWN',
+                    text='')
+                op_props.rc_index = rc_index
+                op_props.move_to = rc_index+1
+            op_props = up_down_row.operator(
+                "nusiq_mcblend.remove_fake_rc", icon='X',
+                text='')
+            op_props.rc_index = rc_index
+            row = box_col.row(align=True)
+            row.prop(rc, "texture", text="Texture")
+            op_props = row.operator(
+                "nusiq_mcblend.fake_rc_select_texture", icon='TEXTURE',
+                text='')
+            
+            op_props.rc_index = rc_index
+            box_col.separator()
+            row = box_col.row()
+            row.label(text="Materials:")
+            op_props = row.operator(
+                "nusiq_mcblend.add_fake_rc_material", icon='ADD',
+                text='')
+            op_props.rc_index = rc_index
+            
+            len_rc_materials = len(rc.materials)
+            for material_index, rc_material in enumerate(rc.materials):
+                row = box_col.row(align=True)
+                row.prop(rc_material, "pattern", text="")
+                row.prop(rc_material, "material", text="")
+                op_props = row.operator(
+                    "nusiq_mcblend.fake_rc_material_select_template",
+                    icon='NODE_MATERIAL', text='')
+                op_props.rc_index = rc_index
+                op_props.material_index = material_index
+                row.separator()
+                if material_index-1 >= 0:
+                    op_props = row.operator(
+                        "nusiq_mcblend.move_fake_rc_material", icon='TRIA_UP',
+                        text='')
+                    op_props.rc_index = rc_index
+                    op_props.material_index = material_index
+                    op_props.move_to = material_index - 1
+                if material_index+1 < len_rc_materials:
+                    op_props = row.operator(
+                        "nusiq_mcblend.move_fake_rc_material", icon='TRIA_DOWN',
+                        text='')
+                    op_props.rc_index = rc_index
+                    op_props.material_index = material_index
+                    op_props.move_to = material_index + 1
+                op_props = row.operator(
+                    "nusiq_mcblend.remove_fake_rc_material", icon='X',
+                    text='')
+                op_props.rc_index = rc_index
+                op_props.material_index = material_index
 
 # Animation properties panel
 class NUSIQ_MCBLEND_PT_AnimationPropertiesPanel(bpy.types.Panel):

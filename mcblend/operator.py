@@ -17,8 +17,9 @@ from .animation_data import (
 from .uv_data import get_unused_uv_group_name
 
 from .operator_func import (
-    export_model, export_animation, fix_uvs, separate_mesh_cubes, set_uvs, round_dimensions,
-    import_model, inflate_objects, reload_rp_entities, import_model_form_project)
+    export_model, export_animation, fix_uvs, separate_mesh_cubes, set_uvs,
+    round_dimensions, import_model, inflate_objects, reload_rp_entities,
+    import_model_form_project, apply_materials)
 from .operator_func.bedrock_packs.json import CompactEncoder
 from .operator_func.exception import (
     InvalidUvShape, NameConflictException, NotEnoughTextureSpace,)
@@ -1614,4 +1615,201 @@ class NUSIQ_MCBLEND_OT_ImportRpEntity(bpy.types.Operator):
 
     def execute(self, context):
         import_model_form_project(context)
+        return {'FINISHED'}
+
+# Armature render controllers
+class NUSIQ_MCBLEND_OT_AddFakeRc(bpy.types.Operator):
+    '''Adds new render controller to active model (armature).'''
+    bl_idname = "nusiq_mcblend.add_fake_rc"
+    bl_label = 'Adds new render controller'
+    bl_options = {'UNDO'}
+
+    @classmethod
+    def poll(cls, context: bpy_types.Context):
+        return context.object.type == 'ARMATURE'
+
+    def execute(self, context):
+        obj = context.object
+        rc = obj.nusiq_mcblend_object_properties.render_controllers.add()
+        material = rc.materials.add()
+        material.pattern = '*'
+        material.material = 'entity_alphatest'
+        return {'FINISHED'}
+
+class NUSIQ_MCBLEND_OT_RemoveFakeRc(bpy.types.Operator):
+    '''Removes render controller from active model (armature).'''
+    bl_idname = "nusiq_mcblend.remove_fake_rc"
+    bl_label = 'Removes render controller'
+    bl_options = {'UNDO'}
+
+    rc_index: IntProperty()  # type: ignore
+
+    @classmethod
+    def poll(cls, context: bpy_types.Context):
+        return context.object.type == 'ARMATURE'
+
+    def execute(self, context):
+        rcs = context.object.nusiq_mcblend_object_properties.render_controllers
+        rcs.remove(self.rc_index)
+        return {'FINISHED'}
+
+class NUSIQ_MCBLEND_OT_MoveFakeRc(bpy.types.Operator):
+    '''Moves render controller in active to a different spot on the list.'''
+    bl_idname = "nusiq_mcblend.move_fake_rc"
+    bl_label = 'Moves render controller'
+    bl_options = {'UNDO'}
+
+    rc_index: IntProperty()  # type: ignore
+    move_to: IntProperty()  # type: ignore
+
+    @classmethod
+    def poll(cls, context: bpy_types.Context):
+        return context.object.type == 'ARMATURE'
+
+    def execute(self, context):
+        rcs = context.object.nusiq_mcblend_object_properties.render_controllers
+        rcs.move(self.rc_index, self.move_to)
+        return {'FINISHED'}
+
+
+class NUSIQ_MCBLEND_OT_FakeRcSelectTexture(bpy.types.Operator):
+    '''Selects the name of the texture for render controller of a model.'''
+    bl_idname = "nusiq_mcblend.fake_rc_select_texture"
+    bl_label = "Selects the texture name"
+    bl_options = {'UNDO'}
+
+    rc_index: IntProperty(options={'HIDDEN'})  # type: ignore
+
+    def list_images(self, context):
+        items = [
+            (x.name, x.name, x.name)
+            for x in bpy.data.images]
+        return items
+    image: bpy.props.EnumProperty(  # type: ignore
+        items=list_images, name="Image")
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self)
+
+    @classmethod
+    def poll(cls, context: bpy_types.Context):
+        return context.object.type == 'ARMATURE'
+
+    def execute(self, context):
+        rc = context.object.nusiq_mcblend_object_properties.\
+            render_controllers[self.rc_index].texture = self.image
+        return {'FINISHED'}
+
+# Armature render controllers materials
+class NUSIQ_MCBLEND_OT_AddFakeRcMaterial(bpy.types.Operator):
+    '''
+    Adds new material to active render controller of active model (armature)
+    '''
+    bl_idname = "nusiq_mcblend.add_fake_rc_material"
+    bl_label = 'Adds new material'
+    bl_options = {'UNDO'}
+
+    rc_index: IntProperty()  # type: ignore
+
+    @classmethod
+    def poll(cls, context: bpy_types.Context):
+        return context.object.type == 'ARMATURE'
+
+    def execute(self, context):
+        rc = context.object.nusiq_mcblend_object_properties.render_controllers[
+            self.rc_index]
+        material = rc.materials.add()
+        material.pattern = '*'
+        material.material = 'entity_alphatest'
+        return {'FINISHED'}
+
+class NUSIQ_MCBLEND_OT_RemoveFakeRcMaterial(bpy.types.Operator):
+    '''
+    Removes material from active render controller of active model (armature).
+    '''
+    bl_idname = "nusiq_mcblend.remove_fake_rc_material"
+    bl_label = 'Removes material'
+    bl_options = {'UNDO'}
+
+    rc_index: IntProperty()  # type: ignore
+    material_index: IntProperty()  # type: ignore
+
+    @classmethod
+    def poll(cls, context: bpy_types.Context):
+        return context.object.type == 'ARMATURE'
+
+    def execute(self, context):
+        context.object.nusiq_mcblend_object_properties.render_controllers[
+            self.rc_index].materials.remove(self.material_index)
+        return {'FINISHED'}
+
+class NUSIQ_MCBLEND_OT_MoveFakeRcMaterial(bpy.types.Operator):
+    '''
+    Moves material of active render controller in active model to a 
+    different spot on the list.
+    '''
+    bl_idname = "nusiq_mcblend.move_fake_rc_material"
+    bl_label = 'Moves material'
+    bl_options = {'UNDO'}
+
+    rc_index: IntProperty()  # type: ignore
+    material_index: IntProperty()  # type: ignore
+    move_to: IntProperty()  # type: ignore
+
+    @classmethod
+    def poll(cls, context: bpy_types.Context):
+        return context.object.type == 'ARMATURE'
+
+    def execute(self, context):
+        context.object.nusiq_mcblend_object_properties.render_controllers[
+            self.rc_index].materials.move(self.material_index, self.move_to)
+        return {'FINISHED'}
+
+class NUSIQ_MCBLEND_OT_FakeRcSMaterailSelectTemplate(bpy.types.Operator):
+    '''Selects the material type.'''
+    bl_idname = "nusiq_mcblend.fake_rc_material_select_template"
+    bl_label = 'Selects the material type'
+    bl_options = {'UNDO'}
+
+    material: bpy.props.EnumProperty(  # type: ignore
+        items=[
+            ('entity_alphatest', 'entity_alphatest', 'entity_alphatest'),
+            ('entity_alphablend', 'entity_alphablend', 'entity_alphablend'),
+            ('entity_emissive', 'entity_emissive', 'entity_emissive'),
+            ('blaze_body', 'blaze_body', 'blaze_body'),
+            (
+                'entity_emissive_alpha', 'entity_emissive_alpha',
+                'entity_emissive_alpha'),
+            ('enderman', 'enderman', 'enderman'),
+            ('spider', 'spider', 'spider'),
+        ], name="Material")
+
+    rc_index: IntProperty(options={'HIDDEN'})  # type: ignore
+    material_index: IntProperty(options={'HIDDEN'})  # type: ignore
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self)
+
+    @classmethod
+    def poll(cls, context: bpy_types.Context):
+        return context.object.type == 'ARMATURE'
+
+    def execute(self, context):
+        context.object.nusiq_mcblend_object_properties.render_controllers[
+            self.rc_index].materials[
+                self.material_index].material = self.material
+        return {'FINISHED'}
+
+class NUSIQ_MCBLEND_OT_FakeRcApplyMaterials(bpy.types.Operator):
+    '''Applies the materials to the model'''
+    bl_idname = "nusiq_mcblend.fake_rc_apply_materials"
+    bl_label = 'Applies the materials to the model'
+    bl_options = {'UNDO'}
+
+    @classmethod
+    def poll(cls, context: bpy_types.Context):
+        return context.object.type == 'ARMATURE'
+
+    def execute(self, context):
+        apply_materials(context)
         return {'FINISHED'}

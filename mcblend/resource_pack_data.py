@@ -5,42 +5,15 @@ from typing import Any, List, Tuple
 
 import bpy
 from bpy.props import (
-    CollectionProperty, EnumProperty, PointerProperty, StringProperty,
-    BoolProperty)
+    CollectionProperty, EnumProperty, PointerProperty, StringProperty)
 
 from .operator_func import reload_rp_entities
 from .operator_func.molang import find_resources
+from .common_data import (
+    NUSIQ_MCBLEND_EnumCache, NUSIQ_MCBLEND_JustName,
+    NUSIQ_MCBLEND_NameValuePair)
 
 # Resource pack (importer)
-class NUSIQ_MCBLEND_JustName(bpy.types.PropertyGroup):
-    '''Custom property group which has only the "name" property'''
-    name: StringProperty(  # type: ignore
-        name="",
-        description="The identifier of the object",
-        default="", maxlen=1024)
-
-class NUSIQ_MCBLEND_NameValuePair(bpy.types.PropertyGroup):
-    '''
-    Custom property group which has only the "name" and "value" string
-    properties.
-    '''
-    name: StringProperty(  # type: ignore
-        name="",
-        description="The identifier of the object",
-        default="", maxlen=1024)
-    value: StringProperty(  # type: ignore
-        name="", description="The value of the object",
-        default="", maxlen=1024
-    )
-
-class NUSIQ_MCBLEND_EnumCache(bpy.types.PropertyGroup):
-    is_cached: BoolProperty(  # type: ignore
-        name="Single frame",
-        description="Whether this object already stores cached values or not",
-        default=False)
-    values: CollectionProperty(  # type: ignore
-        type=NUSIQ_MCBLEND_JustName)
-
 class NUSIQ_MCBLEND_EntityProperties(bpy.types.PropertyGroup):
     '''
     Cached properties of an entity from resource pack.

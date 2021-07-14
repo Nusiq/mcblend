@@ -553,7 +553,7 @@ class RcStackItem:
     '''
     Properties of a render controller.
     '''
-    texture: Image
+    texture: Optional[Image]
     '''The image with the textue'''
     materials: Dict[str, str] = field(default_factory=dict)
     '''Materials dict with pattern keys and full material names values.'''
@@ -584,7 +584,7 @@ def import_model_form_project(context: bpy_types.Context):
         texture_keys = cached_entity.textures.keys()
         if cached_rc.texture in cached_entity.textures.keys():
             texture_name = cached_entity.textures[cached_rc.texture].value
-            texture = bpy.data.images.load(
+            texture = bpy.data.images.load(  # TODO - what if there is no image file?
                 p.rp_texture_files[:texture_name:0].path.as_posix())
         new_rc_stack_item = RcStackItem(texture)
         if cached_rc.geometry not in cached_entity.geometries:
@@ -629,8 +629,17 @@ def import_model_form_project(context: bpy_types.Context):
         else:
             model_properties.model_name = geometry.identifier
             armature.name = geometry.identifier
+        # 7.2. Save render controller properties in the armature
+        for rc_stack_item in rc_stack:
+            armature_rc = armature.nusiq_mcblend_object_properties.\
+                render_controllers.add()
+            armature_rc.texture = rc_stack_item.texture.name
+            for pattern, material in rc_stack_item.materials.items():
+                armature_rc_material = armature_rc.materials.add()
+                armature_rc_material.pattern = pattern
+                armature_rc_material.material = material
 
-        # 7.2. For every bone of geometry, create blender material from.
+        # 7.3. For every bone of geometry, create blender material from.
         # Materials are created from a list of pairs:
         # (Image, minecraft material)
         for bone_name, bone in geometry.bones.items():
@@ -659,4 +668,68 @@ def import_model_form_project(context: bpy_types.Context):
                 if c.blend_cube is None:
                     continue
                 c.blend_cube.data.materials.append(
+                    blender_materials[tuple(bone_materials_id)])
+
+def apply_materials(context: bpy.types.Context):
+    '''
+    Applies materials from render controller menu into the model.
+
+    :param context: the context of running the operator.
+    '''
+    blender_materials: Dict[Tuple[Tuple[str, str], ...], Material] = {}
+    for armature in context.selected_objects:
+        if armature.type != 'ARMATURE':
+            continue
+        mcblend_obj_group = McblendObjectGroup(armature)
+        armature_properties = armature.nusiq_mcblend_object_properties
+
+        model = ModelExport(
+            texture_width=armature_properties.texture_width,
+            texture_height=armature_properties.texture_height,
+            visible_bounds_offset=tuple(  # type: ignore
+                armature_properties.visible_bounds_offset),
+            visible_bounds_width=armature_properties.visible_bounds_width,
+            visible_bounds_height=armature_properties.visible_bounds_height,
+            model_name=armature_properties.model_name,
+        )
+        model.load(mcblend_obj_group)
+        for bone in model.bones:
+            # Create a list of materials applicable for this bone
+            bone_materials: List[Tuple[Image, str]] = []
+            bone_materials_id: List[Tuple[Image, str]] = []
+
+
+            for rc in reversed(armature_properties.render_controllers):
+                texture: Optional[Image] = None
+                if rc.texture in bpy.data.images:
+                    texture = bpy.data.images[rc.texture]
+                rc_stack_item = RcStackItem(texture)
+                for rc_material in rc.materials:
+                    rc_stack_item.materials[
+                        rc_material.pattern] = rc_material.material
+
+                matched_material: Optional[str] = None
+                for pattern, material in rc_stack_item.materials.items():
+                    if star_pattern_match(bone.name, pattern):
+                        matched_material = material
+                # Add material to bone_materials only if something matched
+                if matched_material is not None:
+                    bone_materials.append(
+                        (rc_stack_item.texture, matched_material))
+                    bone_materials_id.append(
+                        (rc_stack_item.texture.name, matched_material))
+            if len(bone_materials) == 0:  # No material for this bone!
+                continue
+            try:  # try to use existing material
+                material = blender_materials[tuple(bone_materials_id)]
+            except:  # create material
+                material = create_bone_material("MC_Material", bone_materials)
+                blender_materials[tuple(bone_materials_id)] = material
+            for c in bone.cubes:
+                c.mcblend_obj.obj_data.materials.clear()
+                c.mcblend_obj.obj_data.materials.append(
+                    blender_materials[tuple(bone_materials_id)])
+            for p in bone.poly_mesh.mcblend_objs:
+                p.mcblend_obj.obj_data.materials.clear()
+                p.mcblend_obj.obj_data.materials.append(
                     blender_materials[tuple(bone_materials_id)])
