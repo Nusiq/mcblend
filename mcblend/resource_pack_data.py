@@ -177,7 +177,7 @@ def enum_project_entities(self, context):
     '''List project entities as blender enum list.'''
     # pylint: disable=unused-argument
     return [
-        (i, i, i)for i in
+        (i, i, i) for i in
         sorted(j.name for j in context.scene.mcblend_project.entities)
     ]
 

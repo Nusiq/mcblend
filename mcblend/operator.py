@@ -1596,6 +1596,10 @@ class MCBLEND_OT_ImportRpEntity(bpy.types.Operator):
     bl_options = {'UNDO'}
     bl_description = "Import entity by it's name from the resource pack."
 
+    @classmethod
+    def poll(cls, context: bpy_types.Context):
+        return len(context.scene.mcblend_project.entities) > 0
+
     def execute(self, context):
         import_model_form_project(context)
         return {'FINISHED'}

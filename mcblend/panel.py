@@ -793,22 +793,23 @@ class MCBLEND_PT_ProjectPanel(bpy.types.Panel):
         )
         project = context.scene.mcblend_project
         # Don't draw dropdown lists if they're empty
-        if project.entity_names != '':
+        if len(project.entities) > 0:
             col.prop_search(
                 data=project, property="entity_names",
                 search_data=project, search_property="entities",
                 text="Entity"
             )
-        entity = project.entities[project.entity_names]
-        for rc_name in entity.render_controllers.keys():
-            if rc_name not in project.render_controllers:
-                # The definition should be on the list of fake RC
-                rc = project.fake_render_controllers[rc_name]
-            else:
-                rc = project.render_controllers[rc_name]
-            self.draw_render_controller(rc, col)
+            if project.entity_names in project.entities:
+                entity = project.entities[project.entity_names]
+                for rc_name in entity.render_controllers.keys():
+                    if rc_name not in project.render_controllers:
+                        # The definition should be on the list of fake RC
+                        rc = project.fake_render_controllers[rc_name]
+                    else:
+                        rc = project.render_controllers[rc_name]
+                    self.draw_render_controller(rc, col)
 
-        col.operator(
-            "mcblend.import_rp_entity",
-            text="Import from project"
-        )
+                col.operator(
+                    "mcblend.import_rp_entity",
+                    text="Import from project"
+                )
