@@ -17,7 +17,7 @@ from .animation import AnimationExport
 from .bedrock_packs import Project, ResourcePack
 from .common import (
     MINECRAFT_SCALE_FACTOR, CubePolygon, McblendObjectGroup, MeshType,
-    apply_obj_transform_keep_origin, fix_cube_rotation)
+    apply_obj_transform_keep_origin, fix_cube_rotation, star_pattern_match)
 from .importer import ImportGeometry, ModelLoader
 from .material import create_bone_material
 from .model import ModelExport
@@ -293,14 +293,7 @@ def import_model(data: Dict, geometry_name: str, context: bpy_types.Context):
     :param geometry_name: the name of the geometry to load from the model.
     :param context: the context of running the operator.
     '''
-    # :param replace_bones_with_empties: Whether to import bones as empties
-    #     (True) or as armature and bones (False).
-
     geometry = ImportGeometry(ModelLoader(data, geometry_name))
-    # TODO - add support for empties as bones again
-    # if replace_bones_with_empties:
-    #     geometry.build_with_empties(context)
-    # else:
     armature = geometry.build_with_armature(context)
     model_properties = armature.mcblend_object_properties
 
@@ -311,7 +304,6 @@ def import_model(data: Dict, geometry_name: str, context: bpy_types.Context):
     model_properties.visible_bounds_height = geometry.visible_bounds_height
 
     if geometry.identifier.startswith('geometry.'):
-        # TODO - maybe just use the amrature name instead of that property?
         model_properties.model_name = geometry.identifier[9:]
         armature.name = geometry.identifier[9:]
     else:
@@ -491,63 +483,6 @@ def reload_rp_entities(context: bpy_types.Context):
                     item = material_array.items.add()
                     item.name = i
 
-# TODO - maybe move some of this code somewhere else... it's getting pretty
-# long and hard to read. This files is meant to be short and contain only
-# the most important functions for operators
-def star_pattern_match(text: str, pattern: str) -> bool:
-    '''
-    Matches text with a pattern that uses "*" as a wildcard which
-    can represent any number of characters.
-
-    :param pattern: the pattern
-    :param text: the text being matched with pattern
-    '''
-    lenp, lent = len(pattern), len(text)
-
-    # Only empty text can match empty pattern
-    if lenp == 0:
-        return lent == 0
-
-    # The table that represents matching smaller patterns to
-    # parts of the text. Row 0 is for empty pattern, column 0
-    # represents empty text: matches[text+1][pattern+1]
-    matches = [[False for i in range(lenp + 1)] for j in range(lent + 1)]
-
-    # Empty pattern matches the empty string
-    matches[0][0] = True
-
-    # Only paterns made out of '*' can match empty stirng
-    for p in range(1, lenp+1):
-        # Propagate matching apttern as long as long as the
-        # pattern uses only '*'
-        if pattern[p - 1] == '*':
-            matches[0][p] = matches[0][p - 1]
-        else:
-            break
-    # Fill the pattern matching table (solutions to
-    # shorter patterns/texts are used to solve
-    # other patterns with increasing complexity).
-    for t in range(1, lent + 1):
-        for p in range(1, lenp + 1):
-            if pattern[p - 1] == '*':
-                # Two wys to propagate matching value
-                # A) Same pattern without '*' worked so this also works
-                # B) Shorter text matched this pattern, and it ends with '*'
-                # so adding characters doesn't change anything
-                matches[t][p] = (
-                    matches[t][p - 1] or
-                    matches[t - 1][p]
-                )
-            elif pattern[p -1] == text[t - 1]:
-                # One way to propagate matching value
-                # If the pattern with one less character matched the text
-                # with one less character (and we have a matching pair now)
-                # then this pattern also matches
-                matches[t][p] = matches[t - 1][p - 1]
-            else:
-                matches[t][p] = False  # no match, always false
-    return matches[lent][lenp]  # return last matched pattern
-
 @dataclass
 class RcStackItem:
     '''
@@ -584,8 +519,11 @@ def import_model_form_project(context: bpy_types.Context):
         texture_keys = cached_entity.textures.keys()
         if cached_rc.texture in cached_entity.textures.keys():
             texture_name = cached_entity.textures[cached_rc.texture].value
-            texture = bpy.data.images.load(  # TODO - what if there is no image file?
-                p.rp_texture_files[:texture_name:0].path.as_posix())
+            try:
+                texture = bpy.data.images.load(
+                    p.rp_texture_files[:texture_name:0].path.as_posix())
+            except RuntimeError:
+                texture = None
         new_rc_stack_item = RcStackItem(texture)
         if cached_rc.geometry not in cached_entity.geometries:
             raise ValueError(

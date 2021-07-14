@@ -1189,7 +1189,7 @@ class ImportGeometry:
         bpy.ops.armature.select_all(action='SELECT')
         bpy.ops.armature.delete()
         bpy.ops.object.mode_set(mode='OBJECT')
-        # TODO - the build the armature without using bpy.ops for better
+        # TODO - build the armature without using bpy.ops for better
         # performance
 
         # Save the armature

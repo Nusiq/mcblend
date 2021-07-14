@@ -905,3 +905,57 @@ def get_vect_json(arr: Iterable) -> List[float]:
         if result[i] == -0.0:
             result[i] = 0.0
     return result
+
+def star_pattern_match(text: str, pattern: str) -> bool:
+    '''
+    Matches text with a pattern that uses "*" as a wildcard which
+    can represent any number of characters.
+
+    :param pattern: the pattern
+    :param text: the text being matched with pattern
+    '''
+    lenp, lent = len(pattern), len(text)
+
+    # Only empty text can match empty pattern
+    if lenp == 0:
+        return lent == 0
+
+    # The table that represents matching smaller patterns to
+    # parts of the text. Row 0 is for empty pattern, column 0
+    # represents empty text: matches[text+1][pattern+1]
+    matches = [[False for i in range(lenp + 1)] for j in range(lent + 1)]
+
+    # Empty pattern matches the empty string
+    matches[0][0] = True
+
+    # Only paterns made out of '*' can match empty stirng
+    for p in range(1, lenp+1):
+        # Propagate matching apttern as long as long as the
+        # pattern uses only '*'
+        if pattern[p - 1] == '*':
+            matches[0][p] = matches[0][p - 1]
+        else:
+            break
+    # Fill the pattern matching table (solutions to
+    # shorter patterns/texts are used to solve
+    # other patterns with increasing complexity).
+    for t in range(1, lent + 1):
+        for p in range(1, lenp + 1):
+            if pattern[p - 1] == '*':
+                # Two wys to propagate matching value
+                # A) Same pattern without '*' worked so this also works
+                # B) Shorter text matched this pattern, and it ends with '*'
+                # so adding characters doesn't change anything
+                matches[t][p] = (
+                    matches[t][p - 1] or
+                    matches[t - 1][p]
+                )
+            elif pattern[p -1] == text[t - 1]:
+                # One way to propagate matching value
+                # If the pattern with one less character matched the text
+                # with one less character (and we have a matching pair now)
+                # then this pattern also matches
+                matches[t][p] = matches[t - 1][p - 1]
+            else:
+                matches[t][p] = False  # no match, always false
+    return matches[lent][lenp]  # return last matched pattern

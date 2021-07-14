@@ -223,7 +223,7 @@ MATERIALS_MAP = {
 
 def create_bone_material(
         material_name: str,
-        data: List[Tuple[Image, str]]) -> Material:
+        data: List[Tuple[Optional[Image], str]]) -> Material:
     '''
     Creates Blender material for a Minecraft bone based on a list of textures
     and Minecraft materials used by the render controllers that dispay this
