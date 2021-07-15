@@ -7,12 +7,12 @@
 				"visible_bounds_width": 1,
 				"visible_bounds_height": 1,
 				"visible_bounds_offset": [0, 0, 0],
-				"texture_width": 512,
+				"texture_width": 384,
 				"texture_height": 256
 			},
 			"bones": [
 				{
-					"name": "Cube",
+					"name": "Bone",
 					"cubes": [
 						{
 							"uv": [0, 0],

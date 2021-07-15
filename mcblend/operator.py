@@ -49,22 +49,23 @@ class MCBLEND_OT_ExportModel(
     def poll(cls, context: bpy_types.Context):
         if context.mode != 'OBJECT':
             return False
-        if len(context.selected_objects) < 1:
+        if context.object is None:
             return False
-        return True
+        return context.object.type == 'ARMATURE'
 
     def execute(self, context):
         bpy.ops.screen.animation_cancel()
         original_frame = context.scene.frame_current
         try:
             context.scene.frame_set(0)
-            for obj in context.selected_objects:
-                if obj.type == 'MESH' and any(map(lambda x: x < 0, obj.scale)):
-                    self.report(
-                        {'ERROR'},
-                        "Negative object scale is not supported. "
-                        f"Object: {obj.name}; Frame: 0.")
-                    return {'FINISHED'}
+            # TODO - implement this safety check in export_model
+            # for obj in context.selected_objects:
+            #     if obj.type == 'MESH' and any(map(lambda x: x < 0, obj.scale)):
+            #         self.report(
+            #             {'ERROR'},
+            #             "Negative object scale is not supported. "
+            #             f"Object: {obj.name}; Frame: 0.")
+            #         return {'FINISHED'}
             result = export_model(context)
         except NameConflictException as e:
             self.report({'ERROR'}, str(e))
@@ -173,22 +174,23 @@ class MCBLEND_OT_MapUv(bpy.types.Operator):
     def poll(cls, context: bpy_types.Context):
         if context.mode != 'OBJECT':
             return False
-        if len(context.selected_objects) < 1:
+        if context.object is None:
             return False
-        return True
+        return context.object.type == 'ARMATURE'
 
     def execute(self, context):
         bpy.ops.screen.animation_cancel()
         original_frame = context.scene.frame_current
         try:
             context.scene.frame_set(0)
-            for obj in context.selected_objects:
-                if obj.type == 'MESH' and any(map(lambda x: x < 0, obj.scale)):
-                    self.report(
-                        {'ERROR'},
-                        "Negative object scale is not supported. "
-                        f"Object: {obj.name}; Frame: 0.")
-                    return {'FINISHED'}
+            # TODO - add safety check with this to set_uvs() function
+            # for obj in context.selected_objects:
+            #     if obj.type == 'MESH' and any(map(lambda x: x < 0, obj.scale)):
+            #         self.report(
+            #             {'ERROR'},
+            #             "Negative object scale is not supported. "
+            #             f"Object: {obj.name}; Frame: 0.")
+            #         return {'FINISHED'}
             set_uvs(context)
         except NotEnoughTextureSpace:
             self.report(

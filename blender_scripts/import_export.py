@@ -18,12 +18,13 @@ def main(source_path: str, target_path: str):
     bpy.ops.object.delete(use_global=False)
 
     # Load model from source file
-    bpy.ops.mcblend.import_model(
-        filepath=source_path,
-        replace_bones_with_empties="use_empties" in argv)
+    bpy.ops.mcblend.import_model(filepath=source_path)
 
     # Save model to target file
-    bpy.ops.object.select_all(action='SELECT')
+    for obj in bpy.context.scene.objects:
+        if obj.type == 'ARMATURE':
+            bpy.context.view_layer.objects.active = obj
+            break
     bpy.ops.mcblend.export_model(filepath=target_path)
 
 

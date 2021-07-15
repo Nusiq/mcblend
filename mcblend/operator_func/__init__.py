@@ -34,23 +34,22 @@ def export_model(context: bpy_types.Context) -> Dict:
     :returns: JSON dict with Minecraft model.
     '''
     result = ModelExport.json_outer()
-    for object in context.selected_objects:
-        if object.type != 'ARMATURE':
-            continue
-        mcblend_obj_group = McblendObjectGroup(object)
-        model_properties = object.mcblend
+    object = context.object  # an armature
 
-        model = ModelExport(
-            texture_width=model_properties.texture_width,
-            texture_height=model_properties.texture_height,
-            visible_bounds_offset=tuple(  # type: ignore
-                model_properties.visible_bounds_offset),
-            visible_bounds_width=model_properties.visible_bounds_width,
-            visible_bounds_height=model_properties.visible_bounds_height,
-            model_name=model_properties.model_name,
-        )
-        model.load(mcblend_obj_group)
-        result['minecraft:geometry'].append(model.json_inner())
+    mcblend_obj_group = McblendObjectGroup(object)
+    model_properties = object.mcblend
+
+    model = ModelExport(
+        texture_width=model_properties.texture_width,
+        texture_height=model_properties.texture_height,
+        visible_bounds_offset=tuple(  # type: ignore
+            model_properties.visible_bounds_offset),
+        visible_bounds_width=model_properties.visible_bounds_width,
+        visible_bounds_height=model_properties.visible_bounds_height,
+        model_name=model_properties.model_name,
+    )
+    model.load(mcblend_obj_group)
+    result['minecraft:geometry'].append(model.json_inner())
     return result
 
 def export_animation(
@@ -98,68 +97,67 @@ def set_uvs(context: bpy_types.Context):
 
     :param context: the execution context.
     '''
-    for object in context.selected_objects:
-        if object.type != 'ARMATURE':
-            continue
-        model_properties = object.mcblend
-        width = model_properties.texture_width
-        height = model_properties.texture_height
-        allow_expanding = model_properties.allow_expanding
-        generate_texture = model_properties.generate_texture
-        resolution = model_properties.texture_template_resolution
+    object = context.object # an armature
 
-        mcblend_obj_group = McblendObjectGroup(object)
-        mapper = UvMapper(width, height, mcblend_obj_group)
-        mapper.plan_uv(allow_expanding)
+    model_properties = object.mcblend
+    width = model_properties.texture_width
+    height = model_properties.texture_height
+    allow_expanding = model_properties.allow_expanding
+    generate_texture = model_properties.generate_texture
+    resolution = model_properties.texture_template_resolution
 
-        # Replace old mappings
-        for objprop in mapper.uv_boxes:
-            objprop.clear_uv_layers()
+    mcblend_obj_group = McblendObjectGroup(object)
+    mapper = UvMapper(width, height, mcblend_obj_group)
+    mapper.plan_uv(allow_expanding)
 
-
-        # Update height and width
-        if allow_expanding:
-            widths = [width]
-            heights = [height]
-            for box in mapper.uv_boxes:
-                widths.append(box.uv[0] + box.size[0])
-                heights.append(box.uv[1] + box.size[1])
-            height = max(heights)
-            width = max(widths)
-
-            model_properties.texture_height = height
-            model_properties.texture_width = width
-
-        if generate_texture:
-            old_image = None
-            if "template" in bpy.data.images:
-                old_image = bpy.data.images['template']
-            image = bpy.data.images.new(
-                "template", width*resolution, height*resolution, alpha=True
-            )
-            if old_image is not None:
-                # If exists remap users of old image and remove it
-                old_image.user_remap(image)
-                bpy.data.images.remove(old_image)
-                image.name = "template"
+    # Replace old mappings
+    for objprop in mapper.uv_boxes:
+        objprop.clear_uv_layers()
 
 
-            # This array represents new texture
-            # DIM0:up axis DIM1:right axis DIM2:rgba axis
-            arr = np.zeros([image.size[1], image.size[0], 4])
+    # Update height and width
+    if allow_expanding:
+        widths = [width]
+        heights = [height]
+        for box in mapper.uv_boxes:
+            widths.append(box.uv[0] + box.size[0])
+            heights.append(box.uv[1] + box.size[1])
+        height = max(heights)
+        width = max(widths)
 
-            for uv_cube in mapper.uv_boxes:
-                uv_cube.paint_texture(arr, resolution)
-            image.pixels = arr.ravel()  # Apply texture pixels values
+        model_properties.texture_height = height
+        model_properties.texture_width = width
 
-        # Set blender UVs
-        converter = CoordinatesConverter(
-            np.array([[0, width], [0, height]]),
-            np.array([[0, 1], [1, 0]])
+    if generate_texture:
+        old_image = None
+        if "template" in bpy.data.images:
+            old_image = bpy.data.images['template']
+        image = bpy.data.images.new(
+            "template", width*resolution, height*resolution, alpha=True
         )
-        for curr_uv in mapper.uv_boxes:
-            curr_uv.new_uv_layer()
-            curr_uv.set_blender_uv(converter)
+        if old_image is not None:
+            # If exists remap users of old image and remove it
+            old_image.user_remap(image)
+            bpy.data.images.remove(old_image)
+            image.name = "template"
+
+
+        # This array represents new texture
+        # DIM0:up axis DIM1:right axis DIM2:rgba axis
+        arr = np.zeros([image.size[1], image.size[0], 4])
+
+        for uv_cube in mapper.uv_boxes:
+            uv_cube.paint_texture(arr, resolution)
+        image.pixels = arr.ravel()  # Apply texture pixels values
+
+    # Set blender UVs
+    converter = CoordinatesConverter(
+        np.array([[0, width], [0, height]]),
+        np.array([[0, 1], [1, 0]])
+    )
+    for curr_uv in mapper.uv_boxes:
+        curr_uv.new_uv_layer()
+        curr_uv.set_blender_uv(converter)
 
 def fix_uvs(context: bpy_types.Context) -> Tuple[int, int]:
     '''

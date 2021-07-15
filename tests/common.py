@@ -290,8 +290,7 @@ def compare_json_files(
             raise NoMatchError(f'{path}: Unequal items {source} != {target}')
 
 def run_import_export_comparison(
-        source: str, tmp: str, use_empties: bool
-    ) -> Tuple[Dict, Dict, str]:
+    source: str, tmp: str) -> Tuple[Dict, Dict, str]:
     '''
     Loads model from source to blender using mcblend_import
     Exports this model to tmp (to a file with the same name as source file).
@@ -316,11 +315,7 @@ def run_import_export_comparison(
     # Create tmp if not exists
     Path(tmp).mkdir(parents=True, exist_ok=True)
 
-    # Run blender actions
-    if use_empties:
-        blender_run_script(script, source, target, "use_empties")
-    else:
-        blender_run_script(script, source, target)
+    blender_run_script(script, source, target)
 
     # Validate results
     with open(source, 'r') as f:

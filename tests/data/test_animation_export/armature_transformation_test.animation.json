@@ -1,10 +1,10 @@
 {
 	"format_version": "1.8.0",
 	"animations": {
-		"animation.mcblend_animation": {
+		"animation.armature_transformation_test": {
 			"animation_length": 17.56,
 			"bones": {
-				"Cube": {
+				"Bone": {
 					"position": {
 						"0.0": [0, 0, 0],
 						"9.36": [0, 0, 0],

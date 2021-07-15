@@ -72,7 +72,7 @@ def scene(request):
 
 
 # TESTS
-def test_importer(scene):
+def test_uv_mapper(scene):
     result, expected_result = make_comparison_files(
         "./.tmp/test_uv_mapper", scene,
         './tests/data/tests_project.blend'

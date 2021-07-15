@@ -12,45 +12,36 @@ import pytest
 from .common import assert_is_model, blender_run_script, compare_json_files
 
 
-def make_comparison_files(
-        tmp: str, scene_name: str, blend_file_path: str,
-    ) -> tp.Tuple[tp.Dict, tp.Dict]:
+SCRIPT = Path('blender_scripts/export_model.py').resolve()
+TMP = Path(".tmp/test_model_export").resolve()
+EXAMPLES = Path(f'tests/data/test_model_export').resolve()
+BLEND_PROJECT = Path('tests/data/tests_project.blend').resolve()
+
+
+def make_comparison_files(scene: str) -> tp.Tuple[tp.Dict, tp.Dict]:
     '''
     Opens blender file, selects_scene and exports model from that to
     given tmp path.
 
     Returns the result JSON in a dictionary and the path to newly created file.
     '''
-    tmp = os.path.abspath(tmp)
-    target = os.path.join(tmp, f'{scene_name}.geo.json')
-    expected_result_path = (
-        f'./tests/data/test_model_export/{scene_name}.geo.json'
-    )
-
-    script = os.path.abspath('./blender_scripts/export_model.py')
-    blend_file_path = os.path.abspath(blend_file_path)
-
-    # Windows uses wierd path separators
-    tmp = tmp.replace('\\', '/')
-    target = target.replace('\\', '/')
-    script = script.replace('\\', '/')
-
-
-    # Create tmp if not exists
-    Path(tmp).mkdir(parents=True, exist_ok=True)
+    TMP.mkdir(parents=True, exist_ok=True)
+    output = TMP / f'{scene}.geo.json'
+    expected = EXAMPLES / f'{scene}.geo.json'
 
     # Run blender actions
     blender_run_script(
-        script, scene_name, target, blend_file_path=blend_file_path
+        SCRIPT.as_posix(), scene, output.as_posix(),
+        blend_file_path=BLEND_PROJECT.as_posix()
     )
 
     # Return results
-    with open(target, 'r') as f:
-        target_dict = json.load(f)
-    with open(expected_result_path, 'r') as f:
-        expected_result = json.load(f)
+    with output.open('r') as f:
+        output_dict = json.load(f)
+    with expected.open('r') as f:
+        expected_dict = json.load(f)
 
-    return target_dict, expected_result  # type: ignore
+    return output_dict, expected_dict  # type: ignore
 
 # PYTEST FUNCTIONS
 SCENES = [
@@ -60,9 +51,8 @@ SCENES = [
 
 def setup_module(module):
     '''Runs before tests'''
-    tmp_path = "./.tmp/test_model_export"
-    if os.path.exists(tmp_path):
-        shutil.rmtree(tmp_path)
+    if TMP.exists():
+        shutil.rmtree(TMP)
 
 
 @pytest.fixture(params=SCENES)
@@ -72,10 +62,7 @@ def scene(request):
 
 # TESTS
 def test_importer(scene):
-    result, expected_result = make_comparison_files(
-        "./.tmp/test_model_export", scene,
-        './tests/data/tests_project.blend'
-    )
+    result, expected_result = make_comparison_files(scene)
 
     assert_is_model(result)
     set_paths = {

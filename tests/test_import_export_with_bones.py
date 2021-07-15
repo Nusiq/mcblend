@@ -48,8 +48,7 @@ def test_bones_importer(model_files_properties):
         './tests/data/test_importer/models/', model_files_properties)
 
     source_dict, target_dict, target = run_import_export_comparison(
-        model_file, OUTPUT, False
-    )
+        model_file, OUTPUT)
 
     print(target)
     assert_is_model(target_dict)

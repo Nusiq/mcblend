@@ -17,7 +17,10 @@ argv = argv[argv.index("--") + 1:]
 def main(scene_name: str, target_path: str):
     '''Main function.'''
     bpy.context.window.scene = bpy.data.scenes[scene_name]
-    bpy.ops.object.select_all(action='SELECT')
+    for obj in bpy.context.scene.objects:
+        if obj.type == 'ARMATURE':
+            bpy.context.view_layer.objects.active = obj
+            break
     bpy.ops.mcblend.map_uv()
     bpy.ops.mcblend.export_model(filepath=target_path)
 
