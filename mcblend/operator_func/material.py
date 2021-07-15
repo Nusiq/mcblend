@@ -1,25 +1,25 @@
 '''
 Everything related to creating materials for the model.
 '''
-from typing import Optional, List, Tuple
+from typing import Deque, Optional, List, Tuple
 
 import bpy
 from collections import deque
-from bpy.types import Image, Material
+from bpy.types import Image, Material, Node, NodeTree
 
 PADDING = 300
 
-def _create_node_group_defaults(name: str):
-    group = bpy.data.node_groups.new(name, 'ShaderNodeTree')
+def _create_node_group_defaults(name: str) -> Tuple[NodeTree, Node, Node]:
+    group: NodeTree = bpy.data.node_groups.new(name, 'ShaderNodeTree')
 
     # create group inputs
-    inputs = group.nodes.new('NodeGroupInput')
+    inputs: Node = group.nodes.new('NodeGroupInput')
     inputs.location = (0, 0)
     group.inputs.new('NodeSocketColor','Color')
     group.inputs.new('NodeSocketFloat','Alpha')
 
     # create group outputs
-    outputs = group.nodes.new('NodeGroupOutput')
+    outputs: Node = group.nodes.new('NodeGroupOutput')
     outputs.location = (4*PADDING, 0)
     group.outputs.new('NodeSocketColor','Color')
     group.outputs.new('NodeSocketFloat','Alpha')
@@ -27,7 +27,7 @@ def _create_node_group_defaults(name: str):
 
     return group, inputs, outputs
 
-def create_entity_alphatest_node_group():
+def create_entity_alphatest_node_group() -> NodeTree:
     '''
     Creates a node group for entity alphatest material if it doesn't exist
     already, otherwise it returns existing node group.
@@ -54,7 +54,7 @@ def create_entity_alphatest_node_group():
 
     return group
 
-def create_entity_alphablend_node_group():
+def create_entity_alphablend_node_group() -> NodeTree:
     '''
     Creates a node group for entity alphablend material if it doesn't exist
     already, otherwise it returns existing node group.
@@ -77,7 +77,7 @@ def create_entity_alphablend_node_group():
 
     return group
 
-def create_entity_emissive_node_group():
+def create_entity_emissive_node_group() -> NodeTree:
     '''
     Creates a node group for entity emissive material if it doesn't exist
     already, otherwise it returns existing node group.
@@ -115,7 +115,7 @@ def create_entity_emissive_node_group():
 
     return group
 
-def create_entity_emissive_alpha_node_group():
+def create_entity_emissive_alpha_node_group() -> NodeTree:
     '''
     Creates a node group for entity emissive alpha material if it doesn't exist
     already, otherwise it returns existing node group.
@@ -154,7 +154,7 @@ def create_entity_emissive_alpha_node_group():
 
     return group
 
-def create_material_mix_node_group():
+def create_material_mix_node_group() -> NodeTree:
     '''
     Creates a node group for mixing Minecraft materials if it doesn't exist
     already, otherwise it returns existing node group.
@@ -254,7 +254,7 @@ def create_bone_material(
     bsdf_node.inputs['Sheen Tint'].default_value = 0
     bsdf_node.inputs['Roughness'].default_value = 1
 
-    node_groups = deque()
+    node_groups: Deque[Node] = deque()
 
     for i, item in enumerate(data):
         img, name = item
@@ -262,7 +262,7 @@ def create_bone_material(
             node_group_data = MATERIALS_MAP[name]()
         except:
             node_group_data = create_entity_alphatest_node_group()  # default
-        node_group = node_tree.nodes.new('ShaderNodeGroup')
+        node_group: Node = node_tree.nodes.new('ShaderNodeGroup')
         node_group.node_tree = node_group_data
         node_group.location = (-3*PADDING, -i*PADDING)
         image_node = node_tree.nodes.new('ShaderNodeTexImage')

@@ -438,39 +438,39 @@ def reload_rp_entities(context: bpy_types.Context):
 
     # Load render controller data into project
     for rc_file in p.rp_render_controllers:
-        for rc in rc_file:
+        for rc_obj in rc_file:
             new_rc = project_rcs.add()
             # new_rc.name: String
-            new_rc.name = rc.json.parent_key
+            new_rc.name = rc_obj.json.parent_key
             # new_rc.geometry_molang: String
-            new_rc.geometry_molang = rc.geometry
+            new_rc.geometry_molang = rc_obj.geometry
             # new_rc.texture_molang: String
-            if len(rc.textures) > 0:  # Currently only one texture is allowed
-                new_rc.texture_molang =  rc.textures[0]
+            if len(rc_obj.textures) > 0:  # Currently only one texture is allowed
+                new_rc.texture_molang =  rc_obj.textures[0]
             else:
                 new_rc.texture_molang = ''
             # new_rc.materials: Collection[MaterialProperties]
-            for k, v in rc.materials.items():
+            for k, v in rc_obj.materials.items():
                 material = new_rc.materials.add()
                 material.name = k  # pattern
                 material.value_molang = v
                 material.owner_name = new_rc.name
             # new_rc.geometry_arrays: Collection[ArrayProperties]
-            for array_name, array_v in rc.geometry_arrays.items():
+            for array_name, array_v in rc_obj.geometry_arrays.items():
                 geo_array = new_rc.geometry_arrays.add()
                 geo_array.name = array_name
                 for i in array_v:
                     item = geo_array.items.add()
                     item.name = i
             # new_rc.texture_arrays: Collection[ArrayProperties]
-            for array_name, array_v in rc.texture_arrays.items():
+            for array_name, array_v in rc_obj.texture_arrays.items():
                 texture_array = new_rc.texture_arrays.add()
                 texture_array.name = array_name
                 for i in array_v:
                     item = texture_array.items.add()
                     item.name = i
             # new_rc.material_arrays: Collection[ArrayProperties]
-            for array_name, array_v in rc.material_arrays.items():
+            for array_name, array_v in rc_obj.material_arrays.items():
                 material_array = new_rc.material_arrays.add()
                 material_array.name = array_name
                 for i in array_v:
@@ -540,7 +540,8 @@ def import_model_form_project(context: bpy_types.Context):
     # it's a dictionary of materials which uses a tuple with pairs of
     # names of the texutes and minecraft materials as the identifiers
     # of the material to create.
-    blender_materials: Dict[Tuple[Tuple[str, str], ...], Material] = {}
+    blender_materials: Dict[
+        Tuple[Tuple[Optional[str], str], ...], Material] = {}
     for geo_name, rc_stack in geo_rc_stacks.items():
         geometry_data: Dict = p.rp_models[:geo_name:0].json.data  # type: ignore
         # Import model
@@ -565,7 +566,10 @@ def import_model_form_project(context: bpy_types.Context):
         for rc_stack_item in rc_stack:
             armature_rc = armature.mcblend.\
                 render_controllers.add()
-            armature_rc.texture = rc_stack_item.texture.name
+            if rc_stack_item.texture is not None:
+                armature_rc.texture = rc_stack_item.texture.name
+            else:
+                armature_rc.texture = ""
             for pattern, material in rc_stack_item.materials.items():
                 armature_rc_material = armature_rc.materials.add()
                 armature_rc_material.pattern = pattern
@@ -577,7 +581,7 @@ def import_model_form_project(context: bpy_types.Context):
         for bone_name, bone in geometry.bones.items():
             # Create a list of materials applicable for this bone
             bone_materials: List[Tuple[Image, str]] = []
-            bone_materials_id: List[Tuple[Image, str]] = []
+            bone_materials_id: List[Tuple[Optional[str], str]] = []
             for rc_stack_item in reversed(rc_stack):
                 matched_material: Optional[str] = None
                 for pattern, material in rc_stack_item.materials.items():
@@ -587,8 +591,12 @@ def import_model_form_project(context: bpy_types.Context):
                 if matched_material is not None:
                     bone_materials.append(
                         (rc_stack_item.texture, matched_material))
-                    bone_materials_id.append(
-                        (rc_stack_item.texture.name, matched_material))
+                    if rc_stack_item.texture is None:
+                        bone_materials_id.append(
+                            (None, matched_material))
+                    else:
+                        bone_materials_id.append(
+                            (rc_stack_item.texture.name, matched_material))
             if len(bone_materials) == 0:  # No material for this bone!
                 continue
             try:  # try to use existing material
@@ -608,7 +616,8 @@ def apply_materials(context: bpy.types.Context):
 
     :param context: the context of running the operator.
     '''
-    blender_materials: Dict[Tuple[Tuple[str, str], ...], Material] = {}
+    blender_materials: Dict[
+        Tuple[Tuple[Optional[str], str], ...], Material] = {}
     armature = context.object
 
     mcblend_obj_group = McblendObjectGroup(armature)
@@ -647,8 +656,12 @@ def apply_materials(context: bpy.types.Context):
             if matched_material is not None:
                 bone_materials.append(
                     (rc_stack_item.texture, matched_material))
-                bone_materials_id.append(
-                    (rc_stack_item.texture.name, matched_material))
+                if rc_stack_item.texture is None:
+                    bone_materials_id.append(
+                        (None, matched_material))
+                else:
+                    bone_materials_id.append(
+                        (rc_stack_item.texture.name, matched_material))
         if len(bone_materials) == 0:  # No material for this bone!
             continue
         try:  # try to use existing material
@@ -661,6 +674,6 @@ def apply_materials(context: bpy.types.Context):
             c.mcblend_obj.obj_data.materials.append(
                 blender_materials[tuple(bone_materials_id)])
         for p in bone.poly_mesh.mcblend_objs:
-            p.mcblend_obj.obj_data.materials.clear()
-            p.mcblend_obj.obj_data.materials.append(
+            p.obj_data.materials.clear()
+            p.obj_data.materials.append(
                 blender_materials[tuple(bone_materials_id)])

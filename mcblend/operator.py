@@ -219,10 +219,11 @@ class MCBLEND_OT_FixUv(bpy.types.Operator):
         "Fix UV-map of selected cubes."
     )
 
-
     @classmethod
     def poll(cls, context: bpy_types.Context):
         if context.mode != 'OBJECT':
+            return False
+        if context.object is None:
             return False
         return context.object.type == 'ARMATURE'
 

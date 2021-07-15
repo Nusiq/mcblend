@@ -320,8 +320,9 @@ class MCBLEND_ObjectProperties(bpy.types.PropertyGroup):
     )
     # ANIMATIONS
     # Animation properties
-    active_animation: IntProperty(default=0)
-    animations: CollectionProperty(type=MCBLEND_AnimationProperties)
+    active_animation: IntProperty(default=0)  # type: ignore
+    animations: CollectionProperty(  # type: ignore
+        type=MCBLEND_AnimationProperties)
 
     # CUBE PROPERTIES
     mirror: BoolProperty(  # type: ignore

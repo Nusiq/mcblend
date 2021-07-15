@@ -7,7 +7,7 @@ from ctypes import c_int
 import math
 from enum import Enum
 from typing import (
-    Dict, Iterator, NamedTuple, List, Optional, Tuple, Any, Iterable, Sequence)
+    Deque, Dict, Iterator, NamedTuple, List, Optional, Tuple, Any, Iterable, Sequence)
 
 import numpy as np
 from collections import deque
@@ -745,15 +745,17 @@ class McblendObjectGroup:
     # in _load_objects. I'm not sure, I don't remember how it works.
     @staticmethod
     def _loop_armature_objects(
-            armature: bpy.context.object
+            armature: bpy.types.Object
             ) -> Iterator[Tuple[ObjectId, bpy.types.Object]]:
         '''
         Yields the offspring of the armature (the bones,
         objects parented to the bones, and the children of the objects).
         '''
+        bone: bpy.types.Bone
         for bone in armature.data.bones:  # BONES
             yield ObjectId(armature.name, bone.name), armature
-        offspring = deque()
+        offspring: Deque[bpy.types.Object] = deque()
+        child: bpy.types.Object
         for child in armature.children:  # ARMATURE CHILDREN
             if child.type not in ['MESH', 'EMPTY']:
                 continue

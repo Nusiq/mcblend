@@ -1444,6 +1444,10 @@ class _AnimationController(_McFileJsonMulti[MCFILE_COLLECTION]):  # GENERIC
                 return id_walker / key
         raise KeyError(key)
 
+    def __iter__(self) -> Iterator[JsonWalker]:
+        for k in self.keys():
+            yield self[k]
+
 class BpAnimationController(_AnimationController['BpAnimationControllers']):
     '''Behavior pack animation controller.'''
 
@@ -1642,6 +1646,10 @@ class RpAnimation(_Animation['RpAnimations']):
                             animation_name, effect))
         self._sound_effects = tuple(result)
         return self._sound_effects
+
+    def __iter__(self) -> Iterator[JsonWalker]:
+        for k in self.keys():
+            yield self[k]
 
 class BpBlock(_McFileJsonSingle['BpBlocks']):
     '''Behavior pack block file.'''
@@ -2050,7 +2058,9 @@ class RpRenderControllerInstance:
                 if not isinstance(geometry.data, str):
                     continue
                 geometries_list.append(geometry.data.lower())
-            result[array.parent_key.lower()] = tuple(geometries_list)
+            result[
+                array.parent_key.lower() # type: ignore
+            ] = tuple(geometries_list)
         self._geometry_arrays = result
         return self._geometry_arrays
 
@@ -2080,7 +2090,9 @@ class RpRenderControllerInstance:
                 if not isinstance(texture.data, str):
                     continue
                 texture_list.append(texture.data.lower())
-            result[array.parent_key.lower()] = tuple(texture_list)
+            result[
+                array.parent_key.lower()  # type: ignore
+            ] = tuple(texture_list)
         self._texture_arrays = result
         return self._texture_arrays
 
@@ -2096,7 +2108,9 @@ class RpRenderControllerInstance:
                 if not isinstance(material.data, str):
                     continue
                 materials_list.append(material.data.lower())
-            result[array.parent_key.lower()] = tuple(materials_list)
+            result[
+                array.parent_key.lower()  # type: ignore
+            ] = tuple(materials_list)
         self._materials_arrays = result
         return self._materials_arrays
 
@@ -2110,7 +2124,9 @@ class RpRenderControllerInstance:
         materials = rc / "materials" // int // str
         for material in materials:
             if isinstance(material.data, str):
-                result[material.parent_key.lower()] = material.data.lower()
+                result[
+                    material.parent_key.lower()  # type: ignore
+                ] = material.data.lower()
         self._materials = result
         return self._materials
 

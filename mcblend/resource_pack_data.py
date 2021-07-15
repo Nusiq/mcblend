@@ -58,7 +58,7 @@ class MCBLEND_MaterialProperties(bpy.types.PropertyGroup):
         name="Texture", description=(
             "The texture used by the importer for this render controller"),
         items=enum_rc_materials)
-    value_cache: PointerProperty(type=MCBLEND_EnumCache)
+    value_cache: PointerProperty(type=MCBLEND_EnumCache)  # type: ignore
     # Ugly hack to access the owner data
     owner_name: StringProperty(  # type: ignore
         name="Name", description=(
@@ -87,7 +87,7 @@ class MCBLEND_RenderControllerArrayProperties(bpy.types.PropertyGroup):
     name: StringProperty(  # type: ignore
         name="Name", description="Name of the array",
         default="", maxlen=1024)
-    items: CollectionProperty(
+    items: CollectionProperty(  # type: ignore
         type=MCBLEND_JustName,
         description="The list of molang variables from the array")
 
@@ -118,11 +118,11 @@ class MCBLEND_RenderControllersProperties(bpy.types.PropertyGroup):
     name: StringProperty(  # type: ignore
         name="Name", description="Name of the render controller",
         default="", maxlen=1024)
-    geometry_arrays: CollectionProperty(
+    geometry_arrays: CollectionProperty(  # type: ignore
         type=MCBLEND_RenderControllerArrayProperties)
-    texture_arrays: CollectionProperty(
+    texture_arrays: CollectionProperty(  # type: ignore
         type=MCBLEND_RenderControllerArrayProperties)
-    material_arrays: CollectionProperty(
+    material_arrays: CollectionProperty(  # type: ignore
         type=MCBLEND_RenderControllerArrayProperties)
     
     geometry_molang: StringProperty(  # type: ignore
@@ -134,7 +134,7 @@ class MCBLEND_RenderControllersProperties(bpy.types.PropertyGroup):
     geometry: EnumProperty(  # type: ignore
         name="Geometry", description="The geometry used by the importer",
         items=enum_rc_geometries)
-    geometry_cache: PointerProperty(type=MCBLEND_EnumCache)
+    geometry_cache: PointerProperty(type=MCBLEND_EnumCache)  # type: ignore
     texture_molang: StringProperty(  # type: ignore
         name="Texture molang",
         description=(
@@ -145,7 +145,7 @@ class MCBLEND_RenderControllersProperties(bpy.types.PropertyGroup):
         name="Texture", description=(
             "The texture used by the importer for this render controller"),
         items=enum_rc_textures)
-    texture_cache: PointerProperty(type=MCBLEND_EnumCache)
+    texture_cache: PointerProperty(type=MCBLEND_EnumCache)  # type: ignore
     materials: CollectionProperty(  # type: ignore
         type=MCBLEND_MaterialProperties)
 
