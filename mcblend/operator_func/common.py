@@ -22,6 +22,12 @@ from .exception import NameConflictException, NoCubePolygonsException
 MINECRAFT_SCALE_FACTOR = 16
 '''The scale convertion from blender to minecraft (16 units == 1 meter).'''
 
+class AnimationLoopType(Enum):
+    '''The types of the loop property from Minecraft animations'''
+    TRUE = 'true'
+    FALSE = 'false'
+    HOLD_ON_LAST_FRAME = 'hold_on_last_frame'
+
 class MCObjType(Enum):
     '''The types of Minecraft objects created from blender objects.'''
     CUBE = 'CUBE'

@@ -14,7 +14,7 @@ import bpy_types
 import numpy as np
 from .json_tools import get_vect_json
 from .common import (
-    MINECRAFT_SCALE_FACTOR, MCObjType, McblendObjectGroup
+    AnimationLoopType, MINECRAFT_SCALE_FACTOR, MCObjType, McblendObjectGroup
 )
 
 
@@ -224,7 +224,7 @@ class AnimationExport:
     '''
     name: str
     length: float
-    loop_animation: bool
+    loop_animation: str
     anim_time_update: str
     fps: float
     effect_events: Dict[str, Tuple[List[Dict], List[Dict]]]
@@ -334,8 +334,12 @@ class AnimationExport:
                     'sound_effects'] = sound_effects
 
             data = result["animations"][f"animation.{self.name}"]
-            if self.loop_animation:
+            if self.loop_animation == AnimationLoopType.TRUE.value:
                 data['loop'] = True
+            elif (
+                    self.loop_animation ==
+                    AnimationLoopType.HOLD_ON_LAST_FRAME.value):
+                data['loop'] = AnimationLoopType.HOLD_ON_LAST_FRAME.value
             if self.anim_time_update != "":
                 data['anim_time_update'] = self.anim_time_update
         return result

@@ -10,7 +10,7 @@ from bpy.props import (
     BoolProperty, CollectionProperty, EnumProperty, IntProperty,
     StringProperty)
 
-from .operator_func.common import MeshType
+from .operator_func.common import MeshType, AnimationLoopType
 from .common_data import MCBLEND_JustName
 
 # Animation properties
@@ -186,11 +186,23 @@ class MCBLEND_AnimationProperties(bpy.types.PropertyGroup):
         default="",
         maxlen=1024
     )
-    loop: BoolProperty(  # type: ignore
-        name="Loop",
-        description="Decides if animation should be looped",
-        default=True,
-    )
+    loop: EnumProperty(  # type: ignore
+        items=(
+            (
+                AnimationLoopType.TRUE.value, AnimationLoopType.TRUE.value,
+                'The animation is looped'
+            ),
+            (
+                AnimationLoopType.FALSE.value, AnimationLoopType.FALSE.value,
+                'The animation has no effect on entity after it finished'
+            ),
+            (
+                AnimationLoopType.HOLD_ON_LAST_FRAME.value,
+                AnimationLoopType.HOLD_ON_LAST_FRAME.value,
+                'After the end of animation the entity stays in the pose from '
+                'the last frame'
+            )
+        ), name='Loop')
     frame_start: IntProperty(  # type: ignore
         name="Frame start",
         description="The first frame of the animation.",
