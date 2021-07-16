@@ -1718,6 +1718,8 @@ class MCBLEND_OT_FakeRcSelectTexture(bpy.types.Operator):
     rc_index: IntProperty(options={'HIDDEN'})  # type: ignore
 
     def list_images(self, context):
+        '''Lists images for dropdown list'''
+        # pylint: disable=unused-argument
         items = [
             (x.name, x.name, x.name)
             for x in bpy.data.images]
@@ -1733,8 +1735,8 @@ class MCBLEND_OT_FakeRcSelectTexture(bpy.types.Operator):
         return context.object.type == 'ARMATURE'
 
     def execute(self, context):
-        rc = context.object.mcblend.\
-            render_controllers[self.rc_index].texture = self.image
+        context.object.mcblend.render_controllers[self.rc_index].\
+            texture = self.image
         return {'FINISHED'}
 
 # Armature render controllers materials
@@ -1782,7 +1784,7 @@ class MCBLEND_OT_RemoveFakeRcMaterial(bpy.types.Operator):
 
 class MCBLEND_OT_MoveFakeRcMaterial(bpy.types.Operator):
     '''
-    Moves material of active render controller in active model to a 
+    Moves material of active render controller in active model to a
     different spot on the list.
     '''
     bl_idname = "mcblend.move_fake_rc_material"

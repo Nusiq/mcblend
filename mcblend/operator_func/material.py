@@ -2,9 +2,9 @@
 Everything related to creating materials for the model.
 '''
 from typing import Deque, Optional, List, Tuple
+from collections import deque
 
 import bpy
-from collections import deque
 from bpy.types import Image, Material, Node, NodeTree
 
 PADDING = 300
@@ -34,10 +34,10 @@ def create_entity_alphatest_node_group() -> NodeTree:
     '''
     try:
         return bpy.data.node_groups['entity_alphatest']
-    except:
+    except:  # pylint: disable=bare-except
         pass
     group, inputs, outputs = _create_node_group_defaults('entity_alphatest')
-    
+
     # In: Color-> Out: Color
     group.links.new(outputs.inputs[0], inputs.outputs[0])
     # In: Alpha -> Math[ADD] -> Math[FLOOR] -> Out: Alpha
@@ -61,7 +61,7 @@ def create_entity_alphablend_node_group() -> NodeTree:
     '''
     try:
         return bpy.data.node_groups['entity_alphablend']
-    except:
+    except:  # pylint: disable=bare-except
         pass
     group, inputs, outputs = _create_node_group_defaults('entity_alphablend')
 
@@ -84,7 +84,7 @@ def create_entity_emissive_node_group() -> NodeTree:
     '''
     try:
         return bpy.data.node_groups['entity_emissive']
-    except:
+    except:  # pylint: disable=bare-except
         pass
     group, inputs, outputs = _create_node_group_defaults('entity_emissive')
 
@@ -122,7 +122,7 @@ def create_entity_emissive_alpha_node_group() -> NodeTree:
     '''
     try:
         return bpy.data.node_groups['entity_emissive_alpha']
-    except:
+    except:  # pylint: disable=bare-except
         pass
     group, inputs, outputs = _create_node_group_defaults('entity_emissive_alpha')
 
@@ -161,7 +161,7 @@ def create_material_mix_node_group() -> NodeTree:
     '''
     try:
         return bpy.data.node_groups['material_mix']
-    except:
+    except:  # pylint: disable=bare-except
         pass
     group = bpy.data.node_groups.new('material_mix', 'ShaderNodeTree')
     # create group inputs
@@ -260,7 +260,7 @@ def create_bone_material(
         img, name = item
         try:
             node_group_data = MATERIALS_MAP[name]()
-        except:
+        except KeyError:
             node_group_data = create_entity_alphatest_node_group()  # default
         node_group: Node = node_tree.nodes.new('ShaderNodeGroup')
         node_group.node_tree = node_group_data
@@ -282,7 +282,7 @@ def create_bone_material(
             bottom = node_groups.popleft()
             top = node_groups.popleft()
             node_groups.appendleft(connection)
-            
+
             node_tree.links.new(connection.inputs['Color1'], bottom.outputs['Color'])
             node_tree.links.new(connection.inputs['Alpha1'], bottom.outputs['Alpha'])
             node_tree.links.new(connection.inputs['Emission1'], bottom.outputs['Emission'])

@@ -1,17 +1,16 @@
 '''
 Custom Blender objects with additional data for the objects and empties.
 '''
+from typing import Dict, List, Tuple
+from enum import Enum
+
 import bpy
 from bpy.props import (
     FloatProperty, IntVectorProperty, FloatVectorProperty,
     BoolProperty, CollectionProperty, EnumProperty, IntProperty,
     StringProperty)
 
-
 from .operator_func.common import MeshType
-from typing import Dict, List, Tuple
-from enum import Enum
-
 from .common_data import MCBLEND_JustName
 
 # Animation properties

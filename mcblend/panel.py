@@ -574,7 +574,7 @@ class MCBLEND_PT_ArmatureRenderControllersPanel(bpy.types.Panel):
             op_props = row.operator(
                 "mcblend.fake_rc_select_texture", icon='TEXTURE',
                 text='')
-            
+
             op_props.rc_index = rc_index
             box_col.separator()
             row = box_col.row()
@@ -583,7 +583,7 @@ class MCBLEND_PT_ArmatureRenderControllersPanel(bpy.types.Panel):
                 "mcblend.add_fake_rc_material", icon='ADD',
                 text='')
             op_props.rc_index = rc_index
-            
+
             len_rc_materials = len(rc.materials)
             for material_index, rc_material in enumerate(rc.materials):
                 row = box_col.row(align=True)
@@ -680,8 +680,7 @@ class MCBLEND_PT_UvMappingPanel(bpy.types.Panel):
 
 
     def draw(self, context):
-        col = self.layout.column(align=True)
-        self.layout.row().operator(
+        self.layout.operator(
             "mcblend.map_uv", text="Set minecraft UVs")
 
 # "Other" operators panel

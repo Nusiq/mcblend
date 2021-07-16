@@ -12,7 +12,6 @@ from bpy.props import (
 from .operator_func.texture_generator import (
     UvMaskTypes, list_mask_types_as_blender_enum,
     list_mix_mask_modes_as_blender_enum)
-from .operator_func import reload_rp_entities
 
 # UV-mask
 class MCBLEND_StripeProperties(bpy.types.PropertyGroup):

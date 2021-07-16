@@ -2,7 +2,8 @@
 Python module for working with Minecraft bedrock edition projects.
 '''
 # Pylint doesn't get the inherited members for some reason
-# pylint: disable=no-member
+# pylint: disable=unused-argument, unsubscriptable-object, disable=no-member
+# pylint: disable=abstract-method, missing-function-docstring
 from __future__ import annotations
 
 import re
@@ -2027,6 +2028,7 @@ class RpRenderController(_McFileJsonMulti['RpRenderControllers']):
             yield self[k]
 
 class RpRenderControllerInstance:
+    '''Render controller object inside render controller file'''
     def __init__(self, json: JsonWalker):
         self.json: JsonWalker = json
         self._geometry: Optional[str] = None

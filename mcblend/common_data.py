@@ -28,6 +28,7 @@ class MCBLEND_NameValuePair(bpy.types.PropertyGroup):
     )
 
 class MCBLEND_EnumCache(bpy.types.PropertyGroup):
+    '''Used from caching values enums in GUI which take a long time to load.'''
     is_cached: BoolProperty(  # type: ignore
         name="Single frame",
         description="Whether this object already stores cached values or not",

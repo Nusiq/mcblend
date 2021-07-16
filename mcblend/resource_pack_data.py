@@ -32,6 +32,7 @@ class MCBLEND_EntityProperties(bpy.types.PropertyGroup):
         type=MCBLEND_NameValuePair, name='Materials')
 
 def enum_rc_materials(self, context):
+    '''Lists materials available to be used by render controller'''
     # Loading values from cache (optimal solution)
     if self.value_cache.is_cached:
         return [(i, i, i) for i in self.value_cache.values.keys()]
@@ -84,6 +85,10 @@ class MCBLEND_MaterialProperties(bpy.types.PropertyGroup):
         self.value_cache.is_cached = True
 
 class MCBLEND_RenderControllerArrayProperties(bpy.types.PropertyGroup):
+    '''
+    Propertis of an array in render controller (geometry, texture or material
+    array)
+    '''
     name: StringProperty(  # type: ignore
         name="Name", description="Name of the array",
         default="", maxlen=1024)
@@ -92,6 +97,8 @@ class MCBLEND_RenderControllerArrayProperties(bpy.types.PropertyGroup):
         description="The list of molang variables from the array")
 
 def enum_rc_geometries(self, context):
+    '''Lists geometries for render controller'''
+    # pylint: disable=unused-argument
     # Loading values from cache (optimal solution)
     if self.geometry_cache.is_cached:
         return [(i, i, i) for i in self.geometry_cache.values.keys()]
@@ -103,6 +110,8 @@ def enum_rc_geometries(self, context):
             self.geometry_molang, 'geometry', self.geometry_arrays))]
 
 def enum_rc_textures(self, context):
+    '''Lists textures for render controller'''
+    # pylint: disable=unused-argument
     # Loading values from cache (optimal solution)
     if self.texture_cache.is_cached:
         return [(i, i, i) for i in self.texture_cache.values.keys()]
@@ -124,7 +133,7 @@ class MCBLEND_RenderControllersProperties(bpy.types.PropertyGroup):
         type=MCBLEND_RenderControllerArrayProperties)
     material_arrays: CollectionProperty(  # type: ignore
         type=MCBLEND_RenderControllerArrayProperties)
-    
+
     geometry_molang: StringProperty(  # type: ignore
         name="Geometry molang",
         description=(

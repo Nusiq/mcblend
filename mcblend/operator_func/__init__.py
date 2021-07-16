@@ -34,10 +34,10 @@ def export_model(context: bpy_types.Context) -> Dict:
     :returns: JSON dict with Minecraft model.
     '''
     result = ModelExport.json_outer()
-    object = context.object  # an armature
+    armature = context.object  # an armature
 
-    mcblend_obj_group = McblendObjectGroup(object)
-    model_properties = object.mcblend
+    mcblend_obj_group = McblendObjectGroup(armature)
+    model_properties = armature.mcblend
 
     model = ModelExport(
         texture_width=model_properties.texture_width,
@@ -97,16 +97,16 @@ def set_uvs(context: bpy_types.Context):
 
     :param context: the execution context.
     '''
-    object = context.object # an armature
+    armature = context.object # an armature
 
-    model_properties = object.mcblend
+    model_properties = armature.mcblend
     width = model_properties.texture_width
     height = model_properties.texture_height
     allow_expanding = model_properties.allow_expanding
     generate_texture = model_properties.generate_texture
     resolution = model_properties.texture_template_resolution
 
-    mcblend_obj_group = McblendObjectGroup(object)
+    mcblend_obj_group = McblendObjectGroup(armature)
     mapper = UvMapper(width, height, mcblend_obj_group)
     mapper.plan_uv(allow_expanding)
 
@@ -510,7 +510,6 @@ def import_model_form_project(context: bpy_types.Context):
             cached_rc = cached_project.render_controllers[rc_name]
         else:
             cached_rc = cached_project.fake_render_controllers[rc_name]
-        texture_keys = cached_entity.textures.keys()
         if cached_rc.texture in cached_entity.textures.keys():
             texture_name = cached_entity.textures[cached_rc.texture].value
             try:
@@ -601,7 +600,8 @@ def import_model_form_project(context: bpy_types.Context):
                 continue
             try:  # try to use existing material
                 material = blender_materials[tuple(bone_materials_id)]
-            except:  # create material
+            except: # pylint: disable=bare-except
+                # create material
                 material = create_bone_material("MC_Material", bone_materials)
                 blender_materials[tuple(bone_materials_id)] = material
             for c in bone.cubes:
@@ -666,7 +666,8 @@ def apply_materials(context: bpy.types.Context):
             continue
         try:  # try to use existing material
             material = blender_materials[tuple(bone_materials_id)]
-        except:  # create material
+        except:  # pylint: disable=bare-except
+            # create material
             material = create_bone_material("MC_Material", bone_materials)
             blender_materials[tuple(bone_materials_id)] = material
         for c in bone.cubes:

@@ -8,9 +8,9 @@ import math
 from enum import Enum
 from typing import (
     Deque, Dict, Iterator, NamedTuple, List, Optional, Tuple, Any, Iterable, Sequence)
+from collections import deque
 
 import numpy as np
-from collections import deque
 
 import bpy_types
 import bpy
