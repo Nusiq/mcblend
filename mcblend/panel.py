@@ -55,7 +55,7 @@ class MCBLEND_PT_UVGroupPanel(bpy.types.Panel):
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = 'scene'
-    bl_label = "Mcblend UV groups"
+    bl_label = "Mcblend: UV-groups"
 
     def draw_colors(self, mask, mask_index: int, col: bpy.types.UILayout):
         '''Draws colors of UV-mask.'''
@@ -394,7 +394,7 @@ class MCBLEND_PT_EventsPanel(bpy.types.Panel):
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = 'scene'
-    bl_label = "Mcblend events"
+    bl_label = "Mcblend: Animation Events"
 
 
     def draw_effect(self, effect, index: int, col: bpy.types.UILayout):
@@ -456,69 +456,80 @@ class MCBLEND_PT_ObjectPropertiesPanel(bpy.types.Panel):
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = 'object'
-    bl_label = "Mcblend object properties"
+    bl_label = "Mcblend: Object Properties"
 
     @classmethod
     def poll(cls, context):
+        if context.mode != "OBJECT":
+            return False
         if context.active_object:
-            return context.active_object.type in [
-                "MESH", "EMPTY", "ARMATURE"]
+            return context.active_object.type in "MESH"
         return False
 
     def draw(self, context):
         col = self.layout.column(align=True)
-        if not context.mode == "OBJECT" or context.object is None:
-            return
+        object_properties = context.object.mcblend
+        col.prop(object_properties, "mesh_type", text="")
 
-        if context.object.type == 'EMPTY':
-            object_properties = context.object.mcblend
-            col.prop(object_properties, "is_bone", text="Export as bone")
-        elif context.object.type == 'MESH':
-            object_properties = context.object.mcblend
-            col.prop(object_properties, "is_bone", text="Export as bone")
-            col.prop(object_properties, "mesh_type", text="")
+        mesh_type = (
+            context.object.mcblend.mesh_type)
+        if mesh_type == MeshType.CUBE.value:
+            if object_properties.uv_group != '':
+                col.label(
+                    text=f'UV Group: {object_properties.uv_group}')
+            else:
+                col.label(text="This object doesn't have a UV group")
+            col.prop(object_properties, "mirror", text="Mirror")
+            col.prop(object_properties, "inflate", text="Inflate")
+            col.row().prop(
+                object_properties, "min_uv_size", text="Min UV bound")
 
-            mesh_type = (
-                context.object.mcblend.mesh_type)
-            if mesh_type == MeshType.CUBE.value:
-                if object_properties.uv_group != '':
-                    col.label(
-                        text=f'UV Group: {object_properties.uv_group}')
-                else:
-                    col.label(text="This object doesn't have a UV group")
-                col.prop(object_properties, "mirror", text="Mirror")
-                col.prop(object_properties, "inflate", text="Inflate")
-                col.prop(
-                    object_properties, "min_uv_size", text="Min UV bound")
-        elif context.object.type == 'ARMATURE':
-            # col.prop(context.scene.mcblend, "path", text="")
-            object_properties = context.object.mcblend
+# Custom object properties panel
+class MCBLEND_PT_ModelPropertiesPanel(bpy.types.Panel):
+    '''Panel used for editing model properties.'''
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = 'object'
+    bl_label = "Mcblend: Model Properties"
+    @classmethod
+    def poll(cls, context):
+        if context.active_object:
+            return context.active_object.type == "ARMATURE"
+        return False
+
+    def draw(self, context):
+        col = self.layout.column(align=True)
+        # col.prop(context.scene.mcblend, "path", text="")
+        object_properties = context.object.mcblend
+        col.prop(
+            object_properties, "model_name", text="Name")
+        col.prop(
+            object_properties, "visible_bounds_width",
+            text="Visible bounds width")
+        col.prop(
+            object_properties, "visible_bounds_height",
+            text="Visible bounds height")
+        col.prop(
+            object_properties, "visible_bounds_offset",
+            text="Visible bounds offset")
+        col.separator()
+        col.prop(
+            object_properties, "texture_width", text="Texture width")
+        col.prop(
+            object_properties, "texture_height", text="Texture height")
+        col = col.box().column()
+        col.label(text="Texture Generation")
+        col.prop(
+            object_properties, "allow_expanding",
+            text="Allow texture expanding")
+        col.prop(
+            object_properties, "generate_texture",
+            text="Generate Texture")
+        if object_properties.generate_texture:
             col.prop(
-                object_properties, "model_name", text="Name")
-            col.prop(
-                object_properties, "visible_bounds_width",
-                text="Visible bounds width")
-            col.prop(
-                object_properties, "visible_bounds_height",
-                text="Visible bounds height")
-            col.prop(
-                object_properties, "visible_bounds_offset",
-                text="Visible bounds offset")
-            col.separator()
-            col.prop(
-                object_properties, "texture_width", text="Texture width")
-            col.prop(
-                object_properties, "texture_height", text="Texture height")
-            col.prop(
-                object_properties, "allow_expanding",
-                text="Allow texture expanding")
-            col.prop(
-                object_properties, "generate_texture",
-                text="Generate Texture")
-            if object_properties.generate_texture:
-                col.prop(
-                    object_properties, "texture_template_resolution",
-                    text="Template resolution")
+                object_properties, "texture_template_resolution",
+                text="Template resolution")
+        col.operator("mcblend.map_uv", text="Set minecraft UVs")
 
 # Armature render controllers properties
 class MCBLEND_PT_ArmatureRenderControllersPanel(bpy.types.Panel):
@@ -526,7 +537,7 @@ class MCBLEND_PT_ArmatureRenderControllersPanel(bpy.types.Panel):
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = 'object'
-    bl_label = "Mcblend Render Controllers"
+    bl_label = "Mcblend: Render Controllers"
 
     @classmethod
     def poll(cls, context):
@@ -541,14 +552,15 @@ class MCBLEND_PT_ArmatureRenderControllersPanel(bpy.types.Panel):
 
         row = col.row()
         object_properties = context.object.mcblend
-        row.operator(
-            "mcblend.fake_rc_apply_materials", icon='FILE_REFRESH',
-            text='Apply Materials')
+        len_rc = len(object_properties.render_controllers)
         op_props = row.operator(
             "mcblend.add_fake_rc", icon='ADD',
             text='Add Render Controller')
+        if len_rc > 0:
+            row.operator(
+                "mcblend.fake_rc_apply_materials", icon='FILE_REFRESH',
+                text='Apply Materials')
         col.separator()
-        len_rc = len(object_properties.render_controllers)
         for rc_index, rc in enumerate(object_properties.render_controllers):
             box = col.box()
             box_col = box.column()
@@ -625,7 +637,7 @@ class MCBLEND_PT_AnimationPropertiesPanel(bpy.types.Panel):
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = 'object'
-    bl_label = "Mcblend Animation properties"
+    bl_label = "Mcblend: Animations"
 
 
     @classmethod
@@ -667,22 +679,6 @@ class MCBLEND_PT_AnimationPropertiesPanel(bpy.types.Panel):
                 col.prop(bpy.context.scene, "frame_start", text="Frame start")
                 col.prop(bpy.context.scene, "frame_end", text="Frame end")
 
-# UV-mapper panel
-class MCBLEND_PT_UvMappingPanel(bpy.types.Panel):
-    '''
-    Panel used for launching the UV-mapping operator and changing its settings.
-    '''
-    # pylint: disable=unused-argument
-    bl_label = "UV-mapping"
-    bl_category = "Mcblend"
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-
-
-    def draw(self, context):
-        self.layout.operator(
-            "mcblend.map_uv", text="Set minecraft UVs")
-
 # "Other" operators panel
 class MCBLEND_PT_OperatorsPanel(bpy.types.Panel):
     '''
@@ -694,13 +690,8 @@ class MCBLEND_PT_OperatorsPanel(bpy.types.Panel):
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
 
-
     def draw(self, context):
         col = self.layout.column()
-        col.operator(
-            "mcblend.toggle_mirror",
-            text="Toggle UV mirror"
-        )
         col.operator(
             "mcblend.fix_uv",
             text="Fix invalid cube UV"
@@ -712,10 +703,6 @@ class MCBLEND_PT_OperatorsPanel(bpy.types.Panel):
         col.operator(
             "mcblend.clear_uv_group",
             text="Clear UV group"
-        )
-        col.operator(
-            "mcblend.toggle_is_bone",
-            text="Toggle export as bones"
         )
         col.operator(
             "mcblend.set_inflate",

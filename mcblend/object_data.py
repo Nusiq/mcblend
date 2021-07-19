@@ -350,12 +350,6 @@ class MCBLEND_ObjectProperties(bpy.types.PropertyGroup):
         default="",
         maxlen=1024
     )
-    is_bone: BoolProperty(  # type: ignore
-        name="Export as bone",
-        description=(
-            "If true than this object will be exported as minecraft bone."),
-        default=False,
-    )
     inflate: FloatProperty(  # type: ignore
         name="Inflate",
         description="The inflate value of this object.",

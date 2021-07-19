@@ -336,109 +336,6 @@ class MCBLEND_OT_ClearUvGroup(bpy.types.Operator):
                 area.tag_redraw()
         return {'FINISHED'}
 
-# Mirror property
-class MCBLEND_OT_ToggleMirror(bpy.types.Operator):
-    '''
-    Operator used for toggling custom "mirror" propert of selected objects.
-    '''
-    # pylint: disable=unused-argument, no-member
-    bl_idname = "mcblend.toggle_mirror"
-    bl_label = "Toggle mirror for selected objects."
-    bl_options = {'UNDO'}
-    bl_description = (
-        "Toggle mirror for selected objects. Adds or removes mirror "
-        "property from a cube in minecraft model"
-    )
-
-    @classmethod
-    def poll(cls, context: bpy_types.Context):
-        if context.mode != 'OBJECT':
-            return False
-        if len(context.selected_objects) < 1:
-            return False
-        return True
-
-    def execute(self, context):
-        is_clearing = False
-        for obj in context.selected_objects:
-            if obj.type == "MESH":
-                if obj.mcblend.mirror:
-                    is_clearing = True
-                    break
-        if is_clearing:
-            for obj in context.selected_objects:
-                if obj.type == "MESH":
-                    (obj.mcblend
-                        ).mirror = False
-            self.report({'INFO'}, 'Disabled the mirror for generating UV for '
-                'selected objects.')
-        else:
-            for obj in context.selected_objects:
-                if obj.type == "MESH":
-                    (obj.mcblend
-                        ).mirror = True
-            self.report({'INFO'}, 'Enabled the mirror for generating UV for '
-                'selected objects.')
-
-        # The object properties display the property edited by this operator
-        # redraw it.
-        for area in context.screen.areas:
-            if area.type == 'PROPERTIES':
-                area.tag_redraw()
-        return {'FINISHED'}
-
-# is_bone property
-class MCBLEND_OT_ToggleIsBone(bpy.types.Operator):
-    '''
-    Operator used for toggling custom "is_bone" property of selected objects.
-    '''
-    # pylint: disable=unused-argument, no-member
-    bl_idname = "mcblend.toggle_is_bone"
-    bl_label = "Toggle is_bone for selected objects."
-    bl_options = {'UNDO'}
-    bl_description = (
-        "Toggles is_bone for selected objects. Setting is_bone property "
-        "to 1 ensures that the object will be converted to a bone in minecraft"
-        " model"
-    )
-
-    @classmethod
-    def poll(cls, context: bpy_types.Context):
-        if context.mode != 'OBJECT':
-            return False
-        if len(context.selected_objects) < 1:
-            return False
-        for obj in context.selected_objects:
-            if obj.type == "MESH" or obj.type == "EMPTY":
-                return True
-        return False
-
-    def execute(self, context):
-        is_clearing = False
-        for obj in context.selected_objects:
-            if obj.type == "MESH":
-                if obj.mcblend.is_bone:
-                    is_clearing = True
-                    break
-        if is_clearing:
-            for obj in context.selected_objects:
-                if obj.type == "MESH" or obj.type == "EMPTY":
-                    obj.mcblend.is_bone = False
-            self.report(
-                {'INFO'}, 'Objects are not market to export as bones anymore.')
-        else:
-            for obj in context.selected_objects:
-                if obj.type == "MESH" or obj.type == "EMPTY":
-                    obj.mcblend.is_bone = True
-            self.report({'INFO'}, 'Marked selected objects to export as bones')
-
-        # The object properties display the property edited by this operator
-        # redraw it.
-        for area in context.screen.areas:
-            if area.type == 'PROPERTIES':
-                area.tag_redraw()
-        return {'FINISHED'}
-
 # Inflate property
 class MCBLEND_OT_SetInflate(bpy.types.Operator):
     '''
@@ -599,10 +496,11 @@ def save_animation_properties(animation, context):
         anim_timeline_marker.name = timeline_marker.name
         anim_timeline_marker.frame = timeline_marker.frame
     animation.nla_tracks.clear()
-    for nla_track in context.object.animation_data.nla_tracks:
-        if not nla_track.mute:
-            cached_nla_track = animation.nla_tracks.add()
-            cached_nla_track.name = nla_track.name
+    if context.object.animation_data is not None:
+        for nla_track in context.object.animation_data.nla_tracks:
+            if not nla_track.mute:
+                cached_nla_track = animation.nla_tracks.add()
+                cached_nla_track.name = nla_track.name
 
 def load_animation_properties(animation, context):
     '''
@@ -618,12 +516,13 @@ def load_animation_properties(animation, context):
         context.scene.timeline_markers.new(
             anim_timeline_marker.name,
             frame=anim_timeline_marker.frame)
-    object_nla_tracks = context.object.animation_data.nla_tracks
-    for nla_track in object_nla_tracks:
-        nla_track.mute = True
-    for cached_nla_track in animation.nla_tracks:
-        if cached_nla_track.name in object_nla_tracks:
-            object_nla_tracks[cached_nla_track.name].mute = False
+    if context.object.animation_data is not None:
+        object_nla_tracks = context.object.animation_data.nla_tracks
+        for nla_track in object_nla_tracks:
+            nla_track.mute = True
+        for cached_nla_track in animation.nla_tracks:
+            if cached_nla_track.name in object_nla_tracks:
+                object_nla_tracks[cached_nla_track.name].mute = False
 
 class MCBLEND_OT_ListAnimations(bpy.types.Operator):
     '''
@@ -692,7 +591,9 @@ class MCBLEND_OT_AddAnimation(bpy.types.Operator):
 
     def execute(self, context):
         # Cancel operation if there is an action being edited
-        if context.object.animation_data.action is not None:
+        if (
+                context.object.animation_data is not None and
+                context.object.animation_data.action is not None):
             self.report(
                 {'WARNING'},
                 "Stash, push down or delete the active action before "
@@ -737,7 +638,9 @@ class MCBLEND_OT_RemoveAnimation(bpy.types.Operator):
 
     def execute(self, context):
         # Cancel operation if there is an action being edited
-        if context.object.animation_data.action is not None:
+        if (
+                context.object.animation_data is not None and
+                context.object.animation_data.action is not None):
             self.report(
                 {'WARNING'},
                 "Stash, push down or delete the active action before "

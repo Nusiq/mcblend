@@ -1203,7 +1203,6 @@ class ImportGeometry:
             bone_obj = bone.blend_empty = context.object
             _mc_pivot(bone_obj, bone.pivot)  # 2. Apply translation
             bone_obj.name = bone.name  # 3. Apply custom properties
-            bone_obj.mcblend.is_bone = True
             for cube in bone.cubes:
                 cube_obj: bpy.types.Object
                 # 1. Spawn cube

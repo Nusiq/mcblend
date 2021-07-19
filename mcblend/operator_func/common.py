@@ -144,15 +144,6 @@ class McblendObject:
         self.thisobj.mcblend.mirror = mirror
 
     @property
-    def is_bone(self) -> bool:
-        '''Whether the object should be exported as bone to Minecraft model.'''
-        return self.thisobj.mcblend.is_bone
-
-    @is_bone.setter
-    def is_bone(self, is_bone: bool):
-        self.thisobj.mcblend.is_bone = is_bone
-
-    @property
     def uv_group(self) -> str:
         '''The name of the UV-group of this object.'''
         return self.thisobj.mcblend.uv_group
@@ -687,19 +678,10 @@ class McblendObjectGroup:
             curr_obj_mc_type: MCObjType
             curr_obj_mc_parent: Optional[ObjectId] = None
             if obj.type == 'EMPTY':
-                curr_obj_mc_type = MCObjType.BONE
-                if (obj.parent is not None and len(obj.children) == 0 and
-                        not obj.mcblend.is_bone):
-                    curr_obj_mc_type = MCObjType.LOCATOR
-
-                if obj.parent is not None:
-                    curr_obj_mc_parent = self._get_parent_mc_bone(obj)
+                curr_obj_mc_type = MCObjType.LOCATOR
+                curr_obj_mc_parent = self._get_parent_mc_bone(obj)
             elif obj.type == 'MESH':
-                if (obj.parent is None or
-                        obj.mcblend.is_bone):
-                    curr_obj_mc_type = MCObjType.BOTH
-                else:
-                    curr_obj_mc_type = MCObjType.CUBE
+                curr_obj_mc_type = MCObjType.CUBE
                 # If parent is none than it will return none
                 curr_obj_mc_parent = self._get_parent_mc_bone(obj)
             elif obj.type == 'ARMATURE':
@@ -775,7 +757,8 @@ class McblendObjectGroup:
             if child.parent_type != 'OBJECT':
                 continue
             yield ObjectId(child.name, ''), child
-            offspring.extend(child.children)
+            if child.type == 'MESH':  # EMPTY children are not allowed
+                offspring.extend(child.children)
 
     @staticmethod
     def _get_parent_mc_bone(obj: bpy.types.Object) -> Optional[ObjectId]:
@@ -796,8 +779,7 @@ class McblendObjectGroup:
             if obj.parent_type == 'OBJECT':
                 obj = obj.parent
                 obj_id = ObjectId(obj.name, '')
-                if (obj.type == 'EMPTY' or
-                        obj.mcblend.is_bone):
+                if obj.type == 'EMPTY':
                     return obj_id
             else:
                 raise Exception(f'Unsupported parent type {obj.parent_type}')
