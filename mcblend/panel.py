@@ -503,15 +503,15 @@ class MCBLEND_PT_ModelPropertiesPanel(bpy.types.Panel):
         object_properties = context.object.mcblend
         col.prop(
             object_properties, "model_name", text="Name")
+        col.row().  prop(
+            object_properties, "visible_bounds_offset",
+            text="Visible bounds offset")
         col.prop(
             object_properties, "visible_bounds_width",
             text="Visible bounds width")
         col.prop(
             object_properties, "visible_bounds_height",
             text="Visible bounds height")
-        col.prop(
-            object_properties, "visible_bounds_offset",
-            text="Visible bounds offset")
         col.separator()
         col.prop(
             object_properties, "texture_width", text="Texture width")
@@ -519,10 +519,11 @@ class MCBLEND_PT_ModelPropertiesPanel(bpy.types.Panel):
             object_properties, "texture_height", text="Texture height")
         col = col.box().column()
         col.label(text="Texture Generation")
-        col.prop(
+        row = col.row()
+        row.prop(
             object_properties, "allow_expanding",
             text="Allow texture expanding")
-        col.prop(
+        row.prop(
             object_properties, "generate_texture",
             text="Generate Texture")
         if object_properties.generate_texture:
@@ -668,14 +669,15 @@ class MCBLEND_PT_AnimationPropertiesPanel(bpy.types.Panel):
 
             active_anim = anims[active_anim_id]
             col.prop(active_anim, "name", text="Name")
-            col.prop(active_anim, "skip_rest_poses", text="Skip rest poses")
-            col.prop(active_anim, "single_frame", text="Export as pose")
+            row = col.row()
+            row.prop(active_anim, "skip_rest_poses", text="Skip rest poses")
+            row.prop(active_anim, "single_frame", text="Export as pose")
             if active_anim.single_frame:
                 col.prop(bpy.context.scene, "frame_current", text="Frame")
             else:
                 col.prop(active_anim, "loop", text="Loop")
                 col.prop(active_anim, "anim_time_update",
-                    text="anim_time_update")
+                    text="Anim Time Update")
                 col.prop(bpy.context.scene, "frame_start", text="Frame start")
                 col.prop(bpy.context.scene, "frame_end", text="Frame end")
 
@@ -692,29 +694,33 @@ class MCBLEND_PT_OperatorsPanel(bpy.types.Panel):
 
     def draw(self, context):
         col = self.layout.column()
-        col.operator(
+        box = col.box().column()
+        box.label(text="UV-mapping")
+        box.operator(
             "mcblend.fix_uv",
-            text="Fix invalid cube UV"
+            text="Fix model UV-mapping"
         )
-        col.operator(
+        box.operator(
             "mcblend.uv_group",
             text="Set the UV group"
         )
-        col.operator(
+        box.operator(
             "mcblend.clear_uv_group",
             text="Clear UV group"
         )
-        col.operator(
+        box = col.box().column()
+        box.label(text="Mesh Transformations")
+        box.operator(
             "mcblend.set_inflate",
             text="Inflate"
         )
-        col.operator(
+        box.operator(
             "mcblend.round_dimensions",
             text="Round dimensions"
         )
-        col.operator(
+        box.operator(
             "mcblend.separate_mesh_cubes",
-            text="Separate cubes"
+            text="Separate and align cubes"
         )
 
 # Resource pack panel

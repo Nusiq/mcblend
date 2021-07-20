@@ -80,12 +80,9 @@ class MCBLEND_OT_ExportModel(
         return {'FINISHED'}
 
 def menu_func_mcblend_export_model(self, context):
-    '''Registers ExportModel operator to the F3 menu.'''
+    '''Used to register the operator in the file export menu.'''
     # pylint: disable=unused-argument
-    self.layout.operator(
-        MCBLEND_OT_ExportModel.bl_idname,
-        text="Mcblend: Export model"
-    )
+    self.layout.operator(MCBLEND_OT_ExportModel.bl_idname)
 
 # Animation exporter
 class MCBLEND_OT_ExportAnimation(
@@ -139,12 +136,9 @@ class MCBLEND_OT_ExportAnimation(
         return {'FINISHED'}
 
 def menu_func_mcblend_export_animation(self, context):
-    '''Registers ExportAnimation operator to the F3 menu.'''
+    '''Used to register the operator in the file export menu.'''
     # pylint: disable=unused-argument
-    self.layout.operator(
-        MCBLEND_OT_ExportAnimation.bl_idname,
-        text="Mcblend: Export animation"
-    )
+    self.layout.operator(MCBLEND_OT_ExportAnimation.bl_idname)
 
 # UV mapper
 class MCBLEND_OT_MapUv(bpy.types.Operator):
@@ -155,7 +149,7 @@ class MCBLEND_OT_MapUv(bpy.types.Operator):
     # pylint: disable=unused-argument, no-member
     bl_idname = "mcblend.map_uv"
     bl_label = "Map uv for bedrock model."
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'REGISTER', 'UNDO', 'INTERNAL'}
     bl_description = (
         "Set UV-mapping for minecraft objects."
     )
@@ -196,15 +190,16 @@ class MCBLEND_OT_MapUv(bpy.types.Operator):
 
 class MCBLEND_OT_FixUv(bpy.types.Operator):
     '''
-    Fixes the UV-mapping of selected cubes. After this operator the faces of
-    the cube on the UV-map are rectangular and properly rotated.
+    Fixes the UV-mapping of the cubes connected to selected armature.
+    After this operator the faces of the cubes on the UV-map are rectangular
+    and properly rotated.
     '''
     # pylint: disable=unused-argument, no-member
     bl_idname = "mcblend.fix_uv"
-    bl_label = "Fix bedrock UV-map."
+    bl_label = "Fix UV-mapping"
     bl_options = {'REGISTER', 'UNDO'}
     bl_description = (
-        "Fix UV-map of selected cubes."
+        "Fix UV-mapping of cubes connected to selected armature"
     )
 
     @classmethod
@@ -231,14 +226,6 @@ class MCBLEND_OT_FixUv(bpy.types.Operator):
             f'objects - {fixed_faces} faces of {fixed_cubes} cubes.'
         )
         return {'FINISHED'}
-
-def menu_func_mcblend_fix_uv(self, context):
-    '''Registers FixUv operator to the F3 menu.'''
-    # pylint: disable=unused-argument
-    self.layout.operator(
-        MCBLEND_OT_FixUv.bl_idname,
-        text="Mcblend: Fix UV-mapping"
-    )
 
 # UV grouping
 class MCBLEND_OT_UvGroup(bpy.types.Operator):
@@ -294,7 +281,7 @@ class MCBLEND_OT_ClearUvGroup(bpy.types.Operator):
     '''Operator used for removing selected objects from their UV-groups'''
     # pylint: disable=unused-argument, no-member
     bl_idname = "mcblend.clear_uv_group"
-    bl_label = "Clear uv_group for object."
+    bl_label = "Clear UV group from objects."
     bl_options = {'UNDO'}
     bl_description = 'Clears the UV group from an object.'
 
@@ -354,6 +341,12 @@ class MCBLEND_OT_SetInflate(bpy.types.Operator):
         return True
 
     def invoke(self, context, event):
+        for obj in context.selected_objects:
+            if obj.type == 'MESH':
+                break
+        else:
+            self.report({'WARNING'}, 'Select at least one mesh to inflate.')
+            return {'CANCELLED'}
         self.inflate_value = 0
         self.mode = 'RELATIVE'
         return {'FINISHED'}
@@ -387,9 +380,21 @@ class MCBLEND_OT_RoundDimensions(bpy.types.Operator):
         return True
 
     def execute(self, context):
-        round_dimensions(  # Returns number of edited objects
+        for obj in context.selected_objects:
+            if obj.type == 'MESH':
+                break
+        else:
+            self.report(
+                {'WARNING'},
+                'Select at least one mesh to round its dimensions.')
+            return {'CANCELLED'}
+        edited_objects = round_dimensions(  # Returns number of edited objects
             context
         )
+        self.report(
+            {'INFO'},
+            f'Rounded the dimensions of {edited_objects} '
+            f'object{"" if edited_objects == 1 else "s"}.')
         return {'FINISHED'}
 
 # Separate mesh cubes
@@ -417,7 +422,12 @@ class MCBLEND_OT_SeparateMeshCubes(bpy.types.Operator):
         return True
 
     def execute(self, context):
-        separate_mesh_cubes(context)
+        edited_objects = separate_mesh_cubes(context)
+        if edited_objects == 1:
+            self.report({'INFO'}, "Aligned object orientation to mesh")
+        else:
+            self.report(
+                {'INFO'}, f"Separated mesh into {edited_objects} objects")
         return {'FINISHED'}
 
 # Model Importer
@@ -460,11 +470,9 @@ class MCBLEND_OT_ImportModel(bpy.types.Operator, ImportHelper):
 
 # Animation (GUI)
 def menu_func_mcblend_import_model(self, context):
-    '''Registers Import operator to the F3 menu.'''
+    '''Used to register the operator in the file import menu.'''
     # pylint: disable=unused-argument
-    self.layout.operator(
-        MCBLEND_OT_ImportModel.bl_idname, text="Mcblend: Import model"
-    )
+    self.layout.operator(MCBLEND_OT_ImportModel.bl_idname)
 
 def save_animation_properties(animation, context):
     '''
@@ -515,6 +523,7 @@ class MCBLEND_OT_ListAnimations(bpy.types.Operator):
     '''
     bl_idname = "mcblend.list_animations"
     bl_label = "List animations and save them to Enum to display them in GUI"
+    bl_options = {'INTERNAL'}
 
     def _list_animations(self, context):
         # pylint: disable=unused-argument
@@ -564,7 +573,7 @@ class MCBLEND_OT_AddAnimation(bpy.types.Operator):
     '''Operator used creating animation settings templates.'''
     bl_idname = "mcblend.add_animation"
     bl_label = '''Adds new animation to the list.'''
-    bl_options = {'UNDO'}
+    bl_options = {'UNDO', 'INTERNAL'}
 
     @classmethod
     def poll(cls, context):
@@ -611,7 +620,7 @@ class MCBLEND_OT_RemoveAnimation(bpy.types.Operator):
     '''
     bl_idname = "mcblend.remove_animation"
     bl_label = "Remove current animation from the list."
-    bl_options = {'UNDO'}
+    bl_options = {'UNDO', 'INTERNAL'}
 
     @classmethod
     def poll(cls, context):
@@ -662,6 +671,7 @@ class MCBLEND_OT_ListUvGroups(bpy.types.Operator):
     '''
     bl_idname = "mcblend.list_uv_groups"
     bl_label = "List UV groups and save them to Enum to display them in GUI"
+    bl_options = {'INTERNAL'}
 
     def _list_uv_groups(self, context):
         # pylint: disable=unused-argument
@@ -688,7 +698,7 @@ class MCBLEND_OT_AddUvGroup(bpy.types.Operator):
     '''Operator used for creating new UV-groups.'''
     bl_idname = "mcblend.add_uv_group"
     bl_label = '''Adds new uv_group to the list.'''
-    bl_options = {'UNDO'}
+    bl_options = {'UNDO', 'INTERNAL'}
 
     def execute(self, context):
         # If OK save old uv_group
@@ -719,7 +729,7 @@ class MCBLEND_OT_RemoveUvGroup(bpy.types.Operator):
     '''Operator useful for removing UV-groups.'''
     bl_idname = "mcblend.remove_uv_group"
     bl_label = "Remove current uv_group from the list."
-    bl_options = {'UNDO'}
+    bl_options = {'UNDO', 'INTERNAL'}
 
     @classmethod
     def poll(cls, context):
@@ -747,7 +757,7 @@ class MCBLEND_OT_CopyUvGroupSide(bpy.types.Operator):
     '''Operator used for copying sides of UV-groups.'''
     bl_idname = "mcblend.copy_uv_group_side"
     bl_label = 'Copy active UV group side other to UV group'
-    bl_options = {'UNDO'}
+    bl_options = {'UNDO', 'INTERNAL'}
 
     def _list_uv_groups(self, context):
         # pylint: disable=unused-argument
@@ -872,7 +882,7 @@ class MCBLEND_OT_AddUvMask(bpy.types.Operator):
     '''Operator used for adding UV-masks to UV groups.'''
     bl_idname = "mcblend.add_uv_mask"
     bl_label = '''Adds new mask to active uv group at active face.'''
-    bl_options = {'UNDO'}
+    bl_options = {'UNDO', 'INTERNAL'}
 
     mask_type: EnumProperty(  # type: ignore
         items=list_mask_types_as_blender_enum, name='Mask type'
@@ -896,7 +906,7 @@ class MCBLEND_OT_RemoveUvMask(bpy.types.Operator):
     '''Operator used for removing UV-masks from UV-groups.'''
     bl_idname = "mcblend.remove_uv_mask"
     bl_label = '''Removes mask from active face of active uv group.'''
-    bl_options = {'UNDO'}
+    bl_options = {'UNDO', 'INTERNAL'}
 
     target: IntProperty()  # type: ignore
 
@@ -917,7 +927,7 @@ class MCBLEND_OT_MoveUvMask(bpy.types.Operator):
     bl_label = (
         'Moves mask in active face of active uv group to different place on '
         'the list.')
-    bl_options = {'UNDO'}
+    bl_options = {'UNDO', 'INTERNAL'}
 
     move_from: IntProperty()  # type: ignore
     move_to: IntProperty()  # type: ignore
@@ -938,7 +948,7 @@ class MCBLEND_OT_AddUvMaskColor(bpy.types.Operator):
     '''Operator used for adding colors to UV-masks.'''
     bl_idname = "mcblend.add_uv_mask_color"
     bl_label = '''Adds new color to a mask.'''
-    bl_options = {'UNDO'}
+    bl_options = {'UNDO', 'INTERNAL'}
 
     mask_index: IntProperty()  # type: ignore
 
@@ -958,7 +968,7 @@ class MCBLEND_OT_RemoveUvMaskColor(bpy.types.Operator):
     '''Operator used for removing colors from UV-masks.'''
     bl_idname = "mcblend.remove_uv_mask_color"
     bl_label = 'Removes color from colors of active face of active uv group.'
-    bl_options = {'UNDO'}
+    bl_options = {'UNDO', 'INTERNAL'}
 
     mask_index: IntProperty()  # type: ignore
     color_index: IntProperty()  # type: ignore
@@ -982,7 +992,7 @@ class MCBLEND_OT_MoveUvMaskColor(bpy.types.Operator):
     bl_label = (
         'Moves color in active mask of active face  of active uv group to'
         'different place on the list.')
-    bl_options = {'UNDO'}
+    bl_options = {'UNDO', 'INTERNAL'}
 
     mask_index: IntProperty()  # type: ignore
     move_from: IntProperty()  # type: ignore
@@ -1005,7 +1015,7 @@ class MCBLEND_OT_AddUvMaskStripe(bpy.types.Operator):
     '''Operator used for adding stripes to UV-masks.'''
     bl_idname = "mcblend.add_uv_mask_stripe"
     bl_label = '''Adds new color to a mask.'''
-    bl_options = {'UNDO'}
+    bl_options = {'UNDO', 'INTERNAL'}
 
     mask_index: IntProperty()  # type: ignore
 
@@ -1025,7 +1035,7 @@ class MCBLEND_OT_RemoveUvMaskStripe(bpy.types.Operator):
     '''Operator used for removing UV-masks from UV-groups.'''
     bl_idname = "mcblend.remove_uv_mask_stripe"
     bl_label = 'Removes color from colors of active face of active uv group.'
-    bl_options = {'UNDO'}
+    bl_options = {'UNDO', 'INTERNAL'}
 
     mask_index: IntProperty()  # type: ignore
     stripe_index: IntProperty()  # type: ignore
@@ -1049,7 +1059,7 @@ class MCBLEND_OT_MoveUvMaskStripe(bpy.types.Operator):
     bl_label = (
         'Moves color in active mask of active face  of active uv group to'
         'different place on the list.')
-    bl_options = {'UNDO'}
+    bl_options = {'UNDO', 'INTERNAL'}
 
     mask_index: IntProperty()  # type: ignore
     move_from: IntProperty()  # type: ignore
@@ -1074,7 +1084,7 @@ class MCBLEND_OT_ExportUvGroup(
     # pylint: disable=unused-argument, no-member
     bl_idname = "mcblend.export_uv_group"
     bl_label = "Export UV-group"
-    bl_options = {'REGISTER'}
+    bl_options = {'REGISTER', 'INTERNAL'}
     bl_description = "Exports active UV-group"
 
     filename_ext = '.json'
@@ -1104,7 +1114,7 @@ class MCBLEND_OT_ImportUvGroup(bpy.types.Operator, ImportHelper):
     # pylint: disable=unused-argument, no-member, too-many-boolean-expressions
     bl_idname = "mcblend.import_uv_group"
     bl_label = "Import UV-group"
-    bl_options = {'REGISTER'}
+    bl_options = {'REGISTER', 'INTERNAL'}
     bl_description = "Import UV-group from JSON file."
     # ImportHelper mixin class uses this
     filename_ext = ".json"
@@ -1426,7 +1436,7 @@ class MCBLEND_OT_AddEvent(bpy.types.Operator):
     '''Operator used for adding events to scene.'''
     bl_idname = "mcblend.add_event"
     bl_label = '''Adds new event to scene.'''
-    bl_options = {'UNDO'}
+    bl_options = {'UNDO', 'INTERNAL'}
 
     def execute(self, context):
         event_new = bpy.context.scene.mcblend_events.add()
@@ -1437,7 +1447,7 @@ class MCBLEND_OT_RemoveEvent(bpy.types.Operator):
     '''Operator used for removing events.'''
     bl_idname = "mcblend.remove_event"
     bl_label = '''Removes event from scene.'''
-    bl_options = {'UNDO'}
+    bl_options = {'UNDO', 'INTERNAL'}
 
     @classmethod
     def poll(cls, context: bpy_types.Context):
@@ -1462,7 +1472,7 @@ class MCBLEND_OT_AddEffect(bpy.types.Operator):
     '''Operator used for adding effects to events.'''
     bl_idname = "mcblend.add_effect"
     bl_label = '''Adds new effect to active event.'''
-    bl_options = {'UNDO'}
+    bl_options = {'UNDO', 'INTERNAL'}
 
     effect_type: EnumProperty(  # type: ignore
         items=list_effect_types_as_blender_enum, name='Effect type'
@@ -1489,7 +1499,7 @@ class MCBLEND_OT_RemoveEffect(bpy.types.Operator):
     '''Operator used for removeing effects effects from events.'''
     bl_idname = "mcblend.remove_effect"
     bl_label = '''Remove effect from active event.'''
-    bl_options = {'UNDO'}
+    bl_options = {'UNDO', 'INTERNAL'}
 
     effect_index: IntProperty()  # type: ignore
 
@@ -1531,7 +1541,7 @@ class MCBLEND_OT_ImportRpEntity(bpy.types.Operator):
     # pylint: disable=unused-argument, no-member
     bl_idname = "mcblend.import_rp_entity"
     bl_label = "Import entity from pack"
-    bl_options = {'UNDO'}
+    bl_options = {'UNDO', 'INTERNAL'}
     bl_description = "Import entity by it's name from the resource pack."
 
     @classmethod
@@ -1547,7 +1557,7 @@ class MCBLEND_OT_AddFakeRc(bpy.types.Operator):
     '''Adds new render controller to active model (armature).'''
     bl_idname = "mcblend.add_fake_rc"
     bl_label = 'Adds new render controller'
-    bl_options = {'UNDO'}
+    bl_options = {'UNDO', 'INTERNAL'}
 
     @classmethod
     def poll(cls, context: bpy_types.Context):
@@ -1565,7 +1575,7 @@ class MCBLEND_OT_RemoveFakeRc(bpy.types.Operator):
     '''Removes render controller from active model (armature).'''
     bl_idname = "mcblend.remove_fake_rc"
     bl_label = 'Removes render controller'
-    bl_options = {'UNDO'}
+    bl_options = {'UNDO', 'INTERNAL'}
 
     rc_index: IntProperty()  # type: ignore
 
@@ -1582,7 +1592,7 @@ class MCBLEND_OT_MoveFakeRc(bpy.types.Operator):
     '''Moves render controller in active to a different spot on the list.'''
     bl_idname = "mcblend.move_fake_rc"
     bl_label = 'Moves render controller'
-    bl_options = {'UNDO'}
+    bl_options = {'UNDO', 'INTERNAL'}
 
     rc_index: IntProperty()  # type: ignore
     move_to: IntProperty()  # type: ignore
@@ -1601,7 +1611,7 @@ class MCBLEND_OT_FakeRcSelectTexture(bpy.types.Operator):
     '''Selects the name of the texture for render controller of a model.'''
     bl_idname = "mcblend.fake_rc_select_texture"
     bl_label = "Selects the texture name"
-    bl_options = {'UNDO'}
+    bl_options = {'UNDO', 'INTERNAL'}
 
     rc_index: IntProperty(options={'HIDDEN'})  # type: ignore
 
@@ -1634,7 +1644,7 @@ class MCBLEND_OT_AddFakeRcMaterial(bpy.types.Operator):
     '''
     bl_idname = "mcblend.add_fake_rc_material"
     bl_label = 'Adds new material'
-    bl_options = {'UNDO'}
+    bl_options = {'UNDO', 'INTERNAL'}
 
     rc_index: IntProperty()  # type: ignore
 
@@ -1656,7 +1666,7 @@ class MCBLEND_OT_RemoveFakeRcMaterial(bpy.types.Operator):
     '''
     bl_idname = "mcblend.remove_fake_rc_material"
     bl_label = 'Removes material'
-    bl_options = {'UNDO'}
+    bl_options = {'UNDO', 'INTERNAL'}
 
     rc_index: IntProperty()  # type: ignore
     material_index: IntProperty()  # type: ignore
@@ -1677,7 +1687,7 @@ class MCBLEND_OT_MoveFakeRcMaterial(bpy.types.Operator):
     '''
     bl_idname = "mcblend.move_fake_rc_material"
     bl_label = 'Moves material'
-    bl_options = {'UNDO'}
+    bl_options = {'UNDO', 'INTERNAL'}
 
     rc_index: IntProperty()  # type: ignore
     material_index: IntProperty()  # type: ignore
@@ -1696,7 +1706,7 @@ class MCBLEND_OT_FakeRcSMaterailSelectTemplate(bpy.types.Operator):
     '''Selects the material type.'''
     bl_idname = "mcblend.fake_rc_material_select_template"
     bl_label = 'Selects the material type'
-    bl_options = {'UNDO'}
+    bl_options = {'UNDO', 'INTERNAL'}
 
     material: bpy.props.EnumProperty(  # type: ignore
         items=[
@@ -1731,7 +1741,7 @@ class MCBLEND_OT_FakeRcApplyMaterials(bpy.types.Operator):
     '''Applies the materials to the model'''
     bl_idname = "mcblend.fake_rc_apply_materials"
     bl_label = 'Applies the materials to the model'
-    bl_options = {'UNDO'}
+    bl_options = {'UNDO', 'INTERNAL'}
 
     @classmethod
     def poll(cls, context: bpy_types.Context):

@@ -11,7 +11,7 @@ from bpy.props import (
 from .operator import (
     MCBLEND_OT_ExportModel, MCBLEND_OT_ExportAnimation,
     MCBLEND_OT_MapUv, MCBLEND_OT_UvGroup,
-    MCBLEND_OT_FixUv, menu_func_mcblend_fix_uv,
+    MCBLEND_OT_FixUv,
     MCBLEND_OT_ClearUvGroup,
     MCBLEND_OT_SetInflate,
     menu_func_mcblend_export_model, menu_func_mcblend_export_animation,

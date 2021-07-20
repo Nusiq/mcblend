@@ -303,14 +303,18 @@ def separate_mesh_cubes(context: bpy_types.Context):
     Separate selected object with meshes that use cuboids only by the lose
     parts. Rotate bound boxes of the objects to fit them to the rotation of the
     separated cubes.
+
+    :returns: the number of created objects
     '''
     bpy.ops.mesh.separate(type='LOOSE')
+    edited_objects = len(context.selected_objects)
     for obj in context.selected_objects:
         if obj.type != 'MESH':
             continue
         apply_obj_transform_keep_origin(obj)
         bpy.context.view_layer.update()
         fix_cube_rotation(obj)
+    return edited_objects
 
 def inflate_objects(
         context: bpy_types.Context, objects: List[bpy.types.Object],
