@@ -48,11 +48,12 @@ class ObjectId(NamedTuple):
     Object that represents Unique ID of blender object (bone, empty or mesh).
 
     For meshes and empties:
-        - :code:`bone_name` is just an empty string.
         - :code:`name` is the name of the object.
+        - :code:`bone_name` is just an empty string.
+
     For bones:
-        - :code:`bone_name` is the name of the bone.
         - :code:`name` is the name of the armature that owns the bone.
+        - :code:`bone_name` is the name of the bone.
     '''
     name: str
     bone_name: str
@@ -166,7 +167,7 @@ class McblendObject:
             return self.thisobj.pose.bones[
                 self.thisobj_id.bone_name
             ].name
-        return self.thisobj.name.split('.')[0]
+        return self.thisobj.name
 
     @property
     def obj_type(self) -> str:
@@ -639,9 +640,7 @@ class McblendObjectGroup:
     def __init__(self, armature: bpy.types.Object):
         self.data: Dict[ObjectId, McblendObject] = {}
         '''the content of the group.'''
-
         self._load_objects(armature)
-        self._check_name_conflicts()
 
     def __len__(self):
         return len(self.data)
@@ -674,116 +673,52 @@ class McblendObjectGroup:
 
         :param armature: the armature used as a root of the object group.
         '''
-        for obj_id, obj in self._loop_armature_objects(armature):
-            curr_obj_mc_type: MCObjType
-            curr_obj_mc_parent: Optional[ObjectId] = None
-            if obj.type == 'EMPTY':
-                curr_obj_mc_type = MCObjType.LOCATOR
-                curr_obj_mc_parent = self._get_parent_mc_bone(obj)
-            elif obj.type == 'MESH':
-                curr_obj_mc_type = MCObjType.CUBE
-                # If parent is none than it will return none
-                curr_obj_mc_parent = self._get_parent_mc_bone(obj)
-            elif obj.type == 'ARMATURE':
-                bone = obj.data.bones[obj_id.bone_name]
-                if (
-                        # No parent and children and...
-                        bone.parent is None and len(bone.children) == 0 and
-                        len([  # ...this bone is not a parent of any other bone
-                            c for c in obj.children
-                            if c.parent_bone == bone.name
-                        ]) == 0
-                    ):
-                    continue  # Skip empty bones
-                curr_obj_mc_type = MCObjType.BONE
-                if bone.parent is not None:
-                    curr_obj_mc_parent = ObjectId(obj.name, bone.parent.name)
-            else:  # Handle only empty, meshes and armatures
-                continue
+        # Loop bones
+        for bone in armature.data.bones:
+            obj_id: ObjectId = ObjectId(armature.name, bone.name)
+            parent_bone_id: Optional[ObjectId] = None
+            if bone.parent is not None:
+                parent_bone_id = ObjectId(armature.name, bone.parent.name)
             self.data[obj_id] = McblendObject(
-                obj_id, obj, curr_obj_mc_parent,
-                [], curr_obj_mc_type, self
-            )
-        # Fill the children property. Must be in separate loop to reverse the
-        # effect of _get_parent_mc_bone() function.
-        for objid, objprop in self.data.items():
-            if objprop.parentobj_id is not None and objprop.parentobj_id in self.data:
-                self.data[objprop.parentobj_id].children_ids.append(objid)
-
-    def _check_name_conflicts(self):
-        '''
-        Looks through the dictionary of :class:`McblendObject`s of this object
-        and tries to find the names conflicts in the names of the objects.
-
-        Raises NameConflictException if name conflicts in some bones are
-        detected. Used in constructor.
-        '''
-        names: List[str] = []
-        for objprop in self.values():
-            if objprop.mctype not in [MCObjType.BONE, MCObjType.BOTH]:
-                continue  # Only bone names conflicts count
-            if objprop.obj_name in names:
-                raise NameConflictException(
-                    f'Name conflict "{objprop.obj_name}". Please rename theobject."'
-                )
-            names.append(objprop.obj_name)
-
-    # TODO -  since now I'm looping using parend-child relations maybe there
-    # is a room for optimization of setting parents for exported model
-    # in _load_objects. I'm not sure, I don't remember how it works.
-    @staticmethod
-    def _loop_armature_objects(
-            armature: bpy.types.Object
-            ) -> Iterator[Tuple[ObjectId, bpy.types.Object]]:
-        '''
-        Yields the offspring of the armature (the bones,
-        objects parented to the bones, and the children of the objects).
-        '''
-        bone: bpy.types.Bone
-        for bone in armature.data.bones:  # BONES
-            yield ObjectId(armature.name, bone.name), armature
-        offspring: Deque[bpy.types.Object] = deque()
-        child: bpy.types.Object
-        for child in armature.children:  # ARMATURE CHILDREN
-            if child.type not in ['MESH', 'EMPTY']:
-                continue
-            if child.parent_type == 'BONE':
-                yield ObjectId(child.name, ''), child
-                offspring.extend(child.children)
-        while offspring:  # FURTHER CHILDREN
-            child = offspring.pop()
-            if child.type not in ['MESH', 'EMPTY']:
-                continue
-            if child.parent_type != 'OBJECT':
-                continue
-            yield ObjectId(child.name, ''), child
-            if child.type == 'MESH':  # EMPTY children are not allowed
-                offspring.extend(child.children)
-
-    @staticmethod
-    def _get_parent_mc_bone(obj: bpy.types.Object) -> Optional[ObjectId]:
-        '''
-        Goes up through the ancestors of an :class:`bpy.types.Object` and
-        tries to find the object that represents its parent bone in Minecraft
-        model. Used in constructor.
-
-        :param obj: Blender object which will be a bone in Minecraft model.
-        :returns: Id of the object that represents a parent bone in Minecraft
-            model.
-        '''
-        obj_id = None
-        while obj.parent is not None:
-            if obj.parent_type == 'BONE':
-                return ObjectId(obj.parent.name, obj.parent_bone)
-
-            if obj.parent_type == 'OBJECT':
-                obj = obj.parent
-                obj_id = ObjectId(obj.name, '')
-                if obj.type == 'EMPTY':
-                    return obj_id
-            else:
-                raise Exception(f'Unsupported parent type {obj.parent_type}')
-        return obj_id
+                thisobj_id=obj_id, thisobj=armature,
+                parentobj_id=parent_bone_id, children_ids=[],
+                mctype=MCObjType.BONE, group=self)
+        for obj in armature.children:
+            if obj.parent_type != 'BONE':
+                continue  # TODO - maybe a warning here?
+            parentobj_id = ObjectId(obj.parent.name, obj.parent_bone)
+            obj_id = ObjectId(obj.name, "")
+            if obj.type  == 'MESH':
+                self.data[obj_id] = McblendObject(
+                    thisobj_id=obj_id, thisobj=obj, parentobj_id=parentobj_id,
+                    children_ids=[], mctype=MCObjType.CUBE, group=self)
+                self.data[parentobj_id].children_ids.append(obj_id)
+                # Further offspring of the "child" (share same parent in mc
+                # model)
+                offspring: Deque[bpy.types.Object] = deque(obj.children)
+                while offspring:
+                    child = offspring.pop()
+                    child_id: ObjectId = ObjectId(child.name, "")
+                    if child.parent_type != 'OBJECT':
+                        continue
+                    if child.type == 'MESH':
+                        self.data[child_id] = McblendObject(
+                            thisobj_id=child_id, thisobj=child,
+                            parentobj_id=parentobj_id, children_ids=[],
+                            mctype=MCObjType.CUBE, group=self)
+                        self.data[parentobj_id].children_ids.append(child_id)
+                        offspring.extend(child.children)
+                    elif child.type == 'EMPTY':
+                        self.data[child_id] = McblendObject(
+                            thisobj_id=child_id, thisobj=child,
+                            parentobj_id=parentobj_id, children_ids=[],
+                            mctype=MCObjType.LOCATOR, group=self)
+                        self.data[parentobj_id].children_ids.append(child_id)
+            elif obj.type == 'EMPTY':
+                self.data[obj_id] = McblendObject(
+                    thisobj_id=obj_id, thisobj=obj, parentobj_id=parentobj_id,
+                    children_ids=[], mctype=MCObjType.LOCATOR, group=self)
+                self.data[parentobj_id].children_ids.append(obj_id)
 
 def cyclic_equiv(u: List, v: List) -> bool:
     '''
