@@ -52,7 +52,7 @@ class ModelExport:
         :param object_properties: Group of mcblend objects.
         '''
         for _, objprop in object_properties.items():
-            if objprop.mctype in [MCObjType.BONE, MCObjType.BOTH]:
+            if objprop.mctype == MCObjType.BONE:
                 self.bones.append(BoneExport(objprop, self))
 
     @staticmethod
@@ -107,19 +107,17 @@ class BoneExport:
     '''
     def __init__(self, bone: McblendObject, model: ModelExport):
         '''
-        Creates BoneExport. If the input value of BONE or BOTH McObjectType
+        Creates BoneExport. If the input value mctype is McObjectType.BONE
         than ValueError is raised.
         '''
         self.model = model
         self.mcblend_obj = bone
         # Test if bone is valid input object
-        if bone.mctype not in [MCObjType.BONE, MCObjType.BOTH]:
+        if bone.mctype != MCObjType.BONE:
             raise ValueError('Input object is not a bone.')
 
         # Create cubes and locators list
         cubes: List[McblendObject] = []
-        if bone.mctype == MCObjType.BOTH:  # Else MCObjType == BOTH
-            cubes.append(bone)
         locators: List[McblendObject] = []
 
         # Add children cubes if they are MCObjType.CUBE type

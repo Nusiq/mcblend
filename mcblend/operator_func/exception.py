@@ -4,9 +4,6 @@ Custom mcblend exceptions.
 from __future__ import annotations
 from typing import List
 
-class NameConflictException(Exception):
-    '''Raise when two bones in Minecraft model have the same name.'''
-
 class NotEnoughTextureSpace(Exception):
     '''Raise when there is no enough UV space for uv-mapping.'''
 

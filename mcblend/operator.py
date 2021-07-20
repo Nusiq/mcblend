@@ -22,7 +22,7 @@ from .operator_func import (
     import_model_form_project, apply_materials)
 from .operator_func.bedrock_packs.json import CompactEncoder
 from .operator_func.exception import (
-    InvalidUvShape, NameConflictException, NotEnoughTextureSpace,)
+    InvalidUvShape, NotEnoughTextureSpace,)
 from .operator_func.bedrock_packs.json import JSONCDecoder
 from .operator_func.texture_generator import (
     list_mask_types_as_blender_enum, UvMaskTypes, MixMaskMode)
@@ -67,9 +67,6 @@ class MCBLEND_OT_ExportModel(
             #             f"Object: {obj.name}; Frame: 0.")
             #         return {'FINISHED'}
             result = export_model(context)
-        except NameConflictException as e:
-            self.report({'ERROR'}, str(e))
-            return {'FINISHED'}
         except InvalidUvShape as e:
             self.report({'ERROR'}, f'{str(e)}')
             return {'FINISHED'}
@@ -134,13 +131,7 @@ class MCBLEND_OT_ExportAnimation(
                 old_dict = json.load(f, cls=JSONCDecoder)
         except (json.JSONDecodeError, OSError):
             pass
-
-        try:
-            animation_dict = export_animation(context, old_dict)
-        except NameConflictException as e:
-            self.report({'ERROR'}, str(e))
-            return {'FINISHED'}
-
+        animation_dict = export_animation(context, old_dict)
         # Save file and finish
         with open(self.filepath, 'w') as f:
             json.dump(animation_dict, f, cls=CompactEncoder)
@@ -197,9 +188,6 @@ class MCBLEND_OT_MapUv(bpy.types.Operator):
                 {'ERROR'},
                 "Not enough texture space to create UV-mapping.")
             return {'FINISHED'}
-        except NameConflictException as e:
-            self.report({'ERROR'}, str(e))
-            return {'FINISHED'}
         finally:
             context.scene.frame_set(original_frame)
 
@@ -228,18 +216,15 @@ class MCBLEND_OT_FixUv(bpy.types.Operator):
         return context.object.type == 'ARMATURE'
 
     def execute(self, context):
-        try:
-            for obj in context.selected_objects:
-                if obj.type == 'MESH' and any(map(lambda x: x < 0, obj.scale)):
-                    self.report(
-                        {'ERROR'},
-                        "Negative object scale is not supported. "
-                        f"Object: {obj.name}; Frame: 0.")
-                    return {'FINISHED'}
-            fixed_cubes, fixed_faces = fix_uvs(context)
-        except NameConflictException as e:
-            self.report({'ERROR'}, str(e))
-            return {'FINISHED'}
+        for obj in context.selected_objects:
+            if obj.type == 'MESH' and any(map(lambda x: x < 0, obj.scale)):
+                self.report(
+                    {'ERROR'},
+                    "Negative object scale is not supported. "
+                    f"Object: {obj.name}; Frame: 0.")
+                return {'FINISHED'}
+        fixed_cubes, fixed_faces = fix_uvs(context)
+
         self.report(
             {'INFO'},
             'Successfully fixed the UV-mapping of selected '

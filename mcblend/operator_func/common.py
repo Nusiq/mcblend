@@ -17,7 +17,7 @@ import bpy
 import mathutils
 
 from .texture_generator import Mask, ColorMask, get_masks_from_side
-from .exception import NameConflictException, NoCubePolygonsException
+from .exception import NoCubePolygonsException
 
 MINECRAFT_SCALE_FACTOR = 16
 '''The scale convertion from blender to minecraft (16 units == 1 meter).'''
@@ -32,7 +32,6 @@ class MCObjType(Enum):
     '''The types of Minecraft objects created from blender objects.'''
     CUBE = 'CUBE'
     BONE = 'BONE'
-    BOTH = 'BOTH'
     LOCATOR = 'LOCATOR'
 
 class MeshType(Enum):

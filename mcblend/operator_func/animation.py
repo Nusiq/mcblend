@@ -182,7 +182,7 @@ class Pose:
         :param object_properties: group of mcblend objects.
         '''
         for objprop in object_properties.values():
-            if objprop.mctype in [MCObjType.BONE, MCObjType.BOTH]:
+            if objprop.mctype == MCObjType.BONE:
                 # Scale
                 local_matrix = objprop.get_local_matrix(
                     objprop.parent, normalize=False)

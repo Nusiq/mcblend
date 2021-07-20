@@ -27,8 +27,6 @@ from .uv import CoordinatesConverter, UvMapper
 def export_model(context: bpy_types.Context) -> Dict:
     '''
     Creates a Minecraft model JSON dict from selected objects.
-    Raises NameConflictException if name conflicts in some bones
-    are detected.
 
     :param context: the context of running the operator.
     :returns: JSON dict with Minecraft model.
@@ -57,8 +55,6 @@ def export_animation(
     ) -> Dict:
     '''
     Creates a Minecraft animation (dictionary) from selected objects.
-    Raises NameConflictException if name conflicts in some bones are
-    duplicated.
 
     :param context: the context of running the operator.
     :param old_dict: optional - JSON dict with animation to write into.
@@ -92,8 +88,6 @@ def set_uvs(context: bpy_types.Context):
 
     Raises NotEnoughTextureSpace when the texture width and height
     wasn't big enough.
-    Raises NameConflictException if name conflicts in some
-    bones are detected.
 
     :param context: the execution context.
     '''
