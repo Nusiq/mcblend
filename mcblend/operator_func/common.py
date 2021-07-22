@@ -408,22 +408,137 @@ class McblendObject:
                 aptr.value = min(a, b)
         return tuple(i.value for i in groups)
 
-# key (side, is_mirrored) : value (names of the vertices)
-# Used in CubePolygons constructor
-_MC_MAPPING_UV_ORDERS = {
-    ('east', False) :('-+-', '---', '--+', '-++'),
-    ('north', False) :('---', '+--', '+-+', '--+'),
-    ('west', False) :('+--', '++-', '+++', '+-+'),
-    ('south', False) :('++-', '-+-', '-++', '+++'),
-    ('up', False) :('--+', '+-+', '+++', '-++'),
-    ('down', False) :('-+-', '++-', '+--', '---'),
-    ('west', True) :('++-', '+--', '+-+', '+++'),
-    ('north', True) :('+--', '---', '--+', '+-+'),
-    ('east', True) :('---', '-+-', '-++', '--+'),
-    ('south', True) :('-+-', '++-', '+++', '-++'),
-    ('up', True) :('+-+', '--+', '-++', '+++'),
-    ('down', True) :('++-', '-+-', '---', '+--'),
-}
+# TODO - CubePolygonsSolver, CubePolygons and CubePolygon is a messy structure
+# maybe CubePolygonsSolver should be removed
+class CubePolygonsSolver:
+    '''
+    This class is used for creating CubePolygons. It solves the problem of
+    assigning correct vertices of a model to correct positions of Minecraft
+    cubes.
+
+    Properties:
+    - p_options - lists of possible positions of vertices (there is 8 vertices)
+    - polygons - MeshPolygons of the cube
+    - solved - whether the problem was solved or not
+    - solution - a list of assigned positions of vertices (list of names like
+        '+++').
+    '''
+    FACE_PATTERNS = [
+        ['---', '+--', '+-+', '--+'],  # Cube Front (north)
+        ['--+', '-++', '-+-', '---'],  # Cube Right (east)
+        ['-++', '+++', '++-', '-+-'],  # Cube Back (south)
+        ['+--', '++-', '+++', '+-+'],  # Cube Left (west)
+        ['--+', '+-+', '+++', '-++'],  # Cube Up (up)
+        ['-+-', '++-', '+--', '---'],  # Cube Down (down)
+    ]
+    FACE_NAMES = ['north', 'east', 'south', 'west', 'up', 'down']
+
+    # key (side, is_mirrored) : value (names of the vertices)
+    MC_MAPPING_UV_ORDERS = {
+        ('east', False) :('-+-', '---', '--+', '-++'),
+        ('north', False) :('---', '+--', '+-+', '--+'),
+        ('west', False) :('+--', '++-', '+++', '+-+'),
+        ('south', False) :('++-', '-+-', '-++', '+++'),
+        ('up', False) :('--+', '+-+', '+++', '-++'),
+        ('down', False) :('-+-', '++-', '+--', '---'),
+        ('west', True) :('++-', '+--', '+-+', '+++'),
+        ('north', True) :('+--', '---', '--+', '+-+'),
+        ('east', True) :('---', '-+-', '-++', '--+'),
+        ('south', True) :('-+-', '++-', '+++', '-++'),
+        ('up', True) :('+-+', '--+', '-++', '+++'),
+        ('down', True) :('++-', '-+-', '---', '+--'),
+    }
+
+    def __init__(
+            self, p_options: List[List[str]],
+            polygons: bpy_types.MeshPolygon):
+        self.p_options = p_options
+        self.polygons = polygons
+        self.solved = False
+        self.solution: List[Optional[str]] = [None] * 8
+
+    @staticmethod
+    def _get_vertices_order(
+        name: str, mirror: bool,
+        bound_box_vertices: List[str]
+    ) -> Tuple[int, int, int, int]:
+        '''Gets the order of vertices for given cube polygon'''
+        mc_mapping_uv_order = CubePolygonsSolver.MC_MAPPING_UV_ORDERS[
+            (name, mirror)]
+        result = []
+        for vertex_name in mc_mapping_uv_order:
+            # Throws ValueError
+            index = bound_box_vertices.index(vertex_name)
+            result.append(index)
+        return tuple(result)  # type: ignore
+
+    def get_cube_polygons(self, mirror: bool) -> CubePolygons:
+        '''
+        Creates CubesPolygons object based on the solution.
+        '''
+        if not self.solved:
+            raise RuntimeError(
+                "Trying to access solution before runing solve function")
+        cube_polygons: Dict[str, CubePolygon] = {}
+        for polygon in self.polygons:
+            complete_face: List[str] = []
+            for vertex_index in polygon.vertices:
+                complete_face.append(self.solution[vertex_index])
+            for j, face_pattern in enumerate(CubePolygonsSolver.FACE_PATTERNS):
+                if cyclic_equiv(face_pattern, complete_face):
+                    side_name = CubePolygonsSolver.FACE_NAMES[j]
+                    order = CubePolygonsSolver._get_vertices_order(
+                        side_name, mirror, complete_face)
+                    cube_polygons[side_name] = (
+                        CubePolygon(
+                            polygon,
+                            tuple(complete_face),  # type: ignore
+                            order))
+        return CubePolygons(**cube_polygons)
+
+    def is_valid(self):
+        '''
+        Check if suggested solution can be valid. The solution may be
+        incomplete. This function returns False only in case of finding an
+        error in solution. If the solution doesn't provide any information
+        about
+        '''
+        used_face_patterns = [False]*6
+        for polygon in self.polygons:
+            complete_face = [None]*4
+            for i, vertex_index in enumerate(polygon.vertices):
+                complete_face[i] = self.solution[vertex_index]
+            if None in complete_face:
+                continue  # This face is not complete
+            for j, face_pattern in enumerate(CubePolygonsSolver.FACE_PATTERNS):
+                if used_face_patterns[j]:
+                    continue  # This pattern is used already (don't check that)
+                if cyclic_equiv(face_pattern, complete_face):
+                    used_face_patterns[j] = True
+                    break  # found matching face pattern
+            else:
+                return False  # Matching face_pattern not found
+        return True
+
+    def solve(self, vertex_index: int=0):
+        '''
+        Assigns the vertices to their positions (fills the self.solution table)
+        using constraints from self.p_options and self.polygons.
+
+        :returns: True if operation succeeded and False otherwise
+        '''
+        for position_code in self.p_options[vertex_index]:
+            if position_code in self.solution:
+                continue
+            self.solution[vertex_index] = position_code
+            if not self.is_valid():
+                continue
+            if vertex_index >= 7:
+                self.solved = True
+                return True
+            return self.solve(vertex_index+1)
+        self.solution[vertex_index] = None
+        return False
 
 class CubePolygons(NamedTuple):
     '''
@@ -446,30 +561,24 @@ class CubePolygons(NamedTuple):
             :class:`CubePolygons` should match Minecraft mirrored mapping format
             or not.
         '''
-        def get_order(
-            name: str, mirror: bool,
-            bound_box_vertices: Tuple[str, str, str, str]
-        ) -> Tuple[int, int, int, int]:
-            '''Gets the order of vertices for given cube polygon'''
-            mc_mapping_uv_order = _MC_MAPPING_UV_ORDERS[(name, mirror)]
-            result = []
-            for vertex_name in mc_mapping_uv_order:
-                # Throws ValueError
-                index = bound_box_vertices.index(vertex_name)
-                result.append(index)
-            return tuple(result)  # type: ignore
-
+        # 0. Check if mesh has 12 edges
+        if len(cube.data.edges) != 12:
+            raise NoCubePolygonsException(
+                f"Object {cube.name.split('.')} is not a cube. Number of edges != 12"
+            )
         # 1. Check if object has 6 quadrilateral faces
         if len(cube.data.polygons) != 6:
             raise NoCubePolygonsException(
-                f"Object {cube.name.split('.')} is not a cube. Number of faces != 6."
+                f"Object {cube.name.split('.')} is not a cube. Number of faces != 6"
             )
         for polygon in cube.data.polygons:
             if len(polygon.vertices) != 4:
                 raise NoCubePolygonsException(
                     f"Object {cube.name.split('.')} is not a cube. Not all faces are "
-                    "quadrilateral."
+                    "quadrilateral"
                 )
+        # At this point the topology is correct but the cube might be deformed
+        # or rotated inside its bound box
 
         # Blender crds (bounding box):
         # 0. ---; 1. --+; 2. -++; 3. -+-; 4. +--; 5. +-+; 6. +++; 7. ++-
@@ -483,64 +592,30 @@ class CubePolygons(NamedTuple):
             "+++": np.array(ppp), "++-": np.array(ppm)
         }
 
-        north: List[str] = ['---', '+--', '+-+', '--+']  # Cube Front
-        east: List[str] = ['--+', '-++', '-+-', '---']  # Cube Right
-        south: List[str] = ['-++', '+++', '++-', '-+-']  # Cube Back
-        west: List[str] = ['+--', '++-', '+++', '+-+']  # Cube Left
-        up: List[str] = ['--+', '+-+', '+++', '-++']  # Cube Up
-        down: List[str] = ['-+-', '++-', '+--', '---']  # Cube Down
-        cube_polygon_builder = {}  # Input for CubePolygons constructor
-        for polygon in cube.data.polygons:
-            bbv: List[str] = []  # bound box vertices
-            for vertex_id in polygon.vertices:
-                vertex_crds = np.array(
-                    cube.data.vertices[vertex_id].co
-                )
-                # Find the closest point of bounding box (key from bb_crds)
-                shortest_distance: Optional[float] = None
-                closest_bb_point = '---'
-                for k, v in bb_crds.items():
-                    curr_distance = np.linalg.norm(v-vertex_crds)
-                    if shortest_distance is None:
-                        shortest_distance = curr_distance
-                        closest_bb_point = k
-                    elif curr_distance < shortest_distance:
-                        shortest_distance = curr_distance
-                        closest_bb_point = k
-                bbv.append(closest_bb_point)
+        p_options: List[List[str]] =  []
+        for vertex_id in range(8):
+            vertex_crds = np.array(cube.data.vertices[vertex_id].co)
+            # Find the closest point of bounding box (key from bb_crds)
+            shortest_distance: Optional[float] = None
+            for k, v in bb_crds.items():
+                p_options.append([])
+                curr_distance = np.linalg.norm(v-vertex_crds)
+                if shortest_distance is None:
+                    shortest_distance = curr_distance
+                    p_options[vertex_id] = [k]
+                elif np.allclose(shortest_distance, curr_distance):
+                    p_options[vertex_id].append(k)
+                elif curr_distance < shortest_distance:
+                    shortest_distance = curr_distance
+                    p_options[vertex_id] = [k]
 
-            if cyclic_equiv(north, bbv):
-                t_bbv: Tuple[str, str, str, str] = tuple(bbv)  # type: ignore
-                cube_polygon_builder['north'] = CubePolygon(
-                    polygon, t_bbv, get_order('north', mirror, t_bbv)
-                )
-            elif cyclic_equiv(east, bbv):
-                t_bbv: Tuple[str, str, str, str] = tuple(bbv)  # type: ignore
-                cube_polygon_builder['east'] = CubePolygon(
-                    polygon, t_bbv, get_order('east', mirror, t_bbv)
-                )
-            elif cyclic_equiv(south, bbv):
-                t_bbv: Tuple[str, str, str, str] = tuple(bbv)  # type: ignore
-                cube_polygon_builder['south'] = CubePolygon(
-                    polygon, t_bbv, get_order('south', mirror, t_bbv)
-                )
-            elif cyclic_equiv(west, bbv):
-                t_bbv: Tuple[str, str, str, str] = tuple(bbv)  # type: ignore
-                cube_polygon_builder['west'] = CubePolygon(
-                    polygon, t_bbv, get_order('west', mirror, t_bbv)
-                )
-            elif cyclic_equiv(up, bbv):
-                t_bbv: Tuple[str, str, str, str] = tuple(bbv)  # type: ignore
-                cube_polygon_builder['up'] = CubePolygon(
-                    polygon, t_bbv, get_order('up', mirror, t_bbv)
-                )
-            elif cyclic_equiv(down, bbv):
-                t_bbv: Tuple[str, str, str, str] = tuple(bbv)  # type: ignore
-                cube_polygon_builder['down'] = CubePolygon(
-                    polygon, t_bbv, get_order('down', mirror, t_bbv)
-                )
+        solver = CubePolygonsSolver(p_options, list(cube.data.polygons))
+        if not solver.solve():
+            raise NoCubePolygonsException(
+                f'Object "{cube.name}" is not a cube.')
+
         try:
-            return CubePolygons(**cube_polygon_builder)
+            return solver.get_cube_polygons(mirror)
         except TypeError as e:  # Missing argument
             raise NoCubePolygonsException(
                 f'Object "{cube.name}" is not a cube.'
