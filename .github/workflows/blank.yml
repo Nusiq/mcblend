@@ -42,7 +42,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        sudo snap install blender --channel=2.83lts/stable --classic
+        sudo snap install blender --channel=2.93lts/stable --classic
         pip install mypy pytest numpy
     - name: Build and install the addon
       run: |
