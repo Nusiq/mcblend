@@ -282,11 +282,9 @@ class McblendObject:
             '''
             Returns Euler rotation of a child matrix in relation to parent matrix
             '''
-            child_matrix = child_matrix.normalized()
-            parent_matrix = parent_matrix.normalized()
-            return (
-                parent_matrix.inverted() @ child_matrix
-            ).to_quaternion().to_euler('XZY')
+            child_q = child_matrix.normalized().to_quaternion()
+            parent_q = parent_matrix.inverted().normalized().to_quaternion()
+            return (parent_q @ child_q).to_euler('XZY')
 
         if other is not None:
             result_euler = local_rotation(
