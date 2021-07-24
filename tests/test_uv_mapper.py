@@ -55,7 +55,8 @@ def make_comparison_files(
 
 # PYTEST FUNCTIONS
 SCENES = [
-    'issue89'
+    'issue89',
+    'flatten_cubes'
 ]
 
 

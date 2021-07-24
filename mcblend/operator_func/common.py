@@ -534,7 +534,8 @@ class CubePolygonsSolver:
             if vertex_index >= 7:
                 self.solved = True
                 return True
-            return self.solve(vertex_index+1)
+            if self.solve(vertex_index+1):
+                return True
         self.solution[vertex_index] = None
         return False
 
