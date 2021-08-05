@@ -684,7 +684,6 @@ class PhysicsObjectsGroup:
     rigid_body_constraint: Optional[bpy.types.Object] = None
     object_parent_empty: Optional[bpy.types.Object] = None
 
-
 def prepare_physics_simulation(context: bpy_types.Context) -> Dict:
     result = ModelExport.json_outer()
     armature = context.object  # an armature
@@ -700,7 +699,17 @@ def prepare_physics_simulation(context: bpy_types.Context) -> Dict:
             collection = bpy.data.collections.new("RigidBodyConstraints")
             context.scene.rigidbody_world.constraints = collection
 
+    # Create new collections for the scene
     physics_objects_groups: Dict[McblendObject, PhysicsObjectsGroup] = {}
+    main_collection = bpy.data.collections.new("Mcblend: Physics")
+    rb_collection = bpy.data.collections.new("Rigid Body")
+    rbc_collection = bpy.data.collections.new("Rigid Body Constraints")
+    bp_collection = bpy.data.collections.new("Bone Parents")
+    context.scene.collection.children.link(main_collection)
+    main_collection.children.link(rb_collection)
+    main_collection.children.link(rbc_collection)
+    main_collection.children.link(bp_collection)
+
     for _, bone in mcblend_obj_group.items():
         if not bone.mctype == MCObjType.BONE:
             continue
@@ -736,6 +745,9 @@ def prepare_physics_simulation(context: bpy_types.Context) -> Dict:
             rigid_body.parent = None
             rigid_body.matrix_world = mw
             context.scene.rigidbody_world.collection.objects.link(rigid_body)
+            # Move to rigid body colleciton
+            context.collection.objects.unlink(rigid_body)
+            rb_collection.objects.link(rigid_body)
             # Add keyframes to the rigid body "animated"/"kinematic" property (
             # enable it 1 frame after current frame)
             rigid_body.rigid_body.kinematic = True
@@ -751,12 +763,13 @@ def prepare_physics_simulation(context: bpy_types.Context) -> Dict:
 
 
             # Add bone parent empty
-            bpy.ops.object.empty_add(type='CONE', location=(0, 0, 0), radius=0.1)
-            empty = bpy.context.object
+            empty = bpy.data.objects.new(
+                f'{bone.obj_name}_bp', None)  # bp - bone parent
+            bp_collection.objects.link(empty)
+            empty.empty_display_type = 'CONE'
+            empty.empty_display_size = 0.1
             empty.matrix_world = bone.obj_matrix_world
-            empty.name = f'{bone.obj_name}_bp'  # bpe - bone parent
             physics_objects_groups[bone].object_parent_empty = empty
-
             # Add "Copy Transforms" constraint to the bone
             context.view_layer.objects.active = armature
             bpy.ops.object.posemode_toggle()  # Pose mode
@@ -782,12 +795,13 @@ def prepare_physics_simulation(context: bpy_types.Context) -> Dict:
             bpy.ops.object.constraint_add(type='CHILD_OF')
             empty.constraints["Child Of"].target = rigid_body
 
-        bpy.ops.object.empty_add(type='PLAIN_AXES', location=(0, 0, 0), radius=0.1)
-        empty = bpy.context.object
+        empty = bpy.data.objects.new(
+            f'{bone.obj_name}_rbc', None)  # bp - bone parent
+        rbc_collection.objects.link(empty)
+        empty.empty_display_type = 'PLAIN_AXES'
+        empty.empty_display_size = 0.1
         empty.matrix_world = bone.obj_matrix_world
-        empty.name = f'{bone.obj_name}_c'  # c - constraint
         physics_objects_groups[bone].rigid_body_constraint = empty
-
 
     # Add constraints to rigid body constraints empty
     for bone, pog in physics_objects_groups.items():
