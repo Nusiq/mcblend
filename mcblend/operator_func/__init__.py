@@ -691,13 +691,15 @@ def prepare_physics_simulation(context: bpy_types.Context) -> Dict:
     mcblend_obj_group = McblendObjectGroup(armature)
 
     # If there is no rigid body world add it to the scene
-    if context.scene.rigidbody_world is None:
+    rigidbody_world = context.scene.rigidbody_world
+    if rigidbody_world is None:
+        rigidbody_world = context.scene.rigidbody_world
         bpy.ops.rigidbody.world_add()
-        if context.scene.rigidbody_world.collection is None:
+        if rigidbody_world.collection is None:
             collection = bpy.data.collections.new("RigidBodyWorld")
-            context.scene.rigidbody_world.collection = collection
+            rigidbody_world.collection = collection
             collection = bpy.data.collections.new("RigidBodyConstraints")
-            context.scene.rigidbody_world.constraints = collection
+            rigidbody_world.constraints = collection
 
     # Create new collections for the scene
     physics_objects_groups: Dict[McblendObject, PhysicsObjectsGroup] = {}
@@ -744,7 +746,7 @@ def prepare_physics_simulation(context: bpy_types.Context) -> Dict:
             mw = rigid_body.matrix_world.copy()
             rigid_body.parent = None
             rigid_body.matrix_world = mw
-            context.scene.rigidbody_world.collection.objects.link(rigid_body)
+            rigidbody_world.collection.objects.link(rigid_body)  # type: ignore
             # Move to rigid body colleciton
             context.collection.objects.unlink(rigid_body)
             rb_collection.objects.link(rigid_body)
@@ -815,7 +817,8 @@ def prepare_physics_simulation(context: bpy_types.Context) -> Dict:
         parent_rb = physics_objects_groups[bone.parent].rigid_body
         if parent_rb is None:
             continue
-        context.scene.rigidbody_world.constraints.objects.link(rbc)
+        context.scene.rigidbody_world.constraints.objects.link(  # type: ignore
+            rbc)
         rbc.rigid_body_constraint.object1 = pog.rigid_body
         rbc.rigid_body_constraint.object2 = parent_rb
 

@@ -33,9 +33,11 @@ class MCBLEND_OT_ExportModel(
     '''Operator used for exporting Minecraft models from blender.'''
     # pylint: disable=unused-argument, no-member
     bl_idname = "mcblend.export_model"
-    bl_label = "Export model"
+    bl_label = "Export Bedrock Model"
     bl_options = {'REGISTER'}
-    bl_description = "Exports selected objects from scene to bedrock model."
+    bl_description = (
+        "Exports selected objects from scene to Minecraft Bedrock edition"
+        " model.")
 
     filename_ext = '.json'
 
@@ -90,12 +92,10 @@ class MCBLEND_OT_ExportAnimation(
     '''Operator used for exporting Minecraft animations from blender.'''
     # pylint: disable=unused-argument, no-member
     bl_idname = "mcblend.export_animation"
-    bl_label = "Export animation"
+    bl_label = "Export Bedrock Animation"
     bl_options = {'REGISTER'}
     bl_description = (
-        "Exports animation of selected objects to bedrock entity animation "
-        "format."
-    )
+        "Exports Bedrock edition entity animation for selected armature.")
 
 
     filename_ext = '.json'
@@ -435,9 +435,9 @@ class MCBLEND_OT_ImportModel(bpy.types.Operator, ImportHelper):
     '''Operator used for importing Minecraft models to Blender.'''
     # pylint: disable=unused-argument, no-member
     bl_idname = "mcblend.import_model"
-    bl_label = "Import model"
+    bl_label = "Import Bedrock Model"
     bl_options = {'REGISTER', 'UNDO'}
-    bl_description = "Import model from json file."
+    bl_description = "Import Minecraft Bedrock edition model from json file."
     # ImportHelper mixin class uses this
     filename_ext = ".json"
     filter_glob: StringProperty(  # type: ignore
