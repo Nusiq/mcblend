@@ -110,7 +110,7 @@ bl_info = {
     "author": "Artur",
     "description": "Minecraft Bedrock Edition addon for creating entity models and animations.",
     "blender": (2, 80, 0),
-    "version": (9, 0, 1),  # COMPATIBILITY BREAKING CHANGE, NEW FEATURE, BUGFIX
+    "version": (9, 1, 0),  # COMPATIBILITY BREAKING CHANGE, NEW FEATURE, BUGFIX
     "location": "",
     "warning": "",
     "category": "Object"
