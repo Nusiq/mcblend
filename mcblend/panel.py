@@ -722,6 +722,10 @@ class MCBLEND_PT_OperatorsPanel(bpy.types.Panel):
             "mcblend.separate_mesh_cubes",
             text="Separate and align cubes"
         )
+        box.operator(
+            "mcblend.prepare_physics_simulation",
+            text="Prepare physics simulation"
+        )
 
 # Resource pack panel
 class MCBLEND_PT_ProjectPanel(bpy.types.Panel):

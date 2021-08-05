@@ -19,7 +19,7 @@ from .uv_data import get_unused_uv_group_name
 from .operator_func import (
     export_model, export_animation, fix_uvs, separate_mesh_cubes, set_uvs,
     round_dimensions, import_model, inflate_objects, reload_rp_entities,
-    import_model_form_project, apply_materials)
+    import_model_form_project, apply_materials, prepare_physics_simulation)
 from .operator_func.bedrock_packs.json import CompactEncoder
 from .operator_func.exception import (
     InvalidUvShape, NotEnoughTextureSpace,)
@@ -1749,4 +1749,26 @@ class MCBLEND_OT_FakeRcApplyMaterials(bpy.types.Operator):
 
     def execute(self, context):
         apply_materials(context)
+        return {'FINISHED'}
+
+# Physics
+class MCBLEND_OT_PreparePhysicsSimulation(bpy.types.Operator):
+    '''Operator used for adding objects used for rigid body simulation.'''
+    # pylint: disable=unused-argument, no-member
+    bl_idname = "mcblend.prepare_physics_simulation"
+    bl_label = "Prepare physics simulation"
+    bl_options = {'REGISTER'}
+    bl_description = (
+        "Operator used for adding objects used for rigid body simulation.")
+
+    @classmethod
+    def poll(cls, context: bpy_types.Context):
+        if context.mode != 'OBJECT':
+            return False
+        if context.object is None:
+            return False
+        return context.object.type == 'ARMATURE'
+
+    def execute(self, context):
+        prepare_physics_simulation(context)
         return {'FINISHED'}

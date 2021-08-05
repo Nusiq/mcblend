@@ -160,6 +160,11 @@ class McblendObject:
         return self.thisobj.data
 
     @property
+    def this_pose_bone(self) -> bpy.types.PoseBone:
+        '''The pose bone of this object (doesn't work for non-bone objects)'''
+        return self.thisobj.pose.bones[self.thisobj_id.bone_name]
+
+    @property
     def obj_name(self) -> str:
         '''The name of this object used for exporting to Minecraft model.'''
         if self.thisobj.type == 'ARMATURE':

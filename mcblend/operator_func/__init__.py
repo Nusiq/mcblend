@@ -16,8 +16,9 @@ import numpy as np
 from .animation import AnimationExport
 from .bedrock_packs import Project, ResourcePack
 from .common import (
-    MINECRAFT_SCALE_FACTOR, CubePolygon, McblendObjectGroup, MeshType,
-    apply_obj_transform_keep_origin, fix_cube_rotation, star_pattern_match)
+    MINECRAFT_SCALE_FACTOR, CubePolygon, McblendObject, McblendObjectGroup, MeshType,
+    apply_obj_transform_keep_origin, fix_cube_rotation, star_pattern_match,
+    MCObjType)
 from .importer import ImportGeometry, ModelLoader
 from .material import create_bone_material
 from .model import ModelExport
@@ -676,3 +677,132 @@ def apply_materials(context: bpy.types.Context):
             p.obj_data.materials.clear()
             p.obj_data.materials.append(
                 blender_materials[tuple(bone_materials_id)])
+
+@dataclass
+class PhysicsObjectsGroup:
+    rigid_body: Optional[bpy.types.Object] = None
+    rigid_body_constraint: Optional[bpy.types.Object] = None
+    object_parent_empty: Optional[bpy.types.Object] = None
+
+
+def prepare_physics_simulation(context: bpy_types.Context) -> Dict:
+    result = ModelExport.json_outer()
+    armature = context.object  # an armature
+
+    mcblend_obj_group = McblendObjectGroup(armature)
+
+    # If there is no rigid body world add it to the scene
+    if context.scene.rigidbody_world is None:
+        bpy.ops.rigidbody.world_add()
+        if context.scene.rigidbody_world.collection is None:
+            collection = bpy.data.collections.new("RigidBodyWorld")
+            context.scene.rigidbody_world.collection = collection
+            collection = bpy.data.collections.new("RigidBodyConstraints")
+            context.scene.rigidbody_world.constraints = collection
+
+    physics_objects_groups: Dict[McblendObject, PhysicsObjectsGroup] = {}
+    for _, bone in mcblend_obj_group.items():
+        if not bone.mctype == MCObjType.BONE:
+            continue
+        physics_objects_groups[bone] = PhysicsObjectsGroup()
+        # Create children cubes
+        cubes_group: List[bpy.context.Object] = []
+        for child in bone.children:
+            if not child.mctype == MCObjType.CUBE:
+                continue
+            new_obj = child.thisobj.copy()
+            new_obj.data = child.obj_data.copy()
+            new_obj.animation_data_clear()
+            context.collection.objects.link(new_obj)
+            cubes_group.append(new_obj)
+        bpy.ops.object.select_all(action='DESELECT')
+        rigid_body: Optional[bpy.types.Object] = None
+        if len(cubes_group) > 1:
+            for c in cubes_group:
+                c.select_set(True)
+            context.view_layer.objects.active = c
+            bpy.ops.object.join()
+            rigid_body = context.object
+        elif len(cubes_group) == 1:
+            cubes_group[0].select_set(True)
+            rigid_body = cubes_group[0]
+        # Move origin to the center of mass and rename the object
+        if rigid_body is not None:
+            for material_slot in rigid_body.material_slots:
+                material_slot.material = None
+            bpy.ops.object.origin_set(type='ORIGIN_CENTER_OF_VOLUME', center='MEDIAN')
+            bpy.ops.object.visual_transform_apply()
+            mw = rigid_body.matrix_world.copy()
+            rigid_body.parent = None
+            rigid_body.matrix_world = mw
+            context.scene.rigidbody_world.collection.objects.link(rigid_body)
+            # Add keyframes to the rigid body "animated"/"kinematic" property (
+            # enable it 1 frame after current frame)
+            rigid_body.rigid_body.kinematic = True
+            rigid_body.rigid_body.keyframe_insert("kinematic", frame=0)
+            rigid_body.rigid_body.keyframe_insert(
+                "kinematic", frame=bpy.context.scene.frame_current)
+            rigid_body.rigid_body.kinematic = False
+            rigid_body.rigid_body.keyframe_insert(
+                "kinematic", frame=bpy.context.scene.frame_current+1)
+            # rb - rigid body
+            rigid_body.name = f'{bone.obj_name}_rb'
+            physics_objects_groups[bone].rigid_body = rigid_body
+
+
+            # Add bone parent empty
+            bpy.ops.object.empty_add(type='CONE', location=(0, 0, 0), radius=0.1)
+            empty = bpy.context.object
+            empty.matrix_world = bone.obj_matrix_world
+            empty.name = f'{bone.obj_name}_bp'  # bpe - bone parent
+            physics_objects_groups[bone].object_parent_empty = empty
+
+            # Add "Copy Transforms" constraint to the bone
+            context.view_layer.objects.active = armature
+            bpy.ops.object.posemode_toggle()  # Pose mode
+            bpy.ops.pose.select_all(action='DESELECT')
+            armature.data.bones.active = armature.data.bones[
+                bone.thisobj_id.bone_name]
+            bpy.ops.pose.constraint_add(type='COPY_TRANSFORMS')
+            constraint = bone.this_pose_bone.constraints["Copy Transforms"]
+            constraint.target = empty
+            # Add keyframes to the "copy transformation" constraint (
+            # enable it 1 frame after current frame)
+            constraint.influence = 0
+            constraint.keyframe_insert("influence", frame=0)
+            constraint.keyframe_insert(
+                "influence", frame=bpy.context.scene.frame_current)
+            constraint.influence = 1
+            constraint.keyframe_insert(
+                "influence", frame=bpy.context.scene.frame_current+1)
+            bpy.ops.object.posemode_toggle()  # Object mode
+
+            # Add "Child of" constraint to parent empty
+            context.view_layer.objects.active = empty
+            bpy.ops.object.constraint_add(type='CHILD_OF')
+            empty.constraints["Child Of"].target = rigid_body
+
+        bpy.ops.object.empty_add(type='PLAIN_AXES', location=(0, 0, 0), radius=0.1)
+        empty = bpy.context.object
+        empty.matrix_world = bone.obj_matrix_world
+        empty.name = f'{bone.obj_name}_c'  # c - constraint
+        physics_objects_groups[bone].rigid_body_constraint = empty
+
+
+    # Add constraints to rigid body constraints empty
+    for bone, pog in physics_objects_groups.items():
+        rbc = pog.rigid_body_constraint
+        if rbc is None:
+            continue
+        if bone.parent is None or bone.parent.mctype != MCObjType.BONE:
+            continue
+        if bone.parent not in physics_objects_groups:
+            continue
+        parent_rb = physics_objects_groups[bone.parent].rigid_body
+        if parent_rb is None:
+            continue
+        context.scene.rigidbody_world.constraints.objects.link(rbc)
+        rbc.rigid_body_constraint.object1 = pog.rigid_body
+        rbc.rigid_body_constraint.object2 = parent_rb
+
+    return result
