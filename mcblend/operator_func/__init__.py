@@ -679,12 +679,21 @@ def apply_materials(context: bpy.types.Context):
                 blender_materials[tuple(bone_materials_id)])
 
 @dataclass
-class PhysicsObjectsGroup:
+class _PhysicsObjectsGroup:
+    '''
+    Group of objects used for rigid body simulation of single bone of armature.
+    '''
     rigid_body: Optional[bpy.types.Object] = None
     rigid_body_constraint: Optional[bpy.types.Object] = None
     object_parent_empty: Optional[bpy.types.Object] = None
 
 def prepare_physics_simulation(context: bpy_types.Context) -> Dict:
+    '''
+    Creates objects necessary for the rigid body simulation of the Minecraft
+    model.
+
+    :param context: the context of running the operator.
+    '''
     result = ModelExport.json_outer()
     armature = context.object  # an armature
 
@@ -693,16 +702,17 @@ def prepare_physics_simulation(context: bpy_types.Context) -> Dict:
     # If there is no rigid body world add it to the scene
     rigidbody_world = context.scene.rigidbody_world
     if rigidbody_world is None:
-        rigidbody_world = context.scene.rigidbody_world
         bpy.ops.rigidbody.world_add()
-        if rigidbody_world.collection is None:
-            collection = bpy.data.collections.new("RigidBodyWorld")
-            rigidbody_world.collection = collection
-            collection = bpy.data.collections.new("RigidBodyConstraints")
-            rigidbody_world.constraints = collection
+        rigidbody_world = context.scene.rigidbody_world
+    if rigidbody_world.collection is None:
+        collection = bpy.data.collections.new("RigidBodyWorld")
+        rigidbody_world.collection = collection
+    if rigidbody_world.constraints is None:
+        collection = bpy.data.collections.new("RigidBodyConstraints")
+        rigidbody_world.constraints = collection
 
     # Create new collections for the scene
-    physics_objects_groups: Dict[McblendObject, PhysicsObjectsGroup] = {}
+    physics_objects_groups: Dict[McblendObject, _PhysicsObjectsGroup] = {}
     main_collection = bpy.data.collections.new("Mcblend: Physics")
     rb_collection = bpy.data.collections.new("Rigid Body")
     rbc_collection = bpy.data.collections.new("Rigid Body Constraints")
@@ -715,9 +725,9 @@ def prepare_physics_simulation(context: bpy_types.Context) -> Dict:
     for _, bone in mcblend_obj_group.items():
         if not bone.mctype == MCObjType.BONE:
             continue
-        physics_objects_groups[bone] = PhysicsObjectsGroup()
+        physics_objects_groups[bone] = _PhysicsObjectsGroup()
         # Create children cubes
-        cubes_group: List[bpy.context.Object] = []
+        cubes_group: List[bpy.types.Object] = []
         for child in bone.children:
             if not child.mctype == MCObjType.CUBE:
                 continue
@@ -731,7 +741,7 @@ def prepare_physics_simulation(context: bpy_types.Context) -> Dict:
         if len(cubes_group) > 1:
             for c in cubes_group:
                 c.select_set(True)
-            context.view_layer.objects.active = c
+            context.view_layer.objects.active = cubes_group[-1]
             bpy.ops.object.join()
             rigid_body = context.object
         elif len(cubes_group) == 1:
@@ -743,9 +753,9 @@ def prepare_physics_simulation(context: bpy_types.Context) -> Dict:
                 material_slot.material = None
             bpy.ops.object.origin_set(type='ORIGIN_CENTER_OF_VOLUME', center='MEDIAN')
             bpy.ops.object.visual_transform_apply()
-            mw = rigid_body.matrix_world.copy()
+            matrix_world = rigid_body.matrix_world.copy()
             rigid_body.parent = None
-            rigid_body.matrix_world = mw
+            rigid_body.matrix_world = matrix_world
             rigidbody_world.collection.objects.link(rigid_body)  # type: ignore
             # Move to rigid body colleciton
             context.collection.objects.unlink(rigid_body)

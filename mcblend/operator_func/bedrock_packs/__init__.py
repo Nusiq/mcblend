@@ -3,11 +3,12 @@ Python module for working with Minecraft bedrock edition projects.
 '''
 # Pylint doesn't get the inherited members for some reason
 # pylint: disable=unused-argument, unsubscriptable-object, disable=no-member
-# pylint: disable=abstract-method, missing-function-docstring
+# pylint: disable=abstract-method, missing-function-docstring,
+# pylint: disable=consider-using-dict-items
 from __future__ import annotations
 
 import re
-from abc import ABC, abstractmethod, abstractproperty
+from abc import ABC, abstractmethod
 from enum import Enum, auto
 from pathlib import Path
 from typing import (
@@ -888,7 +889,8 @@ class _McFileSingle(_McFile[MCFILE_COLLECTION]):
     A file that can contain only one object of certain type from a pack.
     :class:`McFile` with single Minecraft object
     '''
-    @abstractproperty
+    @property
+    @abstractmethod
     def identifier(self) -> Optional[str]:
         '''
         The identifier of a Minecraft object contained in this file.

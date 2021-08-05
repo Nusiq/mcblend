@@ -332,7 +332,7 @@ class CompactEncoder(json.JSONEncoder):
     def _is_primitive(self, obj):
         return isinstance(obj, (int, bool, str, float))
 
-    def encode(self, obj):
+    def encode(self, o):
         '''
         Return a JSON string representation of a Python data structure.
 
@@ -341,7 +341,7 @@ class CompactEncoder(json.JSONEncoder):
         >>> CompactEncoder().encode({"foo": ["bar", "baz"]})
         '{\\n\\t"foo": ["bar", "baz"]\\n}'
         '''
-        return ''.join(i for i in self.iterencode(obj))
+        return ''.join(i for i in self.iterencode(o))
 
     def iterencode(self, obj):
         '''
