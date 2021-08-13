@@ -1,32 +1,27 @@
 # Conversion rules
-There are no directly equivalent objects in blender models to Minecraft models.
+There are no directly equivalent objects in Blender models to Minecraft models.
 Mcblend uses a set of rules to decide which parts of the model
 should be turned into bone, locator or cube.
+
+1. Every model must have an armature (a lot of properties of the model are
+   saved in the armature object).
+2. The bones of the armature are converted into the bones in Minecraft model
+   unless they don't have any children or parents. This rule helps avoid
+   exporting bones used for inverse kinematics.
+3. The child objects (meshes) of the bones are converted into cubes or polymesh
+   (you can use the [mesh type](../gui#object-properties) property to
+   decide wherher the object is exported as polymesh or a cube). Mcblend uses
+   "Bone" parenting mode. You can set a bone to be a parent of an object while
+   you're in "Pose mode" by selecting the child object in outliner, then than
+   selecting the bone and pressing `CTRL+P`. In the context menu select
+   "Bone" option.
+4. The empties are translated into locators. They cannot have child objects.
+   you can parent the empty to a bone in exactly same way as described in
+   point 3.
+5. You don't have to parent the cubes directly to bones. If you parent them
+   to each other as long as one of them are parented to a bone.
 
 !!! note
     The best way to learn what kinds of object are converted to what is trial
     and error. You can use the set of rules below if you notice something
     unexpected.
-
-1. An empty or mesh with custom
-  [_export as bone_](../basic_operators/#toggle-export-as-bones) property
-  always creates a a bone or a bone with cube/polymesh, respectively.
-2. A Blender bone is converted into a Minecraft bone unless it has no children
-  and no parents. In this case it isn't converted at all. This behavior is to
-  prevent the exporting of inverse kinematics bones.
-3. An empty becomes a bone unless it has a parent but no children. In this case
-  it creates a locator.
-4. Mesh without parent becomes a bone with a cube/polymesh inside. Mesh with a parent
-  becomes a cube/polymesh.
-
-!!! note
-    The [mesh type](../gui_changes#object-properties) property decides whether
-    the mesh should be exported as cube or polymesh.
-
-**The conversion rules can also be represented with this table:**
-
-||Export as bone|no parent, no children| parent, no children|no parent,children|parent and children|
-|---|---|---|---|---|---|
-|__Bone__ |N/A|NONE|bone|bone|bone|
-|__Empty__|bone|bone|locator|bone|bone|
-|__Mesh__ |bone & cube/polymesh|bone & cube/polymesh|cube/polymesh| bone & cube/polymesh|cube/polymesh|

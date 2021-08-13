@@ -15,12 +15,12 @@ You can find the framerate setting in `Output Properties -> Frame Rate`.
 ![](../img/framerate_setting.png)
 
 ## World unit scale
-By default 1 meter in your model is equal to one block in Minecraft. One meter
-in Minecraft model is 16 pixels on the texture of the model. You might want to
-measure the size in pixels instead of meters. You can change the setting that
-you can find under `Scene properties -> Unit scale`. Changing the value
-of this property to 16 will cause that one meter of your Blender model will be
-converted into 1 pixel in Minecraft.
+By default 1 meter in Blender is equal to one block in Minecraft. One
+Minecraft meter is 16 units of length of the model. You might want to
+measure the size of the model using these units instead of meters. You can
+go to `Scene properties -> Unit scale` to scale the units used in blender.
+Changing the value of this property to 16 will cause that one length unit in
+Blender model will be equal to one length unit of your model.
 
 ![](../img/unit_scale_setting.png)
 

@@ -3,7 +3,7 @@
 ![](../img/customized_uv_groups.png)
 
 You can customize the appearance of a UV-group by applying masks to its faces
-in new custom panel in [Scene Properties](../gui_changes/#scene-properties).
+in new custom panel in [Scene Properties](../gui/#scene-properties).
 
 Masks are filters that are applied to the texture when it is generated.
 Each UV-group has 6 faces. You can switch between faces to edit with

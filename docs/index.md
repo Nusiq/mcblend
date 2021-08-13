@@ -6,7 +6,8 @@ A Blender addon for creating and animating Minecraft Bedrock Edition models.
 - Generating UV-maps and textures for Minecraft models
 - Exporting animations
 - Exporting poses
-- The animated models can use armatures and constraints to make animating easier. Mcblend can detect parts moved by the constraints and add that to Minecraft animations even though they Minecraft don't have this kind of features.
+- The animated models can use armatures and constraints to make animating easier. Mcblend can detect parts moved by the constraints and add that to Minecraft animations even though Minecraft don't have features like that.
+- Adding physics simulations to the model with a single press of a button
 
 ## Planned features
 The improvements planned for this Blender plugin are often listed as
@@ -29,11 +30,13 @@ must uninstall the old version of the addon and than install the new one.
 
 ## Which version should I install
 ### Pre-release vs Latest release
-The top first two releases at the top of the list of releases for Mcblend - *Pre-release*
+The top first two releases at the top of the list are usually *Pre-release*
 and *Latest release*. The Pre-release versions are used to quickly deploy a new version
-of Mcblend before updating this user manual. This means that Pre-release versions usually
+of Mcblend before updating the user manual. This means that Pre-release versions usually
 have more features and some additional bug-fixes but they are not documented. When
-this user manual is updated the *Pre-release* is changed to *Latest release*.
+this user manual is updated the *Pre-release* is changed to *Latest release*. Sometimes
+shortly after chainging the pre-release status to normal release there is no pre-release
+on the list.
 ### Versioning system
 The Mcblend version numbers are created with 3 dot-separated numbers: A.B.C
 

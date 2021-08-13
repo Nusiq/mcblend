@@ -6,13 +6,16 @@ cubes you mast make sure that every cube is an separate object (separate mesh).
 
 You can use the edit mode to rotate, scale and move your cubes to your preference
 however, they mast be separated before you export the model
-(see *[separate cubes operator](../basic_operators#separate-cubes)*)
+(see *[separate cubes operator](../gui/#mesh-transformations-panel)*)\
 
 If you don't want to be restricted to using only cuboids for your model you can
-also mark your objects as [polymesh](../gui_changes#object-properties).
+also mark your objects as [polymesh](../gui#object-properties).
+Be aware that the polymesh models are still an experimental feature in
+Minecraft and they could be removed in the future.
 
 ## No wide angles in animations
-There must be no more than 180° rotation between two key frames.
+There must be no more than 180° rotation between two key frames or the exported
+animation will look different in Minecraft than in the preview in Blender.
 
 This issue is caused by the way Mcblend computes Minecraft's rotations
 internally.
@@ -41,9 +44,13 @@ because Mcblend will always try to export as short rotation as possible.
     rotations.
 
 
-## No dots in names names
-The add-on does not allow the use of names that have periods. Anything after
-the first dot in the object name is ignored during the conversion. You can use
-dots in the names of the objects that aren't converted to bones of exported 
-Minecraft model. The conversion rules are described in the
-[conversion rules](../conversion_rules/) section of the user manual.
+## Every model must have an armature
+Blender has a lot of featurees. Way more than the Minecraft models support.
+Therfore there is no way of translating everything to Minecraft format. Mcblend
+has a set of [conversion rules](../conversion_rules/) which defines what
+objects are converted to what. The TLDR version is: *bones of armature
+are translated to bones, meshes are translated to cubes or polymesh and
+empties are translated to locators.* You can edit multiple objects at once
+with Mcblend. Every armature can be exported as a Minecraft model. The parent
+rules decide which mesh belongs to what mode.
+

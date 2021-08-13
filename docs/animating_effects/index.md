@@ -2,7 +2,7 @@
 
 The sound effects and particle effects are animated with use of events.
 You can define events in _Mcblend events_ menu in
-[scene properties](../gui_changes/#scene-properties). One event can contain
+[scene properties](../gui/#scene-properties). One event can contain
 multiple particles and sound effects. The effects are not visible in preview
 of the animation in Blender. They only add some information to exported
 animation.

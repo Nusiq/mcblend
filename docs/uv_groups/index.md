@@ -13,11 +13,11 @@ better to create textures in a usual way.
 
 ## Creating and removing UV-groups
 UV-groups are added / removed using the "Mcblend UV groups" panel from the
-[Scene Properties](../gui_changes/#scene-properties) with "New UV group" and
+[Scene Properties](../gui/#scene-properties) with "New UV group" and
 "Delete this UV group" buttons. You can also export and import UV groups by
 using the "Export UV group" and "Import UV group" buttons respectively.
 
 ## Adding objects to UV-groups
 Adding object do UV-groups is done with
-[Set the UV group](../basic_operators/#set-the-uv-group) button on sidebar. You
-must create at least one UV-group in order to add objects to it.
+[Set the UV group](../gui/#uv-mapping-panel) button on sidebar.
+You must create at least one UV-group in order to add objects to it.
