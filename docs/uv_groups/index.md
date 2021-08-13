@@ -2,14 +2,14 @@
 
 UV-groups influence the process of UV-mapping.
 
-The main purpose of UV-groups is to group cubes together so that they are mapped
+The main purpose of UV-groups is to group cuboids together so that they are mapped
 to the same spot on the texture. Using UV groups can help reduce the texture
 size when the model has many identical parts.
 
-UV-groups also let you can change the appearance  of generated textures to your
+UV-groups also let you change the appearance of generated textures to your
 preference. This can be useful for setting some distinguishable look for UV-group
 members. You can create some fairly advanced textures with it, but it's usually
-better to create textures in a usual way.
+better to create textures in the usual way.
 
 ## Creating and removing UV-groups
 UV-groups are added / removed using the "Mcblend UV groups" panel from the
@@ -18,6 +18,6 @@ UV-groups are added / removed using the "Mcblend UV groups" panel from the
 using the "Export UV group" and "Import UV group" buttons respectively.
 
 ## Adding objects to UV-groups
-Adding object do UV-groups is done with
-[Set the UV group](../gui/#uv-mapping-panel) button on sidebar.
+Adding objects to UV-groups is done with the
+[Set the UV group](../gui/#uv-mapping-panel) button on the sidebar.
 You must create at least one UV-group in order to add objects to it.

@@ -6,13 +6,13 @@ You can customize the appearance of a UV-group by applying masks to its faces
 in new custom panel in [Scene Properties](../gui/#scene-properties).
 
 Masks are filters that are applied to the texture when it is generated.
-Each UV-group has 6 faces. You can switch between faces to edit with
+Each UV-group has 6 faces. You can switch between faces to edit with the
 "Side:" dropdown menu. The image below shows how the names of the
 sides (side1-6) are correlated to their placement on the texture.
 
 ![](../img/faces.png)
 
-New masks are added with "Add mask" dropdown menu. There are 8 different types
+New masks are added with the "Add mask" dropdown menu. There are 8 different types
 of masks.
 
 
@@ -29,20 +29,20 @@ to a color image with a palette defined as a list of colors.
 
 Properties:
 
-- Colors - list of colors in the palette
-- Interpolate - whether there should be a smooth transition between the colors
+- Colors - List of colors in the palette
+- Interpolate - Whether there should be a smooth transition between the colors
     on the palette.
-- Normalize - normalizes the input values so that the whole color palette is
+- Normalize - Normalizes the input values so that the entire palette is
     used.
 
 !!! note
 
-    When input image is not grayscale than it gets converted to grayscale
+    If the input image is not grayscale then it gets converted to grayscale
     before applying the mask.
 
 !!! note
 
-    Color palette mask is the only mask which can't be used inside the Mix
+    The color palette mask is the only mask which can't be used inside the Mix
     Mask. If you put this mask into mix mask it will have no effect.
 
 
@@ -52,42 +52,42 @@ Properties:
 
 The Gradient mask creates a grayscale gradient with stripes of varying darkness
 and width. The direction in which the stripes are drawn is defined with two
-points on the texture. The grayscale image is than multiplied by the input image.
+points on the texture. The grayscale image is then multiplied by the input image.
 
 Properties:
 
-- Point A - the starting point of drawing gradient stripes.
-- Point B - the end point of drawing gradient stripes.
-- Relative boundaries - whether points A and B should be passed as absolute
+- Point A - The starting point of drawing gradient stripes.
+- Point B - The end point of drawing gradient stripes.
+- Relative boundaries - Whether points A and B should be passed as absolute
     values (number of pixels from the lower left corner of the texture) or as a
     fraction of the texture size (0.0 lower left corner, 1.0 upper right corner).
     The absolute values can be negative, meaning they represent the number of
     pixels from the top right corner (starting at -1).
-- Stripes - the list of stripes in the gradient their colors (strengths) and
+- Stripes - The list of stripes in the gradient, with their colors (strengths) and
     their widths. The widths define their placement on a line between points
-    A and B so in most cases the width of the first stripe is 0, which means
-    that this stripe should be drawn at the Point A.
-- Exponent - the filter image is raised to the power of this value before it
+    A and B, so in most cases the width of the first stripe is 0, which means
+    that this stripe should be drawn at Point A.
+- Exponent - The filter image is raised to the power of this value before it
     is multiplied by the image.
 ## Ellipse Mask
 ![](../img/ellipse_mask.png)
 
-Ellipse mask creates a grayscale image of ellipse that fits between Point A and
-Point B. The grayscale image is than multiplied by the input image.
+The Ellipse mask creates a grayscale image of an ellipse drawn between Point A and
+Point B. The grayscale image is then multiplied by the input image.
 
 Properties:
 
-- Point A and B - boundaries of the ellipse.
-- Relative boundaries - whether points A and B should be passed as absolute
+- Point A and B - Boundaries of the ellipse.
+- Relative boundaries - Whether points A and B should be passed as absolute
     values (number of pixels from the lower left corner of the texture) or as a
     fraction of the texture size (0.0 lower left corner, 1.0 upper right corner).
     The absolute values can be negative, meaning they represent the number of
     pixels from the top right corner (starting at -1).
-- Exponent - the filter image is raised to the power of this value before it
+- Exponent - The filter image is raised to the power of this value before it
     is multiplied by the image.
-- Strength - the min and max values of brightness of created filter image.
-- Hard edge - whether the ellipse should have hard edges or the brightness
-    of the inner part of the ellipse should be smoothly interpolated to 
+- Strength - The min and max values of brightness of the created filter image.
+- Hard edge - Whether the ellipse should have hard edges or the brightness
+    of the inner part of the ellipse should be smoothly interpolated towards 
     the edges of the image.
 
 
@@ -95,22 +95,22 @@ Properties:
 ## Rectangle Mask
 ![](../img/rectangle_mask.png)
 
-Rectangle mask creates a grayscale image of rectangle between Point A and
-Point B. The grayscale image is than multiplied by the input image.
+The Rectangle mask creates a grayscale image of a rectangle between Point A and
+Point B. The grayscale image is then multiplied by the input image.
 
 Properties:
 
-- Point A and B - opposite corners of the rectangle.
-- Relative boundaries - whether points A and B should be passed as absolute
+- Point A and B - Opposite corners of the rectangle.
+- Relative boundaries - Whether points A and B should be passed as absolute
     values (number of pixels from the lower left corner of the texture) or as a
     fraction of the texture size (0.0 lower left corner, 1.0 upper right corner).
     The absolute values can be negative, meaning they represent the number of
     pixels from the top right corner (starting at -1).
-- Exponent - the filter image is raised to the power of this value before it
+- Exponent - The filter image is raised to the power of this value before it
     is multiplied by the image.
-- Strength - the min and max values of brightness of created filter image.
-- Hard edge - whether the rectangle should have hard edges or the brightness
-    of the inner part of the rectangle should be smoothly interpolated to 
+- Strength - The min and max values of brightness of the created filter image.
+- Hard edge - Whether the rectangle should have hard edges or the brightness
+    of the inner part of the rectangle should be smoothly interpolated towards 
     the edges of the image.
 
 
@@ -119,16 +119,16 @@ Properties:
 ## Stripes Mask
 ![](../img/stripes_mask.png)
 
-Rectangle mask creates a grayscale image with repeating stripes of certain
-width and brightness. The grayscale image is than multiplied by the input
+The Stripes mask creates a grayscale image with repeating stripes of certain
+width and brightness. The grayscale image is then multiplied by the input
 image.
 
 Properties:
 
-- Relative boundaries - whether the width of the stripes is expressed as a
+- Relative boundaries - Whether the width of the stripes is expressed as a
     fraction of the image width / height.
-- Stripes - the list of the stripes, their width and their brightness.
-- Horizontal - whether the stripes should be vertical or horizontal.
+- Stripes - The list of the stripes, their width and their brightness.
+- Horizontal - Whether the stripes should be vertical or horizontal.
 
 
 
@@ -136,21 +136,21 @@ Properties:
 ## Random Mask
 ![](../img/random_mask.png)
 
-Random mask creates a grayscale image with randomly bright pixels. The
-grayscale image is than multiplied by the input image.
+The Random mask creates a grayscale image with randomly bright pixels. The
+grayscale image is then multiplied by the input image.
 
-- Exponent - the filter image is raised to the power of this value before it
+- Exponent - The filter image is raised to the power of this value before it
     is multiplied by the image.
-- Strength - the min and max brightness values of the pixels on the filter
+- Strength - The min and max brightness values of the pixels on the filter
     image.
-- Use seed - allows you to set the seed for the color randomization.
+- Use seed - Allows you to set the seed for the color randomization.
 
 
 
 ## Color Mask
 ![](../img/color_mask.png)
 
-Color mask multiplies the input mask by a color.
+The Color mask multiplies the input mask by a color.
 
 
 
@@ -158,21 +158,21 @@ Color mask multiplies the input mask by a color.
 ## Mix Mask
 ![](../img/mix_mask.png)
 
-Mix mask lets you mix multiple masks in different way than just default
+The Mix mask lets you mix multiple masks in different ways than just default
 multiplication. 
 
 Properties:
 
-- Exponent - the filter image is raised to the power of this value before it
+- Exponent - The filter image is raised to the power of this value before it
     is multiplied by the image.
-- Strength - the min and max values of the brightness of returned filter image.
+- Strength - The min and max values of the brightness of returned filter image.
     The filter image brightness values are mapped to fit on the scale between
-    values defined with "strength"
-- Mix mode - how to mix filter images produced by other masks. There are 4
+    values defined by "strength"
+- Mix mode - How to mix filter images produced by other masks. There are 4
     options: min, max, mean and median.
 - Number of children - Number of mixed masks.
 
 !!! note
 
-    Mix mask ignores the color palette masks because color palette mask does
-    not create a filter image (it just alters the image from the input).
+    Mix mask ignores the color palette masks, since the color palette masks do
+    not create a filter image (they just alter the image from the input).
