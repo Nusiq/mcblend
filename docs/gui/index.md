@@ -42,7 +42,7 @@ are used. In these situations additional user input is required.
 - **Set the UV group** - adds the selected objects to one of the existing
   [UV-groups](../uv_groups). This operator can be used when at least one
   mesh is selected and at least one UV group has been created in your project.
-- **Clear UV group** - the revese of "Set the UV group". It removes the UV group
+- **Clear UV group** - the reverse of "Set the UV group". It removes the UV group
   from the selected objects.
 
 #### Mesh Transformations panel
