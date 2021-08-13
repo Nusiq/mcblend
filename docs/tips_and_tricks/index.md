@@ -23,24 +23,3 @@ Changing the value of this property to 16 will cause that one length unit in
 Blender model will be equal to one length unit of your model.
 
 ![](../img/unit_scale_setting.png)
-
-## Creating materials
-Currently the addon doesn't create materials for your model during UV mapping
-and generating textures. When you create your UV map and texture template, it is
-not visible on your model. If you want to make the texture visible you have to
-create new material in shader editor and assign it to every object in your
-model.
-
-1. Generate texture template using the [Set bedrock UV panel](../gui).
-2. Go to the shading tab and create new material. Based on the image below:
-
-    ![](../img/simple_shader.png)
-
-3. Enable the transparency in material properties.
-
-    ![](../img/transparency_setting.png)
-
-4. Assign the material to other objects in your model.
-    Select all of your objects and make sure that the object that uses your
-    material is active. Go to `Material Properties` right click on the material
-    and select "Copy to selected".
