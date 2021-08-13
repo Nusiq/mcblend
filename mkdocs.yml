@@ -13,7 +13,7 @@ nav:
     - Importing and exporting files: importing_and_exporting/index.md
     - Animating effects: animating_effects/index.md
     - UV-groups: uv_groups/index.md
-    - Texture customization (advanced): texture_customization/index.md
+    - Texture customization: texture_customization/index.md
     - Tips and tricks: tips_and_tricks/index.md
 
 theme:

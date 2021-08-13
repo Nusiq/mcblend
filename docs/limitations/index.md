@@ -2,11 +2,11 @@
 
 ## Every cube must be a separate Blender object
 If you are creating a traditional Minecraft model with all parts made out of
-cubes you mast make sure that every cube is an separate object (separate mesh).
+cuboids, you must make sure that every cuboid is a separate object (separate mesh).
 
-You can use the edit mode to rotate, scale and move your cubes to your preference
-however, they mast be separated before you export the model
-(see *[separate cubes operator](../gui/#mesh-transformations-panel)*)\
+You can use edit mode to rotate, scale and move your cuboids to your preference,
+however, they must be separated before you export the model
+(see *[separate cubes operator](../gui/#mesh-transformations-panel)*)
 
 If you don't want to be restricted to using only cuboids for your model you can
 also mark your objects as [polymesh](../gui#object-properties).
@@ -14,7 +14,7 @@ Be aware that the polymesh models are still an experimental feature in
 Minecraft and they could be removed in the future.
 
 ## No wide angles in animations
-There must be no more than 180° rotation between two key frames or the exported
+There must be no more than 180° of rotation between two key frames, or the exported
 animation will look different in Minecraft than in the preview in Blender.
 
 This issue is caused by the way Mcblend computes Minecraft's rotations
@@ -32,11 +32,11 @@ The design decision for the internal use of quaternions was motivated by the
 fact that quaternions help avoid some calculation errors.
 
 Unfortunately, the quaternion number system has only one unique representation
-for each rotation orientation, so one cannot distinguish full rotation from no
-rotation (360° == 0°).
+for each rotation orientation, so one cannot distinguish the full rotation from no
+rotation at all (360° == 0°).
 
 Therefore, you cannot use angles greater than 180° between two key frames
-because Mcblend will always try to export as short rotation as possible.
+because Mcblend will always try to export the smallest rotation possible.
 
 !!! note
 
@@ -45,10 +45,10 @@ because Mcblend will always try to export as short rotation as possible.
 
 
 ## Every model must have an armature
-Blender has a lot of featurees. Way more than the Minecraft models support.
+Blender has a lot of features. Way more than the Minecraft models support.
 Therfore there is no way of translating everything to Minecraft format. Mcblend
-has a set of [conversion rules](../conversion_rules/) which defines what
-objects are converted to what. The TLDR version is: *bones of armature
+has a set of [conversion rules](../conversion_rules/) which define what
+objects are converted to what. The TL;DR version is: *bones of armature
 are translated to bones, meshes are translated to cubes or polymesh and
 empties are translated to locators.* You can edit multiple objects at once
 with Mcblend. Every armature can be exported as a Minecraft model. The parent
