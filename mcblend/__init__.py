@@ -84,6 +84,7 @@ from .object_data import (
     MCBLEND_FakeRcMaterialProperties,
     MCBLEND_FakeRcProperties,
     MCBLEND_ObjectProperties,
+    MCBLEND_BoneProperties,
 )
 from .uv_data import (
     MCBLEND_StripeProperties,
@@ -103,6 +104,7 @@ from .panel import (
     MCBLEND_PT_EventsPanel,
     MCBLEND_UL_EventsList,
     MCBLEND_PT_ProjectPanel,
+    MCBLEND_PT_BonePanel,
 )
 
 bl_info = {
@@ -178,6 +180,7 @@ classes = (
     MCBLEND_FakeRcMaterialProperties,
     MCBLEND_FakeRcProperties,
     MCBLEND_ObjectProperties,
+    MCBLEND_BoneProperties,
 
     MCBLEND_StripeProperties,
     MCBLEND_ColorProperties,
@@ -190,6 +193,7 @@ classes = (
     MCBLEND_OT_ImportRpEntity,
     MCBLEND_OT_ReloadRp,
     MCBLEND_PT_ProjectPanel,
+    MCBLEND_PT_BonePanel,
 
     MCBLEND_OT_AddFakeRc,
     MCBLEND_OT_RemoveFakeRc,
@@ -233,6 +237,10 @@ def register():
     # Object properties
     bpy.types.Object.mcblend = PointerProperty(
         type=MCBLEND_ObjectProperties)
+
+    # Pose bone properties
+    bpy.types.PoseBone.mcblend = PointerProperty(
+        type=MCBLEND_BoneProperties)
 
     # Append operators to the F3 menu
     bpy.types.TOPBAR_MT_file_export.append(

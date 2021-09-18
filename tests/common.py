@@ -89,7 +89,7 @@ def assert_is_model(a: Dict):
 
             assert set(bone.keys()) <= {  # acceptable keys
                 'name', 'cubes', 'pivot', 'rotation', 'parent', 'locators',
-                'poly_mesh'
+                'poly_mesh', 'binding',
             }
             assert set(bone.keys()) >= {  # obligatory keys
                 'name', 'pivot', 'rotation'

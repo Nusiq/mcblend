@@ -121,15 +121,15 @@ class ModelLoader:
         #     'model file', set(data.keys()), {'format_version'}, [])
         if 'format_version' in data:
             parser_version = pick_version_parser(
-                ('1.12.0', '1.8.0'), data['format_version'])
+                ('1.16.0', '1.12.0', '1.8.0'), data['format_version'])
             true_format_version = data['format_version']
         elif 'minecraft:geometry' in data:  # Based on files structure
-            parser_version = '1.12.0'
-            true_format_version = '1.12.0'
+            parser_version = '1.16.0'
+            true_format_version = '1.16.0'
         else:  # Based on files structure
             parser_version = '1.8.0'
             true_format_version = '1.8.0'
-        if parser_version == '1.12.0':
+        if parser_version in ('1.16.0', '1.12.0'):
             _assert_has_required_keys(
                 'model file', set(data.keys()),
                 {'minecraft:geometry'}, [])
@@ -168,8 +168,8 @@ class ModelLoader:
         :param data: Root object of the JSON.
         '''
         parser_version = pick_version_parser(
-            ('1.12.0', '1.8.0'), self.format_version)
-        if parser_version == '1.12.0':
+            ('1.16.0', '1.12.0', '1.8.0'), self.format_version)
+        if parser_version in ('1.16.0', '1.12.0'):
             geometries = data['minecraft:geometry']
             path: List = ['minecraft:geometry']
             _assert_is_type('geometries', geometries, (list,), path)
@@ -229,8 +229,8 @@ class ModelLoader:
             "visible_bounds_height": 1
         }
         parser_version = pick_version_parser(
-            ('1.12.0', '1.8.0'), self.format_version)
-        if parser_version == '1.12.0':
+            ('1.16.0', '1.12.0', '1.8.0'), self.format_version)
+        if parser_version in ('1.16.0', '1.12.0'):
             desc = geometry['description']
             path = geometry_path + ['description']
 
@@ -333,8 +333,8 @@ class ModelLoader:
         '''
         result: List = []
         parser_version = pick_version_parser(
-            ('1.12.0', '1.8.0'), self.format_version)
-        if parser_version in ('1.12.0', '1.8.0'):
+            ('1.16.0', '1.12.0', '1.8.0'), self.format_version)
+        if parser_version in ('1.16.0', '1.12.0', '1.8.0'):
             _assert_is_type('bones property', bones, (list,), bones_path)
             for i, bone in enumerate(bones):
                 bone_path = bones_path + [i]
@@ -362,20 +362,27 @@ class ModelLoader:
             "cubes" : [],  # List[Dict]
             "locators": {},  # Dict[...]
             "poly_mesh": None,  # Dict
-            "texture_meshes": []  # List[Dict]
+            "texture_meshes": [],  # List[Dict]
+            "binding": None, # str
         }
         parser_version = pick_version_parser(
-            ('1.12.0', '1.8.0'), self.format_version)
-        if parser_version == '1.12.0':
+            ('1.16.0', '1.12.0', '1.8.0'), self.format_version)
+        if parser_version in ('1.16.0', '1.12.0'):
             _assert_is_type('bone', bone, (dict,), bone_path)
 
 
             _assert_has_required_keys(
                 'bone', set(bone.keys()), {'name'}, bone_path)
-            acceptable_keys = {
-                'name', 'parent', 'pivot', 'rotation', 'mirror', 'inflate',
-                'debug', 'render_group_id', 'cubes', 'locators', 'poly_mesh',
-                'texture_meshes'}
+            if parser_version == '1.16.0':
+                acceptable_keys = {
+                    'name', 'parent', 'pivot', 'rotation', 'mirror', 'inflate',
+                    'debug', 'render_group_id', 'cubes', 'locators', 'poly_mesh',
+                    'texture_meshes', 'binding'}
+            else:
+                acceptable_keys = {
+                    'name', 'parent', 'pivot', 'rotation', 'mirror', 'inflate',
+                    'debug', 'render_group_id', 'cubes', 'locators', 'poly_mesh',
+                    'texture_meshes'}
             _assert_has_accepted_keys_only(
                 'bone', set(bone.keys()), acceptable_keys, bone_path)
 
@@ -383,6 +390,10 @@ class ModelLoader:
                 _assert_is_type(
                     'name', bone['name'], (str,), bone_path + ['name'])
                 result['name'] = bone['name']
+            if 'binding' in bone:
+                _assert_is_type(
+                    'binding', bone['binding'], (str,), bone_path + ['binding'])
+                result['binding'] = bone['binding']
             if 'parent' in bone:
                 _assert_is_type(
                     'parent', bone['parent'], (str,), bone_path + ['parent'])
@@ -534,8 +545,8 @@ class ModelLoader:
         '''
         result = []
         parser_version = pick_version_parser(
-            ('1.12.0', '1.8.0'), self.format_version)
-        if parser_version in ('1.12.0', '1.8.0'):
+            ('1.16.0', '1.12.0', '1.8.0'), self.format_version)
+        if parser_version in ('1.16.0', '1.12.0', '1.8.0'):
             _assert_is_type('cubes property', cubes, (list,), cubes_path)
             for i, cube in enumerate(cubes):
                 cube_path = cubes_path + [i]
@@ -607,8 +618,8 @@ class ModelLoader:
             "uv": None
         }
         parser_version = pick_version_parser(
-            ('1.12.0', '1.8.0'), self.format_version)
-        if parser_version == '1.12.0':
+            ('1.16.0', '1.12.0', '1.8.0'), self.format_version)
+        if parser_version in ('1.16.0', '1.12.0'):
             _assert_is_type('cube', cube, (dict,), cube_path)
             # There is no required keys {} is a valid cube
             acceptable_keys = {
@@ -729,8 +740,8 @@ class ModelLoader:
             'polys': [],  # 'tri_list' or 'quad_list" or list with data
         }
         parser_version = pick_version_parser(
-            ('1.12.0', '1.8.0'), self.format_version)
-        if parser_version in ['1.12.0', '1.8.0']:
+            ('1.16.0', '1.12.0', '1.8.0'), self.format_version)
+        if parser_version in ['1.16.0', '1.12.0', '1.8.0']:
             _assert_is_type('poly_mesh', poly_mesh, (dict,), poly_mesh_path)
             # There is no required keys {} is a valid poly_mesh
             _assert_has_required_keys(
@@ -881,8 +892,8 @@ class ModelLoader:
         }
 
         parser_version = pick_version_parser(
-            ('1.12.0',), self.format_version)
-        if parser_version == '1.12.0':
+            ('1.16.0', '1.12.0',), self.format_version)
+        if parser_version in ('1.16.0', '1.12.0'):
             _assert_is_type('uv', uv, (dict,), uv_path)
             # There is no required keys {} is a valid UV
             acceptable_keys = {"north", "south", "east", "west", "up", "down"}
@@ -937,8 +948,8 @@ class ModelLoader:
             "uv_size": default_size, "uv": [0, 0], "material_instance": ""
         }
         parser_version = pick_version_parser(
-            ('1.12.0',), self.format_version)
-        if parser_version == '1.12.0':
+            ('1.16.0', '1.12.0',), self.format_version)
+        if parser_version in ('1.16.0', '1.12.0'):
             _assert_is_type('uv_face', uv_face, (dict,), uv_face_path)
             _assert_has_required_keys(
                 'uv', set(uv_face.keys()), {'uv'}, uv_face_path)
@@ -977,8 +988,8 @@ class ModelLoader:
         '''
         result = {}
         parser_version = pick_version_parser(
-            ('1.12.0', '1.8.0'), self.format_version)
-        if parser_version in ['1.12.0', '1.8.0']:
+            ('1.16.0', '1.12.0', '1.8.0'), self.format_version)
+        if parser_version in ['1.16.0', '1.12.0', '1.8.0']:
             _assert_is_type(
                 'locators property', locators, (dict,), locators_path)
             for i, locator in locators.items():
@@ -995,8 +1006,8 @@ class ModelLoader:
         :param locator_path: Path to the locator
         '''
         parser_version = pick_version_parser(
-            ('1.12.0', '1.8.0'), self.format_version)
-        if parser_version == '1.12.0':
+            ('1.16.0', '1.12.0', '1.8.0'), self.format_version)
+        if parser_version in ['1.16.0', '1.12.0']:
             if isinstance(locator, list):
                 _assert_is_vector('locator', locator, 3, (int, float), locator_path)
                 return locator
@@ -1136,6 +1147,7 @@ class ImportBone:
 
         self.name: str = data['name']
         self.parent: str = data['parent']
+        self.binding: str = data['binding']
         self.cubes = import_cubes
         self.poly_mesh: Optional[ImportPolyMesh] = None
         if data['poly_mesh'] is not None:
@@ -1346,9 +1358,6 @@ class ImportGeometry:
             for cube in bone.cubes:
                 cube_obj = cube.blend_cube
                 _mc_rotate(cube_obj, cube.rotation)
-
-        # TODO - the objects without parents should be parented to armature
-        # (implementing this may break the build_with_armature method)
         return armature
 
     def build_with_armature(self, context: bpy_types.Context):
@@ -1366,6 +1375,8 @@ class ImportGeometry:
         bpy.ops.object.mode_set(mode='EDIT')
 
         edit_bones = armature.data.edit_bones
+
+
         # Create bones
         for bone in self.bones.values():
             add_bone(edit_bones, 0.3, bone)
@@ -1380,6 +1391,12 @@ class ImportGeometry:
                 # context.view_layer.update()
                 edit_bones[bone.name].parent = edit_bones[parent_obj.name]
         bpy.ops.object.mode_set(mode='OBJECT')
+
+        # Add bindings to pose bones
+        pose_bones = armature.pose.bones
+        for bone in self.bones.values():
+            if bone.binding is not None:
+                pose_bones[bone.name].mcblend.binding = bone.binding
 
         def parent_bone_keep_transform(
                 obj: bpy.types.Object, bone: ImportBone):

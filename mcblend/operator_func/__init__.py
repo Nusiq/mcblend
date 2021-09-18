@@ -63,7 +63,7 @@ def export_animation(
     '''
     anim_data = context.object.mcblend.animations[
         context.object.mcblend.active_animation]
-    
+
     # TODO - write this code nicer, passing world_origin as a string isn't
     # a perfect solution
     world_origin = None

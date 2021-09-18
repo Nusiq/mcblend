@@ -241,6 +241,9 @@ class BoneExport:
             mcbone['parent'] = self.parent
         mcbone['pivot'] = get_vect_json(self.pivot)
         mcbone['rotation'] = get_vect_json(self.rotation)
+        binding = self.mcblend_obj.this_pose_bone.mcblend.binding
+        if binding != "":
+            mcbone['binding'] = binding
 
         # Locators
         if len(self.locators) > 0:

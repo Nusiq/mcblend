@@ -728,7 +728,7 @@ class McblendObjectGroup:
     '''
     def __init__(
             self, armature: bpy.types.Object,
-            world_origin: Optional[bpy.type.Object]):
+            world_origin: Optional[bpy.types.Object]):
         self.data: Dict[ObjectId, McblendObject] = {}
         '''the content of the group.'''
         self.world_origin: Optional[bpy.types.Object] = world_origin

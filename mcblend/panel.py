@@ -820,3 +820,38 @@ class MCBLEND_PT_ProjectPanel(bpy.types.Panel):
                     "mcblend.import_rp_entity",
                     text="Import from project"
                 )
+
+# Resource pack panel
+class MCBLEND_PT_BonePanel(bpy.types.Panel):
+    '''
+    Panel that represents a connection of the blender project with
+    a Minecraft project (resource- and behavior- pack)
+    '''
+    # pylint: disable=unused-argument
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = 'object'
+    bl_label = "Mcblend: Bone Properties"
+
+    @classmethod
+    def poll(cls, context):
+        if context.mode != 'POSE':
+            return False
+        try:
+            pose_bone = context.object.pose.bones[
+                context.object.data.bones.active.name]
+        except:  # pylint: disable=bare-except
+            return False
+        return pose_bone is not None
+
+    def draw(self, context):
+        try:
+            pose_bone = context.object.pose.bones[
+                context.object.data.bones.active.name]
+        except:  # pylint: disable=bare-except
+            return
+        col = self.layout.column()
+        # row = col.row()
+        # row.label(text="", icon="BONE_DATA")
+        col.prop(pose_bone, "name", text="Bone Name", icon="BONE_DATA")
+        col.prop(pose_bone.mcblend, "binding")

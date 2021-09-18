@@ -370,3 +370,14 @@ class MCBLEND_ObjectProperties(bpy.types.PropertyGroup):
             "it's greater than the actual X, then the UV-mapper will act as "
             "if the X were equal to this value.")
     )
+
+class MCBLEND_BoneProperties(bpy.types.PropertyGroup):
+    '''
+    Custom properties of a bone
+    '''
+    binding: StringProperty(  # type: ignore
+        name="Binding",
+        description="The equivalent of Minecraft binding property",
+        default="",
+        maxlen=1024
+    )

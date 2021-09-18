@@ -219,7 +219,6 @@ def update_entity_names(self, context):
             if len(material.value_cache.values) > 0:
                 material.value = material.value_cache.values[0].name
 
-
 class MCBLEND_ProjectProperties(bpy.types.PropertyGroup):
     '''
     The properties of the Resource Pack opened in this Blender project.
