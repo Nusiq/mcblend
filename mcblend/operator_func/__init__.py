@@ -35,7 +35,7 @@ def export_model(context: bpy_types.Context) -> Dict:
     result = ModelExport.json_outer()
     armature = context.object  # an armature
 
-    mcblend_obj_group = McblendObjectGroup(armature)
+    mcblend_obj_group = McblendObjectGroup(armature, None)
     model_properties = armature.mcblend
 
     model = ModelExport(
@@ -61,11 +61,18 @@ def export_animation(
     :param old_dict: optional - JSON dict with animation to write into.
     :returns: JSON dict of Minecraft animations.
     '''
-    # Check and create object properties
-    object_properties = McblendObjectGroup(context.object)
-
     anim_data = context.object.mcblend.animations[
         context.object.mcblend.active_animation]
+    
+    # TODO - write this code nicer, passing world_origin as a string isn't
+    # a perfect solution
+    world_origin = None
+    if anim_data.world_origin != "":
+        world_origin = bpy.data.objects[anim_data.world_origin]
+
+    # Check and create object properties
+    object_properties = McblendObjectGroup(context.object, world_origin)
+
 
     animation = AnimationExport(
         name=anim_data.name,
@@ -101,7 +108,7 @@ def set_uvs(context: bpy_types.Context):
     generate_texture = model_properties.generate_texture
     resolution = model_properties.texture_template_resolution
 
-    mcblend_obj_group = McblendObjectGroup(armature)
+    mcblend_obj_group = McblendObjectGroup(armature, None)
     mapper = UvMapper(width, height, mcblend_obj_group)
     mapper.plan_uv(allow_expanding)
 
@@ -164,7 +171,7 @@ def fix_uvs(context: bpy_types.Context) -> Tuple[int, int]:
 
     :returns: The number of fixed cubes and the number of fixed faces.
     '''
-    object_properties = McblendObjectGroup(context.object)
+    object_properties = McblendObjectGroup(context.object, None)
     total_fixed_uv_faces = 0
     total_fixed_cubes = 0
 
@@ -619,7 +626,7 @@ def apply_materials(context: bpy.types.Context):
         Tuple[Tuple[Optional[str], str], ...], Material] = {}
     armature = context.object
 
-    mcblend_obj_group = McblendObjectGroup(armature)
+    mcblend_obj_group = McblendObjectGroup(armature, None)
     armature_properties = armature.mcblend
 
     model = ModelExport(
@@ -697,7 +704,7 @@ def prepare_physics_simulation(context: bpy_types.Context) -> Dict:
     result = ModelExport.json_outer()
     armature = context.object  # an armature
 
-    mcblend_obj_group = McblendObjectGroup(armature)
+    mcblend_obj_group = McblendObjectGroup(armature, None)
 
     # If there is no rigid body world add it to the scene
     rigidbody_world = context.scene.rigidbody_world

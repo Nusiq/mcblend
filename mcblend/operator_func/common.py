@@ -258,6 +258,8 @@ class McblendObject:
         '''
         if other is not None:
             p_matrix = other.obj_matrix_world
+        elif self.group.world_origin is not None:
+            p_matrix = self.group.get_world_origin_matrix()
         else:
             p_matrix = (
                 # pylint: disable=no-value-for-parameter
@@ -294,6 +296,11 @@ class McblendObject:
         if other is not None:
             result_euler = local_rotation(
                 self.obj_matrix_world, other.obj_matrix_world
+            )
+        elif self.group.world_origin is not None:
+            result_euler = local_rotation(
+                self.obj_matrix_world,
+                self.group.get_world_origin_matrix()
             )
         else:
             result_euler = self.obj_matrix_world.to_euler('XZY')
@@ -714,11 +721,27 @@ class McblendObjectGroup:
     from a dict.
 
     :param armature: the armature used as a root of the object group.
+    :param world_origin: optional object that replaces the origin point of
+        the world. The matrix_world of that objects becomes defines the
+        transformation space of the animation. Animating that object is
+        equivalent to animating everything else in opposite way.
     '''
-    def __init__(self, armature: bpy.types.Object):
+    def __init__(
+            self, armature: bpy.types.Object,
+            world_origin: Optional[bpy.type.Object]):
         self.data: Dict[ObjectId, McblendObject] = {}
         '''the content of the group.'''
+        self.world_origin: Optional[bpy.types.Object] = world_origin
         self._load_objects(armature)
+
+    def get_world_origin_matrix(self):
+        '''
+        Returns the matrix_world of the world_origin object or rises an
+        exception.
+        '''
+        if self.world_origin is None:
+            raise RuntimeError("World origin not defined")
+        return self.world_origin.matrix_world
 
     def __len__(self):
         return len(self.data)
