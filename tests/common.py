@@ -55,7 +55,7 @@ def assert_is_model(a: Dict):
     assert type(a) is dict
     assert set(a.keys()) == {'format_version', 'minecraft:geometry'}
 
-    assert a['format_version'] == "1.12.0"
+    assert a['format_version'] in ["1.12.0", "1.16.0"]
 
     geometries = a['minecraft:geometry']
     assert type(geometries) is list

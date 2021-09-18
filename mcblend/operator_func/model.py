@@ -58,11 +58,11 @@ class ModelExport:
     @staticmethod
     def json_outer() -> Dict:
         '''
-        Returns the outer part of the Minecraft model 1.12.0 JSON file
+        Returns the outer part of the Minecraft model 1.16.0 JSON file
         without any geometries.
         '''
         model: Dict = {
-            "format_version": "1.12.0",
+            "format_version": "1.16.0",
             "minecraft:geometry": []
         }
         return model
