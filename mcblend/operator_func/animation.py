@@ -226,6 +226,7 @@ class AnimationExport:
     length: float
     loop_animation: str
     anim_time_update: str
+    override_previous_animation: bool
     fps: float
     effect_events: Dict[str, Tuple[List[Dict], List[Dict]]]
     original_pose: Pose = field(default_factory=Pose)
@@ -342,6 +343,8 @@ class AnimationExport:
                 data['loop'] = AnimationLoopType.HOLD_ON_LAST_FRAME.value
             if self.anim_time_update != "":
                 data['anim_time_update'] = self.anim_time_update
+            if self.override_previous_animation:
+                data['override_previous_animation'] = True
         return result
 
     def _json_bone(self, bone_name: str, skip_rest_pose: bool) -> Dict:

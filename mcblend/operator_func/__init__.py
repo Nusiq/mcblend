@@ -80,6 +80,7 @@ def export_animation(
         loop_animation=anim_data.loop,
         single_frame=anim_data.single_frame,
         anim_time_update=anim_data.anim_time_update,
+        override_previous_animation=anim_data.override_previous_animation,
         fps=context.scene.render.fps,
         effect_events={
             event.name: event.get_effects_dict()

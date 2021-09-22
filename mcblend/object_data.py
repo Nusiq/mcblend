@@ -185,6 +185,12 @@ class MCBLEND_AnimationProperties(bpy.types.PropertyGroup):
             "throughout the whole animation should be ignored."),
         default=False,
     )
+    override_previous_animation: BoolProperty(  # type: ignore
+        name="Override previos animation",
+        description=(
+            "Sets the override_previous_animation property of the animation"),
+        default=False,
+    )
     anim_time_update: StringProperty(  # type: ignore
         name="anim_time_update",
         description="Adds anim_time_update value unless is left empty",

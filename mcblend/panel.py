@@ -677,6 +677,9 @@ class MCBLEND_PT_AnimationPropertiesPanel(bpy.types.Panel):
                 col.prop(bpy.context.scene, "frame_current", text="Frame")
             else:
                 col.prop(active_anim, "loop", text="Loop")
+                col.prop(
+                    active_anim, "override_previous_animation",
+                    text="Override previous animation")
                 col.prop(active_anim, "anim_time_update",
                     text="Anim Time Update")
                 col.prop(bpy.context.scene, "frame_start", text="Frame start")
