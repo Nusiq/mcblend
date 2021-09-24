@@ -673,13 +673,13 @@ class MCBLEND_PT_AnimationPropertiesPanel(bpy.types.Panel):
             row = col.row()
             row.prop(active_anim, "skip_rest_poses", text="Skip rest poses")
             row.prop(active_anim, "single_frame", text="Export as pose")
+            col.prop(
+                active_anim, "override_previous_animation",
+                text="Override previous animation")
             if active_anim.single_frame:
                 col.prop(bpy.context.scene, "frame_current", text="Frame")
             else:
                 col.prop(active_anim, "loop", text="Loop")
-                col.prop(
-                    active_anim, "override_previous_animation",
-                    text="Override previous animation")
                 col.prop(active_anim, "anim_time_update",
                     text="Anim Time Update")
                 col.prop(bpy.context.scene, "frame_start", text="Frame start")
