@@ -313,6 +313,9 @@ class AnimationExport:
                 "bones": bones,
                 "loop": True
             }
+            data = result["animations"][f"animation.{self.name}"]
+            if self.override_previous_animation:
+                data['override_previous_animation'] = True
         else:
             result["animations"][f"animation.{self.name}"] = {
                 "animation_length": self.length,
