@@ -6,15 +6,19 @@ site_description: A Blender addon for creating and animating Minecraft Bedrock E
 site_author: Nusiq
 
 nav:
-    - Overview: index.md
-    - Limitations: limitations/index.md
-    - Conversion rules: conversion_rules/index.md
-    - GUI: gui/index.md
-    - Importing and exporting files: importing_and_exporting/index.md
-    - Animating effects: animating_effects/index.md
-    - UV-groups: uv_groups/index.md
-    - Texture customization: texture_customization/index.md
-    - Tips and tricks: tips_and_tricks/index.md
+    - Overview:
+        - Installation and Features: index.md
+        - Limitations: limitations/index.md
+        - Conversion rules: conversion_rules/index.md
+    - User manual:
+        - GUI: gui/index.md
+        - Importing and exporting files: importing_and_exporting/index.md
+        - Animating effects: animating_effects/index.md
+        - UV-groups: uv_groups/index.md
+        - Texture customization: texture_customization/index.md
+    - Tutorials:
+        - Tips and tricks: tips_and_tricks/index.md
+        - Attachables & First person animations: attachables_and_1st_person_animations/index.md
 
 theme:
     name: readthedocs
