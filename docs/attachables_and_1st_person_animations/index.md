@@ -31,11 +31,11 @@ attachable.
 
 RP/textures/items/nunchaku.png
 
-![](https://raw.githubusercontent.com/Nusiq/Mcblend-Demo-World/a356cfa99f5bd1c973e19ba7012d8c05837174f8/RP/textures/items/nunchaku.png)
+![](../img/attachables_1st_person/nunchaku_item.png)
 
 RP/textures/entity/nunchaku.png
 
-![](https://raw.githubusercontent.com/Nusiq/Mcblend-Demo-World/a356cfa99f5bd1c973e19ba7012d8c05837174f8/RP/textures/entity/nunchaku.png)
+![](../img/attachables_1st_person/nunchaku.png)
 
 <details>
 <summary> [CLICK TO REVEAL] BP/items/nunchaku.bp_item.json</summary>
