@@ -18,7 +18,7 @@ from .uv_data import get_unused_uv_group_name
 
 from .operator_func import (
     export_model, export_animation, fix_uvs, separate_mesh_cubes, set_uvs,
-    round_dimensions, import_model, inflate_objects, reload_rp_entities,
+    import_model, inflate_objects, reload_rp_entities,
     import_model_form_project, apply_materials, prepare_physics_simulation)
 from .operator_func.bedrock_packs.json import CompactEncoder
 from .operator_func.exception import (
@@ -354,47 +354,6 @@ class MCBLEND_OT_SetInflate(bpy.types.Operator):
     def execute(self, context):
         inflate_objects(
             context, context.selected_objects, self.inflate_value, self.mode)
-        return {'FINISHED'}
-
-# Rounding dimensions
-class MCBLEND_OT_RoundDimensions(bpy.types.Operator):
-    '''
-    Operator used for rounding the width, depth and height of selected objects
-    in such way that they'll have integer dimensions in exported Minecraft
-    model file.
-    '''
-    # pylint: disable=unused-argument, R0201, no-member
-    bl_idname = "mcblend.round_dimensions"
-    bl_label = "Round dimensions"
-    bl_options = {'UNDO'}
-    bl_description = (
-        "Round the dimensions of selected object to integers."
-    )
-
-    @classmethod
-    def poll(cls, context: bpy_types.Context):
-        if context.mode != 'OBJECT':
-            return False
-        if len(context.selected_objects) < 1:
-            return False
-        return True
-
-    def execute(self, context):
-        for obj in context.selected_objects:
-            if obj.type == 'MESH':
-                break
-        else:
-            self.report(
-                {'WARNING'},
-                'Select at least one mesh to round its dimensions.')
-            return {'CANCELLED'}
-        edited_objects = round_dimensions(  # Returns number of edited objects
-            context
-        )
-        self.report(
-            {'INFO'},
-            f'Rounded the dimensions of {edited_objects} '
-            f'object{"" if edited_objects == 1 else "s"}.')
         return {'FINISHED'}
 
 # Separate mesh cubes

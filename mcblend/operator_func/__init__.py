@@ -236,52 +236,6 @@ def fix_uvs(context: bpy_types.Context) -> Tuple[int, int]:
             total_fixed_uv_faces += fixed_faces
     return total_fixed_cubes, total_fixed_uv_faces
 
-
-def round_dimensions(context: bpy_types.Context) -> int:
-    '''
-    Rounds dimensions of selected objects in such way that they'll be integers
-    in exported Minecraft model.
-
-    :param context: the context of running the operator.
-    :returns: the number of edited objects.
-    '''
-    counter = 0
-    for obj in context.selected_objects:
-        if obj.type == 'MESH':
-            # Clear parent from children for a moment
-            children = obj.children
-            for child in children:
-                old_matrix = child.matrix_world.copy()
-                child.parent = None
-                child.matrix_world = old_matrix
-
-            # Set new dimensions
-            dimensions = np.array(obj.dimensions)
-
-            if obj.mcblend.inflate != 0.0:
-                dimensions -= (
-                    obj.mcblend.inflate * 2 /
-                    MINECRAFT_SCALE_FACTOR
-                )
-            dimensions = np.array(
-                dimensions * MINECRAFT_SCALE_FACTOR
-            ).round() / MINECRAFT_SCALE_FACTOR
-            if obj.mcblend.inflate != 0.0:
-                dimensions += (
-                    obj.mcblend.inflate * 2 /
-                    MINECRAFT_SCALE_FACTOR
-                )
-            obj.dimensions = dimensions
-            context.view_layer.update()
-
-            # Add children back and set their previous transformations
-            for child in children:
-                child.parent = obj
-                child.matrix_parent_inverse = obj.matrix_world.inverted()
-
-            counter += 1
-    return counter
-
 def import_model(data: Dict, geometry_name: str, context: bpy_types.Context) -> List[str]:
     '''
     Import and build model from JSON dict.

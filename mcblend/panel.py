@@ -722,10 +722,6 @@ class MCBLEND_PT_OperatorsPanel(bpy.types.Panel):
             text="Inflate"
         )
         box.operator(
-            "mcblend.round_dimensions",
-            text="Round dimensions"
-        )
-        box.operator(
             "mcblend.separate_mesh_cubes",
             text="Separate and align cubes"
         )

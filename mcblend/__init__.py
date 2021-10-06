@@ -15,7 +15,6 @@ from .operator import (
     MCBLEND_OT_ClearUvGroup,
     MCBLEND_OT_SetInflate,
     menu_func_mcblend_export_model, menu_func_mcblend_export_animation,
-    MCBLEND_OT_RoundDimensions,
     MCBLEND_OT_SeparateMeshCubes,
     MCBLEND_OT_ImportModel, menu_func_mcblend_import_model,
 
@@ -140,7 +139,6 @@ classes = (
     MCBLEND_OT_ClearUvGroup,
     MCBLEND_PT_OperatorsPanel,
     MCBLEND_OT_SetInflate,
-    MCBLEND_OT_RoundDimensions,
     MCBLEND_OT_SeparateMeshCubes,
     MCBLEND_OT_ImportModel,
     MCBLEND_PT_UVGroupPanel,
