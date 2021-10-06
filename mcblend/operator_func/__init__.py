@@ -511,7 +511,14 @@ def import_model_form_project(context: bpy_types.Context) -> List[str]:
         Tuple[Tuple[Optional[str], str], ...], Material] = {}
     warnings: List[str] = []
     for geo_name, rc_stack in geo_rc_stacks.items():
-        geometry_data: Dict = p.rp_models[:geo_name:0].json.data  # type: ignore
+        try:
+            geometry_data: Dict = p.rp_models[:geo_name:0].json.data  # type: ignore
+        except KeyError:
+            warnings.append(
+                f"Geometry {geo_name} referenced by "
+                f"{cached_project.entity_names} is not defined in the "
+                "resource pack")
+            continue
         # Import model
         model_loader = ModelLoader(geometry_data, geo_name)
         warnings.extend(model_loader.loader_warnings)

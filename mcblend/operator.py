@@ -1516,7 +1516,7 @@ class MCBLEND_OT_ImportRpEntity(bpy.types.Operator):
                 str_warnings = '\n'.join(warnings)
                 self.report(
                     {'WARNING'},
-                    f"Imported with warnings:\n{str_warnings}"
+                    f"Finished warnings:\n{str_warnings}"
                 )
         except FileIsNotAModelException as e:
             self.report(
