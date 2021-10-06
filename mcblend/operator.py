@@ -15,6 +15,7 @@ from bpy_extras.io_utils import ExportHelper, ImportHelper
 from .object_data import (
     get_unused_event_name, list_effect_types_as_blender_enum)
 from .uv_data import get_unused_uv_group_name
+from .operator_func.material import MATERIALS_MAP
 
 from .operator_func import (
     export_model, export_animation, fix_uvs, separate_mesh_cubes, set_uvs,
@@ -1681,17 +1682,7 @@ class MCBLEND_OT_FakeRcSMaterailSelectTemplate(bpy.types.Operator):
     bl_options = {'UNDO', 'INTERNAL'}
 
     material: bpy.props.EnumProperty(  # type: ignore
-        items=[
-            ('entity_alphatest', 'entity_alphatest', 'entity_alphatest'),
-            ('entity_alphablend', 'entity_alphablend', 'entity_alphablend'),
-            ('entity_emissive', 'entity_emissive', 'entity_emissive'),
-            ('blaze_body', 'blaze_body', 'blaze_body'),
-            (
-                'entity_emissive_alpha', 'entity_emissive_alpha',
-                'entity_emissive_alpha'),
-            ('enderman', 'enderman', 'enderman'),
-            ('spider', 'spider', 'spider'),
-        ], name="Material")
+        items=[(i, i, i) for i in MATERIALS_MAP], name="Material")
 
     rc_index: IntProperty(options={'HIDDEN'})  # type: ignore
     material_index: IntProperty(options={'HIDDEN'})  # type: ignore
