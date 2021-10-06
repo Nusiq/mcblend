@@ -1258,7 +1258,7 @@ class RpEntity(_McFileJsonSingle['RpEntities']):
         for i in textures:
             if isinstance(i.data, str) and isinstance(i.parent_key, str):
                 result.append(RpEntity.ConnectTexture(
-                    i.parent_key, i.data, i))
+                    i.parent_key.lower(), i.data.lower(), i))
         self._textures = tuple(result)
         return self._textures
 
@@ -1325,7 +1325,7 @@ class RpEntity(_McFileJsonSingle['RpEntities']):
                     i.data.startswith('geometry.') and
                     isinstance(i.parent_key, str)):
                 result.append(RpEntity.ConnectGeo(
-                    i.parent_key, i.data, i))
+                    i.parent_key.lower(), i.data.lower(), i))
         self._geometries = tuple(result)
         return self._geometries
 
@@ -1342,11 +1342,11 @@ class RpEntity(_McFileJsonSingle['RpEntities']):
         result: List[RpEntity.ConnectRc] = []
         for i in render_controllers:
             if isinstance(i.data, str):
-                result.append(RpEntity.ConnectRc(i.data, None, i))
+                result.append(RpEntity.ConnectRc(i.data.lower(), None, i))
             elif isinstance(i.data, dict) and len(i.data) == 1:
                 k, v = list(i.data.items())[0]
-                if isinstance(v, str):
-                    result.append(RpEntity.ConnectRc(k, v, i))
+                if isinstance(v, str) and isinstance(k, str):
+                    result.append(RpEntity.ConnectRc(k.lower(), v.lower(), i))
         self._render_controllers = tuple(result)
         return self._render_controllers
 

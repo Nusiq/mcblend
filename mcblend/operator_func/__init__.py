@@ -282,15 +282,18 @@ def round_dimensions(context: bpy_types.Context) -> int:
             counter += 1
     return counter
 
-def import_model(data: Dict, geometry_name: str, context: bpy_types.Context):
+def import_model(data: Dict, geometry_name: str, context: bpy_types.Context) -> List[str]:
     '''
     Import and build model from JSON dict.
 
     :param data: JSON dict with minecraft model.
     :param geometry_name: the name of the geometry to load from the model.
     :param context: the context of running the operator.
+
+    :returns: list of warnings
     '''
-    geometry = ImportGeometry(ModelLoader(data, geometry_name))
+    model_loader = ModelLoader(data, geometry_name)
+    geometry = ImportGeometry(model_loader)
     armature = geometry.build_with_armature(context)
     model_properties = armature.mcblend
 
@@ -306,6 +309,7 @@ def import_model(data: Dict, geometry_name: str, context: bpy_types.Context):
     else:
         model_properties.model_name = geometry.identifier
         armature.name = geometry.identifier
+    return model_loader.loader_warnings
 
 def separate_mesh_cubes(context: bpy_types.Context):
     '''
@@ -494,9 +498,11 @@ class RcStackItem:
     materials: Dict[str, str] = field(default_factory=dict)
     '''Materials dict with pattern keys and full material names values.'''
 
-def import_model_form_project(context: bpy_types.Context):
+def import_model_form_project(context: bpy_types.Context) -> List[str]:
     '''
     Imports model using data selected in Project menu.
+
+    :returns: list of warnings
     '''
     # 1. Load cached data
     cached_project = context.scene.mcblend_project
@@ -517,6 +523,7 @@ def import_model_form_project(context: bpy_types.Context):
             cached_rc = cached_project.render_controllers[rc_name]
         else:
             cached_rc = cached_project.fake_render_controllers[rc_name]
+        texture = None
         if cached_rc.texture in cached_entity.textures.keys():
             texture_name = cached_entity.textures[cached_rc.texture].value
             try:
@@ -548,10 +555,13 @@ def import_model_form_project(context: bpy_types.Context):
     # of the material to create.
     blender_materials: Dict[
         Tuple[Tuple[Optional[str], str], ...], Material] = {}
+    warnings: List[str] = []
     for geo_name, rc_stack in geo_rc_stacks.items():
         geometry_data: Dict = p.rp_models[:geo_name:0].json.data  # type: ignore
         # Import model
-        geometry = ImportGeometry(ModelLoader(geometry_data, geo_name))
+        model_loader = ModelLoader(geometry_data, geo_name)
+        warnings.extend(model_loader.loader_warnings)
+        geometry = ImportGeometry(model_loader)
         armature = geometry.build_with_armature(context)
 
         # 7.1. Set proper textures resolution and model bounds
@@ -616,6 +626,7 @@ def import_model_form_project(context: bpy_types.Context):
                     continue
                 c.blend_cube.data.materials.append(
                     blender_materials[tuple(bone_materials_id)])
+    return warnings
 
 def apply_materials(context: bpy.types.Context):
     '''

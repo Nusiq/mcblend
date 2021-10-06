@@ -17,11 +17,6 @@ from .common import (
 from .uv import CoordinatesConverter
 from .exception import FileIsNotAModelException, ImportingNotImplementedError
 
-def _assert(expr: bool, msg: str = ''):
-    '''Used in this module to raise exceptions based on condition.'''
-    if not expr:
-        raise FileIsNotAModelException(msg)
-
 def _assert_is_vector(
         name: str, obj: Any, length: int, types: Tuple, json_path: List
     ) -> None:
@@ -29,36 +24,35 @@ def _assert_is_vector(
     Asserts that object is an array of specific length with specific type of
     items.
     '''
-    _assert(isinstance(obj, list), f'{json_path}::{name} is not a list')
-    _assert(
-        len(obj) == length,
-        f'{json_path}::{name} has invalid length {len(obj)} != {length}')
-    _assert(
-        all(isinstance(i, types) for i in obj),
-        f'{json_path}::{name} is not instance of List[{types}]')
+    if not isinstance(obj, list):
+        nice_path = '->'.join([str(i) for i in json_path])
+        raise FileIsNotAModelException(
+            f'{nice_path}::{name} is not a list')
+    if not len(obj) == length:
+        nice_path = '->'.join([str(i) for i in json_path])
+        raise FileIsNotAModelException(
+            f'{nice_path}::{name} has invalid length {len(obj)} != {length}')
+    if not all(isinstance(i, types) for i in obj):
+        nice_path = '->'.join([str(i) for i in json_path])
+        raise FileIsNotAModelException(
+            f'{nice_path}::{name} is not instance of List[{types}]')
 
 def _assert_has_required_keys(
         what: str, has_keys: Set, required_keys: Set, json_path: List):
     '''Asserts that object has required keys.'''
     missing_keys = required_keys - has_keys
     if len(missing_keys) != 0:
+        nice_path = '->'.join([str(i) for i in json_path])
         raise FileIsNotAModelException(
-            f'{json_path}::{what} is missing properties: {missing_keys}')
-
-def _assert_has_accepted_keys_only(
-        what: str, has_keys: Set, accepted_keys: Set, json_path: List):
-    '''Asserts that object has only keys from accepted set.'''
-    additional_keys = has_keys - accepted_keys
-    if len(additional_keys) != 0:
-        raise FileIsNotAModelException(
-            f'{json_path}::{what} has unexpected properties: {additional_keys}')
+            f'{nice_path}::{what} is missing properties: {missing_keys}')
 
 def _assert_is_type(
         name: str, obj: Any, types: Tuple, json_path: List):
     '''Asserts that object is instance of specific type'''
     if not isinstance(obj, types):
+        nice_path = '->'.join([str(i) for i in json_path])
         raise FileIsNotAModelException(
-            f'{json_path}::{name} is not an instance of {types}')
+            f'{nice_path}::{name} is not an instance of {types}')
 
 def pick_version_parser(parsers: Tuple[str, ...], version: str):
     '''
@@ -101,6 +95,8 @@ class ModelLoader:
     '''
     def __init__(self, data: Dict, geometry_name: str = ""):
         self.data = data
+        # List of warnings about problems related to loading the model
+        self.loader_warnings: List[str] = []
         self.format_version = self._load_format_version(data)
         geometry, geometry_path = self._load_geometry(
             geometry_name, self.data)
@@ -109,6 +105,18 @@ class ModelLoader:
             geometry, geometry_path)
         self.bones: List = self._load_bones(
             geometry['bones'], geometry_path + ['bones'])
+
+    def append_acceptable_keys_warnings(
+            self, what: str, has_keys: Set, accepted_keys: Set, json_path: List):
+        '''
+        Appends warning if object have keys that aren't in the accepted set.
+        '''
+        additional_keys = has_keys - accepted_keys
+        nice_path = '->'.join([str(i) for i in json_path])
+        if len(additional_keys) != 0:
+            self.loader_warnings.append(
+                f'{nice_path}::{what} has unexpected '
+                f'properties: {additional_keys}')
 
     def _load_format_version(self, data: Dict) -> str:
         '''
@@ -133,26 +141,20 @@ class ModelLoader:
             _assert_has_required_keys(
                 'model file', set(data.keys()),
                 {'minecraft:geometry'}, [])
-            _assert_has_accepted_keys_only(
+            self.append_acceptable_keys_warnings(
                 'model file', set(data.keys()),
                 {'minecraft:geometry', 'format_version', 'cape'}, [])
-            if 'cape' in data.keys():
-                raise ImportingNotImplementedError('cape', [])
             return true_format_version
 
         if parser_version == '1.8.0':
             # All geometries must start with geometry.
             for k in data.keys():  # key must be string because its from json
-                _assert(
-                    (
+                if not (
                         k.startswith('geometry.') or
-                        k in ['debug', 'format_version']
-                    ),
-                    f'{[]}::{k} is invalid geometry name (it should start '
-                    'with "geometry."'
-                )
-            if 'debug' in data.keys():
-                raise ImportingNotImplementedError('debug', [])
+                        k in ['debug', 'format_version']):
+                    FileIsNotAModelException(
+                        f'{k} is invalid geometry name (it should start '
+                        'with "geometry."')
             return true_format_version
         raise FileIsNotAModelException('Unsupported format version')
 
@@ -179,7 +181,7 @@ class ModelLoader:
                 _assert_has_required_keys(
                     'geometry', set(geometry.keys()), {'description', 'bones'},
                     path)
-                _assert_has_accepted_keys_only(
+                self.append_acceptable_keys_warnings(
                     'geometry', set(geometry.keys()), {'description', 'bones'},
                     path)
                 desc = geometry['description']
@@ -200,7 +202,7 @@ class ModelLoader:
                     continue
                 path = [k]
                 _assert_is_type('geometry', geometry, (dict,), path)
-                _assert_has_accepted_keys_only(
+                self.append_acceptable_keys_warnings(
                     'geometry', set(geometry.keys()),
                     {
                         "debug", "visible_bounds_width",
@@ -240,7 +242,7 @@ class ModelLoader:
                 'identifier', 'texture_width', 'texture_height',
                 'visible_bounds_offset', 'visible_bounds_width',
                 'visible_bounds_height'}
-            _assert_has_accepted_keys_only(
+            self.append_acceptable_keys_warnings(
                 'description', set(desc.keys()), acceptable_keys, path)
 
             _assert_is_type(
@@ -281,7 +283,7 @@ class ModelLoader:
                 "debug", "visible_bounds_width",
                 "visible_bounds_height", "visible_bounds_offset",
                 "texturewidth", "textureheight", "cape", "bones"}
-            _assert_has_accepted_keys_only(
+            self.append_acceptable_keys_warnings(
                 'geometry', set(desc.keys()), acceptable_keys, path)
 
             _assert_is_type(
@@ -292,7 +294,6 @@ class ModelLoader:
                 _assert_is_type(
                     'debug', desc['debug'], (bool,),
                     geometry_path + ['debug'])
-                raise ImportingNotImplementedError('debug', path + ['debug'])
             if 'texturewidth' in desc:
                 _assert_is_type(
                     'texturewidth', desc['texturewidth'], (int, float),
@@ -383,7 +384,7 @@ class ModelLoader:
                     'name', 'parent', 'pivot', 'rotation', 'mirror', 'inflate',
                     'debug', 'render_group_id', 'cubes', 'locators', 'poly_mesh',
                     'texture_meshes'}
-            _assert_has_accepted_keys_only(
+            self.append_acceptable_keys_warnings(
                 'bone', set(bone.keys()), acceptable_keys, bone_path)
 
             if 'name' in bone:
@@ -420,15 +421,6 @@ class ModelLoader:
             if 'debug' in bone:
                 _assert_is_type(
                     'debug', bone['debug'], (bool,), bone_path + ['debug'])
-                raise ImportingNotImplementedError(
-                    'debug', bone_path + ['debug'])
-            if 'render_group_id' in bone:
-                _assert_is_type(
-                    'render_group_id', bone['render_group_id'], (int, float),
-                    bone_path + ['render_group_id'])
-                # int >= 0
-                raise ImportingNotImplementedError(
-                    'render_group_id', bone_path + ['render_group_id'])
             if 'cubes' in bone:
                 # default mirror for cube is the bones mirror property
                 result['cubes'] = self._load_cubes(
@@ -455,24 +447,13 @@ class ModelLoader:
                 'bind_pose_rotation', 'mirror', 'inflate', 'debug',
                 'render_group_id', 'cubes', 'locators', 'poly_mesh',
                 'texture_meshes'}
-            _assert_has_accepted_keys_only(
+            self.append_acceptable_keys_warnings(
                 'bone', set(bone.keys()), acceptable_keys, bone_path)
 
             if 'name' in bone:
                 _assert_is_type(
                     'name', bone['name'], (str,), bone_path + ['name'])
                 result['name'] = bone['name']
-            if 'reset' in bone:
-                _assert_is_type(
-                    'reset', bone['reset'], (bool,), bone_path + ['reset'])
-                raise ImportingNotImplementedError(
-                    'reset', bone_path + ['reset'])
-            if 'neverRender' in bone:
-                _assert_is_type(
-                    'neverRender', bone['neverRender'], (bool,),
-                    bone_path + ['neverRender'])
-                raise ImportingNotImplementedError(
-                    'neverRender', bone_path + ['neverRender'])
             if 'parent' in bone:
                 _assert_is_type(
                     'parent', bone['parent'], (str,), bone_path + ['parent'])
@@ -487,12 +468,6 @@ class ModelLoader:
                     'rotation', bone['rotation'], 3, (int, float),
                     bone_path + ['rotation'])
                 result['rotation'] = bone['rotation']
-            if 'bind_pose_rotation' in bone:
-                _assert_is_vector(
-                    'bind_pose_rotation', bone['bind_pose_rotation'], 3,
-                    (int, float), bone_path + ['bind_pose_rotation'])
-                raise ImportingNotImplementedError(
-                    'bind_pose_rotation', bone_path + ['bind_pose_rotation'])
             if 'mirror' in bone:
                 _assert_is_type(
                     'mirror', bone['mirror'], (bool,), bone_path + ['mirror'])
@@ -502,18 +477,6 @@ class ModelLoader:
                     'inflate', bone['inflate'], (float, int),
                     bone_path + ['inflate'])
                 result['inflate'] = bone['inflate']
-            if 'debug' in bone:
-                _assert_is_type(
-                    'debug', bone['debug'], (bool,), bone_path + ['debug'])
-                raise ImportingNotImplementedError(
-                    'debug', bone_path + ['debug'])
-            if 'render_group_id' in bone:
-                _assert_is_type(
-                    'render_group_id', bone['render_group_id'], (int, float),
-                    bone_path + ['render_group_id'])
-                # int >= 0
-                raise ImportingNotImplementedError(
-                    'render_group_id', bone_path + ['render_group_id'])
             if 'cubes' in bone:
                 # default mirror for cube is the bones mirror property
                 result['cubes'] = self._load_cubes(
@@ -625,7 +588,7 @@ class ModelLoader:
             acceptable_keys = {
                 "mirror", "inflate", "pivot", "rotation", "origin",
                 "size", "uv"}
-            _assert_has_accepted_keys_only(
+            self.append_acceptable_keys_warnings(
                 'cube', set(cube.keys()), acceptable_keys, cube_path)
             if 'origin' in cube:
                 _assert_is_vector(
@@ -684,7 +647,7 @@ class ModelLoader:
             _assert_is_type('cube', cube, (dict,), cube_path)
             # There is no required keys {} is a valid cube
             acceptable_keys = {"origin", "size", "uv", "inflate", "mirror"}
-            _assert_has_accepted_keys_only(
+            self.append_acceptable_keys_warnings(
                 'cube', set(cube.keys()), acceptable_keys, cube_path)
             if 'origin' in cube:
                 _assert_is_vector(
@@ -748,7 +711,7 @@ class ModelLoader:
                 'poly_mesh', set(poly_mesh.keys()), {'polys'}, poly_mesh_path)
             acceptable_keys = {
                 "normalized_uvs", "positions", "normals", "uvs", "polys"}
-            _assert_has_accepted_keys_only(
+            self.append_acceptable_keys_warnings(
                 'poly_mesh', set(poly_mesh.keys()), acceptable_keys,
                 poly_mesh_path)
             # Acceptable keys
@@ -897,7 +860,7 @@ class ModelLoader:
             _assert_is_type('uv', uv, (dict,), uv_path)
             # There is no required keys {} is a valid UV
             acceptable_keys = {"north", "south", "east", "west", "up", "down"}
-            _assert_has_accepted_keys_only(
+            self.append_acceptable_keys_warnings(
                 'uv', set(uv.keys()), acceptable_keys, uv_path)
             if "north" in uv:
                 _assert_is_type(
@@ -953,7 +916,7 @@ class ModelLoader:
             _assert_is_type('uv_face', uv_face, (dict,), uv_face_path)
             _assert_has_required_keys(
                 'uv', set(uv_face.keys()), {'uv'}, uv_face_path)
-            _assert_has_accepted_keys_only(
+            self.append_acceptable_keys_warnings(
                 'uv_face', set(uv_face.keys()),
                 {"uv", "uv_size", "material_instance"}, uv_face_path)
 
@@ -967,12 +930,6 @@ class ModelLoader:
                     'uv_size', uv_face['uv_size'], 2, (int, float),
                     uv_face_path + ['uv_size'])
                 result["uv_size"] = uv_face["uv_size"]
-            if "material_instance" in uv_face:
-                _assert_is_type(
-                    'material_instance', uv_face['material_instance'], (str,),
-                    uv_face_path + ['material_instance'])
-                raise ImportingNotImplementedError(
-                    'material_instance', uv_face_path + ['material_instance'])
             return result
         raise FileIsNotAModelException('Unsupported format version')
 

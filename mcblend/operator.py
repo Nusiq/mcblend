@@ -22,7 +22,7 @@ from .operator_func import (
     import_model_form_project, apply_materials, prepare_physics_simulation)
 from .operator_func.bedrock_packs.json import CompactEncoder
 from .operator_func.exception import (
-    InvalidUvShape, NotEnoughTextureSpace,)
+    InvalidUvShape, NotEnoughTextureSpace, FileIsNotAModelException)
 from .operator_func.bedrock_packs.json import JSONCDecoder
 from .operator_func.texture_generator import (
     list_mask_types_as_blender_enum, UvMaskTypes, MixMaskMode)
@@ -457,14 +457,16 @@ class MCBLEND_OT_ImportModel(bpy.types.Operator, ImportHelper):
         with open(self.filepath, 'r') as f:
             data = json.load(f, cls=JSONCDecoder)
         try:
-            import_model(data, self.geometry_name, context)
-        except AssertionError as e:
+            warnings = import_model(data, self.geometry_name, context)
+            if len(warnings) > 0:
+                str_warnings = '\n'.join(warnings)
+                self.report(
+                    {'WARNING'},
+                    f"Imported with warnings:\n{str_warnings}"
+                )
+        except FileIsNotAModelException as e:
             self.report(
                 {'ERROR'}, f'Invalid model: {e}'
-            )
-        except ValueError as e:
-            self.report(
-                {'ERROR'}, f'{e}'
             )
         return {'FINISHED'}
 
@@ -1549,7 +1551,18 @@ class MCBLEND_OT_ImportRpEntity(bpy.types.Operator):
         return len(context.scene.mcblend_project.entities) > 0
 
     def execute(self, context):
-        import_model_form_project(context)
+        try:
+            warnings = import_model_form_project(context)
+            if len(warnings) > 0:
+                str_warnings = '\n'.join(warnings)
+                self.report(
+                    {'WARNING'},
+                    f"Imported with warnings:\n{str_warnings}"
+                )
+        except FileIsNotAModelException as e:
+            self.report(
+                {'ERROR'}, f'Invalid model: {e}'
+            )
         return {'FINISHED'}
 
 # Armature render controllers
