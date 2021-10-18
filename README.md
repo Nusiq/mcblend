@@ -9,7 +9,7 @@ User guides and installation instructions can be found on the project site:
 https://nusiq.github.io/mcblend/
 
 ### Discord
-You can contact me about the project on the [Bedrock OSS](https://discord.gg/XjV87YN) discord.
+You can contact me about the project on the #mcblend channel on  [Bedrock OSS](https://discord.gg/trD68msd) discord.
 
 ## Features
 - Exporting models for Minecraft bedrock edition. Custom Minecraft model
