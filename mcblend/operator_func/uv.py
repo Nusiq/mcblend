@@ -15,6 +15,7 @@ from .json_tools import get_vect_json
 from .common import (
     MINECRAFT_SCALE_FACTOR, McblendObject, McblendObjectGroup, CubePolygon,
     MeshType)
+from .bedrock_packs import Vector2di
 
 
 
@@ -67,14 +68,14 @@ class Suggestion(NamedTuple):
     :prop position: Position that other UvBox should touch with its coroner.
     :prop corner: Which corner should touch the position.
     '''
-    position: Tuple[int, int]
+    position: Vector2di
     corner: UvCorner
 
 class UvBox:
     '''Rectangular space on the texture.'''
     def __init__(
-            self, size: Tuple[int, int],
-            uv: Tuple[int, int] = None
+            self, size: Vector2di,
+            uv: Vector2di = None
         ):
         if uv is None:
             uv = (0, 0)
@@ -82,8 +83,8 @@ class UvBox:
         else:
             self.is_mapped = True
 
-        self.size: Tuple[int, int] = size
-        self.uv: Tuple[int, int] = uv
+        self.size: Vector2di = size
+        self.uv: Vector2di = uv
 
     def collides(self, other: UvBox):
         '''
@@ -215,8 +216,8 @@ class UvMcCubeFace(UvBox):
     '''
     def __init__(
             self, cube: UvMcCube, cube_polygon: CubePolygon,
-            size: Tuple[int, int], masks: Sequence[Mask],
-            uv: Tuple[int, int]=None):
+            size: Vector2di, masks: Sequence[Mask],
+            uv: Vector2di=None):
         super().__init__(size, uv=uv)
         self.cube = cube
         self.cube_polygon = cube_polygon
@@ -336,12 +337,12 @@ class UvMcCube(McblendObjUvBox):
         super().__init__(size, None)
 
     @property  # type: ignore
-    def uv(self) -> Tuple[int, int]:  # type: ignore
+    def uv(self) -> Vector2di:  # type: ignore
         '''UV of the object.'''
         return self._uv
 
     @uv.setter
-    def uv(self, uv: Tuple[int, int]):
+    def uv(self, uv: Vector2di):
         self._uv = uv
         self.side1.uv = (uv[0], uv[1] + self.depth)
         self.side2.uv = (uv[0] + self.depth, uv[1] + self.depth)
@@ -435,22 +436,22 @@ class UvGroup(McblendObjUvBox):
         self._objects.append(obj)
 
     @property  # type: ignore
-    def uv(self) -> Tuple[int, int]:  # type: ignore
+    def uv(self) -> Vector2di:  # type: ignore
         '''Uv of the object.'''
         return self._objects[0].uv
 
     @uv.setter
-    def uv(self, uv: Tuple[int, int]):
+    def uv(self, uv: Vector2di):
         for obj in self._objects:
             obj.uv = uv
 
     @property  # type: ignore
-    def size(self) -> Tuple[int, int]:  # type: ignore
+    def size(self) -> Vector2di:  # type: ignore
         '''Size of the object.'''
         return self._objects[0].size
 
     @size.setter
-    def size(self, size: Tuple[int, int]):
+    def size(self, size: Vector2di):
         for obj in self._objects:
             obj.size = size
 

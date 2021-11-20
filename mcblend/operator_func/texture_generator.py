@@ -12,6 +12,8 @@ from enum import Enum
 
 import numpy as np
 
+from .bedrock_packs import Vector2d, Vector3d
+
 class UvMaskTypes(Enum):
     '''
     UvMaskTypes are used for selecting one of the avaliable masks types in
@@ -169,8 +171,8 @@ class TwoPointSurfaceMask(MultiplicativeMask):
     which area should be affected.
     '''
     def __init__(
-            self, p1: Tuple[float, float],
-            p2: Tuple[float, float], *,
+            self, p1: Vector2d,
+            p2: Vector2d, *,
             relative_boundaries: bool=True):
         self.p1 = p1
         self.p2 = p2
@@ -221,8 +223,8 @@ class GradientMask(TwoPointSurfaceMask):
     gradient between two points.
     '''
     def __init__(
-            self, p1: Tuple[float, float],
-            p2: Tuple[float, float], *,
+            self, p1: Vector2d,
+            p2: Vector2d, *,
             stripes: Iterable[Stripe]=(
                 Stripe(0.0, 0.0),
                 Stripe(1.0, 1.0)
@@ -283,9 +285,9 @@ class EllipseMask(TwoPointSurfaceMask):
     Creates ellipse in-between two points.
     '''
     def __init__(
-            self, p1: Tuple[float, float],
-            p2: Tuple[float, float], *,
-            strength: Tuple[float, float]=(0.0, 1.0),
+            self, p1: Vector2d,
+            p2: Vector2d, *,
+            strength: Vector2d=(0.0, 1.0),
             relative_boundaries: bool=True, hard_edge: bool=False,
             expotent: float=1.0):
         super().__init__(
@@ -331,9 +333,9 @@ class RectangleMask(TwoPointSurfaceMask):
     Creates a rectangle in-between two points.
     '''
     def __init__(
-            self, p1: Tuple[float, float],
-            p2: Tuple[float, float], *,
-            strength: Tuple[float, float]=(0.0, 1.0),
+            self, p1: Vector2d,
+            p2: Vector2d, *,
+            strength: Vector2d=(0.0, 1.0),
             relative_boundaries: bool=True,
             hard_edge: bool=False,
             expotent: float=1.0):
@@ -454,7 +456,7 @@ class RandomMask(MultiplicativeMask):
     Creates randomly colored grayscale pixels.
     '''
     def __init__(
-            self, *, strength: Tuple[float, float]=(0.0, 1.0),
+            self, *, strength: Vector2d=(0.0, 1.0),
             expotent: float=1.0, seed: Optional[int]=None):
         self.strength = strength
         self.expotent = expotent
@@ -473,7 +475,7 @@ class ColorMask(MultiplicativeMask):
     '''
     Fileters the image with a color.
     '''
-    def __init__(self, color: Tuple[float, float, float]):
+    def __init__(self, color: Vector3d):
         self.r, self.g, self.b = color
 
     def get_mask(self, image):
@@ -492,7 +494,7 @@ class MixMask(MultiplicativeMask):
     '''
     def __init__(
             self, masks: Iterable[MultiplicativeMask], *,
-            strength: Tuple[float, float]=(0.0, 1.0),
+            strength: Vector2d=(0.0, 1.0),
             expotent: float=1.0, mode='mean'):
         self.strength = strength
         self.expotent = expotent

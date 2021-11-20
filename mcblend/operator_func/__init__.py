@@ -19,6 +19,7 @@ from .common import (
     MINECRAFT_SCALE_FACTOR, CubePolygon, McblendObject, McblendObjectGroup, MeshType,
     apply_obj_transform_keep_origin, fix_cube_rotation, star_pattern_match,
     MCObjType)
+from .bedrock_packs import Vector2di
 from .importer import ImportGeometry, ModelLoader
 from .material import create_bone_material
 from .model import ModelExport
@@ -162,7 +163,7 @@ def set_uvs(context: bpy_types.Context):
         curr_uv.new_uv_layer()
         curr_uv.set_blender_uv(converter)
 
-def fix_uvs(context: bpy_types.Context) -> Tuple[int, int]:
+def fix_uvs(context: bpy_types.Context) -> Vector2di:
     '''
     Fixes the UV-mapping of selected objects.
 

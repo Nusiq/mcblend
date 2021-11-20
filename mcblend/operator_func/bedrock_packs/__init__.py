@@ -34,6 +34,12 @@ UNIQUE_MC_FILE_JSON_MULTI = TypeVar(
     bound='_UniqueMcFileJsonMulti')
 RP_SOUNDS_JSON_PART = TypeVar('RP_SOUNDS_JSON_PART', bound='_RpSoundsJsonPart')
 RP_SOUNDS_JSON_PART_KEY = TypeVar('RP_SOUNDS_JSON_PART_KEY')
+
+Vector3d = Tuple[float, float, float]
+Vector2d = Tuple[float, float]
+Vector3di = Tuple[int, int, int]
+Vector2di = Tuple[int, int]
+
 # PROJECT
 class Project:
     '''
@@ -2745,8 +2751,8 @@ class RpMusicDefinitionsJson(_UniqueMcFileJsonMulti[ResourcePack]):
 
 # SOUNDS.JSON
 def _get_float_tuple_range(
-        data: Union[JsonWalker, float, List[float]], default: Tuple[float, float]
-) -> Tuple[float, float]:
+        data: Union[JsonWalker, float, List[float]], default: Vector2d
+) -> Vector2d:
     '''
     Takes a value which can be a single number or a range (list with two
     numbers) and returns a tuple with two numbers to represent the range.
@@ -2894,7 +2900,7 @@ class SjBlockSoundsBlock(_PermanentJsonWalkerContainer):
         return ''
 
     @property
-    def pitch(self) -> Tuple[float, float]:
+    def pitch(self) -> Vector2d:
         '''
         The default pitch value used by the sound events of this block.
         '''
@@ -2902,7 +2908,7 @@ class SjBlockSoundsBlock(_PermanentJsonWalkerContainer):
         return pitch
 
     @property
-    def volume(self) -> Tuple[float, float]:
+    def volume(self) -> Vector2d:
         '''
         The default volume value used by the sound events of this block.
         '''
@@ -2939,7 +2945,7 @@ class SjBlockSoundsBlockEvent(_PermanentJsonWalkerContainer):
         return sound
 
     @property
-    def pitch(self) -> Tuple[float, float]:
+    def pitch(self) -> Vector2d:
         '''
         The pitch value of this event. If the event doesn't define the pitch
         itself than the default sound value of the block is returned instead.
@@ -2950,7 +2956,7 @@ class SjBlockSoundsBlockEvent(_PermanentJsonWalkerContainer):
         return pitch
 
     @property
-    def volume(self) -> Tuple[float, float]:
+    def volume(self) -> Vector2d:
         '''
         The volume value of this event. If the event doesn't define the volume
         itself than the default sound value of the block is returned instead.
@@ -3052,7 +3058,7 @@ class SjEntitySoundsDefaults(_PermanentJsonWalkerContainer):
         raise KeyError()
 
     @property
-    def pitch(self) -> Tuple[float, float]:
+    def pitch(self) -> Vector2d:
         '''
         The default pitch value of the sound events of this object.
         '''
@@ -3060,7 +3066,7 @@ class SjEntitySoundsDefaults(_PermanentJsonWalkerContainer):
         return pitch
 
     @property
-    def volume(self) -> Tuple[float, float]:
+    def volume(self) -> Vector2d:
         '''
         The default volume value of the sound events of this object.
         '''
@@ -3087,7 +3093,7 @@ class SjEntitySoundsDefaultsEvent(_PermanentJsonWalkerContainer):
         return self._owning_collection
 
     @property
-    def pitch(self) -> Tuple[float, float]:
+    def pitch(self) -> Vector2d:
         '''
         The pitch value of this sound event. If it's not defined by the sound
         event itself than the default value is returned instead.
@@ -3102,7 +3108,7 @@ class SjEntitySoundsDefaultsEvent(_PermanentJsonWalkerContainer):
         return (0, 0)
 
     @property
-    def volume(self) -> Tuple[float, float]:
+    def volume(self) -> Vector2d:
         '''
         The volume value of this sound event. If it's not defined by the sound
         event itself than the default value is returned instead.
@@ -3146,7 +3152,7 @@ class SjEntitySoundsEntity(_PermanentJsonWalkerContainer):
         return self._owning_collection
 
     @property
-    def pitch(self) -> Tuple[float, float]:
+    def pitch(self) -> Vector2d:
         '''
         The default pitch value of a sound event of this entity.
         '''
@@ -3154,7 +3160,7 @@ class SjEntitySoundsEntity(_PermanentJsonWalkerContainer):
         return pitch
 
     @property
-    def volume(self) -> Tuple[float, float]:
+    def volume(self) -> Vector2d:
         '''
         The default volume value of a sound event of this entity.
         '''
@@ -3205,7 +3211,7 @@ class SjEntitySoundsEntityEvent(_PermanentJsonWalkerContainer):
         return self._owning_collection
 
     @property
-    def pitch(self) -> Tuple[float, float]:
+    def pitch(self) -> Vector2d:
         '''
         The pitch value of of this event. If the event doesn't define the
         value itself than the default value from the entity is returned
@@ -3220,7 +3226,7 @@ class SjEntitySoundsEntityEvent(_PermanentJsonWalkerContainer):
         return (0, 0)
 
     @property
-    def volume(self) -> Tuple[float, float]:
+    def volume(self) -> Vector2d:
         '''
         The volume value of of this event. If the event doesn't define the
         value itself than the default value from the entity is returned
@@ -3308,7 +3314,7 @@ class SjIndividualEventSoundsEvent(_PermanentJsonWalkerContainer):
         return self._owning_collection
 
     @property
-    def pitch(self) -> Tuple[float, float]:
+    def pitch(self) -> Vector2d:
         '''
         The pitch value of this sound event.
         '''
@@ -3316,7 +3322,7 @@ class SjIndividualEventSoundsEvent(_PermanentJsonWalkerContainer):
         return pitch
 
     @property
-    def volume(self) -> Tuple[float, float]:
+    def volume(self) -> Vector2d:
         '''
         The volume value of this sound event.
         '''
@@ -3392,7 +3398,7 @@ class SjInteractiveBlockSoundsBlock(_PermanentJsonWalkerContainer):
         return self._owning_collection
 
     @property
-    def pitch(self) -> Tuple[float, float]:
+    def pitch(self) -> Vector2d:
         '''
         The default pitch value the sound events of this block.
         '''
@@ -3400,7 +3406,7 @@ class SjInteractiveBlockSoundsBlock(_PermanentJsonWalkerContainer):
         return pitch
 
     @property
-    def volume(self) -> Tuple[float, float]:
+    def volume(self) -> Vector2d:
         '''
         The default volume value the sound events of this block.
         '''
@@ -3460,7 +3466,7 @@ class SjInteractiveBlockSoundsBlockEvent(_PermanentJsonWalkerContainer):
         return self._owning_collection
 
     @property
-    def pitch(self) -> Tuple[float, float]:
+    def pitch(self) -> Vector2d:
         '''
         The pitch value of this event. If the event doesn't define the value
         itself then the default pitch value of the block is returned instead.
@@ -3470,7 +3476,7 @@ class SjInteractiveBlockSoundsBlockEvent(_PermanentJsonWalkerContainer):
         return pitch
 
     @property
-    def volume(self) -> Tuple[float, float]:
+    def volume(self) -> Vector2d:
         '''
         The volume value of this event. If the event doesn't define the value
         itself then the default volume value of the block is returned instead.
@@ -3586,7 +3592,7 @@ class SjInteractiveEntitySoundsDefaults(_PermanentJsonWalkerContainer):
         raise KeyError()
 
     @property
-    def pitch(self) -> Tuple[float, float]:
+    def pitch(self) -> Vector2d:
         '''
         The default pitch value of sound events defined by this object.
         '''
@@ -3594,7 +3600,7 @@ class SjInteractiveEntitySoundsDefaults(_PermanentJsonWalkerContainer):
         return pitch
 
     @property
-    def volume(self) -> Tuple[float, float]:
+    def volume(self) -> Vector2d:
         '''
         The default volume value of sound events defined by this object.
         '''
@@ -3620,7 +3626,7 @@ class SjInteractiveEntitySoundsDefaultsEvent(_PermanentJsonWalkerContainer):
         return self._owning_collection
 
     @property
-    def pitch(self) -> Tuple[float, float]:
+    def pitch(self) -> Vector2d:
         '''
         The pitch of this sound event. If the event doesn't define the value
         itself then the default value from the owning defaults object is
@@ -3635,7 +3641,7 @@ class SjInteractiveEntitySoundsDefaultsEvent(_PermanentJsonWalkerContainer):
         return (0, 0)
 
     @property
-    def volume(self) -> Tuple[float, float]:
+    def volume(self) -> Vector2d:
         '''
         The volume of this sound event. If the event doesn't define the value
         itself then the default value from the owning defaults object is
@@ -3681,7 +3687,7 @@ class SjInteractiveEntitySoundsEntity(_PermanentJsonWalkerContainer):
         return self._owning_collection
 
     @property
-    def pitch(self) -> Tuple[float, float]:
+    def pitch(self) -> Vector2d:
         '''
         The default pitch value used by the sound events of this entity.
         '''
@@ -3689,7 +3695,7 @@ class SjInteractiveEntitySoundsEntity(_PermanentJsonWalkerContainer):
         return pitch
 
     @property
-    def volume(self) -> Tuple[float, float]:
+    def volume(self) -> Vector2d:
         '''
         The default volume value used by the sound events of this entity.
         '''

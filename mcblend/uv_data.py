@@ -74,16 +74,16 @@ class MCBLEND_UvMaskProperties(bpy.types.PropertyGroup):
     # normalize: bool  # ColorPaletteMask
     normalize: BoolProperty(  # type: ignore
         name='Normalize')
-    # p1: Tuple[float, float]  # GradientMask EllipseMask RectangleMask
+    # p1: Vector2d  # GradientMask EllipseMask RectangleMask
     p1_relative: FloatVectorProperty(  # type: ignore
         name='Point A', min=0.0, max=1.0, default=(0.0, 0.0), size=2)
-    # p2: Tuple[float, float]  # GradientMask EllipseMask RectangleMask
+    # p2: Vector2d  # GradientMask EllipseMask RectangleMask
     p2_relative: FloatVectorProperty(  # type: ignore
         name='Point B', min=0.0, max=1.0, default=(0.0, 0.0), size=2)
-    # p1: Tuple[float, float]  # GradientMask EllipseMask RectangleMask
+    # p1: Vector2d  # GradientMask EllipseMask RectangleMask
     p1: IntVectorProperty(  # type: ignore
         name='Point A', default=(0.1, 0.1), size=2)
-    # p2: Tuple[float, float]  # GradientMask EllipseMask RectangleMask
+    # p2: Vector2d  # GradientMask EllipseMask RectangleMask
     p2: IntVectorProperty(  # type: ignore
         name='Point B', default=(0.9, 0.9), size=2)
     # stripes: List[Stripe]  # GradientMask StripesMask
@@ -98,7 +98,7 @@ class MCBLEND_UvMaskProperties(bpy.types.PropertyGroup):
     #  MixMask
     expotent: FloatProperty(  # type: ignore
         name='Expotent', default=1.0, soft_min=-10.0, soft_max=10.0)
-    # strength: Tuple[float, float]  # EllipseMask RectangleMask RandomMask
+    # strength: Vector2d  # EllipseMask RectangleMask RandomMask
     #  MixMask
     strength: FloatVectorProperty(  # type: ignore
         min=0.0, max=1.0, default=(0.0, 1.0), size=2)
@@ -113,7 +113,7 @@ class MCBLEND_UvMaskProperties(bpy.types.PropertyGroup):
         name='Use seed')
     seed: IntProperty(  # type: ignore
         name='Seed')
-    # color: Tuple[float, float, float]  # ColorMask
+    # color: Vector3d  # ColorMask
     color: PointerProperty(  # type: ignore
         type=MCBLEND_ColorProperties,
         name='Color')

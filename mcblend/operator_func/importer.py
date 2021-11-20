@@ -14,6 +14,7 @@ import bpy
 
 from .common import (
     MINECRAFT_SCALE_FACTOR, CubePolygons, CubePolygon, MeshType)
+from .bedrock_packs import Vector3di, Vector3d, Vector2d
 from .uv import CoordinatesConverter
 from .exception import FileIsNotAModelException, ImportingNotImplementedError
 
@@ -521,8 +522,8 @@ class ModelLoader:
         raise FileIsNotAModelException('Unsupported format version')
 
     def _create_default_uv(
-            self, size: Tuple[float, float, float], mirror: bool,
-            uv: Tuple[float, float] = (0.0, 0.0)) -> Dict:
+            self, size: Vector3d, mirror: bool,
+            uv: Vector2d = (0.0, 0.0)) -> Dict:
         '''
         Creates default UV dictionary (in per-face UV-mapping format) based on
         some other properties of a cube.
@@ -535,7 +536,7 @@ class ModelLoader:
         # pylint: disable=no-self-use
         width, height, depth = (int(i) for i in size)
 
-        def _face(size: Tuple[float, float], uv: Tuple[float, float]):
+        def _face(size: Vector2d, uv: Vector2d):
             return {"uv_size": size, "uv": uv, "material_instance": ""}
 
         face1 = _face((depth, height), (uv[0], uv[1] + depth))
@@ -761,7 +762,7 @@ class ModelLoader:
             elif isinstance(poly_mesh['polys'], list):
                 polys_path = poly_mesh_path + ['polys']
                 for poly_id, poly in enumerate(poly_mesh['polys']):
-                    curr_result_poly: List[Tuple[int, int, int]] = []
+                    curr_result_poly: List[Vector3di] = []
                     result['polys'].append(curr_result_poly)  # type: ignore
                     poly_path = polys_path + [poly_id]
                     _assert_is_type(
@@ -830,7 +831,7 @@ class ModelLoader:
 
     def _load_uv(
             self, uv: Any, uv_path: List,
-            cube_size: Tuple[float, float, float]) -> Dict[str, Any]:
+            cube_size: Vector3d) -> Dict[str, Any]:
         '''
         Returns UV and adds all of the missing default values of its
         properties.
@@ -841,7 +842,7 @@ class ModelLoader:
             getting default UV values).
         '''
         width, height, depth = cube_size
-        def _face(size: Tuple[float, float], uv: Tuple[float, float]):
+        def _face(size: Vector2d, uv: Vector2d):
             return {"uv_size": size, "uv": uv, "material_instance": ""}
         result = {
             # Faces outside of the texture are invisible and should be skipped
@@ -897,7 +898,7 @@ class ModelLoader:
 
     def _load_uv_face(
             self, uv_face: Any, uv_face_path: List,
-            default_size: Tuple[float, float]) -> Dict[str, Any]:
+            default_size: Vector2d) -> Dict[str, Any]:
         '''
         Returns UV and adds all of the missing default values of its
         properties.
@@ -988,7 +989,8 @@ class ImportLocator:
     :param name: Name of the locator.
     :param position: The position of the locator.
     '''
-    def __init__(self, name: str, position: Tuple[float, float, float]):
+    def __init__(
+            self, name: str, position: Vector3d):
         self.name = name
         self.position = position
 
@@ -1017,13 +1019,13 @@ class ImportCube:
         self.uv: Dict = data['uv']
         self.mirror: bool = data['mirror']
         self.inflate: bool = data['inflate']
-        self.origin: Tuple[float, float, float] = tuple(  # type: ignore
+        self.origin: Vector3d = tuple(  # type: ignore
             data['origin'])
-        self.pivot: Tuple[float, float, float] = tuple(  # type: ignore
+        self.pivot: Vector3d = tuple(  # type: ignore
             data['pivot'])
-        self.size: Tuple[float, float, float] = tuple(  # type: ignore
+        self.size: Vector3d = tuple(  # type: ignore
             data['size'])
-        self.rotation: Tuple[float, float, float] = tuple(  # type: ignore
+        self.rotation: Vector3d = tuple(  # type: ignore
             data['rotation'])
 
 
@@ -1046,10 +1048,10 @@ class ImportPolyMesh:
         self.blend_object: Optional[bpy.types.Object] = None
 
         self.normalized_uvs: bool = data['normalized_uvs']
-        self.positions: List[Tuple[float, float, float]] = data['positions']
-        self.normals: List[Tuple[float, float, float]] = data['normals']
-        self.uvs: List[Tuple[float, float]] = data['uvs']
-        self.polys: List[List[Tuple[int, int, int]]] = data['polys']
+        self.positions: List[Vector3d] = data['positions']
+        self.normals: List[Vector3d] = data['normals']
+        self.uvs: List[Vector2d] = data['uvs']
+        self.polys: List[List[Vector3di]] = data['polys']
 
     def unpack_data(self):
         '''
@@ -1067,9 +1069,9 @@ class ImportPolyMesh:
         # vertex IDs to create polygons
         blender_polygons: List[List[int]] = []
         # List of vectors with normals
-        blender_normals: List[Tuple[float, float, float]] = []
+        blender_normals: List[Vector3d] = []
         # List of vectors with UVs
-        blender_uvs: List[Tuple[float, float]] = []
+        blender_uvs: List[Vector2d] = []
 
         # TODO - this function or earlier data processing should make sure
         # the indices doesn't go out of bounds
@@ -1110,9 +1112,9 @@ class ImportBone:
         if data['poly_mesh'] is not None:
             self.poly_mesh = ImportPolyMesh(data['poly_mesh'])
         self.locators = locators
-        self.pivot: Tuple[float, float, float] = tuple(  # type: ignore
+        self.pivot: Vector3d = tuple(  # type: ignore
             data['pivot'])
-        self.rotation: Tuple[float, float, float] = tuple(  # type: ignore
+        self.rotation: Vector3d = tuple(  # type: ignore
             data['rotation'])
         self.mirror = data['mirror']
 
@@ -1203,8 +1205,8 @@ class ImportGeometry:
                 # mesh
                 blender_polygons: List[List[int]] = []
                 blender_normals: List[mathutils.Vector] = []
-                blender_uvs: List[Tuple[float, float]] = []
-                blender_vertices: List[Tuple[float, float, float]] = []
+                blender_uvs: List[Vector2d] = []
+                blender_vertices: List[Vector3d] = []
 
                 for vertex in bone.poly_mesh.positions:
                     blender_vertices.append((
@@ -1409,9 +1411,9 @@ class ImportGeometry:
         return armature
 
 def _mc_translate(
-        obj: bpy.types.Object, mctranslation: Tuple[float, float, float],
-        mcsize: Tuple[float, float, float],
-        mcpivot: Tuple[float, float, float]
+        obj: bpy.types.Object, mctranslation: Vector3d,
+        mcsize: Vector3d,
+        mcpivot: Vector3d
     ):
     '''
     Translates a Blender object using a translation vector written in Minecraft
@@ -1435,7 +1437,7 @@ def _mc_translate(
         vertex.co += (translation - pivot_offset + size_offset)
 
 def _mc_set_size(
-        obj: bpy.types.Object, mcsize: Tuple[float, float, float],
+        obj: bpy.types.Object, mcsize: Vector3d,
         inflate: Optional[float]=None):
     '''
     Scales a Blender object using scale vector written in Minecraft coordinates
@@ -1467,7 +1469,7 @@ def _mc_set_size(
     data.vertices[6].co = mathutils.Vector(pos_delta * np.array([1, 1, -1]))
     data.vertices[7].co = mathutils.Vector(pos_delta * np.array([1, 1, 1]))
 
-def _mc_pivot(obj: bpy.types.Object, mcpivot: Tuple[float, float, float]):
+def _mc_pivot(obj: bpy.types.Object, mcpivot: Vector3d):
     '''
     Moves a pivot of an Blender object using pivot value in Minecraft
     coordinates system.
@@ -1481,7 +1483,7 @@ def _mc_pivot(obj: bpy.types.Object, mcpivot: Tuple[float, float, float]):
     obj.location += translation
 
 def _mc_rotate(
-        obj: bpy.types.Object, mcrotation: Tuple[float, float, float]
+        obj: bpy.types.Object, mcrotation: Vector3d
     ):
     '''
     Rotates a Blender object using rotation written in Minecraft coordinates
@@ -1514,8 +1516,8 @@ def _set_uv(
     uv_data = uv_layer.data
 
     def set_uv(
-            cube_polygon: CubePolygon, size: Tuple[float, float],
-            uv: Tuple[float, float]):
+            cube_polygon: CubePolygon, size: Vector2d,
+            uv: Vector2d):
         cp_loop_indices = cube_polygon.side.loop_indices
         cp_order = cube_polygon.order
 

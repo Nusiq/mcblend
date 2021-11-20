@@ -16,6 +16,7 @@ from .common import (
     MINECRAFT_SCALE_FACTOR, McblendObject, McblendObjectGroup, MCObjType,
     CubePolygons, CubePolygon, MeshType
 )
+from .bedrock_packs import Vector2di, Vector3d, Vector3di
 from .json_tools import get_vect_json
 from .exception import NoCubePolygonsException, InvalidUvShape
 from .uv import CoordinatesConverter
@@ -40,7 +41,7 @@ class ModelExport:
     model_name: str
     texture_width: int
     texture_height: int
-    visible_bounds_offset: Tuple[float, float, float]
+    visible_bounds_offset: Vector3d
     visible_bounds_width: float
     visible_bounds_height: float
     bones: List[BoneExport] = field(default_factory=list)
@@ -200,7 +201,7 @@ class BoneExport:
 
                 positions: List[List[float]] = []
                 normals: List[List[float]] = []
-                polys: List[List[Tuple[int, int, int]]] = []
+                polys: List[List[Vector3di]] = []
                 uvs: List[List[int]] = [list(i.uv) for i in uv_data]
                 for vertex in vertices:
                     transformed_vertex = inv_bone_matrix @ vertex.co
@@ -217,7 +218,7 @@ class BoneExport:
                     normals.append(list(transformed_normal))
                 for poly in polygons:
                     # vertex data -> List[(positions, normals, uvs)]
-                    curr_poly: List[Tuple[int, int, int]] = []
+                    curr_poly: List[Vector3di] = []
                     for loop_id, vertex_id in zip(
                             poly.loop_indices, poly.vertices):
                         curr_poly.append((vertex_id, loop_id, loop_id))
@@ -312,7 +313,7 @@ class PolyMesh:
 
     def extend_mesh_data(
             self, positions: List[List[float]], normals: List[List[float]],
-            polys: List[List[Tuple[int, int, int]]],
+            polys: List[List[Vector3di]],
             uvs: List[List[int]], mcblend_obj: McblendObject):
         '''
         Extends the poly_mesh data with new vertices, normals, polys and uvs
@@ -352,7 +353,7 @@ class UvExportFactory:
     Object used for creating the UvExport objects. Decides which subtype of the
     UvExport object should be used.
     '''
-    def __init__(self, texture_size: Tuple[int, int]):
+    def __init__(self, texture_size: Vector2di):
         self.blend_to_mc_converter = CoordinatesConverter(
             np.array([[0, 1], [1, 0]]),
             np.array([[0, texture_size[0]], [0, texture_size[1]]])
