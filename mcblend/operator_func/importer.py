@@ -108,7 +108,8 @@ class ModelLoader:
             geometry['bones'], geometry_path + ['bones'])
 
     def append_acceptable_keys_warnings(
-            self, what: str, has_keys: Set, accepted_keys: Set, json_path: List):
+            self, what: str, has_keys: Set, accepted_keys: Set,
+            json_path: List):
         '''
         Appends warning if object have keys that aren't in the accepted set.
         '''
@@ -192,7 +193,8 @@ class ModelLoader:
                 identifier = desc['identifier']
                 if geometry_name in (identifier, ''):
                     return geometry, path
-            raise ValueError(f'Unable to find geometry called geometry.{geometry_name}')
+            raise ValueError(
+                f'Unable to find geometry called geometry.{geometry_name}')
 
         if parser_version == '1.8.0':
             geometries = data
@@ -213,8 +215,10 @@ class ModelLoader:
                 identifier = k
                 if geometry_name in (identifier, ''):
                     return geometry, path
-            raise ValueError(f'Unable to find geometry called geometry.{geometry_name}')
-        raise FileIsNotAModelException(f'Unsupported format version: {self.format_version}')
+            raise ValueError(
+                f'Unable to find geometry called geometry.{geometry_name}')
+        raise FileIsNotAModelException(
+            f'Unsupported format version: {self.format_version}')
 
     def _load_description(self, geometry: Any, geometry_path: List) -> Dict:
         '''
@@ -378,13 +382,13 @@ class ModelLoader:
             if parser_version == '1.16.0':
                 acceptable_keys = {
                     'name', 'parent', 'pivot', 'rotation', 'mirror', 'inflate',
-                    'debug', 'render_group_id', 'cubes', 'locators', 'poly_mesh',
-                    'texture_meshes', 'binding'}
+                    'debug', 'render_group_id', 'cubes', 'locators',
+                    'poly_mesh', 'texture_meshes', 'binding'}
             else:
                 acceptable_keys = {
                     'name', 'parent', 'pivot', 'rotation', 'mirror', 'inflate',
-                    'debug', 'render_group_id', 'cubes', 'locators', 'poly_mesh',
-                    'texture_meshes'}
+                    'debug', 'render_group_id', 'cubes', 'locators',
+                    'poly_mesh', 'texture_meshes'}
             self.append_acceptable_keys_warnings(
                 'bone', set(bone.keys()), acceptable_keys, bone_path)
 
@@ -394,7 +398,8 @@ class ModelLoader:
                 result['name'] = bone['name']
             if 'binding' in bone:
                 _assert_is_type(
-                    'binding', bone['binding'], (str,), bone_path + ['binding'])
+                    'binding', bone['binding'], (str,),
+                    bone_path + ['binding'])
                 result['binding'] = bone['binding']
             if 'parent' in bone:
                 _assert_is_type(
@@ -613,7 +618,8 @@ class ModelLoader:
                 result['pivot'] = cube['pivot']
             if 'inflate' in cube:
                 _assert_is_type(
-                    'inflate', cube['inflate'], (int, float), cube_path + ['inflate'])
+                    'inflate', cube['inflate'], (int, float),
+                    cube_path + ['inflate'])
                 result['inflate'] = cube['inflate']
             if 'mirror' in cube:
                 _assert_is_type(
@@ -662,7 +668,8 @@ class ModelLoader:
                 result['size'] = cube['size']
             if 'inflate' in cube:
                 _assert_is_type(
-                    'inflate', cube['inflate'], (int, float), cube_path + ['inflate'])
+                    'inflate', cube['inflate'], (int, float),
+                    cube_path + ['inflate'])
                 result['inflate'] = cube['inflate']
             if 'mirror' in cube:
                 _assert_is_type(
@@ -724,7 +731,8 @@ class ModelLoader:
             if 'positions' in poly_mesh:
                 positions = poly_mesh['positions']
                 positions_path = poly_mesh_path + ['position']
-                _assert_is_type('positions', positions, (list,), positions_path)
+                _assert_is_type(
+                    'positions', positions, (list,), positions_path)
                 for position_id, position in enumerate(positions):
                     _assert_is_vector(
                         'position', position, 3, (float, int,),
@@ -807,8 +815,8 @@ class ModelLoader:
             group_size = 4
         else:
             raise FileIsNotAModelException(
-                f'{poly_mesh_path + ["polys"]}::{"polys"} is not an a list of polys or a '
-                'literal string "quad_list" or "tri_list"')
+                f'{poly_mesh_path + ["polys"]}::{"polys"} is not an a list of '
+                'polys or a literal string "quad_list" or "tri_list"')
         # Check if positions, normals and uvs are the same lengths
         pos_length = len(positions)
         if not pos_length == len(normals) == len(uvs):
@@ -967,17 +975,30 @@ class ModelLoader:
             ('1.16.0', '1.12.0', '1.8.0'), self.format_version)
         if parser_version in ['1.16.0', '1.12.0']:
             if isinstance(locator, list):
-                _assert_is_vector('locator', locator, 3, (int, float), locator_path)
-                return locator
+                _assert_is_vector(
+                    'locator', locator, 3, (int, float), locator_path)
+                return {"offset": locator, "rotation": [0, 0, 0]}
 
             if isinstance(locator, dict):
-                raise ImportingNotImplementedError('locator', locator_path)
+                result = {"offset": [0, 0, 0], "rotation": [0, 0, 0]}
+                if "offset" in locator:
+                    _assert_is_vector(
+                        'offset', locator['offset'], 3, (int, float),
+                        locator_path + ['offset'])
+                    result["offset"] = locator["offset"]
+                if "rotation" in locator:
+                    _assert_is_vector(
+                        'rotation', locator['rotation'], 3, (int, float),
+                        locator_path + ['rotation'])
+                    result["rotation"] = locator["rotation"]
+                return result
             raise FileIsNotAModelException(
                 f'{locator_path + ["locator"]}::{"locator"} is not an '
                 f'instance of {(list, dict)}')
         if parser_version == '1.8.0':
             _assert_is_type('locator', locator, (list,), locator_path)
-            _assert_is_vector('locator', locator, 3, (int, float), locator_path)
+            _assert_is_vector(
+                'locator', locator, 3, (int, float), locator_path)
             return locator
         raise FileIsNotAModelException('Unsupported format version')
 
@@ -990,9 +1011,10 @@ class ImportLocator:
     :param position: The position of the locator.
     '''
     def __init__(
-            self, name: str, position: Vector3d):
+            self, name: str, position: Vector3d, rotation: Vector3d):
         self.name = name
         self.position = position
+        self.rotation = rotation
 
         self.blend_empty: Optional[bpy.types.Object] = None
 
@@ -1011,8 +1033,8 @@ class ImportCube:
         file in the model.
 
         # Arguments:
-        - `data: Dict` - the part of the Minecraft model JSON file that represents
-        the cube.
+        - `data: Dict` - the part of the Minecraft model JSON file that
+        represents the cube.
         '''
         self.blend_cube: Optional[bpy.types.Object] = None
 
@@ -1098,7 +1120,8 @@ class ImportBone:
         # Locators
         locators: List[ImportLocator] = []
         for k, v in data['locators'].items():
-            locators.append(ImportLocator(k, tuple(v)))  # type: ignore
+            locators.append(
+                ImportLocator(k, v['offset'], v['rotation']))  # type: ignore
         # Cubes
         import_cubes: List[ImportCube] = []
         for cube in data['cubes']:
@@ -1130,9 +1153,11 @@ class ImportGeometry:
         self.identifier = loader.description['identifier']
         self.texture_width = int(loader.description['texture_width'])
         self.texture_height = int(loader.description['texture_height'])
-        self.visible_bounds_offset = loader.description['visible_bounds_offset']
+        self.visible_bounds_offset = loader.description[
+            'visible_bounds_offset']
         self.visible_bounds_width = loader.description['visible_bounds_width']
-        self.visible_bounds_height = loader.description['visible_bounds_height']
+        self.visible_bounds_height = loader.description[
+            'visible_bounds_height']
         self.bones: Dict[str, ImportBone] = {}
         self.uv_converter = CoordinatesConverter(
             np.array([[0, self.texture_width], [0, self.texture_height]]),
@@ -1156,7 +1181,8 @@ class ImportGeometry:
         '''
         # Build armature:
         # Create empty armature and enter edit mode:
-        bpy.ops.object.armature_add(enter_editmode=True, align='WORLD', location=(0, 0, 0))
+        bpy.ops.object.armature_add(
+            enter_editmode=True, align='WORLD', location=(0, 0, 0))
         bpy.ops.armature.select_all(action='SELECT')
         bpy.ops.armature.delete()
         bpy.ops.object.mode_set(mode='OBJECT')
@@ -1169,7 +1195,8 @@ class ImportGeometry:
         # Create objects - and set their pivots
         for bone in self.bones.values():
             # 1. Spawn bone (empty)
-            bpy.ops.object.empty_add(type='SPHERE', location=(0, 0, 0), radius=0.2)
+            bpy.ops.object.empty_add(
+                type='SPHERE', location=(0, 0, 0), radius=0.2)
             bone_obj: bpy.types.Object
             bone_obj = bone.blend_empty = context.object
             _mc_pivot(bone_obj, bone.pivot)  # 2. Apply translation
@@ -1259,14 +1286,18 @@ class ImportGeometry:
                         uv_layer[i].uv = uv
                 else:
                     del mesh
-                    raise FileIsNotAModelException('Invalid poly_mesh geometry!')
+                    raise FileIsNotAModelException(
+                        'Invalid poly_mesh geometry!')
 
             for locator in bone.locators:
                 # 1. Spawn locator (empty)
                 locator_obj: bpy.types.Object
-                bpy.ops.object.empty_add(type='SPHERE', location=(0, 0, 0), radius=0.1)
+                bpy.ops.object.empty_add(
+                    type='SPHERE', location=(0, 0, 0), radius=0.1)
                 locator_obj = locator.blend_empty = context.object
-                _mc_pivot(locator_obj, locator.position)  # 2. Apply translation
+                # 2. Apply translation
+                _mc_pivot(locator_obj, locator.position)
+                _mc_rotate(locator_obj, locator.rotation)
                 # 3. Apply custom properties
                 locator_obj.name = locator.name
 

@@ -105,7 +105,16 @@ def assert_is_model(a: Dict):
                 assert type(bone['locators']) is dict
                 for locator_name, locator in bone['locators'].items():
                     assert type(locator_name) is str
-                    assert_is_vector(locator, 3, (int, float))
+                    assert isinstance(locator, (list, dict))
+                    if isinstance(locator, list):
+                        assert_is_vector(locator, 3, (int, float))
+                    elif isinstance(locator, dict):
+                        assert set(locator.keys()) <= {  # acceptable keys
+                            'offset', 'rotation'}
+                        if 'offset' in locator:
+                            assert_is_vector(locator['offset'], 3, (int, float))
+                        if 'rotation' in locator:
+                            assert_is_vector(locator['rotation'], 3, (int, float))
             # minecraft:geometry -> bones -> cubes
             if 'cubes' in bone:
                 assert type(bone['cubes']) is list
@@ -118,6 +127,7 @@ def assert_is_model(a: Dict):
                     assert set(cube.keys()) >= {  # obligatory keys
                         'uv', 'size', 'origin', 'pivot', 'rotation'
                     }
+                    assert isinstance(cube['uv'], (list, dict))
                     if isinstance(cube['uv'], list):  # Standard MC uv
                         assert_is_vector(cube['uv'], 2, (int, float))
                     elif isinstance(cube['uv'], dict):  # Per face UV mapping

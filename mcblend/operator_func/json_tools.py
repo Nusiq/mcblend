@@ -14,6 +14,6 @@ def get_vect_json(arr: Iterable) -> List[float]:
     '''
     result = [round(i, 3) for i in arr]
     for i, _ in enumerate(result):
-        if result[i] == -0.0:
-            result[i] = 0.0
+        if result[i] == int(result[i]):
+            result[i] = int(result[i])
     return result

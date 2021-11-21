@@ -27,6 +27,7 @@ MODEL_FILES = [
     "three_bones.geo.json",
     "two_bones.geo.json",
     "battle_mech.geo.json",
+    "rotated_locators.geo.json",
     'flat_monkey_smooth_monkey.geo.json',
     "binding_test.geo.json",
 ]

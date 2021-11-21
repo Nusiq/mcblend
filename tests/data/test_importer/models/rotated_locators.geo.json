@@ -1,0 +1,76 @@
+{
+	"format_version": "1.16.0",
+	"minecraft:geometry": [
+		{
+			"description": {
+				"identifier": "geometry.rotated_locators",
+				"texture_width": 16,
+				"texture_height": 16,
+				"visible_bounds_width": 1,
+				"visible_bounds_height": 1,
+				"visible_bounds_offset": [0, 0, 0]
+			},
+			"bones": [
+				{
+					"name": "root",
+					"pivot": [0, 0, 0],
+					"rotation": [0, 0, 0],
+					"locators": {
+						"locator": {
+							"offset": [0, 16, 0],
+							"rotation": [45, 0, 0]
+						},
+						"locator2": {
+							"offset": [0, 32, 0],
+							"rotation": [0, 45, 0]
+						},
+						"locator3": {
+							"offset": [0, 48, 0],
+							"rotation": [0, 0, 45]
+						}
+					}
+				},
+				{
+					"name": "child1",
+					"parent": "root",
+					"pivot": [0, 10, 0],
+					"rotation": [0, 25, 0],
+					"locators": {
+						"locator4": {
+							"offset": [0, 16, 0],
+							"rotation": [10, 20, 30]
+						},
+						"locator5": {
+							"offset": [0, 32, 0],
+							"rotation": [30, 10, 20]
+						},
+						"locator6": {
+							"offset": [0, 48, 0],
+							"rotation": [20, 30, 10]
+						}
+					}
+				},
+				{
+					"name": "child2",
+					"parent": "child1",
+					"pivot": [0, 10, 0],
+					"rotation": [0, 25, 0],
+					"locators": {
+						"locator7": {
+							"offset": [0, 16, 0],
+							"rotation": [10, 20, 30]
+						},
+						"locator8": {
+							"offset": [0, 32, 0],
+							"rotation": [30, 10, 20]
+						},
+						"locator9": {
+							"offset": [0, 48, 0],
+							"rotation": [20, 30, 10]
+						}
+					}
+				}
+			]
+		}
+	]
+}

@@ -161,8 +161,9 @@ class BoneExport:
                 locatorprop.mccube_position *
                 _l_scale * MINECRAFT_SCALE_FACTOR
             )
+            l_rot = locatorprop.get_mcrotation(thisobj)
             self.locators[locatorprop.obj_name] = LocatorExport(
-                l_origin, locatorprop)
+                l_origin, l_rot, locatorprop)
 
         # Set cubes
         for cubeprop in cube_objs:
@@ -264,12 +265,23 @@ class BoneExport:
 @dataclass
 class LocatorExport:
     '''Object that represents a Locator during model export.'''
-    origin: np.ndarray
+    offset: np.ndarray
+    rotation: np.ndarray
     mcblend_obj: McblendObject
 
     def json(self):
         '''Returns JSON representation of this object'''
-        return get_vect_json(self.origin)
+        # The rotation must be evaluated early because of rounding errors
+        export_rotation = [
+            i if i != -180 else 180
+            for i in get_vect_json(self.rotation)
+        ]
+        if export_rotation == [0, 0, 0]:
+            return get_vect_json(self.offset)
+        return {
+            'offset': get_vect_json(self.offset),
+            'rotation': export_rotation
+        }
 
 @dataclass
 class CubeExport:
