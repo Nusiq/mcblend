@@ -999,7 +999,7 @@ class ModelLoader:
             _assert_is_type('locator', locator, (list,), locator_path)
             _assert_is_vector(
                 'locator', locator, 3, (int, float), locator_path)
-            return locator
+            return {"offset": locator, "rotation": [0, 0, 0]}
         raise FileIsNotAModelException('Unsupported format version')
 
 
