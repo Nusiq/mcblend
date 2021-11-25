@@ -23,7 +23,7 @@ from .operator_func import (
     import_model_form_project, apply_materials, prepare_physics_simulation)
 from .operator_func.bedrock_packs.json import CompactEncoder
 from .operator_func.exception import (
-    InvalidUvShape, NotEnoughTextureSpace, FileIsNotAModelException)
+    InvalidUvShape, NotEnoughTextureSpace, ImporterException)
 from .operator_func.bedrock_packs.json import JSONCDecoder
 from .operator_func.texture_generator import (
     list_mask_types_as_blender_enum, UvMaskTypes, MixMaskMode)
@@ -418,13 +418,17 @@ class MCBLEND_OT_ImportModel(bpy.types.Operator, ImportHelper):
             data = json.load(f, cls=JSONCDecoder)
         try:
             warnings = import_model(data, self.geometry_name, context)
-            if len(warnings) > 0:
-                str_warnings = '\n'.join(warnings)
-                self.report(
-                    {'WARNING'},
-                    f"Imported with warnings:\n{str_warnings}"
-                )
-        except FileIsNotAModelException as e:
+            if len(warnings) > 1:
+                for warning in warnings:
+                    self.report({'WARNING'}, warning)
+                    self.report(
+                        {'WARNING'},
+                        f"Finished with {len(warnings)} warnings. "
+                        "See logs for more details."
+                    )
+            elif len(warnings) == 1:
+                self.report({'WARNING'}, warnings[0])
+        except ImporterException as e:
             self.report(
                 {'ERROR'}, f'Invalid model: {e}'
             )
@@ -1513,13 +1517,17 @@ class MCBLEND_OT_ImportRpEntity(bpy.types.Operator):
     def execute(self, context):
         try:
             warnings = import_model_form_project(context)
-            if len(warnings) > 0:
-                str_warnings = '\n'.join(warnings)
-                self.report(
-                    {'WARNING'},
-                    f"Finished warnings:\n{str_warnings}"
-                )
-        except FileIsNotAModelException as e:
+            if len(warnings) > 1:
+                for warning in warnings:
+                    self.report({'WARNING'}, warning)
+                    self.report(
+                        {'WARNING'},
+                        f"Finished with {len(warnings)} warnings. "
+                        "See logs for more details."
+                    )
+            elif len(warnings) == 1:
+                self.report({'WARNING'}, warnings[0])
+        except ImporterException as e:
             self.report(
                 {'ERROR'}, f'Invalid model: {e}'
             )

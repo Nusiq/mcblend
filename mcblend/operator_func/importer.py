@@ -4,7 +4,8 @@ Functions and objects related to importing Minecraft models to Blender.
 from __future__ import annotations
 
 import math
-from typing import Dict, List, Optional, Any, Tuple, Set
+from typing import Dict, List, Optional, Any, Tuple, Set, Union
+from enum import Enum
 
 import numpy as np
 
@@ -16,44 +17,15 @@ from .common import (
     MINECRAFT_SCALE_FACTOR, CubePolygons, CubePolygon, MeshType)
 from .bedrock_packs import Vector3di, Vector3d, Vector2d
 from .uv import CoordinatesConverter
-from .exception import FileIsNotAModelException, ImportingNotImplementedError
+from .exception import ImporterException
 
-def _assert_is_vector(
-        name: str, obj: Any, length: int, types: Tuple, json_path: List
-    ) -> None:
+class ErrorLevel(Enum):
     '''
-    Asserts that object is an array of specific length with specific type of
-    items.
+    Used by ModelLoader to indicate that certain errors should break execution
+    or just show a warning.
     '''
-    if not isinstance(obj, list):
-        nice_path = '->'.join([str(i) for i in json_path])
-        raise FileIsNotAModelException(
-            f'{nice_path}::{name} is not a list')
-    if not len(obj) == length:
-        nice_path = '->'.join([str(i) for i in json_path])
-        raise FileIsNotAModelException(
-            f'{nice_path}::{name} has invalid length {len(obj)} != {length}')
-    if not all(isinstance(i, types) for i in obj):
-        nice_path = '->'.join([str(i) for i in json_path])
-        raise FileIsNotAModelException(
-            f'{nice_path}::{name} is not instance of List[{types}]')
-
-def _assert_has_required_keys(
-        what: str, has_keys: Set, required_keys: Set, json_path: List):
-    '''Asserts that object has required keys.'''
-    missing_keys = required_keys - has_keys
-    if len(missing_keys) != 0:
-        nice_path = '->'.join([str(i) for i in json_path])
-        raise FileIsNotAModelException(
-            f'{nice_path}::{what} is missing properties: {missing_keys}')
-
-def _assert_is_type(
-        name: str, obj: Any, types: Tuple, json_path: List):
-    '''Asserts that object is instance of specific type'''
-    if not isinstance(obj, types):
-        nice_path = '->'.join([str(i) for i in json_path])
-        raise FileIsNotAModelException(
-            f'{nice_path}::{name} is not an instance of {types}')
+    ERROR = 0
+    WARNING = 1
 
 def pick_version_parser(parsers: Tuple[str, ...], version: str):
     '''
@@ -68,7 +40,7 @@ def pick_version_parser(parsers: Tuple[str, ...], version: str):
             return tuple(  # type: ignore
                 map(int, version.split('.')))
         except Exception as e:
-            raise FileIsNotAModelException(
+            raise ImporterException(
                 f'Unable to parse format version number: {version}') from e
 
     t_parsers = [to_tuple(parser) for parser in parsers]
@@ -81,7 +53,7 @@ def pick_version_parser(parsers: Tuple[str, ...], version: str):
             best_choice = t_parser
             break
     if best_choice is None:
-        raise FileIsNotAModelException(
+        raise ImporterException(
             f'Unsupported format version: {version}')
     return '.'.join([str(i) for i in best_choice])
 
@@ -97,8 +69,9 @@ class ModelLoader:
     def __init__(self, data: Dict, geometry_name: str = ""):
         self.data = data
         # List of warnings about problems related to loading the model
-        self.loader_warnings: List[str] = []
-        self.format_version = self._load_format_version(data)
+        self.warnings: List[str] = []
+        self.format_version, self.parser_version = self._load_format_version(
+            data)
         geometry, geometry_path = self._load_geometry(
             geometry_name, self.data)
 
@@ -107,28 +80,151 @@ class ModelLoader:
         self.bones: List = self._load_bones(
             geometry['bones'], geometry_path + ['bones'])
 
-    def append_acceptable_keys_warnings(
+    def append_warning(self, warning: str, json_path: List[Union[str, int]]):
+        '''Appends warning about problem with model loading.'''
+        nice_path = '->'.join([str(i) for i in json_path])
+        self.warnings.append(f'{nice_path}::{warning}')
+
+    def _error_level_handler(
+            self, message: str, error_level: ErrorLevel=ErrorLevel.ERROR):
+        '''
+        Adds warning or rises an exception with the message, based on the error
+        level.
+        '''
+        if error_level == ErrorLevel.ERROR:
+            raise ImporterException(message)
+        self.warnings.append(message)
+
+    def _assert_vector_type(
+            self, name: str, obj: Any, length: int, types: Tuple,
+            json_path: List, error_level: ErrorLevel=ErrorLevel.ERROR,
+            more: str=""
+        ) -> bool:
+        '''
+        Asserts that object is an array of specific length with specific type
+        of items.
+        If assertion fails:
+        - when error level is ERROR, rises an exception.
+        - when error level is WARNING, appends warning and returns False.
+        otherwise returns True.
+        '''
+        if not isinstance(obj, list):
+            nice_path = '->'.join([str(i) for i in json_path])
+            msg = f'{nice_path}::{name} is not a list.'
+            if more:
+                msg += f' {more}'
+            self._error_level_handler(msg, error_level)
+            return False
+        if not len(obj) == length:
+            nice_path = '->'.join([str(i) for i in json_path])
+            msg = (
+                f'{nice_path}::{name} has invalid length '
+                f'{len(obj)} != {length}.'
+            )
+            if more:
+                msg += f' {more}'
+            self._error_level_handler(msg, error_level)
+            return False
+        if not all(isinstance(i, types) for i in obj):
+            nice_path = '->'.join([str(i) for i in json_path])
+            msg = f'{nice_path}::{name} is not instance of 'f'List[{types}].'
+            if more:
+                msg += f' {more}'
+            self._error_level_handler(msg, error_level)
+            return False
+        return True
+
+    def _assert_required_keys(
+            self, what: str, has_keys: Set, required_keys: Set,
+            json_path: List, error_level: ErrorLevel=ErrorLevel.ERROR,
+            more: str="") -> bool:
+        '''
+        Asserts that object has required keys.
+        If assertion fails:
+        - when error level is ERROR, rises an exception.
+        - when error level is WARNING, appends warning and returns False.
+        otherwise returns True.
+        '''
+        missing_keys = required_keys - has_keys
+        if len(missing_keys) != 0:
+            nice_path = '->'.join([str(i) for i in json_path])
+            msg = f'{nice_path}::{what} is missing properties: {missing_keys}.'
+            if more:
+                msg += f' {more}'
+            self._error_level_handler(msg, error_level)
+            return False
+        return True
+
+    def _assert_type(
+            self, name: str, obj: Any, types: Tuple, json_path: List,
+            error_level: ErrorLevel=ErrorLevel.ERROR, more: str="") -> bool:
+        '''
+        Asserts that object is instance of specific type.
+        If assertion fails:
+        - when error level is ERROR, rises an exception.
+        - when error level is WARNING, appends warning and returns False.
+        otherwise returns True.
+        '''
+        if not isinstance(obj, types):
+            nice_path = '->'.join([str(i) for i in json_path])
+            if len(types) == 1:
+                msg = (
+                    f'{nice_path}::{name} ({type(name)}) is not instance of '
+                    f'{types[0]}.'
+                )
+                if more:
+                    msg += f' {more}'
+                self._error_level_handler(msg, error_level)
+            else:
+                msg = (
+                    f'{nice_path}::{name} ({type(name)}) is not instance of '
+                    f'any of the acceptable types: {types}.'
+                )
+                if more:
+                    msg += f' {more}'
+                self._error_level_handler(msg, error_level)
+            return False
+        return True
+
+    def _assert_acceptable_keys(
             self, what: str, has_keys: Set, accepted_keys: Set,
-            json_path: List):
+            json_path: List, error_level: ErrorLevel=ErrorLevel.ERROR,
+            more: str="") -> bool:
         '''
         Appends warning if object have keys that aren't in the accepted set.
+        If assertion fails:
+        - when error level is ERROR, rises an exception.
+        - when error level is WARNING, appends warning and returns False.
+        otherwise returns True.
         '''
         additional_keys = has_keys - accepted_keys
         nice_path = '->'.join([str(i) for i in json_path])
-        if len(additional_keys) != 0:
-            self.loader_warnings.append(
+        if len(additional_keys) > 1:
+            msg = (
+                f'{nice_path}::{what} has unexpected properties: '
+                f'{", ".join(additional_keys)}.')
+            if more:
+                msg += f' {more}'
+            self._error_level_handler(msg, error_level)
+            return False
+        if len(additional_keys) == 1:
+            msg = (
                 f'{nice_path}::{what} has unexpected '
-                f'properties: {additional_keys}')
+                f'property: {additional_keys.pop()}.'
+            )
+            if more:
+                msg += f' {more}'
+            self._error_level_handler(msg, error_level)
+            return False
+        return True
 
-    def _load_format_version(self, data: Dict) -> str:
+    def _load_format_version(self, data: Dict) -> Tuple[str, str]:
         '''
         Returns the version of the model from JSON file loaded into data.
 
         :param data: JSON dict with model file.
         '''
         # pylint: disable=no-self-use
-        # _assert_has_required_keys(
-        #     'model file', set(data.keys()), {'format_version'}, [])
         if 'format_version' in data:
             parser_version = pick_version_parser(
                 ('1.16.0', '1.12.0', '1.8.0'), data['format_version'])
@@ -139,26 +235,27 @@ class ModelLoader:
         else:  # Based on files structure
             parser_version = '1.8.0'
             true_format_version = '1.8.0'
+
         if parser_version in ('1.16.0', '1.12.0'):
-            _assert_has_required_keys(
+            self._assert_required_keys(
                 'model file', set(data.keys()),
                 {'minecraft:geometry'}, [])
-            self.append_acceptable_keys_warnings(
+            self._assert_acceptable_keys(
                 'model file', set(data.keys()),
-                {'minecraft:geometry', 'format_version', 'cape'}, [])
-            return true_format_version
-
+                {'minecraft:geometry', 'format_version', 'cape'}, [],
+                ErrorLevel.WARNING)
+            return true_format_version, parser_version
         if parser_version == '1.8.0':
             # All geometries must start with geometry.
             for k in data.keys():  # key must be string because its from json
                 if not (
                         k.startswith('geometry.') or
                         k in ['debug', 'format_version']):
-                    FileIsNotAModelException(
-                        f'{k} is invalid geometry name (it should start '
-                        'with "geometry."')
-            return true_format_version
-        raise FileIsNotAModelException('Unsupported format version')
+                    self.append_warning(
+                        "Invalid geomtetry name. All 1.8.0 model names must "
+                        "start with 'geometry.' prefix.", [k])
+            return true_format_version, parser_version
+        raise ImporterException('Unsupported format version')
 
     def _load_geometry(
             self, geometry_name: str, data: Any) -> Tuple[Dict, List]:
@@ -171,53 +268,71 @@ class ModelLoader:
         :param geometry_name: The name of geometry
         :param data: Root object of the JSON.
         '''
-        parser_version = pick_version_parser(
-            ('1.16.0', '1.12.0', '1.8.0'), self.format_version)
-        if parser_version in ('1.16.0', '1.12.0'):
+        if self.parser_version in ('1.16.0', '1.12.0'):
+            result = None
             geometries = data['minecraft:geometry']
             path: List = ['minecraft:geometry']
-            _assert_is_type('geometries', geometries, (list,), path)
+            self._assert_type('geometries', geometries, (list,), path)
             for i, geometry in enumerate(geometries):
                 path = ['minecraft:geometry', i]
-                _assert_is_type('geometry', geometry, (dict,), path)
-                _assert_has_required_keys(
+                if not self._assert_type(
+                        'geometry', geometry, (dict,), path,
+                        ErrorLevel.WARNING):
+                    continue
+                if not self._assert_required_keys(
+                        'geometry', set(geometry.keys()),
+                        {'description', 'bones'}, path, ErrorLevel.WARNING):
+                    continue
+                self._assert_acceptable_keys(
                     'geometry', set(geometry.keys()), {'description', 'bones'},
-                    path)
-                self.append_acceptable_keys_warnings(
-                    'geometry', set(geometry.keys()), {'description', 'bones'},
-                    path)
+                    path, ErrorLevel.WARNING)
                 desc = geometry['description']
                 if 'identifier' not in desc:
-                    raise FileIsNotAModelException(
-                        f'{path}::description is missing identifier')
+                    self.append_warning(
+                        "description is missing identifier", path)
+                    continue
                 identifier = desc['identifier']
-                if geometry_name in (identifier, ''):
-                    return geometry, path
-            raise ValueError(
+                if geometry_name  == '' and result is None:
+                    result = geometry, path
+                elif geometry_name == identifier:
+                    result = geometry, path
+            # Return from 1.16.0 or 1.12.0
+            if result is not None:
+                return result
+            raise ImporterException(
                 f'Unable to find geometry called geometry.{geometry_name}')
 
-        if parser_version == '1.8.0':
+        if self.parser_version == '1.8.0':
+            result = None
             geometries = data
             path = []
-            _assert_is_type('geometries', geometries, (dict,), path)
+            self._assert_type('geometries', geometries, (dict,), path)
             for k, geometry in geometries.items():
-                if k in ['format_version', 'debug']:
+                if k in ('format_version', 'debug'):
                     continue
                 path = [k]
-                _assert_is_type('geometry', geometry, (dict,), path)
-                self.append_acceptable_keys_warnings(
+                if not self._assert_type(
+                        'geometry', geometry, (dict,), path,
+                        ErrorLevel.WARNING):
+                    continue
+                self._assert_acceptable_keys(
                     'geometry', set(geometry.keys()),
                     {
                         "debug", "visible_bounds_width",
                         "visible_bounds_height", "visible_bounds_offset",
                         "texturewidth", "textureheight", "cape", "bones"
-                    }, path)
+                    }, path, ErrorLevel.WARNING)
                 identifier = k
-                if geometry_name in (identifier, ''):
-                    return geometry, path
-            raise ValueError(
+                if geometry_name  == '' and result is None:
+                    result = geometry, path
+                elif geometry_name == identifier:
+                    result = geometry, path
+            # Return from 1.8.0
+            if result is not None:
+                return result
+            raise ImporterException(
                 f'Unable to find geometry called geometry.{geometry_name}')
-        raise FileIsNotAModelException(
+        raise ImporterException(
             f'Unsupported format version: {self.format_version}')
 
     def _load_description(self, geometry: Any, geometry_path: List) -> Dict:
@@ -235,52 +350,53 @@ class ModelLoader:
             "visible_bounds_width" : 1,
             "visible_bounds_height": 1
         }
-        parser_version = pick_version_parser(
-            ('1.16.0', '1.12.0', '1.8.0'), self.format_version)
-        if parser_version in ('1.16.0', '1.12.0'):
+        if self.parser_version in ('1.16.0', '1.12.0'):
             desc = geometry['description']
             path = geometry_path + ['description']
 
-            _assert_has_required_keys(
+            self._assert_required_keys(
                 'description', set(desc.keys()), {'identifier'}, path)
             acceptable_keys = {
                 'identifier', 'texture_width', 'texture_height',
                 'visible_bounds_offset', 'visible_bounds_width',
                 'visible_bounds_height'}
-            self.append_acceptable_keys_warnings(
-                'description', set(desc.keys()), acceptable_keys, path)
+            self._assert_acceptable_keys(
+                'description', set(desc.keys()), acceptable_keys, path,
+                ErrorLevel.WARNING)
 
-            _assert_is_type(
+            self._assert_type(
                 'identifier', desc['identifier'], (str,),
                 geometry_path + ['identifier'])
             result['identifier'] = desc['identifier']
-            if 'texture_width' in desc:
-                _assert_is_type(
-                    'texture_width', desc['texture_width'], (int, float),
-                    geometry_path + ['texture_width'])
-                result['texture_width'] = int(desc['texture_width'])
-            if 'texture_height' in desc:
-                _assert_is_type(
-                    'texture_height', desc['texture_height'], (int, float),
-                    geometry_path + ['texture_height'])
-                result['texture_height'] = int(desc['texture_height'])
+            for what in ('texture_width', 'texture_height'):
+                if what in desc:
+                    obj, obj_path = desc[what], geometry_path + [what]
+                    success = self._assert_type(
+                        what, obj, (int, float), obj_path, ErrorLevel.WARNING,
+                        more="Replaced with default value: 64.")
+                    success = success and self._assert_type(
+                        what, obj, (int,), obj_path, ErrorLevel.WARNING,
+                        more="Rounded down to nearest integer.")
+                    if success:
+                        result[what] = int(desc[what])
             if 'visible_bounds_offset' in desc:
-                _assert_is_vector(
-                    'visible_bounds_offset', desc['visible_bounds_offset'], 3,
-                    (int, float), geometry_path + ['visible_bounds_offset'])
-                result['visible_bounds_offset'] = desc['visible_bounds_offset']
-            if 'visible_bounds_width' in desc:
-                _assert_is_type(
-                    'visible_bounds_width', desc['visible_bounds_width'],
-                    (int, float), geometry_path + ['visible_bounds_width'])
-                result['visible_bounds_width'] = desc['visible_bounds_width']
-            if 'visible_bounds_height' in desc:
-                _assert_is_type(
-                    'visible_bounds_height', desc['visible_bounds_height'],
-                    (int, float), geometry_path + ['visible_bounds_height'])
-                result['visible_bounds_height'] = desc['visible_bounds_height']
+                what = 'visible_bounds_offset'
+                obj, obj_path = desc[what], geometry_path + [what]
+                success = self._assert_vector_type(
+                    what, obj, 3, (int, float), obj_path, ErrorLevel.WARNING,
+                    more="Replaced with default value: [0, 0, 0].")
+                if success:
+                    result[what] = desc[what]
+            for what in ('visible_bounds_width', 'visible_bounds_height'):
+                if what in desc:
+                    obj, obj_path = desc[what], geometry_path + [what]
+                    success = self._assert_type(
+                        what, obj, (int, float), obj_path, ErrorLevel.WARNING,
+                        more="Replaced with default value: 1.")
+                    if success:
+                        result[what] = desc[what]
             return result
-        if parser_version == '1.8.0':
+        if self.parser_version == '1.8.0':
             desc = geometry
             path = geometry_path
 
@@ -288,46 +404,51 @@ class ModelLoader:
                 "debug", "visible_bounds_width",
                 "visible_bounds_height", "visible_bounds_offset",
                 "texturewidth", "textureheight", "cape", "bones"}
-            self.append_acceptable_keys_warnings(
-                'geometry', set(desc.keys()), acceptable_keys, path)
+            self._assert_acceptable_keys(
+                'geometry', set(desc.keys()), acceptable_keys, path,
+                ErrorLevel.WARNING)
 
-            _assert_is_type(
+            self._assert_type(
                 'identifier', path[-1], (str,),
                 geometry_path + ['identifier'])
             result['identifier'] = path[-1]
             if 'debug' in desc:
-                _assert_is_type(
-                    'debug', desc['debug'], (bool,),
-                    geometry_path + ['debug'])
-            if 'texturewidth' in desc:
-                _assert_is_type(
-                    'texturewidth', desc['texturewidth'], (int, float),
-                    geometry_path + ['texturewidth'])
-                # texture_width not texturewidth (not a bug!!!)
-                result['texture_width'] = int(desc['texturewidth'])
-            if 'textureheight' in desc:
-                _assert_is_type(
-                    'textureheight', desc['textureheight'], (int, float),
-                    geometry_path + ['textureheight'])
-                # texture_height not textureheight (not a bug!!!)
-                result['texture_height'] = int(desc['textureheight'])
+                self.append_warning(
+                    "Debug property is not supported. Ignored.",
+                    geometry_path + ["debug"])
+            for what, what_new in (
+                    ('texturewidth', 'texture_width'),
+                    ('textureheight', 'texture_height')):
+                if what in desc:
+                    success = self._assert_type(
+                        what, desc[what], (int, float),
+                        geometry_path + [what], ErrorLevel.WARNING,
+                        more="Replaced with default value: 64.")
+                    success = success and self._assert_type(
+                        what, desc[what], (int,),
+                        geometry_path + [what], ErrorLevel.WARNING,
+                        more="Rounded down to nearest integer.")
+                    if success:
+                        # The result uses different name than the models
+                        # in format version 1.8.0 (e.g texture_width vs
+                        # texturewidth)
+                        result[what_new] = int(desc[what])
             if 'visible_bounds_offset' in desc:
-                _assert_is_vector(
+                self._assert_vector_type(
                     'visible_bounds_offset', desc['visible_bounds_offset'], 3,
                     (int, float), geometry_path + ['visible_bounds_offset'])
                 result['visible_bounds_offset'] = desc['visible_bounds_offset']
-            if 'visible_bounds_width' in desc:
-                _assert_is_type(
-                    'visible_bounds_width', desc['visible_bounds_width'],
-                    (int, float), geometry_path + ['visible_bounds_width'])
-                result['visible_bounds_width'] = desc['visible_bounds_width']
-            if 'visible_bounds_height' in desc:
-                _assert_is_type(
-                    'visible_bounds_height', desc['visible_bounds_height'],
-                    (int, float), geometry_path + ['visible_bounds_height'])
-                result['visible_bounds_height'] = desc['visible_bounds_height']
+            for what in ('visible_bounds_width', 'visible_bounds_height'):
+                if 'visible_bounds_width' in desc:
+                    what = 'visible_bounds_width'
+                    obj, obj_path = desc[what], geometry_path + [what]
+                    success = self._assert_type(
+                        what, obj, (int, float), obj_path, ErrorLevel.WARNING,
+                        more="Replaced with default value: 1.")
+                    if success:
+                        result[what] = desc[what]
             return result
-        raise FileIsNotAModelException('Unsupported format version')
+        raise ImporterException('Unsupported format version')
 
     def _load_bones(
             self, bones: Any, bones_path: List) -> List[Dict[str, Any]]:
@@ -338,15 +459,13 @@ class ModelLoader:
         :param bones_path: Path to the bones list (used for error messages).
         '''
         result: List = []
-        parser_version = pick_version_parser(
-            ('1.16.0', '1.12.0', '1.8.0'), self.format_version)
-        if parser_version in ('1.16.0', '1.12.0', '1.8.0'):
-            _assert_is_type('bones property', bones, (list,), bones_path)
+        if self.parser_version in ('1.16.0', '1.12.0', '1.8.0'):
+            self._assert_type('bones property', bones, (list,), bones_path)
             for i, bone in enumerate(bones):
                 bone_path = bones_path + [i]
                 result.append(self._load_bone(bone, bone_path))
             return result
-        raise FileIsNotAModelException('Unsupported format version')
+        raise ImporterException('Unsupported format version')
 
     def _load_bone(self, bone: Any, bone_path: List) -> Dict[str, Any]:
         '''
@@ -364,69 +483,80 @@ class ModelLoader:
             "mirror" : False,  # bool
             "inflate": 0.0,  # float
             "debug": False,  # bool
-            "render_group_id": 0,  # int >= 0
             "cubes" : [],  # List[Dict]
             "locators": {},  # Dict[...]
             "poly_mesh": None,  # Dict
             "texture_meshes": [],  # List[Dict]
             "binding": None, # str
+            # "render_group_id": 0,  # int >= 0
         }
-        parser_version = pick_version_parser(
-            ('1.16.0', '1.12.0', '1.8.0'), self.format_version)
-        if parser_version in ('1.16.0', '1.12.0'):
-            _assert_is_type('bone', bone, (dict,), bone_path)
+        if self.parser_version in ('1.16.0', '1.12.0'):
+            self._assert_type('bone', bone, (dict,), bone_path)
 
 
-            _assert_has_required_keys(
+            self._assert_required_keys(
                 'bone', set(bone.keys()), {'name'}, bone_path)
-            if parser_version == '1.16.0':
-                acceptable_keys = {
-                    'name', 'parent', 'pivot', 'rotation', 'mirror', 'inflate',
-                    'debug', 'render_group_id', 'cubes', 'locators',
-                    'poly_mesh', 'texture_meshes', 'binding'}
-            else:
-                acceptable_keys = {
-                    'name', 'parent', 'pivot', 'rotation', 'mirror', 'inflate',
-                    'debug', 'render_group_id', 'cubes', 'locators',
-                    'poly_mesh', 'texture_meshes'}
-            self.append_acceptable_keys_warnings(
-                'bone', set(bone.keys()), acceptable_keys, bone_path)
+            acceptable_keys = {
+                'name', 'parent', 'pivot', 'rotation', 'mirror', 'inflate',
+                'cubes', 'locators', 'poly_mesh'}
+            # 'render_group_id', 'debug', 'texture_meshes'
+            if self.parser_version == '1.16.0':
+                acceptable_keys.add('binding')
+
+            self._assert_acceptable_keys(
+                'bone', set(bone.keys()), acceptable_keys, bone_path,
+                ErrorLevel.WARNING)
 
             if 'name' in bone:
-                _assert_is_type(
+                # This property is a minimal requirement. ErrorLevel: ERROR
+                self._assert_type(
                     'name', bone['name'], (str,), bone_path + ['name'])
                 result['name'] = bone['name']
             if 'binding' in bone:
-                _assert_is_type(
+                success = self._assert_type(
                     'binding', bone['binding'], (str,),
-                    bone_path + ['binding'])
-                result['binding'] = bone['binding']
+                    bone_path + ['binding'], ErrorLevel.WARNING,
+                    more="Skipped.")
+                if success:
+                    result['binding'] = bone['binding']
             if 'parent' in bone:
-                _assert_is_type(
-                    'parent', bone['parent'], (str,), bone_path + ['parent'])
-                result['parent'] = bone['parent']
+                success = self._assert_type(
+                    'parent', bone['parent'], (str,), bone_path + ['parent'],
+                    ErrorLevel.WARNING, more="Skipped.")
+                if success:
+                    result['parent'] = bone['parent']
             if 'pivot' in bone:
-                _assert_is_vector(
+                success = self._assert_vector_type(
                     'pivot', bone['pivot'], 3, (int, float),
-                    bone_path + ['pivot'])
-                result['pivot'] = bone['pivot']
+                    bone_path + ['pivot'], ErrorLevel.WARNING,
+                    more="Replaced with default value: [0, 0, 0].")
+                if success:
+                    result['pivot'] = bone['pivot']
             if 'rotation' in bone:
-                _assert_is_vector(
+                success = self._assert_vector_type(
                     'rotation', bone['rotation'], 3, (int, float),
-                    bone_path + ['rotation'])
-                result['rotation'] = bone['rotation']
+                    bone_path + ['rotation'], ErrorLevel.WARNING,
+                    more="Replaced with default value: [0, 0, 0].")
+                if success:
+                    result['rotation'] = bone['rotation']
             if 'mirror' in bone:
-                _assert_is_type(
-                    'mirror', bone['mirror'], (bool,), bone_path + ['mirror'])
-                result['mirror'] = bone['mirror']
+                success = self._assert_type(
+                    'mirror', bone['mirror'], (bool,), bone_path + ['mirror'],
+                    ErrorLevel.WARNING,
+                    more="Replaced with default value: false.")
+                if success:
+                    result['mirror'] = bone['mirror']
             if 'inflate' in bone:
-                _assert_is_type(
+                success = self._assert_type(
                     'inflate', bone['inflate'], (float, int),
-                    bone_path + ['inflate'])
-                result['inflate'] = bone['inflate']
+                    bone_path + ['inflate'], ErrorLevel.WARNING,
+                    more="Skipped.")
+                if success:
+                    result['inflate'] = bone['inflate']
             if 'debug' in bone:
-                _assert_is_type(
-                    'debug', bone['debug'], (bool,), bone_path + ['debug'])
+                self.append_warning(
+                    "Debug property is not supported. Ignored.",
+                    bone_path + ["debug"])
             if 'cubes' in bone:
                 # default mirror for cube is the bones mirror property
                 result['cubes'] = self._load_cubes(
@@ -438,51 +568,61 @@ class ModelLoader:
             if 'poly_mesh' in bone:
                 result['poly_mesh'] = self._load_poly_mesh(
                     bone['poly_mesh'], bone_path + ['poly_mesh'])
-            if 'texture_meshes' in bone:
-                # type: list
-                raise ImportingNotImplementedError(
-                    'texture_meshes', bone_path + ['texture_meshes'])
             return result
-        if parser_version == '1.8.0':
-            _assert_is_type('bone', bone, (dict,), bone_path)
+        if self.parser_version == '1.8.0':
+            self._assert_type('bone', bone, (dict,), bone_path)
 
-            _assert_has_required_keys(
+            self._assert_required_keys(
                 'bone', set(bone.keys()), {'name'}, bone_path)
             acceptable_keys = {
-                'name', 'reset', 'neverRender', 'parent', 'pivot', 'rotation',
-                'bind_pose_rotation', 'mirror', 'inflate', 'debug',
-                'render_group_id', 'cubes', 'locators', 'poly_mesh',
-                'texture_meshes'}
-            self.append_acceptable_keys_warnings(
-                'bone', set(bone.keys()), acceptable_keys, bone_path)
+                'name', 'parent', 'pivot', 'rotation',
+                'mirror', 'inflate', 'cubes', 'locators',
+                'poly_mesh'}
+            # 'bind_pose_rotation', 'neverRender', 'debug', 'render_group_id',
+            # 'reset', 'texture_meshes'
+            self._assert_acceptable_keys(
+                'bone', set(bone.keys()), acceptable_keys, bone_path,
+                ErrorLevel.WARNING)
 
             if 'name' in bone:
-                _assert_is_type(
+                # This property is a minimal requirement. ErrorLevel: ERROR
+                self._assert_type(
                     'name', bone['name'], (str,), bone_path + ['name'])
                 result['name'] = bone['name']
             if 'parent' in bone:
-                _assert_is_type(
-                    'parent', bone['parent'], (str,), bone_path + ['parent'])
-                result['parent'] = bone['parent']
+                success = self._assert_type(
+                    'parent', bone['parent'], (str,), bone_path + ['parent'],
+                    ErrorLevel.WARNING, more="Skipped.")
+                if success:
+                    result['parent'] = bone['parent']
             if 'pivot' in bone:
-                _assert_is_vector(
+                success = self._assert_vector_type(
                     'pivot', bone['pivot'], 3, (int, float),
-                    bone_path + ['pivot'])
-                result['pivot'] = bone['pivot']
+                    bone_path + ['pivot'], ErrorLevel.WARNING,
+                    more="Replaced with default value: [0, 0, 0].")
+                if success:
+                    result['pivot'] = bone['pivot']
             if 'rotation' in bone:
-                _assert_is_vector(
+                success = self._assert_vector_type(
                     'rotation', bone['rotation'], 3, (int, float),
-                    bone_path + ['rotation'])
-                result['rotation'] = bone['rotation']
+                    bone_path + ['rotation'], ErrorLevel.WARNING,
+                    more="Replaced with default value: [0, 0, 0].")
+                if success:
+                    result['rotation'] = bone['rotation']
             if 'mirror' in bone:
-                _assert_is_type(
-                    'mirror', bone['mirror'], (bool,), bone_path + ['mirror'])
-                result['mirror'] = bone['mirror']
+                success = self._assert_type(
+                    'mirror', bone['mirror'], (bool,), bone_path + ['mirror'],
+                    ErrorLevel.WARNING,
+                    more="Replaced with default value: false.")
+                if success:
+                    result['mirror'] = bone['mirror']
             if 'inflate' in bone:
-                _assert_is_type(
+                success = self._assert_type(
                     'inflate', bone['inflate'], (float, int),
-                    bone_path + ['inflate'])
-                result['inflate'] = bone['inflate']
+                    bone_path + ['inflate'], ErrorLevel.WARNING,
+                    more="Skipped.")
+                if success:
+                    result['inflate'] = bone['inflate']
             if 'cubes' in bone:
                 # default mirror for cube is the bones mirror property
                 result['cubes'] = self._load_cubes(
@@ -494,12 +634,8 @@ class ModelLoader:
             if 'poly_mesh' in bone:
                 result['poly_mesh'] = self._load_poly_mesh(
                     bone['poly_mesh'], bone_path + ['poly_mesh'])
-            if 'texture_meshes' in bone:
-                # type: list
-                raise ImportingNotImplementedError(
-                    'texture_meshes', bone_path + ['texture_meshes'])
             return result
-        raise FileIsNotAModelException('Unsupported format version')
+        raise ImporterException('Unsupported format version')
 
     def _load_cubes(
             self, cubes: Any, cubes_path: List[Any], default_mirror: bool,
@@ -512,11 +648,12 @@ class ModelLoader:
         :param default_mirror: Mirror value of a bone that owns this list
             of cubes.
         '''
-        result = []
-        parser_version = pick_version_parser(
-            ('1.16.0', '1.12.0', '1.8.0'), self.format_version)
-        if parser_version in ('1.16.0', '1.12.0', '1.8.0'):
-            _assert_is_type('cubes property', cubes, (list,), cubes_path)
+        result: List[Dict[str, Any]] = []
+        if self.parser_version in ('1.16.0', '1.12.0', '1.8.0'):
+            if not self._assert_type(
+                    'cubes property', cubes, (list,), cubes_path,
+                    ErrorLevel.WARNING, more="Skipped."):
+                return result
             for i, cube in enumerate(cubes):
                 cube_path = cubes_path + [i]
                 result.append(
@@ -524,7 +661,7 @@ class ModelLoader:
                         cube, cube_path, default_mirror,
                         default_inflate))
             return result
-        raise FileIsNotAModelException('Unsupported format version')
+        raise ImporterException('Unsupported format version')
 
     def _create_default_uv(
             self, size: Vector3d, mirror: bool,
@@ -542,7 +679,7 @@ class ModelLoader:
         width, height, depth = (int(i) for i in size)
 
         def _face(size: Vector2d, uv: Vector2d):
-            return {"uv_size": size, "uv": uv, "material_instance": ""}
+            return {"uv_size": size, "uv": uv}
 
         face1 = _face((depth, height), (uv[0], uv[1] + depth))
         face2 = _face((width, height), (uv[0]+depth, uv[1] + depth))
@@ -586,122 +723,122 @@ class ModelLoader:
             # before return statement
             "uv": None
         }
-        parser_version = pick_version_parser(
-            ('1.16.0', '1.12.0', '1.8.0'), self.format_version)
-        if parser_version in ('1.16.0', '1.12.0'):
-            _assert_is_type('cube', cube, (dict,), cube_path)
+        if self.parser_version in ('1.16.0', '1.12.0'):
+            self._assert_type('cube', cube, (dict,), cube_path)
             # There is no required keys {} is a valid cube
             acceptable_keys = {
                 "mirror", "inflate", "pivot", "rotation", "origin",
                 "size", "uv"}
-            self.append_acceptable_keys_warnings(
-                'cube', set(cube.keys()), acceptable_keys, cube_path)
-            if 'origin' in cube:
-                _assert_is_vector(
-                    'origin', cube['origin'], 3, (int, float),
-                    cube_path + ['origin'])
-                result['origin'] = cube['origin']
-            if 'size' in cube:
-                _assert_is_vector(
-                    'size', cube['size'], 3, (int, float),
-                    cube_path + ['size'])
-                result['size'] = cube['size']
-            if 'rotation' in cube:
-                _assert_is_vector(
-                    'rotation', cube['rotation'], 3, (int, float),
-                    cube_path + ['rotation'])
-                result['rotation'] = cube['rotation']
-            if 'pivot' in cube:
-                _assert_is_vector(
-                    'pivot', cube['pivot'], 3, (int, float),
-                    cube_path + ['pivot'])
-                result['pivot'] = cube['pivot']
+            self._assert_acceptable_keys(
+                'cube', set(cube.keys()), acceptable_keys, cube_path,
+                ErrorLevel.WARNING)
+            for k in ('origin', 'size', 'rotation', 'pivot'):
+                if k in cube:
+                    success = self._assert_vector_type(
+                        k, cube[k], 3, (int, float),
+                        cube_path + [k], ErrorLevel.WARNING,
+                        more="Replaced with default value: [0, 0, 0]")
+                    if success:
+                        result[k] = cube[k]
+
             if 'inflate' in cube:
-                _assert_is_type(
+                success = self._assert_type(
                     'inflate', cube['inflate'], (int, float),
-                    cube_path + ['inflate'])
-                result['inflate'] = cube['inflate']
+                    cube_path + ['inflate'], ErrorLevel.WARNING,
+                    more="Replaced with default value.")
+                if success:
+                    result['inflate'] = cube['inflate']
             if 'mirror' in cube:
-                _assert_is_type(
-                    'mirror', cube['mirror'], (bool,), cube_path + ['mirror'])
-                result['mirror'] = cube['mirror']
+                success = self._assert_type(
+                    'mirror', cube['mirror'], (bool,), cube_path + ['mirror'],
+                    ErrorLevel.WARNING, more="Replaced with default value.")
+                if success:
+                    result['mirror'] = cube['mirror']
             if 'uv' in cube:
-                _assert_is_type(
-                    'uv', cube['uv'], (list, dict), cube_path + ['uv'])
-                if isinstance(cube['uv'], dict):
-                    result['uv'] = self._load_uv(
-                        cube['uv'], cube_path + ['uv'],
-                        tuple(result['size'])  # type: ignore
-                    )
-                elif isinstance(cube['uv'], list):
-                    _assert_is_vector(
-                        'uv', cube['uv'], 2, (int, float), cube_path + ['uv'])
+                success = self._assert_type(
+                    'uv', cube['uv'], (list, dict), cube_path + ['uv'],
+                    ErrorLevel.WARNING, more="Replaced with default value.")
+                if success:
+                    if isinstance(cube['uv'], dict):
+                        result['uv'] = self._load_uv(
+                            cube['uv'], cube_path + ['uv'],
+                            tuple(result['size'])  # type: ignore
+                        )
+                    elif isinstance(cube['uv'], list):
+                        success = self._assert_vector_type(
+                            'uv', cube['uv'], 2, (int, float),
+                            cube_path + ['uv'], ErrorLevel.WARNING,
+                            more="Replaced with default value.")
+                        if success:
+                            result['uv'] = self._create_default_uv(
+                                tuple(result['size']),  # type: ignore
+                                result['mirror'],  # type: ignore
+                                tuple(cube['uv']))  # type: ignore
+            # Create default UV based on size and mirror
+            if result['uv'] is None:
+                result['uv'] = self._create_default_uv(
+                    tuple(result['size']),  # type: ignore
+                    result['mirror'])  # type: ignore
+            return result
+        if self.parser_version == '1.8.0':
+            self._assert_type('cube', cube, (dict,), cube_path)
+            # There is no required keys {} is a valid cube
+            acceptable_keys = {"origin", "size", "uv", "inflate", "mirror"}
+            self._assert_acceptable_keys(
+                'cube', set(cube.keys()), acceptable_keys, cube_path,
+                ErrorLevel.WARNING)
+            for k in ('origin', 'size'):
+                if k in cube:
+                    success = self._assert_vector_type(
+                        k, cube[k], 3, (int, float),
+                        cube_path + [k], ErrorLevel.WARNING,
+                        more="Replaced with default value: [0, 0, 0]")
+                    if success:
+                        result[k] = cube[k]
+
+            if 'inflate' in cube:
+                success = self._assert_type(
+                    'inflate', cube['inflate'], (int, float),
+                    cube_path + ['inflate'], ErrorLevel.WARNING,
+                    more="Replaced with default value.")
+                if success:
+                    result['inflate'] = cube['inflate']
+            if 'mirror' in cube:
+                success = self._assert_type(
+                    'mirror', cube['mirror'], (bool,), cube_path + ['mirror'],
+                    ErrorLevel.WARNING, more="Replaced with default value.")
+                if success:
+                    result['mirror'] = cube['mirror']
+            if 'uv' in cube:
+                success = self._assert_type(
+                    'uv', cube['uv'], (list,), cube_path + ['uv'],
+                    ErrorLevel.WARNING, more="Replaced with default value.")
+                success = success and self._assert_vector_type(
+                    'uv', cube['uv'], 2, (int, float), cube_path + ['uv'],
+                    ErrorLevel.WARNING, more="Replaced with default value.")
+                if success:
                     result['uv'] = self._create_default_uv(
                         tuple(result['size']),  # type: ignore
                         result['mirror'],  # type: ignore
                         tuple(cube['uv']))  # type: ignore
-                else:
-                    raise FileIsNotAModelException(
-                        f'{cube_path + ["uv"]}::{"uv"} is not an '
-                        f'instance of {(list, dict)}')
             # Create default UV based on size and mirror
             if result['uv'] is None:
                 result['uv'] = result['uv'] = self._create_default_uv(
                     tuple(result['size']),  # type: ignore
                     result['mirror'])  # type: ignore
             return result
-        if parser_version == '1.8.0':
-            _assert_is_type('cube', cube, (dict,), cube_path)
-            # There is no required keys {} is a valid cube
-            acceptable_keys = {"origin", "size", "uv", "inflate", "mirror"}
-            self.append_acceptable_keys_warnings(
-                'cube', set(cube.keys()), acceptable_keys, cube_path)
-            if 'origin' in cube:
-                _assert_is_vector(
-                    'origin', cube['origin'], 3, (int, float),
-                    cube_path + ['origin'])
-                result['origin'] = cube['origin']
-            if 'size' in cube:
-                _assert_is_vector(
-                    'size', cube['size'], 3, (int, float),
-                    cube_path + ['size'])
-                result['size'] = cube['size']
-            if 'inflate' in cube:
-                _assert_is_type(
-                    'inflate', cube['inflate'], (int, float),
-                    cube_path + ['inflate'])
-                result['inflate'] = cube['inflate']
-            if 'mirror' in cube:
-                _assert_is_type(
-                    'mirror', cube['mirror'], (bool,), cube_path + ['mirror'])
-                result['mirror'] = cube['mirror']
-            if 'uv' in cube:
-                _assert_is_type(
-                    'uv', cube['uv'], (list,), cube_path + ['uv'])
-                _assert_is_vector(
-                    'uv', cube['uv'], 2, (int, float), cube_path + ['uv'])
-                result['uv'] = self._create_default_uv(
-                    tuple(result['size']),  # type: ignore
-                    result['mirror'],  # type: ignore
-                    tuple(cube['uv']))  # type: ignore
-            # Create default UV based on size and mirror
-            if result['uv'] is None:
-                result['uv'] = result['uv'] = self._create_default_uv(
-                    tuple(result['size']),  # type: ignore
-                    result['mirror'])  # type: ignore
-            return result
-        raise FileIsNotAModelException('Unsupported format version')
+        raise ImporterException('Unsupported format version')
 
     def _load_poly_mesh(
             self, poly_mesh: Any, poly_mesh_path: List) -> Dict[str, Any]:
         '''
-        Returns a cube with added all of the missing default values of the
+        Returns a polymesh with added all of the missing default values of the
         properties.
 
-        :param cube: Part of the JSON dict that has the inforation about the
-            cube.
-        :param cube_path: JSON path to the cube (used for error messages).
-        :param default_mirror: Mirror value of a bone that owns this cube.
+        :param poly_mesh: Part of the JSON dict that has the inforation about
+            the polymesh.
+        :param poly_mesh_path: JSON path to the polymesh (used for error
+            messages).
         '''
         result = {
             'normalized_uvs': False,
@@ -710,54 +847,81 @@ class ModelLoader:
             'uvs': [],
             'polys': [],  # 'tri_list' or 'quad_list" or list with data
         }
-        parser_version = pick_version_parser(
-            ('1.16.0', '1.12.0', '1.8.0'), self.format_version)
-        if parser_version in ['1.16.0', '1.12.0', '1.8.0']:
-            _assert_is_type('poly_mesh', poly_mesh, (dict,), poly_mesh_path)
+        if self.parser_version in ('1.16.0', '1.12.0', '1.8.0'):
+            success = self._assert_type(
+                'poly_mesh', poly_mesh, (dict,), poly_mesh_path,
+                ErrorLevel.WARNING, more="Replaced with default value.")
+            if not success:
+                return result
             # There is no required keys {} is a valid poly_mesh
-            _assert_has_required_keys(
-                'poly_mesh', set(poly_mesh.keys()), {'polys'}, poly_mesh_path)
+            success = self._assert_required_keys(
+                'poly_mesh', set(poly_mesh.keys()), {'polys'}, poly_mesh_path,
+                ErrorLevel.WARNING, more="Replaced with default value.")
+            if not success:
+                return result
             acceptable_keys = {
                 "normalized_uvs", "positions", "normals", "uvs", "polys"}
-            self.append_acceptable_keys_warnings(
+            self._assert_acceptable_keys(
                 'poly_mesh', set(poly_mesh.keys()), acceptable_keys,
-                poly_mesh_path)
+                poly_mesh_path, ErrorLevel.WARNING)
             # Acceptable keys
             if 'normalized_uvs' in poly_mesh:
-                _assert_is_type(
+                success = self._assert_type(
                     'normalized_uvs', poly_mesh['normalized_uvs'], (bool,),
-                    poly_mesh_path + ['normalized_uvs'])
-                result['normalized_uvs'] = poly_mesh['normalized_uvs']
+                    poly_mesh_path + ['normalized_uvs'], ErrorLevel.WARNING,
+                    more="Replaced with default value: false")
+                if success:
+                    result['normalized_uvs'] = poly_mesh['normalized_uvs']
             if 'positions' in poly_mesh:
                 positions = poly_mesh['positions']
                 positions_path = poly_mesh_path + ['position']
-                _assert_is_type(
-                    'positions', positions, (list,), positions_path)
-                for position_id, position in enumerate(positions):
-                    _assert_is_vector(
-                        'position', position, 3, (float, int,),
-                        positions_path + [position_id])
-                    result['positions'].append(tuple(position))  # type: ignore
+                success = self._assert_type(
+                    'positions', positions, (list,), positions_path,
+                    ErrorLevel.WARNING, more="Ignored.")
+                if success:
+                    for position_id, position in enumerate(positions):
+                        success = self._assert_vector_type(
+                            'position', position, 3, (float, int,),
+                            positions_path + [position_id], ErrorLevel.WARNING,
+                            more="Ignored entire polymesh positions list.")
+                        if not success:
+                            result['positions'] = []
+                            break
+                        result['positions'].append(tuple(position))  # type: ignore
             if 'normals' in poly_mesh:
                 normals = poly_mesh['normals']
                 normals_path = poly_mesh_path + ['normal']
-                _assert_is_type('normals', normals, (list,), normals_path)
-                for normal_id, normal in enumerate(normals):
-                    _assert_is_vector(
-                        'normal', normal, 3, (float, int,),
-                        normals_path + [normal_id])
-                    result['normals'].append(tuple(normal))  # type: ignore
+                success = self._assert_type(
+                    'normals', normals, (list,), normals_path,
+                    ErrorLevel.WARNING, more="Ignored.")
+                if success:
+                    for normal_id, normal in enumerate(normals):
+                        success = self._assert_vector_type(
+                            'normal', normal, 3, (float, int,),
+                            normals_path + [normal_id], ErrorLevel.WARNING,
+                            more="Ignored entire polymesh normals list.")
+                        if not success:
+                            result['normals'] = []
+                            break
+                        result['normals'].append(tuple(normal))  # type: ignore
             if 'uvs' in poly_mesh:
                 uvs = poly_mesh['uvs']
                 uvs_path = poly_mesh_path + ['uv']
-                _assert_is_type('uvs', uvs, (list,), uvs_path)
-                for uv_id, uv in enumerate(uvs):
-                    _assert_is_vector(
-                        'uv', uv, 2, (float, int,),
-                        uvs_path + [uv_id])
-                    result['uvs'].append(tuple(uv))  # type: ignore
+                success = self._assert_type(
+                    'uvs', uvs, (list,), uvs_path, ErrorLevel.WARNING,
+                    more="Ignored.")
+                if success:
+                    for uv_id, uv in enumerate(uvs):
+                        self._assert_vector_type(
+                            'uv', uv, 2, (float, int,),
+                            uvs_path + [uv_id], ErrorLevel.WARNING,
+                            more="Ignored entire polymesh uvs list.")
+                        if not success:
+                            result['uvs'] = []
+                            break
+                        result['uvs'].append(tuple(uv))  # type: ignore
             # Required keys
-            _assert_is_type(
+            self._assert_type(
                 'polys', poly_mesh['polys'], (str, list),
                 poly_mesh_path + ['polys'])
             if isinstance(poly_mesh['polys'], str):
@@ -771,22 +935,25 @@ class ModelLoader:
                 polys_path = poly_mesh_path + ['polys']
                 for poly_id, poly in enumerate(poly_mesh['polys']):
                     curr_result_poly: List[Vector3di] = []
-                    result['polys'].append(curr_result_poly)  # type: ignore
                     poly_path = polys_path + [poly_id]
-                    _assert_is_type(
-                        'poly', poly, (list,), poly_path)
+                    success = self._assert_type(
+                        'poly', poly, (list,), poly_path, ErrorLevel.WARNING,
+                        more="Ignored polygon.")
+                    if not success:
+                        continue
+                    result['polys'].append(curr_result_poly)  # type: ignore
                     for poly_vertex_id, poly_vertex in enumerate(poly):
-                        _assert_is_vector(
+                        success = self._assert_vector_type(
                             'vertex', poly_vertex, 3, (int,),
-                            poly_path + [poly_vertex_id])
-                        curr_result_poly.append(
-                            tuple(poly_vertex))  # type: ignore
-            else:
-                raise FileIsNotAModelException(
-                    f'{poly_mesh_path + ["polys"]}::{"polys"} is not an '
-                    f'instance of {(str, list)}')
+                            poly_path + [poly_vertex_id], ErrorLevel.WARNING,
+                            more="Replaced with default value: [0, 0, 0]")
+                        if success:
+                            curr_result_poly.append(
+                                tuple(poly_vertex))  # type: ignore
+                        else:
+                            curr_result_poly.append((0, 0, 0))
             return result
-        raise FileIsNotAModelException('Unsupported format version')
+        raise ImporterException('Unsupported format version')
 
     def _create_default_polys(
             self, grouping_mode: str, positions: List[List[float]],
@@ -814,21 +981,22 @@ class ModelLoader:
         elif grouping_mode == 'quad_list':
             group_size = 4
         else:
-            raise FileIsNotAModelException(
+            raise ImporterException(
                 f'{poly_mesh_path + ["polys"]}::{"polys"} is not an a list of '
                 'polys or a literal string "quad_list" or "tri_list"')
         # Check if positions, normals and uvs are the same lengths
         pos_length = len(positions)
         if not pos_length == len(normals) == len(uvs):
-            raise FileIsNotAModelException(
+            raise ImporterException(
                 f'{poly_mesh_path}::"positions", "normals" and "uvs" are not '
                 'the same lengths. They must be the same lengths in "tri_list"'
                 ' and "quad_list" polys grouping mode.')
         # Check if list length is divisible by the group_size
         if not pos_length % group_size == 0:
-            raise FileIsNotAModelException(
+            raise ImporterException(
                 f'{poly_mesh_path}::"positions" list length must be '
-                f'divisible by {group_size} in {grouping_mode}.')
+                f'divisible by {group_size} when you use grouping mode: '
+                f'{grouping_mode}.')
         # Build default polys property in list format
         result = np.repeat(
             range(pos_length), 3
@@ -851,7 +1019,7 @@ class ModelLoader:
         '''
         width, height, depth = cube_size
         def _face(size: Vector2d, uv: Vector2d):
-            return {"uv_size": size, "uv": uv, "material_instance": ""}
+            return {"uv_size": size, "uv": uv}
         result = {
             # Faces outside of the texture are invisible and should be skipped
             # on export
@@ -863,46 +1031,31 @@ class ModelLoader:
             "down": _face((0, 0), (0, -1))
         }
 
-        parser_version = pick_version_parser(
-            ('1.16.0', '1.12.0',), self.format_version)
-        if parser_version in ('1.16.0', '1.12.0'):
-            _assert_is_type('uv', uv, (dict,), uv_path)
+        if self.parser_version in ('1.16.0', '1.12.0'):
+            success = self._assert_type(
+                'uv', uv, (dict,), uv_path, ErrorLevel.WARNING,
+                more="Replaced with default value.")
+            if not success:
+                return result
             # There is no required keys {} is a valid UV
             acceptable_keys = {"north", "south", "east", "west", "up", "down"}
-            self.append_acceptable_keys_warnings(
-                'uv', set(uv.keys()), acceptable_keys, uv_path)
-            if "north" in uv:
-                _assert_is_type(
-                    'north', uv['north'], (dict,), uv_path + ['north'])
-                result["north"] = self._load_uv_face(
-                    uv["north"], uv_path + ["north"], (depth, height))
-            if "south" in uv:
-                _assert_is_type(
-                    'south', uv['south'], (dict,), uv_path + ['south'])
-                result["south"] = self._load_uv_face(
-                    uv["south"], uv_path + ["south"], (width, height))
-            if "east" in uv:
-                _assert_is_type(
-                    'east', uv['east'], (dict,), uv_path + ['east'])
-                result["east"] = self._load_uv_face(
-                    uv["east"], uv_path + ["east"], (depth, height))
-            if "west" in uv:
-                _assert_is_type(
-                    'west', uv['west'], (dict,), uv_path + ['west'])
-                result["west"] = self._load_uv_face(
-                    uv["west"], uv_path + ["west"], (width, height))
-            if "up" in uv:
-                _assert_is_type(
-                    'up', uv['up'], (dict,), uv_path + ['up'])
-                result["up"] = self._load_uv_face(
-                    uv["up"], uv_path + ["up"], (width, depth))
-            if "down" in uv:
-                _assert_is_type(
-                    'down', uv['down'], (dict,), uv_path + ['down'])
-                result["down"] = self._load_uv_face(
-                    uv["down"], uv_path + ["down"], (width, depth))
+            self._assert_acceptable_keys(
+                'uv', set(uv.keys()), acceptable_keys, uv_path,
+                ErrorLevel.WARNING)
+            sides = (
+                ("north", (depth, height)),
+                ("south", (width, height)),
+                ("east", (depth, height)),
+                ("west", (width, height)),
+                ("up", (width, depth)),
+                ("down", (width, depth)),
+            )
+            for k, dimensions in sides:
+                if k in uv:
+                    result[k] = self._load_uv_face(
+                        uv[k], uv_path + [k], dimensions)
             return result
-        raise FileIsNotAModelException('Unsupported format version')
+        raise ImporterException('Unsupported format version')
 
     def _load_uv_face(
             self, uv_face: Any, uv_face_path: List,
@@ -917,30 +1070,39 @@ class ModelLoader:
         :param default_size: Default size of the UV face.
         '''
         result = {
-            "uv_size": default_size, "uv": [0, 0], "material_instance": ""
+            "uv_size": default_size, "uv": [0, 0]
         }
-        parser_version = pick_version_parser(
-            ('1.16.0', '1.12.0',), self.format_version)
-        if parser_version in ('1.16.0', '1.12.0'):
-            _assert_is_type('uv_face', uv_face, (dict,), uv_face_path)
-            _assert_has_required_keys(
-                'uv', set(uv_face.keys()), {'uv'}, uv_face_path)
-            self.append_acceptable_keys_warnings(
+        if self.parser_version in ('1.16.0', '1.12.0'):
+            success = self._assert_type(
+                'uv_face', uv_face, (dict,), uv_face_path, ErrorLevel.WARNING,
+                more="Replaced with default value.")
+            if not success:
+                return result
+            self._assert_required_keys(
+                'uv', set(uv_face.keys()), {'uv'}, uv_face_path,
+                ErrorLevel.WARNING,
+                more="Replaced with default value [0, 0]")
+            self._assert_acceptable_keys(
                 'uv_face', set(uv_face.keys()),
-                {"uv", "uv_size", "material_instance"}, uv_face_path)
+                {"uv", "uv_size"}, uv_face_path,
+                ErrorLevel.WARNING)
+            # "material_instance"
 
-
-            _assert_is_vector(
+            success = self._assert_vector_type(
                 'uv', uv_face['uv'], 2, (int, float),
-                uv_face_path + ['uv'])
-            result["uv"] = uv_face["uv"]
+                uv_face_path + ['uv'], error_level=ErrorLevel.WARNING,
+                more="Replaced with default value [0, 0]")
+            if success:
+                result["uv"] = uv_face["uv"]
             if "uv_size" in uv_face:
-                _assert_is_vector(
+                success = self._assert_vector_type(
                     'uv_size', uv_face['uv_size'], 2, (int, float),
-                    uv_face_path + ['uv_size'])
-                result["uv_size"] = uv_face["uv_size"]
+                    uv_face_path + ['uv_size'], ErrorLevel.WARNING,
+                    more=f"Replaced with default value {default_size}")
+                if success:
+                    result["uv_size"] = uv_face["uv_size"]
             return result
-        raise FileIsNotAModelException('Unsupported format version')
+        raise ImporterException('Unsupported format version')
 
     def _load_locators(
             self, locators: Any, locators_path: List) -> Dict[str, Any]:
@@ -952,17 +1114,18 @@ class ModelLoader:
         :param locators_path: Path to the locators list (used for error
             messages)
         '''
-        result = {}
-        parser_version = pick_version_parser(
-            ('1.16.0', '1.12.0', '1.8.0'), self.format_version)
-        if parser_version in ['1.16.0', '1.12.0', '1.8.0']:
-            _assert_is_type(
-                'locators property', locators, (dict,), locators_path)
+        result: Dict[str, Any] = {}
+        if self.parser_version in ['1.16.0', '1.12.0', '1.8.0']:
+            success = self._assert_type(
+                'locators property', locators, (dict,), locators_path,
+                ErrorLevel.WARNING, more="Ignored.")
+            if not success:
+                return result
             for i, locator in locators.items():
                 locator_path = locators_path + [i]
                 result[i] = self._load_locator(locator, locator_path)
             return result
-        raise FileIsNotAModelException('Unsupported format version')
+        raise ImporterException('Unsupported format version')
 
     def _load_locator(self, locator: Any, locator_path: List) -> Any:
         '''
@@ -971,36 +1134,49 @@ class ModelLoader:
         :param locator: The locator
         :param locator_path: Path to the locator
         '''
-        parser_version = pick_version_parser(
-            ('1.16.0', '1.12.0', '1.8.0'), self.format_version)
-        if parser_version in ['1.16.0', '1.12.0']:
+        if self.parser_version in ['1.16.0', '1.12.0']:
+            result = {"offset": [0, 0, 0], "rotation": [0, 0, 0]}
             if isinstance(locator, list):
-                _assert_is_vector(
-                    'locator', locator, 3, (int, float), locator_path)
+                success = self._assert_vector_type(
+                    'locator', locator, 3, (int, float), locator_path,
+                    ErrorLevel.WARNING,
+                    more="Replaced with default value: [0, 0, 0]")
+                if not success:
+                    return result
                 return {"offset": locator, "rotation": [0, 0, 0]}
 
             if isinstance(locator, dict):
-                result = {"offset": [0, 0, 0], "rotation": [0, 0, 0]}
+                self._assert_acceptable_keys(
+                    'locator', set(locator.keys()), {'offset', 'rotation'},
+                    locator_path, ErrorLevel.WARNING)
                 if "offset" in locator:
-                    _assert_is_vector(
+                    success = self._assert_vector_type(
                         'offset', locator['offset'], 3, (int, float),
-                        locator_path + ['offset'])
-                    result["offset"] = locator["offset"]
+                        locator_path + ['offset'], ErrorLevel.WARNING,
+                        more="Replaced with default value: [0, 0, 0]")
+                    if success:
+                        result["offset"] = locator["offset"]
                 if "rotation" in locator:
-                    _assert_is_vector(
+                    success = self._assert_vector_type(
                         'rotation', locator['rotation'], 3, (int, float),
-                        locator_path + ['rotation'])
-                    result["rotation"] = locator["rotation"]
+                        locator_path + ['rotation'], ErrorLevel.WARNING,
+                        more="Replaced with default value: [0, 0, 0]")
+                    if success:
+                        result["rotation"] = locator["rotation"]
                 return result
-            raise FileIsNotAModelException(
-                f'{locator_path + ["locator"]}::{"locator"} is not an '
-                f'instance of {(list, dict)}')
-        if parser_version == '1.8.0':
-            _assert_is_type('locator', locator, (list,), locator_path)
-            _assert_is_vector(
-                'locator', locator, 3, (int, float), locator_path)
+            self.append_warning(
+                'locator is not a list or dict. Replaced with default value.',
+                locator_path)
+            return result
+        if self.parser_version == '1.8.0':
+            success = self._assert_vector_type(
+                'locator', locator, 3, (int, float), locator_path,
+                ErrorLevel.WARNING,
+                more="Replaced with default value: [0, 0, 0]")
+            if not success:
+                return {"offset": [0, 0, 0], "rotation": [0, 0, 0]}
             return {"offset": locator, "rotation": [0, 0, 0]}
-        raise FileIsNotAModelException('Unsupported format version')
+        raise ImporterException('Unsupported format version')
 
 
 class ImportLocator:
@@ -1286,7 +1462,7 @@ class ImportGeometry:
                         uv_layer[i].uv = uv
                 else:
                     del mesh
-                    raise FileIsNotAModelException(
+                    raise ImporterException(
                         'Invalid poly_mesh geometry!')
 
             for locator in bone.locators:

@@ -264,7 +264,7 @@ def import_model(data: Dict, geometry_name: str, context: bpy_types.Context) -> 
     else:
         model_properties.model_name = geometry.identifier
         armature.name = geometry.identifier
-    return model_loader.loader_warnings
+    return model_loader.warnings
 
 def separate_mesh_cubes(context: bpy_types.Context):
     '''
@@ -522,7 +522,7 @@ def import_model_form_project(context: bpy_types.Context) -> List[str]:
             continue
         # Import model
         model_loader = ModelLoader(geometry_data, geo_name)
-        warnings.extend(model_loader.loader_warnings)
+        warnings.extend(model_loader.warnings)
         geometry = ImportGeometry(model_loader)
         armature = geometry.build_with_armature(context)
 
