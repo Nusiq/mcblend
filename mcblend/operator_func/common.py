@@ -94,7 +94,7 @@ class McblendObject:
             return None
 
     @property
-    def children(self) -> Tuple[McblendObject]:
+    def children(self) -> Tuple[McblendObject, ...]:
         '''
         Children of this object from the :class:`McblendObjectGroup` of this
         object.
@@ -103,7 +103,7 @@ class McblendObject:
         for child_id in self.children_ids:
             if child_id in self.group:
                 children.append(self.group[child_id])
-        return tuple(children)  # type: ignore
+        return tuple(children)
 
     @property
     def inflate(self) -> float:
@@ -575,18 +575,18 @@ class CubePolygons(NamedTuple):
         # 0. Check if mesh has 12 edges
         if len(cube.data.edges) != 12:
             raise ExporterException(
-                f"Object {cube.name.split('.')} is not a cube. Number of edges != 12"
+                f"Object {cube.name.split('.')[0]} is not a cube. Number of edges != 12."
             )
         # 1. Check if object has 6 quadrilateral faces
         if len(cube.data.polygons) != 6:
             raise ExporterException(
-                f"Object {cube.name.split('.')} is not a cube. Number of faces != 6"
+                f"Object {cube.name.split('.')[0]} is not a cube. Number of faces != 6."
             )
         for polygon in cube.data.polygons:
             if len(polygon.vertices) != 4:
                 raise ExporterException(
-                    f"Object {cube.name.split('.')} is not a cube. Not all faces are "
-                    "quadrilateral"
+                    f"Object {cube.name.split('.')[0]} is not a cube. Not all faces are "
+                    "quadrilateral."
                 )
         # At this point the topology is correct but the cube might be deformed
         # or rotated inside its bound box

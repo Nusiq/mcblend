@@ -22,8 +22,7 @@ from .operator_func import (
     import_model, inflate_objects, reload_rp_entities,
     import_model_form_project, apply_materials, prepare_physics_simulation)
 from .operator_func.bedrock_packs.json import CompactEncoder
-from .operator_func.exception import (
-    ExporterException, NotEnoughTextureSpace, ImporterException)
+from .operator_func.exception import NotEnoughTextureSpace, ImporterException
 from .operator_func.bedrock_packs.json import JSONCDecoder
 from .operator_func.texture_generator import (
     list_mask_types_as_blender_enum, UvMaskTypes, MixMaskMode)
@@ -59,6 +58,7 @@ class MCBLEND_OT_ExportModel(
     def execute(self, context):
         bpy.ops.screen.animation_cancel()
         original_frame = context.scene.frame_current
+        warnings_counter = 0
         try:
             context.scene.frame_set(0)
             # TODO - implement this safety check in export_model
@@ -69,17 +69,29 @@ class MCBLEND_OT_ExportModel(
             #             "Negative object scale is not supported. "
             #             f"Object: {obj.name}; Frame: 0.")
             #         return {'FINISHED'}
-            result = export_model(context)
-        except ExporterException as e:
-            self.report({'ERROR'}, f'{str(e)}')
-            return {'FINISHED'}
+            result, warnings_generator = export_model(context)
+
+            for warning in warnings_generator:
+                self.report({'WARNING'}, warning)
+                warnings_counter += 1
+
         finally:
             context.scene.frame_set(original_frame)
 
         with open(self.filepath, 'w') as f:
             json.dump(result, f, cls=CompactEncoder)
-
-        self.report({'INFO'}, f'Model saved in {self.filepath}.')
+        if warnings_counter > 1:
+            self.report(
+                {'WARNING'},
+                f"Model saved in {self.filepath} after exporting with "
+                f"{warnings_counter} warnings. See logs for more details.")
+        elif warnings_counter == 1:
+            self.report(
+                {'WARNING'},
+                f"Model saved in {self.filepath} after exporting with 1 "
+                "warning. See logs for more details.")
+        else:
+            self.report({'INFO'}, f'Model saved in {self.filepath}.')
         return {'FINISHED'}
 
 def menu_func_mcblend_export_model(self, context):

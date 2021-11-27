@@ -4,7 +4,7 @@ Functions related to exporting models.
 from __future__ import annotations
 
 from copy import copy
-from typing import List, Dict, Tuple, Any, Optional
+from typing import Iterable, List, Dict, Tuple, Any, Optional
 from dataclasses import dataclass, field
 
 import numpy as np
@@ -56,6 +56,13 @@ class ModelExport:
             if objprop.mctype == MCObjType.BONE:
                 self.bones.append(BoneExport(objprop, self))
 
+    def yield_warnings(self) -> Iterable[str]:
+        '''
+        Yields warnings from BoneExport objects of this model.
+        '''
+        for bone in self.bones:
+            yield from bone.warnings
+
     @staticmethod
     def json_outer() -> Dict:
         '''
@@ -104,6 +111,7 @@ class BoneExport:
     - `cubes: List[CubeExport]` - list of cubes to export.
     - `locators: Dict[str, LocatorExport]` - list of locators to export.
       (if exists) or None
+    - `warnings: List[str]` - list of warnings.
     - `mcblend_obj: McblendObject` - McblendObject of this bone.
     '''
     def __init__(self, bone: McblendObject, model: ModelExport):
@@ -117,17 +125,6 @@ class BoneExport:
         if bone.mctype != MCObjType.BONE:
             raise ValueError('Input object is not a bone.')
 
-        # Create cubes and locators list
-        cubes: List[McblendObject] = []
-        locators: List[McblendObject] = []
-
-        # Add children cubes if they are MCObjType.CUBE type
-        for child in bone.children:
-            if child.mctype is MCObjType.CUBE:
-                cubes.append(child)
-            elif child.mctype is MCObjType.LOCATOR:
-                locators.append(child)
-
         self.name: str = bone.obj_name
         self.parent: Optional[str] = (
             None if bone.parent is None else bone.parent.obj_name)
@@ -136,14 +133,23 @@ class BoneExport:
         self.cubes: List[CubeExport] = []
         self.poly_mesh: PolyMesh = PolyMesh()
         self.locators: Dict[str, LocatorExport] = {}
-        self.load(bone, cubes, locators)
+        self.warnings: List[str] = []
+        self.load(bone)
 
-    def load(
-            self, thisobj: McblendObject, cube_objs: List[McblendObject],
-            locator_objs: List[McblendObject]):
+    def load(self, thisobj: McblendObject):
         '''
         Used in constructor to cubes and locators.
         '''
+        # Create cubes and locators list
+        cube_objs: List[McblendObject] = []
+        locator_objs: List[McblendObject] = []
+        # Add children cubes if they are MCObjType.CUBE type
+        for child in thisobj.children:
+            if child.mctype is MCObjType.CUBE:
+                cube_objs.append(child)
+            elif child.mctype is MCObjType.LOCATOR:
+                locator_objs.append(child)
+
         uv_factory = UvExportFactory(
             (self.model.texture_width, self.model.texture_height)
         )
@@ -168,24 +174,30 @@ class BoneExport:
         # Set cubes
         for cubeprop in cube_objs:
             if cubeprop.mesh_type is MeshType.CUBE:
-                _c_scale = _scale(cubeprop)
-                c_size = cubeprop.mcube_size * _c_scale * MINECRAFT_SCALE_FACTOR
-                c_pivot = cubeprop.mcpivot * MINECRAFT_SCALE_FACTOR
-                c_origin = c_pivot + (
-                    cubeprop.mccube_position * _c_scale * MINECRAFT_SCALE_FACTOR
-                )
-                c_rot = cubeprop.get_mcrotation(thisobj)
+                try:
+                    _c_scale = _scale(cubeprop)
+                    c_size = (
+                        cubeprop.mcube_size * _c_scale *
+                        MINECRAFT_SCALE_FACTOR)
+                    c_pivot = cubeprop.mcpivot * MINECRAFT_SCALE_FACTOR
+                    c_origin = c_pivot + (
+                        cubeprop.mccube_position * _c_scale *
+                        MINECRAFT_SCALE_FACTOR)
+                    c_rot = cubeprop.get_mcrotation(thisobj)
 
-                if cubeprop.inflate != 0:
-                    c_size = c_size - cubeprop.inflate*2
-                    c_origin = c_origin + cubeprop.inflate
+                    if cubeprop.inflate != 0:
+                        c_size = c_size - cubeprop.inflate*2
+                        c_origin = c_origin + cubeprop.inflate
 
-                uv, uv_mirror = uv_factory.get_uv_export(cubeprop, c_size)
+                    uv, uv_mirror = uv_factory.get_uv_export(cubeprop, c_size)
 
-                cube = CubeExport(
-                    size=c_size, pivot=c_pivot, origin=c_origin,
-                    rotation=c_rot, inflate=cubeprop.inflate, uv=uv,
-                    uv_mirror=uv_mirror, mcblend_obj=cubeprop)
+                    cube = CubeExport(
+                        size=c_size, pivot=c_pivot, origin=c_origin,
+                        rotation=c_rot, inflate=cubeprop.inflate, uv=uv,
+                        uv_mirror=uv_mirror, mcblend_obj=cubeprop)
+                except ExporterException as e:
+                    self.warnings.append(f'{e} Skipped.')
+                    continue
                 self.cubes.append(cube)
             elif cubeprop.mesh_type is MeshType.POLY_MESH:
                 cubeprop.obj_data.calc_normals_split()
@@ -195,7 +207,7 @@ class BoneExport:
                 if cubeprop.obj_data.uv_layers.active is None:
                     raise ExporterException(
                         f'{cubeprop.thisobj.name} - exporting polymesh '
-                        'objects without UV-layer is not supported')
+                        'objects without UV-layer is not supported.')
                 uv_data = cubeprop.obj_data.uv_layers.active.data  # uv
 
                 inv_bone_matrix = cubeprop.get_local_matrix(thisobj)
@@ -389,9 +401,16 @@ class UvExportFactory:
         layer: Optional[bpy.types.MeshUVLoopLayer] = (
             mcobj.obj_data.uv_layers.active)
         if layer is None:  # Make sure that UV exists
-            raise ExporterException(f'{mcobj.thisobj.name} - missing UV layer')
+            raise ExporterException(
+                f'Cube based on Blender object "{mcobj.thisobj.name}": '
+                'missing UV layer.')
 
-        polygons = mcobj.cube_polygons() # Can rise ExporterException
+        try:
+            polygons = mcobj.cube_polygons()
+        except ExporterException as e:
+            raise ExporterException(
+                f'Cube based on Blender object "{mcobj.thisobj.name}": {e}'
+            ) from e
         try:
             return self._get_standard_cube_uv_export(
                 polygons, layer, cube_size)
@@ -400,7 +419,8 @@ class UvExportFactory:
                 return self._get_per_face_uv_export(polygons, layer)
             except ExporterException as e:
                 raise ExporterException(
-                    f'{mcobj.thisobj.name} - {str(e)} - impossible to export'
+                    'Cube based on Blender object '
+                    f'"{mcobj.thisobj.name}": {e}'
                 ) from e
 
     def _get_uv(
@@ -514,7 +534,7 @@ class UvExportFactory:
         mirror = False
         if not np.isclose(expected_shape, real_shape).all():
             if not np.isclose(expected_shape_mirror, real_shape).all():
-                raise ExporterException()
+                raise ExporterException()  # Always catched (no message needed)
             mirror = True
 
         # Return the JSON and mirror
@@ -535,7 +555,7 @@ class UvExportFactory:
                 CubePolygon.validate_rectangle_uv(crds))
             if not is_valid:
                 raise ExporterException(
-                    f'{side_name} face has invalid UV-mapping')
+                    f'"{side_name}" face has invalid UV-mapping.')
 
             left_top = self.blend_to_mc_converter.convert(crds[3])
             right_bottom = self.blend_to_mc_converter.convert(crds[1])

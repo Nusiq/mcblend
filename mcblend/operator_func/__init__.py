@@ -4,7 +4,7 @@ Functions used directly by the blender operators.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Iterable, List, Optional, Tuple
 from dataclasses import dataclass, field
 from collections import defaultdict
 
@@ -26,12 +26,14 @@ from .model import ModelExport
 from .uv import CoordinatesConverter, UvMapper
 
 
-def export_model(context: bpy_types.Context) -> Dict:
+def export_model(
+        context: bpy_types.Context) -> Tuple[Dict, Iterable[str]]:
     '''
     Creates a Minecraft model JSON dict from selected objects.
 
     :param context: the context of running the operator.
-    :returns: JSON dict with Minecraft model.
+    :returns: JSON dict with Minecraft model and a generator that yields
+        warnings about exporting.
     '''
     result = ModelExport.json_outer()
     armature = context.object  # an armature
@@ -50,7 +52,7 @@ def export_model(context: bpy_types.Context) -> Dict:
     )
     model.load(mcblend_obj_group)
     result['minecraft:geometry'].append(model.json_inner())
-    return result
+    return result, model.yield_warnings()
 
 def export_animation(
         context: bpy_types.Context, old_dict: Optional[Dict]
