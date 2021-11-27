@@ -17,7 +17,7 @@ import bpy
 import mathutils
 
 from .texture_generator import Mask, ColorMask, get_masks_from_side
-from .exception import NoCubePolygonsException
+from .exception import ExporterException
 
 MINECRAFT_SCALE_FACTOR = 16
 '''The scale convertion from blender to minecraft (16 units == 1 meter).'''
@@ -574,17 +574,17 @@ class CubePolygons(NamedTuple):
         '''
         # 0. Check if mesh has 12 edges
         if len(cube.data.edges) != 12:
-            raise NoCubePolygonsException(
+            raise ExporterException(
                 f"Object {cube.name.split('.')} is not a cube. Number of edges != 12"
             )
         # 1. Check if object has 6 quadrilateral faces
         if len(cube.data.polygons) != 6:
-            raise NoCubePolygonsException(
+            raise ExporterException(
                 f"Object {cube.name.split('.')} is not a cube. Number of faces != 6"
             )
         for polygon in cube.data.polygons:
             if len(polygon.vertices) != 4:
-                raise NoCubePolygonsException(
+                raise ExporterException(
                     f"Object {cube.name.split('.')} is not a cube. Not all faces are "
                     "quadrilateral"
                 )
@@ -622,13 +622,13 @@ class CubePolygons(NamedTuple):
 
         solver = CubePolygonsSolver(p_options, list(cube.data.polygons))
         if not solver.solve():
-            raise NoCubePolygonsException(
+            raise ExporterException(
                 f'Object "{cube.name}" is not a cube.')
 
         try:
             return solver.get_cube_polygons(mirror)
         except TypeError as e:  # Missing argument
-            raise NoCubePolygonsException(
+            raise ExporterException(
                 f'Object "{cube.name}" is not a cube.'
             ) from e
 

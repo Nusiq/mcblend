@@ -167,7 +167,7 @@ def fix_uvs(context: bpy_types.Context) -> Vector2di:
     '''
     Fixes the UV-mapping of selected objects.
 
-    Raises NoCubePolygonsException when one of the is not a cuboid.
+    Raises ExporterException when one of the is not a cuboid.
 
     :param context: the execution context.
 

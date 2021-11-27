@@ -23,7 +23,7 @@ from .operator_func import (
     import_model_form_project, apply_materials, prepare_physics_simulation)
 from .operator_func.bedrock_packs.json import CompactEncoder
 from .operator_func.exception import (
-    InvalidUvShape, NotEnoughTextureSpace, ImporterException)
+    ExporterException, NotEnoughTextureSpace, ImporterException)
 from .operator_func.bedrock_packs.json import JSONCDecoder
 from .operator_func.texture_generator import (
     list_mask_types_as_blender_enum, UvMaskTypes, MixMaskMode)
@@ -70,7 +70,7 @@ class MCBLEND_OT_ExportModel(
             #             f"Object: {obj.name}; Frame: 0.")
             #         return {'FINISHED'}
             result = export_model(context)
-        except InvalidUvShape as e:
+        except ExporterException as e:
             self.report({'ERROR'}, f'{str(e)}')
             return {'FINISHED'}
         finally:

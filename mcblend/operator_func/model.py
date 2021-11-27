@@ -18,7 +18,7 @@ from .common import (
 )
 from .bedrock_packs import Vector2di, Vector3d, Vector3di
 from .json_tools import get_vect_json
-from .exception import NoCubePolygonsException, InvalidUvShape
+from .exception import ExporterException
 from .uv import CoordinatesConverter
 
 @dataclass
@@ -193,7 +193,7 @@ class BoneExport:
                 vertices = cubeprop.obj_data.vertices  # crds
                 loops = cubeprop.obj_data.loops  # normals
                 if cubeprop.obj_data.uv_layers.active is None:
-                    raise InvalidUvShape(
+                    raise ExporterException(
                         f'{cubeprop.thisobj.name} - exporting polymesh '
                         'objects without UV-layer is not supported')
                 uv_data = cubeprop.obj_data.uv_layers.active.data  # uv
@@ -376,7 +376,8 @@ class UvExportFactory:
         )
 
     def get_uv_export(
-            self, mcobj: McblendObject, cube_size: np.ndarray) -> Tuple[Any, bool]:
+            self, mcobj: McblendObject,
+            cube_size: np.ndarray) -> Tuple[Any, bool]:
         '''
         Creates uv properties for given McblendObject.
 
@@ -388,19 +389,17 @@ class UvExportFactory:
         layer: Optional[bpy.types.MeshUVLoopLayer] = (
             mcobj.obj_data.uv_layers.active)
         if layer is None:  # Make sure that UV exists
-            return [0, 0], False
-        try:
-            polygons = mcobj.cube_polygons()
-        except NoCubePolygonsException:
-            return [0, 0], False
+            raise ExporterException(f'{mcobj.thisobj.name} - missing UV layer')
+
+        polygons = mcobj.cube_polygons() # Can rise ExporterException
         try:
             return self._get_standard_cube_uv_export(
                 polygons, layer, cube_size)
-        except InvalidUvShape:
+        except ExporterException:
             try:
                 return self._get_per_face_uv_export(polygons, layer)
-            except InvalidUvShape as e:
-                raise InvalidUvShape(
+            except ExporterException as e:
+                raise ExporterException(
                     f'{mcobj.thisobj.name} - {str(e)} - impossible to export'
                 ) from e
 
@@ -427,7 +426,7 @@ class UvExportFactory:
         ) -> Tuple[Any, bool]:
         '''
         Attempts to return UV and mirror for standard UV-mapping. Raises
-        InvalidUvShape exception if this kind of mapping is impossible for
+        ExporterException exception if this kind of mapping is impossible for
         given input.
         '''
         # Get min and max value of he loop coordinates
@@ -515,7 +514,7 @@ class UvExportFactory:
         mirror = False
         if not np.isclose(expected_shape, real_shape).all():
             if not np.isclose(expected_shape_mirror, real_shape).all():
-                raise InvalidUvShape()
+                raise ExporterException()
             mirror = True
 
         # Return the JSON and mirror
@@ -535,7 +534,7 @@ class UvExportFactory:
             is_valid, _, _ = (
                 CubePolygon.validate_rectangle_uv(crds))
             if not is_valid:
-                raise InvalidUvShape(
+                raise ExporterException(
                     f'{side_name} face has invalid UV-mapping')
 
             left_top = self.blend_to_mc_converter.convert(crds[3])
