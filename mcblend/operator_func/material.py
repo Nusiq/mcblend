@@ -413,29 +413,30 @@ MATERIALS_MAP_ALIASES = {  # Aliases used when loading but not suggested in GUI
     'entity_multitexture_masked': 'entity_alphatest',
     'villager_v2_masked': 'entity_alphatest',
     'zombie_villager_v2_masked': 'entity_alphatest',
+    'entity_alphatest_multicolor_tint': 'entity_alphatest',
+    'entity_custom': 'entity_alphatest',
+    'entity_dissolve_layer1': 'entity_alphatest',
+    'entity_multitexture_multiplicative_blend': 'entity_alphatest',
 
     # entity
     'entity_dissolve_layer0': 'entity',
     'entity_nocull': 'entity',
     'entity_lead_base': 'entity',
-    'entity_dissolve_layer1': 'entity',
     'beacon_beam_transparent': 'entity',
     'slime_outer': 'entity',
-    'entity_alphatest_multicolor_tint': 'entity',
     'entity_multitexture': 'entity',
-    'entity_multitexture_multiplicative_blend': 'entity',
     'entity_glint': 'entity',
     'entity_alphablend': 'entity',
     'entity_emissive': 'entity',
     'experience_orb': 'entity',
-    'entity_custom': 'entity',
     'item_in_hand': 'entity',
-    'entity_emissive_alpha_one_sided': 'entity',
+
 
     # entity_emissive_alpha
     'enderman_invisible': 'entity_emissive_alpha',
     'spider_invisible': 'entity_emissive_alpha',
     'phantom_invisible': 'entity_emissive_alpha',
+    'entity_emissive_alpha_one_sided': 'entity_emissive_alpha',
 }
 
 MATERIALS_MAP = {
