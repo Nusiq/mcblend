@@ -8,7 +8,7 @@ from bpy.props import (
     CollectionProperty, EnumProperty, PointerProperty, StringProperty)
 
 from .operator_func import reload_rp_entities
-from .operator_func.molang import find_resources
+from .operator_func.molang import MolangExpressionResourcesStats
 from .common_data import (
     MCBLEND_EnumCache, MCBLEND_JustName,
     MCBLEND_NameValuePair)
@@ -42,10 +42,10 @@ def enum_rc_materials(self, context):
     # always be generated from Molang string.
     owner = context.scene.mcblend_project.render_controllers[
         self.owner_name]
+    resources = self.get_molang_expression_stats(context).as_set()
     return [
         (i, i, i) for i in
-        sorted(find_resources(
-            self.value_molang, 'material', owner.material_arrays))]
+        sorted(resources)]
 
 class MCBLEND_MaterialProperties(bpy.types.PropertyGroup):
     '''Properties of a material from a render controller'''
@@ -67,6 +67,16 @@ class MCBLEND_MaterialProperties(bpy.types.PropertyGroup):
             "properties"),
         default="", maxlen=1024)
 
+    def get_molang_expression_stats(
+            self, context) -> MolangExpressionResourcesStats:
+        '''
+        Used for reloading and for easy access to this data for external tools
+        '''
+        owner = context.scene.mcblend_project.render_controllers[
+            self.owner_name]
+        return MolangExpressionResourcesStats(
+            self.value_molang, 'material', owner.material_arrays)
+
     def try_reload_cached_values(self, context):
         '''
         Tries to load the list of the available material names from the
@@ -75,10 +85,7 @@ class MCBLEND_MaterialProperties(bpy.types.PropertyGroup):
         '''
         if self.value_cache.is_cached:
             return  # nothing to do
-        owner = context.scene.mcblend_project.render_controllers[
-            self.owner_name]
-        resources = find_resources(
-            self.value_molang, 'material', owner.material_arrays)
+        resources = self.get_molang_expression_stats(context).as_set()
         for resource_name in sorted(resources):
             new_val = self.value_cache.values.add()
             new_val.name = resource_name
@@ -104,10 +111,10 @@ def enum_rc_geometries(self, context):
         return [(i, i, i) for i in self.geometry_cache.values.keys()]
     # Suboptimal solution loading values from string
     # WARNING! The values can't be cached from this context.
+    resources = self.get_geometry_molang_expression_stats().as_set()
     return [
         (i, i, i) for i in
-        sorted(find_resources(
-            self.geometry_molang, 'geometry', self.geometry_arrays))]
+        sorted(resources)]
 
 def enum_rc_textures(self, context):
     '''Lists textures for render controller'''
@@ -117,10 +124,10 @@ def enum_rc_textures(self, context):
         return [(i, i, i) for i in self.texture_cache.values.keys()]
     # Suboptimal solution loading values from string
     # WARNING! The values can't be cached from this context.
+    resources = self.get_texture_molang_expression_stats().as_set()
     return [
         (i, i, i) for i in
-        sorted(find_resources(
-            self.texture_molang, 'geometry', self.texture_arrays))]
+        sorted(resources)]
 
 class MCBLEND_RenderControllersProperties(bpy.types.PropertyGroup):
     '''Properties of a render controller from resource pack.'''
@@ -158,6 +165,22 @@ class MCBLEND_RenderControllersProperties(bpy.types.PropertyGroup):
     materials: CollectionProperty(  # type: ignore
         type=MCBLEND_MaterialProperties)
 
+    def get_geometry_molang_expression_stats(
+            self) -> MolangExpressionResourcesStats:
+        '''
+        Used for reloading and for easy access to this data for external tools
+        '''
+        return MolangExpressionResourcesStats(
+            self.geometry_molang, 'geometry', self.geometry_arrays)
+
+    def get_texture_molang_expression_stats(
+            self) -> MolangExpressionResourcesStats:
+        '''
+        Used for reloading and for easy access to this data for external tools
+        '''
+        return MolangExpressionResourcesStats(
+            self.texture_molang, 'texture', self.texture_arrays)
+
     def try_reload_cached_values(self):
         '''
         Tries to load the values for the 'geometry' and 'texture' enums from
@@ -166,17 +189,16 @@ class MCBLEND_RenderControllersProperties(bpy.types.PropertyGroup):
         are already loaded.
         '''
         # Load geometry if necessary
+        print("Trying to reload geometry")
         if not self.geometry_cache.is_cached:
-            resources = find_resources(
-                self.geometry_molang, 'geometry', self.geometry_arrays)
+            resources = self.get_geometry_molang_expression_stats().as_set()
             for resource_name in sorted(resources):
                 new_val = self.geometry_cache.values.add()
                 new_val.name = resource_name
             self.geometry_cache.is_cached = True
         # Load texture if necessary
         if not self.texture_cache.is_cached:
-            resources = find_resources(
-                self.texture_molang, 'texture', self.texture_arrays)
+            resources = self.get_texture_molang_expression_stats().as_set()
             for resource_name in sorted(resources):
                 new_val = self.texture_cache.values.add()
                 new_val.name = resource_name
