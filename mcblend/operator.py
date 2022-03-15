@@ -528,7 +528,8 @@ class MCBLEND_OT_ListAnimations(bpy.types.Operator):
         '''
         # Cancel operation if there is an action being edited
         if context.object.animation_data.action is not None:
-            # TODO - stash action and activate the action strip for current animation if a new aniamtion has been selected
+            # TODO - stash action and activate the action strip for current
+            # animation if a new aniamtion has been selected
             self.report(
                 {'WARNING'},
                 "Stash, push down or delete the active action before "
@@ -567,7 +568,8 @@ class MCBLEND_OT_AddAnimation(bpy.types.Operator):
         if (
                 context.object.animation_data is not None and
                 context.object.animation_data.action is not None):
-            # TODO - stash action if mcblend animation already exists or don't do anything if that's the first mcblend aniamtion
+            # TODO - stash action if mcblend animation already exists or
+            # don't do anything if that's the first mcblend aniamtion
             self.report(
                 {'WARNING'},
                 "Stash, push down or delete the active action before "

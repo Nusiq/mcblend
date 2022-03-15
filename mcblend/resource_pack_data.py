@@ -40,8 +40,6 @@ def enum_rc_materials(self, context):
     # WARNING! The values can't be cached from this context. The
     # method that create cache must be called somewhere else or the enum will
     # always be generated from Molang string.
-    owner = context.scene.mcblend_project.render_controllers[
-        self.owner_name]
     resources = self.get_molang_expression_stats(context).as_set()
     return [
         (i, i, i) for i in

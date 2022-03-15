@@ -48,12 +48,11 @@ class MolangExpressionResourcesStats:
             self.use_count[item_name] += 1
         for array_name in array_pattern.findall(self.molang):
             self.use_count[array_name] += 1
-            self.arrays_contents[array_name] = []
-            if arrays is None or array_name not in arrays.keys():
-                continue
             if self.use_count[array_name] > 1:
                 continue  # Not the first time we found this array
             self.arrays_contents[array_name] = []
+            if arrays is None or array_name not in arrays.keys():
+                continue
             for array_item in arrays[array_name].items.keys():
                 self.arrays_contents[array_name].extend(
                     item_pattern.findall(array_item))
