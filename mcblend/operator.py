@@ -18,9 +18,11 @@ from .uv_data import get_unused_uv_group_name
 from .operator_func.material import MATERIALS_MAP
 
 from .operator_func import (
-    export_model, export_animation, fix_uvs, separate_mesh_cubes, set_uvs,
-    import_model, inflate_objects, reload_rp_entities,
-    import_model_form_project, apply_materials, prepare_physics_simulation)
+    export_model, export_animation, fix_uvs, move_uv_map_save,
+    separate_mesh_cubes, set_uvs, move_uv_map_apply, import_model,
+    inflate_objects, reload_rp_entities, import_model_form_project,
+    apply_materials, prepare_physics_simulation)
+
 from .operator_func.bedrock_packs.json import CompactEncoder
 from .operator_func.exception import NotEnoughTextureSpace, ImporterException
 from .operator_func.bedrock_packs.json import JSONCDecoder
@@ -239,6 +241,71 @@ class MCBLEND_OT_FixUv(bpy.types.Operator):
             f'objects - {fixed_faces} faces of {fixed_cubes} cubes.'
         )
         return {'FINISHED'}
+
+# Moving UV-maps
+class MCBLEND_OT_MoveUvMapSave(bpy.types.Operator):
+    '''Saves current UV map before rearranging it'''
+    bl_idname = 'mcblend.move_uv_map_save'
+    bl_label = 'Mcblend: Save UV Map'
+    bl_description = 'Saves current UV map before rearranging it'
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context: bpy_types.Context):
+        if len(context.selected_objects) < 1:
+            return False
+        if bpy.context.mode != 'EDIT_MESH' and bpy.context.mode != 'OBJECT':
+            return False
+        return bpy.context.area.ui_type == 'UV'
+
+    def execute(self, context):
+        # img = context.area.spaces.active.image
+        # import numpy as np
+        # img.pixels.foreach_set(list(np.zeros(len(img.pixels))))
+        # bpy.ops.object.mode_set(mode='OBJECT')
+        move_uv_map_save(context)
+        bpy.ops.image.read_viewlayers()
+        return {'FINISHED'}
+
+def menu_func_mcblend_move_uv_map_save(self, context):
+    '''Used to register the operator in the file export menu.'''
+    # pylint: disable=unused-argument
+    self.layout.operator(MCBLEND_OT_MoveUvMapSave.bl_idname)
+
+class MCBLEND_OT_MoveUvMapApply(bpy.types.Operator):
+    '''Applies the UV changes after saving the UV with MoveUvMapSave.'''
+    bl_idname = 'mcblend.move_uv_map_apply'
+    bl_label = 'Mcblend: Apply UV Map'
+    bl_description = 'Applies the UV changes after saving the UV with MoveUvMapSave'
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context: bpy_types.Context):
+        if 'mcblend_uv_remapping_data' not in context.scene:
+            return False
+        if len(context.selected_objects) < 1:
+            del context.scene['mcblend_uv_remapping_data']
+            return False
+        if bpy.context.mode != 'EDIT_MESH' and bpy.context.mode != 'OBJECT':
+            del context.scene['mcblend_uv_remapping_data']
+            return False
+        meshes_keys = set(
+            obj.name for obj in context.selected_objects
+            if obj.type == 'MESH' or obj.data.uv_layers.active is not None)
+        if set(context.scene['mcblend_uv_remapping_data'].keys()) != meshes_keys:
+            del context.scene['mcblend_uv_remapping_data']
+            return False
+        return bpy.context.area.ui_type == 'UV'
+
+    def execute(self, context):
+        move_uv_map_apply(context)
+        bpy.ops.image.read_viewlayers()
+        return {'FINISHED'}
+
+def menu_func_mcblend_move_uv_map_apply(self, context):
+    '''Used to register the operator in the file export menu.'''
+    # pylint: disable=unused-argument
+    self.layout.operator(MCBLEND_OT_MoveUvMapApply.bl_idname)
 
 # UV grouping
 class MCBLEND_OT_UvGroup(bpy.types.Operator):

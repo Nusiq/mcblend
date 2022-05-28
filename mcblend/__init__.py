@@ -12,6 +12,12 @@ from .operator import (
     MCBLEND_OT_ExportModel, MCBLEND_OT_ExportAnimation,
     MCBLEND_OT_MapUv, MCBLEND_OT_UvGroup,
     MCBLEND_OT_FixUv,
+
+    MCBLEND_OT_MoveUvMapSave,
+    menu_func_mcblend_move_uv_map_save,
+    MCBLEND_OT_MoveUvMapApply,
+    menu_func_mcblend_move_uv_map_apply,
+
     MCBLEND_OT_ClearUvGroup,
     MCBLEND_OT_SetInflate,
     menu_func_mcblend_export_model, menu_func_mcblend_export_animation,
@@ -135,6 +141,8 @@ classes = (
     MCBLEND_PT_AnimationPropertiesPanel,
     MCBLEND_OT_MapUv,
     MCBLEND_OT_FixUv,
+    MCBLEND_OT_MoveUvMapSave,
+    MCBLEND_OT_MoveUvMapApply,
     MCBLEND_OT_UvGroup,
     MCBLEND_OT_ClearUvGroup,
     MCBLEND_PT_OperatorsPanel,
@@ -250,6 +258,12 @@ def register():
     bpy.types.TOPBAR_MT_file_import.append(
         menu_func_mcblend_import_model
     )
+    bpy.types.IMAGE_MT_uvs.append(
+        menu_func_mcblend_move_uv_map_save
+    )
+    bpy.types.IMAGE_MT_uvs.append(
+        menu_func_mcblend_move_uv_map_apply
+    )
 
 def unregister():
     '''Unregisters the plugin'''
@@ -265,4 +279,10 @@ def unregister():
     )
     bpy.types.TOPBAR_MT_file_import.remove(
         menu_func_mcblend_import_model
+    )
+    bpy.types.IMAGE_MT_uvs.remove(
+        menu_func_mcblend_move_uv_map_save
+    )
+    bpy.types.IMAGE_MT_uvs.remove(
+        menu_func_mcblend_move_uv_map_apply
     )

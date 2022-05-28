@@ -19,7 +19,7 @@ from .common import (
     MINECRAFT_SCALE_FACTOR, CubePolygon, McblendObject, McblendObjectGroup, MeshType,
     apply_obj_transform_keep_origin, fix_cube_rotation, star_pattern_match,
     MCObjType)
-from .bedrock_packs import Vector2di
+from .bedrock_packs import Vector2di, Vector2d
 from .importer import ImportGeometry, ModelLoader
 from .material import create_bone_material
 from .model import ModelExport
@@ -238,6 +238,175 @@ def fix_uvs(context: bpy_types.Context) -> Vector2di:
             total_fixed_cubes += 1
             total_fixed_uv_faces += fixed_faces
     return total_fixed_cubes, total_fixed_uv_faces
+
+# 4 points with coordinats of a face
+RectangleCrds = Tuple[Vector2d, Vector2d, Vector2d, Vector2d]
+def get_rectangle_uv_islands(obj: bpy.types.Object) -> List[RectangleCrds]:
+    '''
+    Returns a list of UV coordinates of all of the faces of the object. The
+    faces must be rectangular or an exception will be raised. This function
+    is used to get the data for moving UV maps. The rectangles are saved
+    as 4 points instad of 2 points to detect mirroring faces which is not
+    supported.
+    '''
+    result = []
+    uv_layer =  obj.data.uv_layers.active
+    for polygon in obj.data.polygons:
+        if polygon.loop_total != 4:
+            raise ValueError(f'The {obj.name} has a non-rectangular face')
+        crds: RectangleCrds = (
+            tuple(uv_layer.data[polygon.loop_indices[0]].uv),
+            tuple(uv_layer.data[polygon.loop_indices[1]].uv),
+            tuple(uv_layer.data[polygon.loop_indices[2]].uv),
+            tuple(uv_layer.data[polygon.loop_indices[3]].uv)
+        )
+        # Check if it's rectangular
+        if not (
+            np.isclose(crds[0][0], crds[1][0]) and
+            np.isclose(crds[0][1], crds[3][1]) and
+            np.isclose(crds[2][0], crds[3][0]) and
+            np.isclose(crds[2][1], crds[1][1])
+        ) and not (
+            np.isclose(crds[0][0], crds[3][0]) and
+            np.isclose(crds[0][1], crds[1][1]) and
+            np.isclose(crds[2][0], crds[1][0]) and
+            np.isclose(crds[2][1], crds[3][1])
+        ):
+            raise ValueError(f'The {obj.name} has a non-rectangular face')
+        result.append(crds)
+    return result
+
+def move_uv_map_save(context: bpy_types.Context):
+    '''
+    Saves the current UV-map of the selected objects, so that we can move
+    the pixels later with the UV-map.
+    '''
+    # The poll condition makes sure that the mode is 'OBJECT' or 'EDIT_MESH'
+    initial_mode = 'OBJECT' if bpy.context.mode == 'OBJECT' else 'EDIT'
+    try:
+        bpy.ops.object.mode_set(mode='OBJECT')
+        uv_map = {
+            obj.name: get_rectangle_uv_islands(obj)
+            for obj in context.selected_objects
+            if obj.type == 'MESH' and obj.data.uv_layers.active is not None
+        }
+        context.scene['mcblend_uv_remapping_data'] = uv_map
+    finally:
+        bpy.ops.object.mode_set(mode=initial_mode)
+
+def move_uv_map_apply(context: bpy_types.Context):
+    '''
+    Applies the texture movement based on the difference between the saved
+    UV-map and the current UV-map.
+    '''
+    # The poll condition makes sure that the mode is 'OBJECT' or 'EDIT_MESH'
+    # and that there is the 'mcblend_uv_remapping_data' property in the scene
+    # whith the same set of keys as the selected objects. Only the mesh
+    # objects with a UV map are affected.
+    initial_mode = 'OBJECT' if bpy.context.mode == 'OBJECT' else 'EDIT'
+    try:
+        bpy.ops.object.mode_set(mode='OBJECT')
+        uv_map = {
+            obj.name: get_rectangle_uv_islands(obj)
+            for obj in context.selected_objects
+            if obj.type == 'MESH' and obj.data.uv_layers.active is not None
+        }
+        old_uv_map = context.scene['mcblend_uv_remapping_data']
+        keys = list(uv_map.keys())
+        for k in keys:
+            old_faces = old_uv_map[k]
+            new_faces = uv_map[k]
+            if len(old_faces) != len(new_faces):
+                raise RuntimeError(
+                    f"The number of UV faces of {k} object has changed since "
+                    "the UV map was saved.")
+            for old_face, new_face in zip(old_faces, new_faces):
+                translation = np.array(new_face) - np.array(old_face)
+                # All vertices must be moved exactly the same amount
+                if not np.allclose(translation, translation[0]):
+                    raise RuntimeError(
+                        f"The translation of the UV faces of {k} object is "
+                        "different for some of the vertices than for the "
+                        "others.")
+        image = bpy.context.area.spaces.active.image
+        image_array_source = np.array(image.pixels, dtype=float)
+        # DIM0:up axis DIM1:right axis DIM2:rgba axis
+        image_array_source.resize(image.size[1], image.size[0], image.channels)
+        image_array_target = image_array_source.copy()
+        image_size = np.array(image.size)
+        # One task has coordinates that show what to copy, where (tuple)
+        # copy_start_min, copy_start_max, copy_end_min, copy_end_max
+        tasks = []
+        for k in keys:
+            for old_face, new_face in zip(old_uv_map[k], uv_map[k]):
+                old_chunk_corners = np.array(
+                    (
+                        np.array([old_face[0], old_face[2]]) * image_size
+                    ).round(),
+                    dtype=int)
+                new_chunk_corners = np.array(
+                    (
+                        np.array([new_face[0], new_face[2]]) * image_size
+                    ).round(),
+                    dtype=int)
+                if (old_chunk_corners == new_chunk_corners).all():
+                    continue  # No movement, nothing to do
+                old_chunk_min, old_chunk_max = (
+                    old_chunk_corners.min(0), old_chunk_corners.max(0))
+                new_chunk_min, new_chunk_max = (
+                    new_chunk_corners.min(0), new_chunk_corners.max(0))
+                # Padding is a distance from border to the cropped chunk of the
+                # image. The cropping happens when the chunks sticks out of the
+                # image. Padding 0 or more pixels.
+                old_min_padding = np.maximum(np.zeros(2) - old_chunk_min, 0)
+                old_max_padding = np.maximum(old_chunk_max - image_size, 0)
+                new_min_padding = np.maximum(np.zeros(2) - new_chunk_min, 0)
+                new_max_padding = np.maximum(new_chunk_max - image_size, 0)
+                # If padded chunk is 0 pixels in any direction, then the
+                # surface of the chunk is 0 and no action is needed.
+                chunk_size = old_chunk_max - old_chunk_min
+                total_min_padding = np.maximum(
+                    old_min_padding, new_min_padding)
+                total_max_padding = np.maximum(
+                    old_max_padding, new_max_padding)
+                padded_chunk_size = (
+                    chunk_size - total_min_padding - total_max_padding)
+                if np.all(padded_chunk_size == 0):
+                    continue
+                cp_start_min = np.array(
+                    old_chunk_min + old_min_padding, dtype=int)
+                cp_start_max = np.array(
+                    cp_start_min + padded_chunk_size, dtype=int)
+                cp_end_min = np.array(
+                    new_chunk_min + new_min_padding, dtype=int)
+                cp_end_max = np.array(
+                    cp_end_min + padded_chunk_size, dtype=int)
+                tasks.append(
+                    (cp_start_min, cp_start_max, cp_end_min, cp_end_max))
+                # Fill the source pixels in the target image with transparency
+                # TODO - this part could be skipped so we can have texture
+                # duplication
+                image_array_target[
+                    cp_start_min[1]:cp_start_max[1],
+                    cp_start_min[0]:cp_start_max[0],
+                    :
+                ] = 0.0
+        # Copy source pixels to target pixels of target image
+        for cp_start_min, cp_start_max, cp_end_min, cp_end_max in tasks:
+                image_array_target[
+                    cp_end_min[1]:cp_end_max[1],
+                    cp_end_min[0]:cp_end_max[0],
+                    :
+                ] = image_array_source[
+                    cp_start_min[1]:cp_start_max[1],
+                    cp_start_min[0]:cp_start_max[0],
+                    :
+                ]
+        # Save the image
+        image.pixels[:] = image_array_target.ravel()
+        move_uv_map_save(context)
+    finally:
+        bpy.ops.object.mode_set(mode=initial_mode)
 
 def import_model(data: Dict, geometry_name: str, context: bpy_types.Context) -> List[str]:
     '''
