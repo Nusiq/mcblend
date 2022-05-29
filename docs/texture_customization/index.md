@@ -1,16 +1,16 @@
 # Texture generator customization
 
-![](../img/customized_uv_groups.png)
+![](/mcblend/img/customized_uv_groups.png)
 
 You can customize the appearance of a UV-group by applying masks to its faces
-in new custom panel in [Scene Properties](../gui/#scene-properties).
+in new custom panel in [Scene Properties](/mcblend/gui/scene_properties/).
 
 Masks are filters that are applied to the texture when it is generated.
 Each UV-group has 6 faces. You can switch between faces to edit with the
 "Side:" dropdown menu. The image below shows how the names of the
 sides (side1-6) are correlated to their placement on the texture.
 
-![](../img/faces.png)
+![](/mcblend/img/faces.png)
 
 New masks are added with the "Add mask" dropdown menu. There are 8 different types
 of masks.
@@ -22,7 +22,7 @@ of masks.
     temporarily disable / enable the mask.
 
 ## Color Palette Mask
-![](../img/color_palette_mask.png)
+![](/mcblend/img/color_palette_mask.png)
 
 This mask takes the grayscale image as an input and maps its brightness values
 to a color image with a palette defined as a list of colors.
@@ -48,7 +48,7 @@ Properties:
 
 
 ## Gradient Mask
-![](../img/gradient_mask.png)
+![](/mcblend/img/gradient_mask.png)
 
 The Gradient mask creates a grayscale gradient with stripes of varying darkness
 and width. The direction in which the stripes are drawn is defined with two
@@ -70,7 +70,7 @@ Properties:
 - Exponent - The filter image is raised to the power of this value before it
     is multiplied by the image.
 ## Ellipse Mask
-![](../img/ellipse_mask.png)
+![](/mcblend/img/ellipse_mask.png)
 
 The Ellipse mask creates a grayscale image of an ellipse drawn between Point A and
 Point B. The grayscale image is then multiplied by the input image.
@@ -93,7 +93,7 @@ Properties:
 
 
 ## Rectangle Mask
-![](../img/rectangle_mask.png)
+![](/mcblend/img/rectangle_mask.png)
 
 The Rectangle mask creates a grayscale image of a rectangle between Point A and
 Point B. The grayscale image is then multiplied by the input image.
@@ -117,7 +117,7 @@ Properties:
 
 
 ## Stripes Mask
-![](../img/stripes_mask.png)
+![](/mcblend/img/stripes_mask.png)
 
 The Stripes mask creates a grayscale image with repeating stripes of certain
 width and brightness. The grayscale image is then multiplied by the input
@@ -134,7 +134,7 @@ Properties:
 
 
 ## Random Mask
-![](../img/random_mask.png)
+![](/mcblend/img/random_mask.png)
 
 The Random mask creates a grayscale image with randomly bright pixels. The
 grayscale image is then multiplied by the input image.
@@ -148,7 +148,7 @@ grayscale image is then multiplied by the input image.
 
 
 ## Color Mask
-![](../img/color_mask.png)
+![](/mcblend/img/color_mask.png)
 
 The Color mask multiplies the input mask by a color.
 
@@ -156,7 +156,7 @@ The Color mask multiplies the input mask by a color.
 
 
 ## Mix Mask
-![](../img/mix_mask.png)
+![](/mcblend/img/mix_mask.png)
 
 The Mix mask lets you mix multiple masks in different ways than just default
 multiplication. 

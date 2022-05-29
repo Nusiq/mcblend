@@ -2,7 +2,7 @@
 
 The sound effects and particle effects are animated with the use of events.
 You can define events in the _Mcblend events_ menu in
-[scene properties](../gui/#scene-properties). One event can contain
+[scene properties](/mcblend/gui/scene_properties/). One event can contain
 multiple particle and sound effects. The effects are not visible in the animation preview
 in Blender. They only add some information to the exported animation.
 
@@ -15,4 +15,4 @@ exporting the animation and serve the same purpose as any other timeline marker
 in Blender.
 
 A timeline with timeline markers for events:
-![](../img/effect_animation.png)
+![](/mcblend/img/effect_animation.png)

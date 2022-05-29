@@ -13,7 +13,10 @@
 
 ![](../img/import_model_file_explorer.png)
 
+!!! Note
 
+    Alternatively you can use the [resource pack panel](/mcblend/gui/3d_viewport_sidebar/#resurce-pack-panel)
+    to import models from Minecraft resource packs.
 
 ## Exporting models
 
