@@ -7,15 +7,15 @@ to the same spot on the texture. Using UV groups can help reduce the texture
 size when the model has many identical parts.
 
 UV-groups also let you change the appearance of generated textures to your
-preference. This can be useful for setting some distinguishable look for UV-group
+preference. This can be useful for creating distinguishable look for UV-group
 members. You can create some fairly advanced textures with it, but it's usually
-better to create textures in the usual way.
+better to create textures manually.
 
 ## Creating and removing UV-groups
-UV-groups are added / removed using the "Mcblend UV groups" panel from the
-[Scene Properties](/mcblend/gui/scene_properties) with "New UV group" and
-"Delete this UV group" buttons. You can also export and import UV groups by
-using the "Export UV group" and "Import UV group" buttons respectively.
+UV-groups are added / removed using the *Mcblend UV groups* panel from the
+[Scene Properties](/mcblend/gui/scene_properties) with *New UV group* and
+*Delete this UV group* buttons. You can also export and import UV groups by
+using the *Export UV group* and *Import UV group* buttons respectively.
 
 ## Adding objects to UV-groups
 Adding objects to UV-groups is done with the
