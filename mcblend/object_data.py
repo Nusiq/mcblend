@@ -370,7 +370,7 @@ class MCBLEND_ObjectProperties(bpy.types.PropertyGroup):
         items=list_mesh_types_as_blender_enum, # type: ignore
         name='Mesh type')
     min_uv_size: IntVectorProperty(  # type: ignore
-        name="Min UV size", default=(0.0, 0.0, 0.0), min=0,
+        name="Min UV size", default=(0, 0, 0), min=0,
         description=(
             "The lower UV boundary of the length of X dimension of a cube. If "
             "it's greater than the actual X, then the UV-mapper will act as "

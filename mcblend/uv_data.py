@@ -82,10 +82,10 @@ class MCBLEND_UvMaskProperties(bpy.types.PropertyGroup):
         name='Point B', min=0.0, max=1.0, default=(0.0, 0.0), size=2)
     # p1: Vector2d  # GradientMask EllipseMask RectangleMask
     p1: IntVectorProperty(  # type: ignore
-        name='Point A', default=(0.1, 0.1), size=2)
+        name='Point A', default=(0, 0), size=2)
     # p2: Vector2d  # GradientMask EllipseMask RectangleMask
     p2: IntVectorProperty(  # type: ignore
-        name='Point B', default=(0.9, 0.9), size=2)
+        name='Point B', default=(0, 0), size=2)
     # stripes: List[Stripe]  # GradientMask StripesMask
     stripes: CollectionProperty(  # type: ignore
         type=MCBLEND_StripeProperties,
