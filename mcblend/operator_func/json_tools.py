@@ -12,8 +12,12 @@ def get_vect_json(arr: Iterable, precision: int=3) -> List[float]:
 
     :param arr: an iterable of numbers.
     '''
-    result = [round(i, precision) for i in arr]
-    for i, _ in enumerate(result):
-        if result[i] == int(result[i]):
-            result[i] = int(result[i])
+    result: List[float] = []
+    for i in arr:
+        i = round(i, precision)
+        int_i = int(i)
+        if i == int_i:
+            result.append(int_i)
+        else:
+            result.append(i)
     return result
