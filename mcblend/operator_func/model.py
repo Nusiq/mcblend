@@ -367,7 +367,7 @@ class PolyMesh:
             'normalized_uvs': self.normalized_uvs,
             'positions': [get_vect_json(i) for i in self.positions],
             'normals': [get_vect_json(i) for i in self.normals],
-            'uvs': [get_vect_json(i) for i in self.uvs],
+            'uvs': [get_vect_json(i, precision=10) for i in self.uvs],
             'polys': self.polys,
         }
         return poly_mesh
@@ -460,7 +460,7 @@ class UvExportFactory:
         # max_loop_crds = loop_crds_arr.max(0)
 
         # Depth width height
-        # first round with get_json_vect to avoid numerical errors and than
+        # first round with get_vect_json to avoid numerical errors and than
         # round down to int (like minecraft does).
         w, h, d = [
             int(i) for i in
