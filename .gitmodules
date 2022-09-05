@@ -1,0 +1,3 @@
+[submodule "mcblend/operator_func/sqlite_bedrock_packs"]
+	path = mcblend/operator_func/sqlite_bedrock_packs
+	url = https://github.com/Nusiq/sqlite_bedrock_packs_core
