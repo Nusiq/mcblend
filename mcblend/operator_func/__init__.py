@@ -23,7 +23,7 @@ from .importer import ImportGeometry, ModelLoader
 from .material import create_bone_material
 from .model import ModelExport
 from .uv import CoordinatesConverter, UvMapper
-
+from .db_handler import get_db, load_resource_pack, delete_db
 
 def export_model(
         context: bpy_types.Context) -> Tuple[Dict, Iterable[str]]:
@@ -361,6 +361,12 @@ def reload_rp_entities(context: bpy_types.Context):
 
     :param context: the context of running the operator.
     '''
+    delete_db()
+    rp_path: Path = Path(context.scene.mcblend_project.rp_path)
+    if not rp_path.exists() or rp_path.is_file():
+        return
+    load_resource_pack(rp_path)
+
 
 @dataclass
 class RcStackItem:

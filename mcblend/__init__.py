@@ -67,10 +67,6 @@ from .common_data import (
 )
 
 from .resource_pack_data import (
-    MCBLEND_EntityProperties,
-    MCBLEND_MaterialProperties,
-    MCBLEND_RenderControllerArrayProperties,
-    MCBLEND_RenderControllersProperties,
     MCBLEND_ProjectProperties,
 )
 
@@ -121,10 +117,6 @@ classes = (
     MCBLEND_JustName,
     MCBLEND_NameValuePair,
     MCBLEND_EnumCache,
-    MCBLEND_EntityProperties,
-    MCBLEND_MaterialProperties,
-    MCBLEND_RenderControllerArrayProperties,
-    MCBLEND_RenderControllersProperties,
     MCBLEND_ProjectProperties,
 
     MCBLEND_PT_ObjectPropertiesPanel,

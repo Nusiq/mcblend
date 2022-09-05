@@ -798,27 +798,21 @@ class MCBLEND_PT_ProjectPanel(bpy.types.Panel):
             text="", icon='FILE_REFRESH'
         )
         project = context.scene.mcblend_project
+        col.prop(project, "entity_names", text="Entity")
         # Don't draw dropdown lists if they're empty
-        if len(project.entities) > 0:
-            col.prop_search(
-                data=project, property="entity_names",
-                search_data=project, search_property="entities",
-                text="Entity"
-            )
-            if project.entity_names in project.entities:
-                entity = project.entities[project.entity_names]
-                for rc_name in entity.render_controllers.keys():
-                    if rc_name not in project.render_controllers:
-                        # The definition should be on the list of fake RC
-                        rc = project.fake_render_controllers[rc_name]
-                    else:
-                        rc = project.render_controllers[rc_name]
-                    self.draw_render_controller(rc, col)
+        # if len(project.entities) > 0:
+        #     col.prop_search(
+        #         data=project, property="entity_names",
+        #         search_data=project, search_property="entities",
+        #         text="Entity"
+        #     )
 
-                col.operator(
-                    "mcblend.import_rp_entity",
-                    text="Import from project"
-                )
+        #     if project.entity_names in project.entities:
+        #         # TODO -select some other properties of the entity here
+        #         col.operator(
+        #             "mcblend.import_rp_entity",
+        #             text="Import from project"
+        #         )
 
 # Resource pack panel
 class MCBLEND_PT_BonePanel(bpy.types.Panel):
