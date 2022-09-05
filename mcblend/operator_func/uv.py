@@ -15,7 +15,7 @@ from .json_tools import get_vect_json
 from .common import (
     MINECRAFT_SCALE_FACTOR, McblendObject, McblendObjectGroup, CubePolygon,
     MeshType)
-from .bedrock_packs import Vector2di
+from .extra_types import Vector2di
 
 
 

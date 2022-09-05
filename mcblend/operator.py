@@ -21,9 +21,9 @@ from .operator_func import (
     export_model, export_animation, fix_uvs, separate_mesh_cubes, set_uvs,
     import_model, inflate_objects, reload_rp_entities,
     import_model_form_project, apply_materials, prepare_physics_simulation)
-from .operator_func.bedrock_packs.json import CompactEncoder
+from .operator_func.sqlite_bedrock_packs.better_json import (
+    CompactEncoder, JSONCDecoder)
 from .operator_func.exception import NotEnoughTextureSpace, ImporterException
-from .operator_func.bedrock_packs.json import JSONCDecoder
 from .operator_func.texture_generator import (
     list_mask_types_as_blender_enum, UvMaskTypes, MixMaskMode)
 

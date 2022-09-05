@@ -15,7 +15,7 @@ import bpy
 
 from .common import (
     MINECRAFT_SCALE_FACTOR, CubePolygons, CubePolygon, MeshType)
-from .bedrock_packs import Vector3di, Vector3d, Vector2d
+from .extra_types import Vector3di, Vector3d, Vector2d
 from .uv import CoordinatesConverter
 from .exception import ImporterException
 

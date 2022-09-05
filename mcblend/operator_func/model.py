@@ -16,7 +16,7 @@ from .common import (
     MINECRAFT_SCALE_FACTOR, McblendObject, McblendObjectGroup, MCObjType,
     CubePolygons, CubePolygon, MeshType
 )
-from .bedrock_packs import Vector2di, Vector3d, Vector3di
+from .extra_types import Vector2di, Vector3d, Vector3di
 from .json_tools import get_vect_json
 from .exception import ExporterException
 from .uv import CoordinatesConverter
