@@ -798,14 +798,24 @@ class MCBLEND_PT_ProjectPanel(bpy.types.Panel):
             text="", icon='FILE_REFRESH'
         )
         project = context.scene.mcblend_project
-        col.prop(project, "entity_names", text="Entity")
-        # Don't draw dropdown lists if they're empty
-        # if len(project.entities) > 0:
-        #     col.prop_search(
-        #         data=project, property="entity_names",
-        #         search_data=project, search_property="entities",
-        #         text="Entity"
-        #     )
+        # col.prop(project, "entity_names", text="Entity")
+        col.prop_search(
+            data=project, property="selected_entity",
+            search_data=project, search_property="entities",
+            text="Entity"
+        )
+        # if len(project.render_controllers) > 0:
+        for rc in project.render_controllers:
+            box = col.box()
+            box.label(text=rc.identifier)
+            box.prop(rc, "geometries", text="Geometry")
+            box.prop(rc, "textures", text="Texture")
+            materials_box = box.box()
+            materials_box.label(text="Materials")
+            for material_pattern in rc.material_patterns:
+                materials_box.prop(
+                    material_pattern, "materials",
+                    text=material_pattern.pattern)
 
         #     if project.entity_names in project.entities:
         #         # TODO -select some other properties of the entity here

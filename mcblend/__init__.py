@@ -64,9 +64,12 @@ from .common_data import (
     MCBLEND_JustName,
     MCBLEND_NameValuePair,
     MCBLEND_EnumCache,
+    MCBLEND_DbEntry,
 )
 
 from .resource_pack_data import (
+    MCBLEND_RcMaterialPattern,
+    MCBLEND_RenderController,
     MCBLEND_ProjectProperties,
 )
 
@@ -117,6 +120,10 @@ classes = (
     MCBLEND_JustName,
     MCBLEND_NameValuePair,
     MCBLEND_EnumCache,
+    MCBLEND_DbEntry,
+
+    MCBLEND_RcMaterialPattern,
+    MCBLEND_RenderController,
     MCBLEND_ProjectProperties,
 
     MCBLEND_PT_ObjectPropertiesPanel,

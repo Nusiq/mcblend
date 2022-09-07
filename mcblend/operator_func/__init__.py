@@ -6,7 +6,6 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple
 from dataclasses import dataclass, field
-from collections import defaultdict
 
 import bpy
 from bpy.types import Image, Material
@@ -366,7 +365,28 @@ def reload_rp_entities(context: bpy_types.Context):
     if not rp_path.exists() or rp_path.is_file():
         return
     load_resource_pack(rp_path)
-
+    connection = get_db()
+    mcblend_project = context.scene.mcblend_project
+    mcblend_project.entities.clear()
+    q = '''
+    SELECT ClientEntity_pk, identifier
+    FROM ClientEntity
+    ORDER BY identifier;
+    '''
+    duplicate_counter: int = 1
+    last_name: Optional[str] = None
+    for pk, name in connection.execute(q):
+        entity = mcblend_project.entities.add()
+        # Add primary key property
+        entity.primary_key = pk
+        # Add name (if duplicated add index to it)
+        if name == last_name:
+            duplicate_counter += 1
+            entity.name = f'{name} ({duplicate_counter})'
+        else:
+            duplicate_counter = 1
+            entity.name = name
+        last_name = name
 
 @dataclass
 class RcStackItem:

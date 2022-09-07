@@ -4,7 +4,7 @@ as pointers.
 '''
 import bpy
 from bpy.props import (
-    CollectionProperty, StringProperty, BoolProperty)
+    CollectionProperty, StringProperty, BoolProperty, IntProperty)
 
 class MCBLEND_JustName(bpy.types.PropertyGroup):
     '''Custom property group which has only the "name" property'''
@@ -35,3 +35,11 @@ class MCBLEND_EnumCache(bpy.types.PropertyGroup):
         default=False)
     values: CollectionProperty(  # type: ignore
         type=MCBLEND_JustName)
+
+class MCBLEND_DbEntry(bpy.types.PropertyGroup):
+    '''
+    Used for creating CollectionProperties that store primary keys from some
+    query in the database and a name for displaying in the GUI.
+    '''
+    primary_key: IntProperty()
+    name: StringProperty(default="")
