@@ -62,8 +62,6 @@ from .operator import (
 
 from .common_data import (
     MCBLEND_JustName,
-    MCBLEND_NameValuePair,
-    MCBLEND_EnumCache,
     MCBLEND_DbEntry,
 )
 
@@ -118,8 +116,6 @@ bl_info = {
 
 classes = (
     MCBLEND_JustName,
-    MCBLEND_NameValuePair,
-    MCBLEND_EnumCache,
     MCBLEND_DbEntry,
 
     MCBLEND_RcMaterialPattern,

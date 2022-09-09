@@ -10,18 +10,6 @@ from .operator_func import reload_rp_entities
 from .operator_func.db_handler import get_db
 
 
-def enum_project_entities(self, context):
-    '''List project entities as blender enum list.'''
-    # pylint: disable=unused-argument
-    connection = get_db()
-    return [
-        (str(i),j,k)  # It must be tuple of strings
-        for i,j,k in connection.execute(
-            '''
-            SELECT ClientEntity_pk, identifier, identifier
-            FROM ClientEntity;'''
-        )]
-
 # RENDER CONTROLLER'S MATERIAL FIELD
 def enum_materials(self, context):
     q = '''
@@ -81,7 +69,6 @@ def enum_geometries(self, context):
         ON ClientEntityGeometryField.identifier = Geometry.identifier
     WHERE
         ClientEntityGeometryField.shortName == RenderControllerGeometryField.shortName
-        -- AND ClientEntity.identifier == 'shapescape:citizen';
         AND RenderController_pk == ?
         AND ClientEntity_pk == ?;
     '''
@@ -150,14 +137,6 @@ class MCBLEND_RenderController(bpy.types.PropertyGroup):
         type=MCBLEND_RcMaterialPattern)
 
 # RESOURCE PACK (PROJECT)
-def update_entity_names(self, context):
-    '''
-    Called on update of project.entity_names. Resets the values of selected
-    enum items in 'entities' and 'render_controllers'. If necessary updates
-    the cached values of selected entity and its render controllers.
-    '''
-    # pylint: disable=unused-argument
-
 def update_selected_entity(self, context):
     '''
     Called on update of project.selected_entity.
@@ -213,7 +192,4 @@ class MCBLEND_ProjectProperties(bpy.types.PropertyGroup):
         type=MCBLEND_DbEntry)
     render_controllers: CollectionProperty(
         type=MCBLEND_RenderController)
-    # entity_names: EnumProperty(  # type: ignore
-    #     items=enum_project_entities,
-    #     update=update_entity_names)
 
