@@ -1,6 +1,8 @@
 '''
 Custom Blender objects with properties of the resource pack.
 '''
+from typing import TYPE_CHECKING, Any, cast
+
 import bpy
 from bpy.props import (
     CollectionProperty, EnumProperty, IntProperty, StringProperty)
@@ -8,7 +10,7 @@ from bpy.props import (
 from .common_data import MCBLEND_DbEntry
 from .operator_func import reload_rp_entities
 from .operator_func.db_handler import get_db_handler
-
+from .extra_types import CollectionPropertyAnnotation
 
 # RENDER CONTROLLER'S MATERIAL FIELD
 def enum_materials(self, context) -> list[tuple[str, str, str]]:
@@ -39,6 +41,13 @@ class MCBLEND_MaterialPattern(bpy.types.PropertyGroup):
     materials: EnumProperty(  # type: ignore
         items=enum_materials,
         description="The material value of this material pattern")
+
+if TYPE_CHECKING:
+    class MCBLEND_MaterialPattern:
+        active_rc_pk: int
+        active_entity_pk: int
+        pattern: str
+        materials: str
 
 # RENDER CONTROLLER
 def enum_geometries(self, context) -> list[tuple[str, str, str]]:
@@ -90,6 +99,15 @@ class MCBLEND_RenderController(bpy.types.PropertyGroup):
         type=MCBLEND_MaterialPattern,
         description="List of material patters used by this render controller")
 
+if TYPE_CHECKING:
+    class MCBLEND_RenderController:
+        active_entity_pk: int
+        primary_key: int
+        identifier: str
+        geometries: str
+        textures: str
+        material_patterns: CollectionPropertyAnnotation[MCBLEND_MaterialPattern]
+
 # RESOURCE PACK (PROJECT)
 def update_selected_entity(self, context) -> None:
     '''
@@ -99,12 +117,13 @@ def update_selected_entity(self, context) -> None:
     self.render_Controllers.
     '''
     # pylint: disable=unused-argument
+    self = cast(MCBLEND_ProjectProperties, self)
     pk = self.entities[self.selected_entity].primary_key
     self.render_controllers.clear()
     db_handler = get_db_handler()
     for rc_pk, rc_identifier in db_handler.list_render_controllers_from_db(pk):
         rc = self.render_controllers.add()
-        rc.primary_key = rc_pk
+        rc.primary_key = -1 if rc_pk is None else rc_pk 
         rc.identifier = rc_identifier
         rc.active_entity_pk = pk
         for pattern in db_handler.list_bone_name_patterns_from_rc(rc_pk):
@@ -134,3 +153,10 @@ class MCBLEND_ProjectProperties(bpy.types.PropertyGroup):
     render_controllers: CollectionProperty(
         type=MCBLEND_RenderController,
         description="List of loaded render controllers")
+
+if TYPE_CHECKING:
+    class MCBLEND_ProjectProperties:
+        rp_path: str
+        selected_entity: str
+        entities: CollectionPropertyAnnotation[MCBLEND_DbEntry]
+        render_controllers: CollectionPropertyAnnotation[MCBLEND_RenderController]

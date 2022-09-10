@@ -25,7 +25,7 @@ class DbHandler:
         self.gui_enum_textures_from_db.cache_clear()
         self.list_render_controllers_from_db.cache_clear()
         self.list_bone_name_patterns_from_rc.cache_clear()
-        self.list_entities_with_models_from_db.cache_clear()
+        self.list_entities_with_models_and_rc_from_db.cache_clear()
 
     def load_resource_pack(self, path: Path):
         '''Load a resource pack into the database'''
@@ -55,7 +55,7 @@ class DbHandler:
         ("short_name;identifier", short_name, identifier).
         '''
         query = '''
-        SELECT
+        SELECT DISTINCT
             ClientEntityMaterialField.shortName || ';' || ClientEntityMaterialField.identifier,
             ClientEntityMaterialField.shortName,
             ClientEntityMaterialField.identifier
@@ -88,42 +88,52 @@ class DbHandler:
         - full identifier.
 
         The values are cached and prepared to be used as an enum property in
-        GUI.
+        GUI. The first value (geometry primary key) contains a string that
+        can be converted to int. If the geometry is not found, the first value
+        is a string build from pattern "not_found_{number}".
         '''
         query = '''
-        SELECT
+        SELECT DISTINCT
             Geometry_pk,
-            RenderControllerGeometryField.shortName,
-            Geometry.identifier
+            ClientEntityGeometryField.shortName,
+            ClientEntityGeometryField.identifier
         FROM
             ClientEntity
         JOIN ClientEntityRenderControllerField
             ON ClientEntityRenderControllerField.ClientEntity_fk = ClientEntity_pk
         JOIN ClientEntityGeometryField
             ON ClientEntityGeometryField.ClientEntity_fk = ClientEntity_pk
-        JOIN RenderController
+        LEFT OUTER JOIN RenderController
             ON ClientEntityRenderControllerField.identifier = RenderController.identifier
-        JOIN RenderControllerGeometryField
+        LEFT OUTER JOIN RenderControllerGeometryField
             ON RenderControllerGeometryField.RenderController_fk = RenderController_pk
         LEFT OUTER JOIN Geometry
             ON ClientEntityGeometryField.identifier = Geometry.identifier
         WHERE
-            ClientEntityGeometryField.shortName == RenderControllerGeometryField.shortName
+            (
+                ClientEntityGeometryField.shortName == RenderControllerGeometryField.shortName
+                OR RenderControllerGeometryField.shortName IS NULL
+            )
             AND RenderController_pk == ?
             AND ClientEntity_pk == ?;
         '''
-        return [
-            (str(geometry_pk), str(short_name), str(identifier))
-            for geometry_pk, short_name, identifier in
-            self.db.execute(query, (rc_pk, entity_pk))
-        ]
+        not_found_counter = 0
+        result = []
+        for geometry_pk, short_name, identifier in self.db.execute(
+                query, (rc_pk, entity_pk)):
+            if geometry_pk is None:
+                geometry_pk = f'not_found_{geometry_pk}'
+                not_found_counter += 1
+            result.append((str(geometry_pk), str(short_name), str(identifier)))
+        return result
 
     @cache
     def gui_enum_textures_from_db(
             self, rc_pk: int, entity_pk: int) -> list[tuple[str, str, str]]:
         '''
         Lists all of the textures from the database, which are connected to the
-        given render controller and entity. The results are tuples that contain:
+        given render controller and entity. The results are tuples that
+        contain:
         - primary key of texture file
         - short name used by RC and entity
         - full path to the texture file
@@ -209,18 +219,20 @@ class DbHandler:
         ]
 
     @cache
-    def list_entities_with_models_from_db(self) -> list[tuple[int, str]]:
+    def list_entities_with_models_and_rc_from_db(
+            self) -> list[tuple[int, str]]:
         '''
-        Lists all of the entities that use geometry field from the database.
-        The results are tuples:
-        that contain:
+        Lists all of the all of the  entities from database that use geometries
+        and render_controlelrs fields. The results are tuples that contain:
+
         - primary key of the entity
         - identifier of the entity
+
         Results are ordered by identifier
         '''
 
         # DISTINCT in SELECT is needed, because there can be multiple geometry
-        # fields in one entity
+        # or rc fields in one entity
         query = '''
         SELECT DISTINCT
             ClientEntity_pk, ClientEntity.identifier
@@ -228,6 +240,8 @@ class DbHandler:
             ClientEntity
         JOIN ClientEntityGeometryField
             ON ClientEntityGeometryField.ClientEntity_fk = ClientEntity_pk
+        JOIN ClientEntityRenderControllerField
+            ON ClientEntityRenderControllerField.ClientEntity_fk = ClientEntity_pk
         ORDER BY ClientEntity.identifier;
         '''
         return [

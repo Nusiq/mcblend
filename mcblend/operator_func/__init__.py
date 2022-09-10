@@ -4,7 +4,7 @@ Functions used directly by the blender operators.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Tuple, cast
+from typing import Dict, Iterable, List, Optional, Tuple, cast, TYPE_CHECKING
 from dataclasses import dataclass, field
 from collections import defaultdict
 
@@ -14,8 +14,6 @@ import bpy_types
 import numpy as np
 
 from .sqlite_bedrock_packs.better_json import load_jsonc
-# from ..resource_pack_data import MCBLEND_ProjectProperties, MCBLEND_RcMaterialPattern, MCBLEND_RenderController
-# from ..object_data import MCBLEND_ObjectProperties
 
 from .animation import AnimationExport
 from .common import (
@@ -28,6 +26,13 @@ from .material import create_bone_material
 from .model import ModelExport
 from .uv import CoordinatesConverter, UvMapper
 from .db_handler import get_db_handler
+
+if TYPE_CHECKING:
+    from ..resource_pack_data import MCBLEND_ProjectProperties
+    from ..object_data import MCBLEND_ObjectProperties
+else:
+    MCBLEND_ProjectProperties = None
+    MCBLEND_ObjectProperties = None
 
 def export_model(
         context: bpy_types.Context) -> Tuple[Dict, Iterable[str]]:
@@ -374,7 +379,7 @@ def reload_rp_entities(context: bpy_types.Context):
     mcblend_project.entities.clear()
     duplicate_counter: int = 1
     last_name: Optional[str] = None
-    for pk, name in db_handler.list_entities_with_models_from_db():
+    for pk, name in db_handler.list_entities_with_models_and_rc_from_db():
         entity = mcblend_project.entities.add()
         # Add primary key property
         entity.primary_key = pk
@@ -397,22 +402,21 @@ class RcStackItem:
     materials: Dict[str, str] = field(default_factory=dict)
     '''Materials dict with pattern keys and full material names values.'''
 
-# TODO - implement using the new API
 def import_model_form_project(context: bpy_types.Context) -> List[str]:
     '''
     Imports model using data selected in Project menu.
+
     :returns: list of warnings
     '''
     # 1. Load cached data
     db_handler = get_db_handler()
     project = context.scene.mcblend_project
-    # project = cast(MCBLEND_ProjectProperties, project)
+    project = cast(MCBLEND_ProjectProperties, project)
 
     # 5. Unpack the data (get full IDs instead of short names) from render
     # controllers into a single object and group it by used geometry.
     geo_rc_stacks: Dict[int, List[RcStackItem]] = defaultdict(list)
     for render_controller in project.render_controllers:
-        # render_controller = cast(MCBLEND_RenderController, render_controller)
         # TODO - for now I'm assuming th the render controller is valid
 
         texture_file_pk = int(render_controller.textures)
@@ -428,9 +432,6 @@ def import_model_form_project(context: bpy_types.Context) -> List[str]:
         new_rc_stack_item = RcStackItem(texture)
         geo_rc_stacks[geo_pk].append(new_rc_stack_item)
         for material_pattern_obj in render_controller.material_patterns:
-            # material_pattern_obj = cast(
-            #     MCBLEND_RcMaterialPattern, material_pattern_obj)
-            
             # Materials enum are stored as: short_name;identifier
             _, material_full_name = material_pattern_obj.materials.split(
                 ";", 1)
@@ -468,8 +469,8 @@ def import_model_form_project(context: bpy_types.Context) -> List[str]:
 
         # 7.1. Set proper textures resolution and model bounds
         model_properties = armature.mcblend
-        # model_properties = cast(
-        #     MCBLEND_ObjectProperties, model_properties)
+        model_properties = cast(
+            MCBLEND_ObjectProperties, model_properties)
 
         model_properties.texture_width = geometry.texture_width
         model_properties.texture_height = geometry.texture_height
