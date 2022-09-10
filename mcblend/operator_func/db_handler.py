@@ -235,3 +235,33 @@ class DbHandler:
             for entity_pk, identifier in
             self.db.execute(query)
         ]
+
+    def get_texture_file_path(self, texture_file_pk: int) -> Path:
+        '''
+        Returns the path to the texture file with the given primary key.
+        '''
+        query = '''
+        SELECT path
+        FROM TextureFile
+        WHERE TextureFile_pk == ?;
+        '''
+        return self.db.execute(query, (texture_file_pk,)).fetchone()[0]
+
+    def get_geometry(self, geometry_pk: int) -> tuple[Path, str]:
+        '''
+        Returns pair of the path to the geometry file and its identifier
+        based on the geometry primary key from the database.
+        '''
+        query = '''
+        SELECT
+            GeometryFile.path,
+            Geometry.identifier
+        FROM
+            Geometry
+        JOIN
+            GeometryFile
+            ON Geometry.GeometryFile_fk == GeometryFile_pk
+        WHERE
+            Geometry_pk == ?;
+        '''
+        return tuple(self.db.execute(query, (geometry_pk,)).fetchone())

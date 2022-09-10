@@ -2,10 +2,12 @@
 This module contains all of the panels for mcblend GUI.
 '''
 # don't import future annotations Blender needs that
-from typing import List, Optional
+from typing import List, Optional, cast
 from dataclasses import dataclass
 
 import bpy
+
+from .resource_pack_data import MCBLEND_ProjectProperties
 
 from .object_data import EffectTypes
 from .operator_func.common import MeshType
@@ -790,14 +792,15 @@ class MCBLEND_PT_ProjectPanel(bpy.types.Panel):
     def draw(self, context):
         col = self.layout.column()
         row = col.row()
+        project = context.scene.mcblend_project
+        project = cast(MCBLEND_ProjectProperties, project)
         row.prop(
-            context.scene.mcblend_project, "rp_path", text="Resource Pack"
+            project, "rp_path", text="Resource Pack"
         )
         row.operator(
             "mcblend.reload_rp",
             text="", icon='FILE_REFRESH'
         )
-        project = context.scene.mcblend_project
         # col.prop(project, "entity_names", text="Entity")
         col.prop_search(
             data=project, property="selected_entity",
@@ -817,12 +820,11 @@ class MCBLEND_PT_ProjectPanel(bpy.types.Panel):
                     material_pattern, "materials",
                     text=material_pattern.pattern)
 
-        #     if project.entity_names in project.entities:
-        #         # TODO -select some other properties of the entity here
-        #         col.operator(
-        #             "mcblend.import_rp_entity",
-        #             text="Import from project"
-        #         )
+        if project.selected_entity in project.entities:
+            col.operator(
+                "mcblend.import_rp_entity",
+                text="Import from project"
+            )
 
 # Resource pack panel
 class MCBLEND_PT_BonePanel(bpy.types.Panel):
