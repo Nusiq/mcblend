@@ -22,7 +22,8 @@ from .importer import ImportGeometry, ModelLoader
 from .material import create_bone_material
 from .model import ModelExport
 from .uv import CoordinatesConverter, UvMapper
-from .db_handler import get_db, load_resource_pack, delete_db
+from .db_handler import (
+    load_resource_pack, delete_db, yield_entities_from_db)
 
 def export_model(
         context: bpy_types.Context) -> Tuple[Dict, Iterable[str]]:
@@ -353,7 +354,6 @@ def inflate_objects(
             counter += 1
     return counter
 
-# TODO - implement using the new API
 def reload_rp_entities(context: bpy_types.Context):
     '''
     Loads the names of the entities used in the resource pack.
@@ -365,17 +365,11 @@ def reload_rp_entities(context: bpy_types.Context):
     if not rp_path.exists() or rp_path.is_file():
         return
     load_resource_pack(rp_path)
-    connection = get_db()
     mcblend_project = context.scene.mcblend_project
     mcblend_project.entities.clear()
-    q = '''
-    SELECT ClientEntity_pk, identifier
-    FROM ClientEntity
-    ORDER BY identifier;
-    '''
     duplicate_counter: int = 1
     last_name: Optional[str] = None
-    for pk, name in connection.execute(q):
+    for pk, name in yield_entities_from_db():
         entity = mcblend_project.entities.add()
         # Add primary key property
         entity.primary_key = pk

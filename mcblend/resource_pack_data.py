@@ -7,30 +7,17 @@ from bpy.props import (
 
 from .common_data import MCBLEND_DbEntry
 from .operator_func import reload_rp_entities
-from .operator_func.db_handler import get_db
+from .operator_func.db_handler import (
+    get_db, yield_materials_from_db, yield_geometries_from_db,
+    yield_textures_from_db, yield_render_controllers_from_db,
+    yield_bone_name_patterns_from_rc)
 
 
 # RENDER CONTROLLER'S MATERIAL FIELD
 def enum_materials(self, context):
-    q = '''
-    SELECT
-        ClientEntityMaterialField.identifier,
-        ClientEntityMaterialField.shortName
-    FROM
-        RenderControllerMaterialsField
-    JOIN
-        ClientEntityMaterialField
-        ON ClientEntityMaterialField.shortName = RenderControllerMaterialsField.shortName
-    WHERE
-        ClientEntityMaterialField.shortName = RenderControllerMaterialsField.shortName
-        AND RenderControllerMaterialsField.RenderController_fk = ?
-        AND ClientEntityMaterialField.ClientEntity_fk = ?
-        AND RenderControllerMaterialsField.boneNamePattern = ?;
-    '''
-    connection = get_db()
     result = []
-    for identifier, short_name in connection.execute(
-            q, (self.active_rc_pk, self.active_entity_pk, self.pattern)):
+    for identifier, short_name in yield_materials_from_db(
+            self.active_rc_pk, self.active_entity_pk, self.pattern):
         result.append((identifier, short_name, identifier))
     return result
 
@@ -50,65 +37,19 @@ class MCBLEND_RcMaterialPattern(bpy.types.PropertyGroup):
 # RENDER CONTROLLER
 def enum_geometries(self, context):
     # pylint: disable=unused-argument
-    q = '''
-    SELECT
-        Geometry_pk,
-        RenderControllerGeometryField.shortName,
-        Geometry.identifier
-    FROM
-        ClientEntity
-    JOIN ClientEntityRenderControllerField
-        ON ClientEntityRenderControllerField.ClientEntity_fk = ClientEntity_pk
-    JOIN ClientEntityGeometryField
-        ON ClientEntityGeometryField.ClientEntity_fk = ClientEntity_pk
-    JOIN RenderController
-        ON ClientEntityRenderControllerField.identifier = RenderController.identifier
-    JOIN RenderControllerGeometryField
-        ON RenderControllerGeometryField.RenderController_fk = RenderController_pk
-    LEFT OUTER JOIN Geometry
-        ON ClientEntityGeometryField.identifier = Geometry.identifier
-    WHERE
-        ClientEntityGeometryField.shortName == RenderControllerGeometryField.shortName
-        AND RenderController_pk == ?
-        AND ClientEntity_pk == ?;
-    '''
-    connection = get_db()
     entity_pk = self.active_entity_pk
     result = []
-    for geo_pk, geo_short_name, geo_identifier in connection.execute(
-            q, (self.primary_key, entity_pk)):
+    for geo_pk, geo_short_name, geo_identifier in yield_geometries_from_db(
+            self.primary_key, entity_pk):
         result.append((str(geo_pk), geo_short_name, geo_identifier))
     return result
 
 def enum_textures(self, context):
     # pylint: disable=unused-argument
-    q = '''
-    SELECT
-        TextureFile_pk,
-        RenderControllerTexturesField.shortName,
-        TextureFile.path
-    FROM
-        ClientEntity
-    JOIN ClientEntityRenderControllerField
-        ON ClientEntityRenderControllerField.ClientEntity_fk = ClientEntity_pk
-    JOIN ClientEntityTextureField
-        ON ClientEntityTextureField.ClientEntity_fk = ClientEntity_pk
-    JOIN RenderController
-        ON ClientEntityRenderControllerField.identifier = RenderController.identifier
-    JOIN RenderControllerTexturesField
-        ON RenderControllerTexturesField.RenderController_fk = RenderController_pk
-    LEFT OUTER JOIN TextureFile
-        ON ClientEntityTextureField.identifier = TextureFile.identifier
-    WHERE
-        ClientEntityTextureField.shortName == RenderControllerTexturesField.shortName
-        AND RenderController_pk == ?
-        AND ClientEntity_pk == ?;
-    '''
-    connection = get_db()
     entity_pk = self.active_entity_pk
     result = []
-    for texture_pk, texture_short_name, texture_path in connection.execute(
-            q, (self.primary_key, entity_pk)):
+    for texture_pk, texture_short_name, texture_path in yield_textures_from_db(
+            self.primary_key, entity_pk):
         val = (
             str(texture_pk),
             texture_short_name,
@@ -142,33 +83,14 @@ def update_selected_entity(self, context):
     Called on update of project.selected_entity.
     '''
     # pylint: disable=unused-argument
-    q = '''
-    SELECT
-        RenderController_pk,
-        RenderController.identifier
-    FROM
-        ClientEntity
-    JOIN ClientEntityRenderControllerField
-        ON ClientEntityRenderControllerField.ClientEntity_fk = ClientEntity_pk
-    LEFT OUTER JOIN RenderController
-        ON ClientEntityRenderControllerField.identifier = RenderController.identifier
-    WHERE
-        ClientEntity_pk == ?;
-    '''
     pk = self.entities[self.selected_entity].primary_key
-    connection = get_db()
     self.render_controllers.clear()
-    for rc_pk, rc_identifier in connection.execute(q, (pk,)):
+    for rc_pk, rc_identifier in yield_render_controllers_from_db(pk):
         rc = self.render_controllers.add()
         rc.primary_key = rc_pk
         rc.identifier = rc_identifier
         rc.active_entity_pk = pk
-        qq = '''
-        SELECT DISTINCT boneNamePattern
-        FROM RenderControllerMaterialsField
-        WHERE RenderController_fk = ?;
-        '''
-        for pattern, in connection.execute(qq, (rc_pk,)):
+        for pattern in yield_bone_name_patterns_from_rc(rc_pk):
             pattern_field = rc.material_patterns.add()
             pattern_field.pattern = pattern
             # Reused properties
@@ -192,4 +114,3 @@ class MCBLEND_ProjectProperties(bpy.types.PropertyGroup):
         type=MCBLEND_DbEntry)
     render_controllers: CollectionProperty(
         type=MCBLEND_RenderController)
-
