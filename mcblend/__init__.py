@@ -66,7 +66,7 @@ from .common_data import (
 )
 
 from .resource_pack_data import (
-    MCBLEND_RcMaterialPattern,
+    MCBLEND_MaterialPattern,
     MCBLEND_RenderController,
     MCBLEND_ProjectProperties,
 )
@@ -118,7 +118,7 @@ classes = (
     MCBLEND_JustName,
     MCBLEND_DbEntry,
 
-    MCBLEND_RcMaterialPattern,
+    MCBLEND_MaterialPattern,
     MCBLEND_RenderController,
     MCBLEND_ProjectProperties,
 

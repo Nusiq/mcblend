@@ -11,31 +11,51 @@ from .operator_func.db_handler import get_db_handler
 
 
 # RENDER CONTROLLER'S MATERIAL FIELD
-def enum_materials(self, context):
+def enum_materials(self, context) -> list[tuple[str, str, str]]:
+    '''
+    Generates list for the materials enum property of the
+    MCBLEND_MaterialPattern.
+    '''
     return get_db_handler().gui_enum_materials_from_db(
         self.active_rc_pk, self.active_entity_pk, self.pattern)
 
-class MCBLEND_RcMaterialPattern(bpy.types.PropertyGroup):
+class MCBLEND_MaterialPattern(bpy.types.PropertyGroup):
     '''
-    Represents a material field in the render controller.
+    Used to store information about material field in a render controller of
+    the selected entity in the GUI of the model importer.
     '''
     # Reused properties from parent objects for quick access
-    active_rc_pk: IntProperty()
-    active_entity_pk: IntProperty()
+    active_rc_pk: IntProperty(  # type: ignore
+        description=(
+            "Primary key of the render controller that owns this material"
+            " pattern")
+    )
+    active_entity_pk: IntProperty(  # type: ignore
+        description="Primary key of the active entity")
 
     # Actual properties of the object
-    pattern: StringProperty()
-    materials: EnumProperty(
-        items=enum_materials)
+    pattern: StringProperty(  # type: ignore
+        description="The pattern value of this material pattern")
+    materials: EnumProperty(  # type: ignore
+        items=enum_materials,
+        description="The material value of this material pattern")
 
 # RENDER CONTROLLER
-def enum_geometries(self, context):
+def enum_geometries(self, context) -> list[tuple[str, str, str]]:
+    '''
+    Generates list for the geometries enum property of the
+    MCBLEND_RenderController.
+    '''
     # pylint: disable=unused-argument
     entity_pk = self.active_entity_pk
     return get_db_handler().gui_enum_geometries_from_db(
         self.primary_key, entity_pk)
 
-def enum_textures(self, context):
+def enum_textures(self, context) -> list[tuple[str, str, str]]:
+    '''
+    Generates list for the textues enum property of the
+    MCBLEND_RenderController.
+    '''
     # pylint: disable=unused-argument
     entity_pk = self.active_entity_pk
     return get_db_handler().gui_enum_textures_from_db(
@@ -43,28 +63,40 @@ def enum_textures(self, context):
 
 class MCBLEND_RenderController(bpy.types.PropertyGroup):
     '''
-    Represents the properties to be selected in the render controller menu:
-    geometry, texture, material
+    Used to store infromation about one of the render controllers of the
+    selected entity in the GUI of the model impoerter.
     '''
     # Reused properties from parent objects for quick access
-    active_entity_pk: IntProperty()
+    active_entity_pk: IntProperty(  # type: ignore
+        description="Primary key of the selected entity")
 
     # Actual properties of the object
-    primary_key: IntProperty()
-    identifier: StringProperty()
+    primary_key: IntProperty(  # type: ignore
+        description="Primary key of this render controller")
+    identifier: StringProperty(   # type: ignore
+        description="Identifier of this render controller")
 
     geometries: EnumProperty(  # type: ignore
-        items=enum_geometries)
+        items=enum_geometries,
+        description="List of geometries of this render controller")
         # update=update_geometries)
     textures: EnumProperty(  # type: ignore
-        items=enum_textures)
-    material_patterns: CollectionProperty(
-        type=MCBLEND_RcMaterialPattern)
+        items=enum_textures,
+        description="List of textures of this render controller")
+
+    # Material pattern is a star pattern that matches the names of the bones
+    # in the geometry to assign materials
+    material_patterns: CollectionProperty(  # type: ignore
+        type=MCBLEND_MaterialPattern,
+        description="List of material patters used by this render controller")
 
 # RESOURCE PACK (PROJECT)
-def update_selected_entity(self, context):
+def update_selected_entity(self, context) -> None:
     '''
-    Called on update of project.selected_entity.
+    Called on update of selected_entity property of the
+    MCBLEND_ProjectProperties. Loads the data related to the selected entity
+    from the database and assigns it to self.entities and
+    self.render_Controllers.
     '''
     # pylint: disable=unused-argument
     pk = self.entities[self.selected_entity].primary_key
@@ -82,11 +114,10 @@ def update_selected_entity(self, context):
             pattern_field.active_entity_pk = pk
             pattern_field.active_rc_pk = rc_pk
 
-
 class MCBLEND_ProjectProperties(bpy.types.PropertyGroup):
     '''
-    Represents top level selction in ResourcePack menu (the entity selection
-    for importing).
+    Used to store information about the resource pack for the GUI of the model
+    importer.
     '''
     rp_path: StringProperty(  # type: ignore
         name="Resource pack path",
@@ -94,8 +125,12 @@ class MCBLEND_ProjectProperties(bpy.types.PropertyGroup):
         default="", subtype="DIR_PATH",
         update=lambda self, context: reload_rp_entities(context))
     selected_entity: StringProperty(   # type: ignore
-        default="", update=update_selected_entity)
+        default="",
+        description="Name that identifies one of the loaded entities",
+        update=update_selected_entity)
     entities: CollectionProperty(  # type: ignore
-        type=MCBLEND_DbEntry)
+        type=MCBLEND_DbEntry,
+        description="List of the loaded entities")
     render_controllers: CollectionProperty(
-        type=MCBLEND_RenderController)
+        type=MCBLEND_RenderController,
+        description="List of loaded render controllers")
