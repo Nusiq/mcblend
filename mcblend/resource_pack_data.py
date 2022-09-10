@@ -7,19 +7,13 @@ from bpy.props import (
 
 from .common_data import MCBLEND_DbEntry
 from .operator_func import reload_rp_entities
-from .operator_func.db_handler import (
-    get_db, yield_materials_from_db, yield_geometries_from_db,
-    yield_textures_from_db, yield_render_controllers_from_db,
-    yield_bone_name_patterns_from_rc)
+from .operator_func.db_handler import get_db_handler
 
 
 # RENDER CONTROLLER'S MATERIAL FIELD
 def enum_materials(self, context):
-    result = []
-    for identifier, short_name in yield_materials_from_db(
-            self.active_rc_pk, self.active_entity_pk, self.pattern):
-        result.append((identifier, short_name, identifier))
-    return result
+    return get_db_handler().gui_enum_materials_from_db(
+        self.active_rc_pk, self.active_entity_pk, self.pattern)
 
 class MCBLEND_RcMaterialPattern(bpy.types.PropertyGroup):
     '''
@@ -38,24 +32,14 @@ class MCBLEND_RcMaterialPattern(bpy.types.PropertyGroup):
 def enum_geometries(self, context):
     # pylint: disable=unused-argument
     entity_pk = self.active_entity_pk
-    result = []
-    for geo_pk, geo_short_name, geo_identifier in yield_geometries_from_db(
-            self.primary_key, entity_pk):
-        result.append((str(geo_pk), geo_short_name, geo_identifier))
-    return result
+    return get_db_handler().gui_enum_geometries_from_db(
+        self.primary_key, entity_pk)
 
 def enum_textures(self, context):
     # pylint: disable=unused-argument
     entity_pk = self.active_entity_pk
-    result = []
-    for texture_pk, texture_short_name, texture_path in yield_textures_from_db(
-            self.primary_key, entity_pk):
-        val = (
-            str(texture_pk),
-            texture_short_name,
-            texture_path.as_posix())
-        result.append(val)
-    return result
+    return get_db_handler().gui_enum_textures_from_db(
+            self.primary_key, entity_pk)
 
 class MCBLEND_RenderController(bpy.types.PropertyGroup):
     '''
@@ -85,12 +69,13 @@ def update_selected_entity(self, context):
     # pylint: disable=unused-argument
     pk = self.entities[self.selected_entity].primary_key
     self.render_controllers.clear()
-    for rc_pk, rc_identifier in yield_render_controllers_from_db(pk):
+    db_handler = get_db_handler()
+    for rc_pk, rc_identifier in db_handler.list_render_controllers_from_db(pk):
         rc = self.render_controllers.add()
         rc.primary_key = rc_pk
         rc.identifier = rc_identifier
         rc.active_entity_pk = pk
-        for pattern in yield_bone_name_patterns_from_rc(rc_pk):
+        for pattern in db_handler.list_bone_name_patterns_from_rc(rc_pk):
             pattern_field = rc.material_patterns.add()
             pattern_field.pattern = pattern
             # Reused properties

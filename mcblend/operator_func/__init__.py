@@ -22,8 +22,7 @@ from .importer import ImportGeometry, ModelLoader
 from .material import create_bone_material
 from .model import ModelExport
 from .uv import CoordinatesConverter, UvMapper
-from .db_handler import (
-    load_resource_pack, delete_db, yield_entities_from_db)
+from .db_handler import get_db_handler
 
 def export_model(
         context: bpy_types.Context) -> Tuple[Dict, Iterable[str]]:
@@ -360,16 +359,17 @@ def reload_rp_entities(context: bpy_types.Context):
 
     :param context: the context of running the operator.
     '''
-    delete_db()
+    db_handler = get_db_handler()
+    db_handler.delete_db()
     rp_path: Path = Path(context.scene.mcblend_project.rp_path)
     if not rp_path.exists() or rp_path.is_file():
         return
-    load_resource_pack(rp_path)
+    db_handler.load_resource_pack(rp_path)
     mcblend_project = context.scene.mcblend_project
     mcblend_project.entities.clear()
     duplicate_counter: int = 1
     last_name: Optional[str] = None
-    for pk, name in yield_entities_from_db():
+    for pk, name in db_handler.list_entities_with_models_from_db():
         entity = mcblend_project.entities.add()
         # Add primary key property
         entity.primary_key = pk
