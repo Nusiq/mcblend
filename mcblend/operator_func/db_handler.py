@@ -25,7 +25,7 @@ class DbHandler:
         self.gui_enum_textures_from_db.cache_clear()
         self.list_render_controllers_from_db.cache_clear()
         self.list_bone_name_patterns_from_rc.cache_clear()
-        self.list_entities_from_db.cache_clear()
+        self.list_entities_with_models_from_db.cache_clear()
 
     def load_resource_pack(self, path: Path):
         '''Load a resource pack into the database'''
@@ -209,18 +209,26 @@ class DbHandler:
         ]
 
     @cache
-    def list_entities_from_db(self) -> list[tuple[int, str]]:
+    def list_entities_with_models_from_db(self) -> list[tuple[int, str]]:
         '''
-        Lists all of the entities from the database. The results are tuples
+        Lists all of the entities that use geometry field from the database.
+        The results are tuples:
         that contain:
         - primary key of the entity
         - identifier of the entity
         Results are ordered by identifier
         '''
+
+        # DISTINCT in SELECT is needed, because there can be multiple geometry
+        # fields in one entity
         query = '''
-        SELECT ClientEntity_pk, identifier
-        FROM ClientEntity
-        ORDER BY identifier;
+        SELECT DISTINCT
+            ClientEntity_pk, ClientEntity.identifier
+        FROM
+            ClientEntity
+        JOIN ClientEntityGeometryField
+            ON ClientEntityGeometryField.ClientEntity_fk = ClientEntity_pk
+        ORDER BY ClientEntity.identifier;
         '''
         return [
             (entity_pk, identifier)
