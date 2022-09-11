@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import json
-from typing import Dict, Iterable, List, Optional, Tuple, cast, TYPE_CHECKING
+from typing import Dict, Iterable, List, Optional, Tuple, cast, TYPE_CHECKING, TypedDict
 from dataclasses import dataclass, field
 from collections import defaultdict
 
@@ -406,68 +406,105 @@ class RcStackItem:
     materials: Dict[str, str] = field(default_factory=dict)
     '''Materials dict with pattern keys and full material names values.'''
 
-def import_model_form_project(context: bpy_types.Context) -> List[str]:
-    '''
-    Imports model using data selected in Project menu.
 
-    :returns: list of warnings
-    '''
-    debug_dictionary = {}
+# TODO - replace with names that actually make sense? Move it somewhere?
+class ImportModelFromProjectPrimaryKeysRenderController(TypedDict):
+    RenderController_pk: int
+    TextureFile_pk: int
+    Geometry_pk: int
+    ClientEntityMaterialField_pk: int
+    RenderControllerMaterialsField_pks: List[int]
 
+# TODO - replace with names that actually make sense? Move it somewhere?
+class ImportModelFromProjectPrimaryKeys(TypedDict):
+    ClientEntity_pk: int
+    render_controllers: List[ImportModelFromProjectPrimaryKeysRenderController]
+
+# TODO - replace with names that actually make sense? Move it somewhere?
+def import_model_from_project_get_primary_keys(
+        context: bpy_types.Context) -> ImportModelFromProjectPrimaryKeys:
     # 1. Load cached data
-    db_handler = get_db_handler()
     project = context.scene.mcblend_project
     project = cast(MCBLEND_ProjectProperties, project)
 
     entity_pk = project.entities[
         project.selected_entity].primary_key
-    debug_dictionary['ClientEntity_pk'] = entity_pk
 
-    # 5. Unpack the data (get full IDs instead of short names) from render
-    # controllers into a single object and group it by used geometry.
-    geo_rc_stacks: Dict[int, List[RcStackItem]] = defaultdict(list)
-    debug_dictionary['render_controllers'] = []
+    # 2. Build a dictionary with PKs of all of the queries needed to load the
+    # data about the model
+    query_data: ImportModelFromProjectPrimaryKeys = {}
+    # Load client entity PK
+    query_data['ClientEntity_pk'] = entity_pk
+    query_data['render_controllers'] = []
+    # Load all render controllers PKs
     for render_controller in project.render_controllers:
-        debug_dictionary_rc = {}
-        debug_dictionary['render_controllers'].append(debug_dictionary_rc)
-
+        # Load render controller PK
         rc_pk = render_controller.primary_key
-        debug_dictionary_rc['RenderController_pk'] = rc_pk
-        texture_file_pk = int(render_controller.textures)
-        debug_dictionary_rc['TextureFile_pk'] = texture_file_pk
-        geo_pk = int(render_controller.geometries)
-        debug_dictionary_rc['Geometry_pk'] = geo_pk
-        
+        query_data_rc = {}
+        query_data['render_controllers'].append(query_data_rc)
+        query_data_rc['RenderController_pk'] = rc_pk
 
-        texture_file_path = db_handler.get_texture_file_path(texture_file_pk)
-        # cached_rc - Real or fake render controller
-        # texture - Optional[Image] (bpy.types.Image)
+        # Load texture PK
         try:
+            texture_file_pk = int(render_controller.textures)
+        except ValueError:
+            texture_file_pk = -1
+        query_data_rc['TextureFile_pk'] = texture_file_pk
+
+        # Load geometry PK
+        geo_pk = int(render_controller.geometries)
+        query_data_rc['Geometry_pk'] = geo_pk
+
+        # Load all materials PKs
+        query_data_rc_materials = []
+        query_data_rc['RenderControllerMaterialsField_pks'] = query_data_rc_materials
+        query_data_rc['ClientEntityMaterialField_pk'] = -1
+        if len(render_controller.material_patterns) > 0:
+            # Materials loaded from render controller
+            for material_pattern_obj in render_controller.material_patterns:
+                rc_material_field_pk = int(material_pattern_obj.materials)
+                query_data_rc_materials.append(rc_material_field_pk)
+        else:
+            # Materials loaded from the entity it's a fake render controller
+            ce_material_field_pk = int(render_controller.fake_material_patterns)
+            query_data_rc['ClientEntityMaterialField_pk'] = ce_material_field_pk
+    return query_data
+
+def import_model_form_project(
+        context: bpy_types.Context,
+        query_data: ImportModelFromProjectPrimaryKeys) -> List[str]:
+    '''
+    Imports model using data selected in Project menu.
+
+    :returns: list of warnings
+    '''
+    db_handler = get_db_handler()
+    entity_pk = query_data['ClientEntity_pk']
+    geo_rc_stacks: Dict[int, List[RcStackItem]] = defaultdict(list)
+    for render_controller_data in query_data['render_controllers']:
+        rc_pk = render_controller_data['RenderController_pk']
+        try:
+            # texture - Optional[Image] (bpy.types.Image)
+            texture_file_path = db_handler.get_texture_file_path(
+                render_controller_data['TextureFile_pk'])
             texture = bpy.data.images.load(texture_file_path.as_posix())
         except RuntimeError:
             texture = None
         new_rc_stack_item = RcStackItem(texture)
-        geo_rc_stacks[geo_pk].append(new_rc_stack_item)
-        debug_dictionary_rc_materials = []
-        debug_dictionary_rc['RenderControllerMaterialsField_pks'] = debug_dictionary_rc_materials
-        debug_dictionary_rc['ClientEntityMaterialField_pk'] = None
-        if len(render_controller.material_patterns) > 0:
-            for material_pattern_obj in render_controller.material_patterns:
-                # Materials enum are stored as primary keys of the material
-                # field of render controller
-                rc_material_field_pk = int(material_pattern_obj.materials)
+        geo_rc_stacks[render_controller_data['Geometry_pk']].append(
+            new_rc_stack_item)
+        material_pks = render_controller_data['RenderControllerMaterialsField_pks']
+        if len(material_pks) > 0:
+            for rc_material_field_pk in material_pks:
                 pattern, material_full_name = db_handler.get_material_pattern_and_material(
                     entity_pk, rc_pk, rc_material_field_pk)
-
                 new_rc_stack_item.materials[pattern] = material_full_name
-                debug_dictionary_rc_materials.append(rc_material_field_pk)
         else:  # Pull materials from the entity it's a fake render controller
-            ce_material_field_pk = int(render_controller.fake_material_patterns)
+            ce_material_field_pk = render_controller_data[
+                'ClientEntityMaterialField_pk']
             material_full_name = db_handler.get_full_material_identifier(
                 ce_material_field_pk)
-            debug_dictionary_rc['ClientEntityMaterialField_pk'] = ce_material_field_pk
             new_rc_stack_item.materials['*'] = material_full_name
-
     # 7. Load every geometry
     # blender_materials - Prevents creating same material multiple times
     # it's a dictionary of materials which uses a tuple with pairs of
@@ -552,7 +589,6 @@ def import_model_form_project(context: bpy_types.Context) -> List[str]:
                     continue
                 c.blend_cube.data.materials.append(
                     blender_materials[tuple(bone_materials_id)])
-    print(json.dumps(debug_dictionary, indent=4))
     return warnings
 
 def apply_materials(context: bpy.types.Context):
