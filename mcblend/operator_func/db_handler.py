@@ -50,9 +50,10 @@ class DbHandler:
         - full identifier of the material
         - the short name used by RC and entity
 
+        The actual result is: ("short_name;identifier", short_name, identifier)
+
         The values are cached and prepared to be used as an enum property in
-        GUI. The actual result is:
-        ("short_name;identifier", short_name, identifier).
+        GUI.
         '''
         query = '''
         SELECT DISTINCT
@@ -77,6 +78,37 @@ class DbHandler:
         ]
 
     @cache
+    def gui_enum_fake_material_patterns_from_db(
+            self, entity_pk: int):
+        '''
+        Lists all of the materials from the database, which are connected to
+        give entity. The results are tuples that contain.
+        - full identifier of the material
+        - the short name used by RC and entity
+
+        The actual result is: ("short_name;identifier", short_name, identifier)
+
+        The values are cached and prepared to be used as an enum property in
+        GUI.
+        '''
+        query = '''
+        SELECT DISTINCT
+            ClientEntityMaterialField.shortName || ';' || ClientEntityMaterialField.identifier,
+            ClientEntityMaterialField.shortName,
+            ClientEntityMaterialField.identifier
+        FROM
+            ClientEntityMaterialField
+        WHERE
+            ClientEntityMaterialField.ClientEntity_fk = ?;
+        '''
+        return [
+            (str(identifier), str(name), str(description))
+            for identifier, name, description in
+            self.db.execute(query, (entity_pk,))
+        ]
+
+
+    @cache
     def gui_enum_geometries_from_db(
             self, rc_pk: int, entity_pk: int) -> list[tuple[str, str, str]]:
         '''
@@ -87,10 +119,13 @@ class DbHandler:
         - short name used by RC and entity
         - full identifier.
 
+        The first value (geometry primary key) contains a string that
+        can be converted to int. The geometry must be valid, if client entity
+        and RC have references to geometries that don't exist, they won't be
+        listed here.
+
         The values are cached and prepared to be used as an enum property in
-        GUI. The first value (geometry primary key) contains a string that
-        can be converted to int. If the geometry is not found, the first value
-        is a string build from pattern "not_found_{number}".
+        GUI.
         '''
         query = '''
         SELECT DISTINCT
@@ -103,29 +138,55 @@ class DbHandler:
             ON ClientEntityRenderControllerField.ClientEntity_fk = ClientEntity_pk
         JOIN ClientEntityGeometryField
             ON ClientEntityGeometryField.ClientEntity_fk = ClientEntity_pk
-        LEFT OUTER JOIN RenderController
+        JOIN RenderController
             ON ClientEntityRenderControllerField.identifier = RenderController.identifier
-        LEFT OUTER JOIN RenderControllerGeometryField
+        JOIN RenderControllerGeometryField
             ON RenderControllerGeometryField.RenderController_fk = RenderController_pk
-        LEFT OUTER JOIN Geometry
+        JOIN Geometry
             ON ClientEntityGeometryField.identifier = Geometry.identifier
         WHERE
-            (
-                ClientEntityGeometryField.shortName == RenderControllerGeometryField.shortName
-                OR RenderControllerGeometryField.shortName IS NULL
-            )
+            ClientEntityGeometryField.shortName == RenderControllerGeometryField.shortName
             AND RenderController_pk == ?
             AND ClientEntity_pk == ?;
         '''
-        not_found_counter = 0
-        result = []
-        for geometry_pk, short_name, identifier in self.db.execute(
-                query, (rc_pk, entity_pk)):
-            if geometry_pk is None:
-                geometry_pk = f'not_found_{geometry_pk}'
-                not_found_counter += 1
-            result.append((str(geometry_pk), str(short_name), str(identifier)))
-        return result
+        return [
+            (str(geometry_pk), str(short_name), str(identifier))
+            for geometry_pk, short_name, identifier in
+            self.db.execute(query, (rc_pk, entity_pk))
+        ]
+
+    @cache
+    def gui_enum_geometries_for_fake_rc_from_db(
+            self, entity_pk: int) -> list[tuple[str, str, str]]:
+        '''
+        Lists all of the geometries from the database, which are connected to
+        given entity. The results are tuples that contain:
+        - primary key of the geometry
+        - short name used by the entity
+        - full identifier.
+
+        The values are cached and prepared to be used as an enum property in
+        GUI.
+        '''
+        query = '''
+        SELECT DISTINCT
+            Geometry_pk,
+            ClientEntityGeometryField.shortName,
+            ClientEntityGeometryField.identifier
+        FROM
+            ClientEntity
+        JOIN ClientEntityGeometryField
+            ON ClientEntityGeometryField.ClientEntity_fk = ClientEntity_pk
+        JOIN Geometry
+            ON ClientEntityGeometryField.identifier = Geometry.identifier
+        WHERE
+            ClientEntity_pk == ?;
+        '''
+        return [
+            (str(geometry_pk), str(short_name), str(identifier))
+            for geometry_pk, short_name, identifier in
+            self.db.execute(query, (entity_pk,))
+        ]
 
     @cache
     def gui_enum_textures_from_db(
@@ -137,6 +198,9 @@ class DbHandler:
         - primary key of texture file
         - short name used by RC and entity
         - full path to the texture file
+
+        The texture file might not exist, in this case the primary key is
+        "-1".
 
         The values are cached and prepared to be used as an enum property in
         GUI.
@@ -164,9 +228,53 @@ class DbHandler:
             AND ClientEntity_pk == ?;
         '''
         return [
-            (str(texture_pk), str(short_name), path.as_posix())
+            (
+                "-1" if texture_pk is None else str(texture_pk),
+                str(short_name),
+                path.as_posix()
+            )
             for texture_pk, short_name, path in
             self.db.execute(query, (rc_pk, entity_pk))
+        ]
+
+    @cache
+    def gui_enum_textures_for_fake_rc_from_db(
+            self, entity_pk: int) -> list[tuple[str, str, str]]:
+        '''
+        Lists all of the textures from the database, which are connected to the
+        given entity. The results are tuples that contain:
+        - primary key of texture file
+        - short name used by entity
+        - full path to the texture file
+
+        The texture file might not exist, in this case the primary key is
+        "-1".
+
+        The values are cached and prepared to be used as an enum property in
+        GUI.
+        '''
+        query = '''
+        SELECT
+            TextureFile_pk,
+            ClientEntityTextureField.shortName,
+            TextureFile.path
+        FROM
+            ClientEntity
+        JOIN ClientEntityTextureField
+            ON ClientEntityTextureField.ClientEntity_fk = ClientEntity_pk
+        LEFT OUTER JOIN TextureFile
+            ON ClientEntityTextureField.identifier = TextureFile.identifier
+        WHERE
+            ClientEntity_pk == ?;
+        '''
+        return [
+            (
+                "-1" if texture_pk is None else str(texture_pk),
+                str(short_name),
+                path.as_posix()
+            )
+            for texture_pk, short_name, path in
+            self.db.execute(query, (entity_pk,))
         ]
 
     @cache
@@ -223,7 +331,12 @@ class DbHandler:
             self) -> list[tuple[int, str]]:
         '''
         Lists all of the all of the  entities from database that use geometries
-        and render_controlelrs fields. The results are tuples that contain:
+        and render_controlelrs fields. There must be at least one 
+        geometry in the database that connects to the geometry field. The
+        render controller don't have to exist but there must be a render
+        controller field in the client entity file.
+
+        The results are tuples that contain:
 
         - primary key of the entity
         - identifier of the entity
@@ -242,6 +355,9 @@ class DbHandler:
             ON ClientEntityGeometryField.ClientEntity_fk = ClientEntity_pk
         JOIN ClientEntityRenderControllerField
             ON ClientEntityRenderControllerField.ClientEntity_fk = ClientEntity_pk
+        JOIN  -- Geometry file must exist
+            Geometry
+            ON Geometry.identifier = ClientEntityGeometryField.identifier
         ORDER BY ClientEntity.identifier;
         '''
         return [

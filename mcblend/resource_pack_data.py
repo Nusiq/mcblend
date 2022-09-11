@@ -57,8 +57,12 @@ def enum_geometries(self, context) -> list[tuple[str, str, str]]:
     '''
     # pylint: disable=unused-argument
     entity_pk = self.active_entity_pk
-    return get_db_handler().gui_enum_geometries_from_db(
-        self.primary_key, entity_pk)
+    if self.primary_key != -1:
+        return get_db_handler().gui_enum_geometries_from_db(
+            self.primary_key, entity_pk)
+    else:
+        return get_db_handler().gui_enum_geometries_for_fake_rc_from_db(
+            entity_pk)
 
 def enum_textures(self, context) -> list[tuple[str, str, str]]:
     '''
@@ -67,8 +71,24 @@ def enum_textures(self, context) -> list[tuple[str, str, str]]:
     '''
     # pylint: disable=unused-argument
     entity_pk = self.active_entity_pk
-    return get_db_handler().gui_enum_textures_from_db(
-            self.primary_key, entity_pk)
+    if self.primary_key != -1:
+        return get_db_handler().gui_enum_textures_from_db(
+                self.primary_key, entity_pk)
+    else:
+        return get_db_handler().gui_enum_textures_for_fake_rc_from_db(
+            entity_pk)
+
+def enum_fake_material_patterns(self, context) -> list[tuple[str, str, str]]:
+    '''
+    Generates list for the fake_material_patterns enum property of the
+    MCBLEND_RenderController.
+
+    Fake marerial patterns are used only when the render controller is not
+    found. It lists all of the materials defined in the entity.
+    '''
+    # pylint: disable=unused-argument
+    return get_db_handler().gui_enum_fake_material_patterns_from_db(
+        self.active_entity_pk)
 
 class MCBLEND_RenderController(bpy.types.PropertyGroup):
     '''
@@ -98,6 +118,12 @@ class MCBLEND_RenderController(bpy.types.PropertyGroup):
     material_patterns: CollectionProperty(  # type: ignore
         type=MCBLEND_MaterialPattern,
         description="List of material patters used by this render controller")
+    fake_material_patterns: EnumProperty(  # type: ignore
+        description=(
+            "List of materials that can be used by this render controller "
+            "when it is a fake render controller (i.e. it is not in the "
+            "database). It's applied to '*' pattern."),
+        items=enum_fake_material_patterns)
 
 if TYPE_CHECKING:
     class MCBLEND_RenderController:
@@ -107,6 +133,7 @@ if TYPE_CHECKING:
         geometries: str
         textures: str
         material_patterns: CollectionPropertyAnnotation[MCBLEND_MaterialPattern]
+        fake_material_patterns: str
 
 # RESOURCE PACK (PROJECT)
 def update_selected_entity(self, context) -> None:
@@ -150,7 +177,7 @@ class MCBLEND_ProjectProperties(bpy.types.PropertyGroup):
     entities: CollectionProperty(  # type: ignore
         type=MCBLEND_DbEntry,
         description="List of the loaded entities")
-    render_controllers: CollectionProperty(
+    render_controllers: CollectionProperty(  # type: ignore
         type=MCBLEND_RenderController,
         description="List of loaded render controllers")
 

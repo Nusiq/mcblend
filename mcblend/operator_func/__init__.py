@@ -418,7 +418,6 @@ def import_model_form_project(context: bpy_types.Context) -> List[str]:
     geo_rc_stacks: Dict[int, List[RcStackItem]] = defaultdict(list)
     for render_controller in project.render_controllers:
         # TODO - for now I'm assuming th the render controller is valid
-
         texture_file_pk = int(render_controller.textures)
         geo_pk = int(render_controller.geometries)
 
@@ -431,15 +430,20 @@ def import_model_form_project(context: bpy_types.Context) -> List[str]:
             texture = None
         new_rc_stack_item = RcStackItem(texture)
         geo_rc_stacks[geo_pk].append(new_rc_stack_item)
-        for material_pattern_obj in render_controller.material_patterns:
-            # Materials enum are stored as: short_name;identifier
-            _, material_full_name = material_pattern_obj.materials.split(
-                ";", 1)
-            # TODO - what if material_full_name doesn't exist? It should be
-            # replaced with default value "entity_alphatest"
+        if len(render_controller.material_patterns) > 1:
+            for material_pattern_obj in render_controller.material_patterns:
+                # Materials enum are stored as: short_name;identifier
+                _, material_full_name = material_pattern_obj.materials.split(
+                    ";", 1)
+                # TODO - what if material_full_name doesn't exist? It should be
+                # replaced with default value "entity_alphatest"
 
-            new_rc_stack_item.materials[
-                material_pattern_obj.pattern] = material_full_name
+                new_rc_stack_item.materials[
+                    material_pattern_obj.pattern] = material_full_name
+        else:  # Pull materials from the entity it's a fake render controller
+            _, entity_full_name = render_controller.\
+                fake_material_patterns.split(";", 1)
+            new_rc_stack_item.materials['*'] = entity_full_name
 
     # 7. Load every geometry
     # blender_materials - Prevents creating same material multiple times
@@ -451,15 +455,6 @@ def import_model_form_project(context: bpy_types.Context) -> List[str]:
     warnings: List[str] = []
     for geo_pk, rc_stack in geo_rc_stacks.items():
         geo_path, geo_identifier = db_handler.get_geometry(geo_pk)
-        # TODO - what if geometry doesn't exist?
-        # try:
-        #     geometry_data: Dict = p.rp_models[:geo_name:0].json.data  # type: ignore
-        # except KeyError:
-        #     warnings.append(
-        #         f"Geometry {geo_name} referenced by "
-        #         f"{project.entity_names} is not defined in the "
-        #         "resource pack")
-        #     continue
         geo_data = load_jsonc(geo_path).data
         # # Import model
         model_loader = ModelLoader(geo_data, geo_identifier)

@@ -744,51 +744,6 @@ class MCBLEND_PT_ProjectPanel(bpy.types.Panel):
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
 
-    def draw_render_controller(
-            self, rc, col: bpy.types.UILayout):
-        '''
-        Draws single render controller GUI
-        '''
-        geo_cache = rc.geometry_cache
-        texture_cache = rc.texture_cache
-        geo_choice = geo_cache.is_cached and len(geo_cache.values) > 1
-        texture_choice = texture_cache.is_cached and len(texture_cache.values) > 1
-        material_choice = False
-        for mat in rc.materials:
-            mat_cache = mat.value_cache
-            # Not cached (shouldn't happen) -> assume you can select something
-            # Cached -> check if there are at least 2 items (a choice for user)
-            if (
-                    not mat_cache.is_cached or
-                    (mat_cache.is_cached and len(mat_cache.values) > 1)):
-                material_choice = True
-                break
-        if (not geo_choice and not texture_choice and not material_choice):
-            return  # Nothing to draw
-        box = col.box()
-        col = box.column()
-        row = col.row()
-        row.label(text=f'{rc.name}')
-        if geo_choice:
-            col.prop(
-                rc, "geometry", text="Geometry"
-            )
-        if texture_choice:
-            col.prop(
-                rc, "texture", text="Texture"
-            )
-        if material_choice:
-            box = col.box()
-            col = box.column()
-            row = col.row()
-            row.label(text="Materials")
-            for mat in rc.materials:
-                mat_cache = mat.value_cache
-                if (
-                        not mat_cache.is_cached or
-                        (mat_cache.is_cached and len(mat_cache.values) > 1)):
-                    col.prop(mat, "value", text=mat.name)
-
     def draw(self, context):
         col = self.layout.column()
         row = col.row()
@@ -811,14 +766,20 @@ class MCBLEND_PT_ProjectPanel(bpy.types.Panel):
         for rc in project.render_controllers:
             box = col.box()
             box.label(text=rc.identifier)
+            if rc.primary_key == -1:
+                box.label(text="Render controller not found! Using data from client entity.", icon="ERROR")
+
             box.prop(rc, "geometries", text="Geometry")
             box.prop(rc, "textures", text="Texture")
             materials_box = box.box()
             materials_box.label(text="Materials")
-            for material_pattern in rc.material_patterns:
-                materials_box.prop(
-                    material_pattern, "materials",
-                    text=material_pattern.pattern)
+            if len(rc.material_patterns) > 0:
+                for material_pattern in rc.material_patterns:
+                    materials_box.prop(
+                        material_pattern, "materials",
+                        text=material_pattern.pattern)
+            else:
+                materials_box.prop(rc, "fake_material_patterns", text="*")
 
         if project.selected_entity in project.entities:
             col.operator(
