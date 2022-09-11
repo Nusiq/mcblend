@@ -57,7 +57,7 @@ class DbHandler:
         '''
         query = '''
         SELECT DISTINCT
-            ClientEntityMaterialField.shortName || ';' || ClientEntityMaterialField.identifier,
+            RenderControllerMaterialsField_pk,
             ClientEntityMaterialField.shortName,
             ClientEntityMaterialField.identifier
         FROM
@@ -86,14 +86,14 @@ class DbHandler:
         - full identifier of the material
         - the short name used by RC and entity
 
-        The actual result is: ("short_name;identifier", short_name, identifier)
+        The actual result is: (ClientEntityMaterialField_pk, short_name, identifier)
 
         The values are cached and prepared to be used as an enum property in
         GUI.
         '''
         query = '''
         SELECT DISTINCT
-            ClientEntityMaterialField.shortName || ';' || ClientEntityMaterialField.identifier,
+            ClientEntityMaterialField_pk,
             ClientEntityMaterialField.shortName,
             ClientEntityMaterialField.identifier
         FROM
@@ -200,7 +200,7 @@ class DbHandler:
         - full path to the texture file
 
         The texture file might not exist, in this case the primary key is
-        "-1".
+        based on a pattern: not_found_<number>.
 
         The values are cached and prepared to be used as an enum property in
         GUI.
@@ -227,15 +227,17 @@ class DbHandler:
             AND RenderController_pk == ?
             AND ClientEntity_pk == ?;
         '''
-        return [
-            (
-                "-1" if texture_pk is None else str(texture_pk),
-                str(short_name),
-                path.as_posix()
+        result = []
+        not_found_counter = 0
+        for texture_pk, short_name, path in self.db.execute(
+                query, (rc_pk, entity_pk)):
+            if texture_pk is None:
+                texture_pk = f'not_found_{not_found_counter}'
+                not_found_counter += 1
+            result.append(
+                (str(texture_pk), str(short_name), path.as_posix())
             )
-            for texture_pk, short_name, path in
-            self.db.execute(query, (rc_pk, entity_pk))
-        ]
+        return result
 
     @cache
     def gui_enum_textures_for_fake_rc_from_db(
@@ -395,3 +397,46 @@ class DbHandler:
             Geometry_pk == ?;
         '''
         return tuple(self.db.execute(query, (geometry_pk,)).fetchone())
+
+    def get_material_pattern_and_material(
+            self, entity_pk: int, rc_pk: int,
+            material_field_pk: int) -> tuple[str, str]:
+        '''
+        Returns tuple with the material pattern and full material identifier
+        based on matching entity, render controller and material field primary
+        keys from the database. 
+        '''
+        query = '''
+        SELECT DISTINCT
+            -- RenderControllerMaterialsField.RenderController_fk,
+            -- ClientEntityMaterialField.ClientEntity_fk,
+            -- RenderControllerMaterialsField_pk,
+            -- RenderControllerMaterialsField.shortName,
+            RenderControllerMaterialsField.boneNamePattern,
+            ClientEntityMaterialField.identifier
+        FROM
+            RenderControllerMaterialsField
+        JOIN ClientEntityMaterialField
+            ON ClientEntityMaterialField.shortName = RenderControllerMaterialsField.shortName
+        WHERE
+            ClientEntityMaterialField.ClientEntity_fk = ?
+            AND RenderControllerMaterialsField.RenderController_fk = ?
+            AND RenderControllerMaterialsField_pk = ?;
+        '''
+        return tuple(self.db.execute(
+            query, (entity_pk, rc_pk, material_field_pk)).fetchone())
+
+    def get_full_material_identifier(self, material_field_pk: int) -> str:
+        '''
+        Returns the full material identifier based on the material field
+        primary key from the database.
+        '''
+        query = '''
+        SELECT
+            ClientEntityMaterialField.identifier
+        FROM
+            ClientEntityMaterialField
+        WHERE
+            ClientEntityMaterialField_pk = ?;
+        '''
+        return self.db.execute(query, (material_field_pk,)).fetchone()[0]

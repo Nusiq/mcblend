@@ -4,6 +4,7 @@ Functions used directly by the blender operators.
 from __future__ import annotations
 
 from pathlib import Path
+import json
 from typing import Dict, Iterable, List, Optional, Tuple, cast, TYPE_CHECKING
 from dataclasses import dataclass, field
 from collections import defaultdict
@@ -408,18 +409,32 @@ def import_model_form_project(context: bpy_types.Context) -> List[str]:
 
     :returns: list of warnings
     '''
+    debug_dictionary = {}
+
     # 1. Load cached data
     db_handler = get_db_handler()
     project = context.scene.mcblend_project
     project = cast(MCBLEND_ProjectProperties, project)
 
+    entity_pk = project.entities[
+        project.selected_entity].primary_key
+    debug_dictionary['ClientEntity_pk'] = entity_pk
+
     # 5. Unpack the data (get full IDs instead of short names) from render
     # controllers into a single object and group it by used geometry.
     geo_rc_stacks: Dict[int, List[RcStackItem]] = defaultdict(list)
+    debug_dictionary['render_controllers'] = []
     for render_controller in project.render_controllers:
-        # TODO - for now I'm assuming th the render controller is valid
+        debug_dictionary_rc = {}
+        debug_dictionary['render_controllers'].append(debug_dictionary_rc)
+
+        rc_pk = render_controller.primary_key
+        debug_dictionary_rc['RenderController_pk'] = rc_pk
         texture_file_pk = int(render_controller.textures)
+        debug_dictionary_rc['TextureFile_pk'] = texture_file_pk
         geo_pk = int(render_controller.geometries)
+        debug_dictionary_rc['Geometry_pk'] = geo_pk
+        
 
         texture_file_path = db_handler.get_texture_file_path(texture_file_pk)
         # cached_rc - Real or fake render controller
@@ -430,20 +445,25 @@ def import_model_form_project(context: bpy_types.Context) -> List[str]:
             texture = None
         new_rc_stack_item = RcStackItem(texture)
         geo_rc_stacks[geo_pk].append(new_rc_stack_item)
-        if len(render_controller.material_patterns) > 1:
+        debug_dictionary_rc_materials = []
+        debug_dictionary_rc['RenderControllerMaterialsField_pks'] = debug_dictionary_rc_materials
+        debug_dictionary_rc['ClientEntityMaterialField_pk'] = None
+        if len(render_controller.material_patterns) > 0:
             for material_pattern_obj in render_controller.material_patterns:
-                # Materials enum are stored as: short_name;identifier
-                _, material_full_name = material_pattern_obj.materials.split(
-                    ";", 1)
-                # TODO - what if material_full_name doesn't exist? It should be
-                # replaced with default value "entity_alphatest"
+                # Materials enum are stored as primary keys of the material
+                # field of render controller
+                rc_material_field_pk = int(material_pattern_obj.materials)
+                pattern, material_full_name = db_handler.get_material_pattern_and_material(
+                    entity_pk, rc_pk, rc_material_field_pk)
 
-                new_rc_stack_item.materials[
-                    material_pattern_obj.pattern] = material_full_name
+                new_rc_stack_item.materials[pattern] = material_full_name
+                debug_dictionary_rc_materials.append(rc_material_field_pk)
         else:  # Pull materials from the entity it's a fake render controller
-            _, entity_full_name = render_controller.\
-                fake_material_patterns.split(";", 1)
-            new_rc_stack_item.materials['*'] = entity_full_name
+            ce_material_field_pk = int(render_controller.fake_material_patterns)
+            material_full_name = db_handler.get_full_material_identifier(
+                ce_material_field_pk)
+            debug_dictionary_rc['ClientEntityMaterialField_pk'] = ce_material_field_pk
+            new_rc_stack_item.materials['*'] = material_full_name
 
     # 7. Load every geometry
     # blender_materials - Prevents creating same material multiple times
@@ -529,6 +549,7 @@ def import_model_form_project(context: bpy_types.Context) -> List[str]:
                     continue
                 c.blend_cube.data.materials.append(
                     blender_materials[tuple(bone_materials_id)])
+    print(json.dumps(debug_dictionary, indent=4))
     return warnings
 
 def apply_materials(context: bpy.types.Context):
