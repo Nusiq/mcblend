@@ -377,7 +377,10 @@ def reload_rp_entities(context: bpy_types.Context):
         return
     db_handler.load_resource_pack(rp_path)
     mcblend_project = context.scene.mcblend_project
+    mcblend_project = cast(MCBLEND_ProjectProperties, mcblend_project)
+    mcblend_project.render_controllers.clear()
     mcblend_project.entities.clear()
+    mcblend_project.selected_entity = ''
     duplicate_counter: int = 1
     last_name: Optional[str] = None
     for pk, name in db_handler.list_entities_with_models_and_rc_from_db():

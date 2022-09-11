@@ -16,7 +16,8 @@ def get_db_handler() -> DbHandler:
 class DbHandler:
     def __init__(self):
         self.db = create_db()
-    
+        self.is_loaded = False
+
     def delete_db(self):
         '''Delete all data from the database.'''
         self.db.execute('DELETE FROM ResourcePack;')
@@ -26,6 +27,7 @@ class DbHandler:
         self.list_render_controllers_from_db.cache_clear()
         self.list_bone_name_patterns_from_rc.cache_clear()
         self.list_entities_with_models_and_rc_from_db.cache_clear()
+        self.is_loaded = False
 
     def load_resource_pack(self, path: Path):
         '''Load a resource pack into the database'''
@@ -38,6 +40,7 @@ class DbHandler:
             render_controllers=True,
             textures=True,
         )
+        self.is_loaded = True
 
     @cache
     def gui_enum_materials_from_db(

@@ -7,9 +7,11 @@ from dataclasses import dataclass
 
 import bpy
 
+
 from .resource_pack_data import MCBLEND_ProjectProperties
 
 from .object_data import EffectTypes
+from .operator_func.db_handler import get_db_handler
 from .operator_func.common import MeshType
 from .operator_func.texture_generator import UvMaskTypes
 
@@ -756,12 +758,15 @@ class MCBLEND_PT_ProjectPanel(bpy.types.Panel):
             "mcblend.reload_rp",
             text="", icon='FILE_REFRESH'
         )
-        # col.prop(project, "entity_names", text="Entity")
+        if not get_db_handler().is_loaded:
+            return
         col.prop_search(
             data=project, property="selected_entity",
             search_data=project, search_property="entities",
             text="Entity"
         )
+        if not project.selected_entity in project.entities:
+            return
         # if len(project.render_controllers) > 0:
         for rc in project.render_controllers:
             box = col.box()
