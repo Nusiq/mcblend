@@ -311,26 +311,35 @@ class DbHandler:
 
         The primary key of the render controller can be None, if the render
         controller is not defined in the database.
+        If the render controllers have duplicated identifiers, the last one is
+        used (this means that if there is multiple resource packs, the pack
+        loaded last will be used). If a pack has multiple render controllers
+        with the same identifier (which is not allowed), the last one is used.
         '''
+
         query = '''
-        SELECT DISTINCT
-            RenderController_pk,
-            ClientEntityRenderControllerField.identifier
-        FROM
-            ClientEntity
-        JOIN ClientEntityRenderControllerField
-            ON ClientEntityRenderControllerField.ClientEntity_fk = ClientEntity_pk
-        LEFT OUTER JOIN RenderController
-            ON ClientEntityRenderControllerField.identifier = RenderController.identifier
-        WHERE
-            ClientEntity_pk == ?
+        SELECT pk, identifier FROM (
+            SELECT DISTINCT
+                RenderController_pk AS pk,
+                ClientEntityRenderControllerField.identifier AS identifier,
+                ClientEntityRenderControllerField_pk AS field_pk
+            FROM
+                ClientEntity
+            JOIN ClientEntityRenderControllerField
+                ON ClientEntityRenderControllerField.ClientEntity_fk = ClientEntity_pk
+            LEFT OUTER JOIN RenderController
+                ON ClientEntityRenderControllerField.identifier = RenderController.identifier
+            WHERE
+                ClientEntity_pk == ?
+            ORDER BY
+                RenderController_pk DESC
+        )
         GROUP BY
-            -- TODO - it would be nice to remove this and to let the user
-            -- choose which one of the duplicated render controllers to use.
-            -- This line gets rid of the duplicates (when you have multiple
-            -- render controllers with the same identifier)
-            ClientEntityRenderControllerField.identifier;
+            identifier,
+            field_pk;
         '''
+        # field_pk is for a rare case when the entity uses the same render
+        # controller twice
         return [
             (rc_pk, identifier)
             for rc_pk, identifier in
