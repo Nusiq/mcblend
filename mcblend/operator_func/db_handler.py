@@ -277,18 +277,26 @@ class DbHandler:
         GUI.
         '''
         query = '''
-        SELECT
-            TextureFile_pk,
-            ClientEntityTextureField.shortName,
-            TextureFile.path
-        FROM
-            ClientEntity
-        JOIN ClientEntityTextureField
-            ON ClientEntityTextureField.ClientEntity_fk = ClientEntity_pk
-        LEFT OUTER JOIN TextureFile
-            ON ClientEntityTextureField.identifier = TextureFile.identifier
-        WHERE
-            ClientEntity_pk == ?;
+        SELECT pk, shortName, path FROM (
+            SELECT
+                TextureFile_pk AS pk,
+                ClientEntityTextureField.shortName AS shortName,
+                TextureFile.path AS path,
+                ClientEntityTextureField.identifier AS identifier
+            FROM
+                ClientEntity
+            JOIN ClientEntityTextureField
+                ON ClientEntityTextureField.ClientEntity_fk = ClientEntity_pk
+            LEFT OUTER JOIN TextureFile
+                ON ClientEntityTextureField.identifier = TextureFile.identifier
+            WHERE
+                ClientEntity_pk == ?
+            ORDER BY
+                TextureFile_pk DESC
+        )
+        GROUP BY
+            identifier,
+            shortName;
         '''
         return [
             (
