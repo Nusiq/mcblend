@@ -341,8 +341,8 @@ class DbHandler:
     def list_bone_name_patterns_from_rc(
             self, render_controller_pk: int) -> list[str]:
         '''
-        Lists all of the bone name patterns from the given render controller.
-        The result is a string with the bone name pattern.
+        Lists all of the distinct bone name patterns from the given
+        render controller. The result is a string with the bone name pattern.
         '''
         query = '''
         SELECT DISTINCT boneNamePattern
