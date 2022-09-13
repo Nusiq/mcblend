@@ -506,10 +506,12 @@ def import_model_form_project(
         geo_rc_stacks[render_controller_data['Geometry_pk']].append(
             new_rc_stack_item)
         material_pks = render_controller_data['RenderControllerMaterialsField_pks']
+
         if len(material_pks) > 0:
             for rc_material_field_pk in material_pks:
-                pattern, material_full_name = db_handler.get_material_pattern_and_material(
-                    entity_pk, rc_pk, rc_material_field_pk)
+                pattern, material_full_name = (
+                    db_handler.get_material_pattern_and_material(
+                        entity_pk, rc_material_field_pk))
                 new_rc_stack_item.materials[pattern] = material_full_name
         else:  # Pull materials from the entity it's a fake render controller
             ce_material_field_pk = render_controller_data[
@@ -517,6 +519,7 @@ def import_model_form_project(
             material_full_name = db_handler.get_full_material_identifier(
                 ce_material_field_pk)
             new_rc_stack_item.materials['*'] = material_full_name
+
     # 7. Load every geometry
     # blender_materials - Prevents creating same material multiple times
     # it's a dictionary of materials which uses a tuple with pairs of

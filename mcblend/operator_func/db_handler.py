@@ -426,19 +426,16 @@ class DbHandler:
         return tuple(self.db.execute(query, (geometry_pk,)).fetchone())
 
     def get_material_pattern_and_material(
-            self, entity_pk: int, rc_pk: int,
-            material_field_pk: int) -> tuple[str, str]:
+            self, entity_pk: int, rc_material_field_pk: int) -> tuple[str, str]:
         '''
         Returns tuple with the material pattern and full material identifier
-        based on matching entity, render controller and material field primary
-        keys from the database. 
+        based on matching entity and render controller material field primary
+        keys from the database.
         '''
+        # The rc_material_field_pk also unambiguously identifies the render
+        # controller
         query = '''
         SELECT DISTINCT
-            -- RenderControllerMaterialsField.RenderController_fk,
-            -- ClientEntityMaterialField.ClientEntity_fk,
-            -- RenderControllerMaterialsField_pk,
-            -- RenderControllerMaterialsField.shortName,
             RenderControllerMaterialsField.boneNamePattern,
             ClientEntityMaterialField.identifier
         FROM
@@ -447,11 +444,10 @@ class DbHandler:
             ON ClientEntityMaterialField.shortName = RenderControllerMaterialsField.shortName
         WHERE
             ClientEntityMaterialField.ClientEntity_fk = ?
-            AND RenderControllerMaterialsField.RenderController_fk = ?
             AND RenderControllerMaterialsField_pk = ?;
         '''
         return tuple(self.db.execute(
-            query, (entity_pk, rc_pk, material_field_pk)).fetchone())
+            query, (entity_pk, rc_material_field_pk)).fetchone())
 
     def get_full_material_identifier(self, material_field_pk: int) -> str:
         '''
