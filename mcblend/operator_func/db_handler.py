@@ -227,26 +227,36 @@ class DbHandler:
         GUI.
         '''
         query = '''
-        SELECT
-            TextureFile_pk,
-            RenderControllerTexturesField.shortName,
-            TextureFile.path
-        FROM
-            ClientEntity
-        JOIN ClientEntityRenderControllerField
-            ON ClientEntityRenderControllerField.ClientEntity_fk = ClientEntity_pk
-        JOIN ClientEntityTextureField
-            ON ClientEntityTextureField.ClientEntity_fk = ClientEntity_pk
-        JOIN RenderController
-            ON ClientEntityRenderControllerField.identifier = RenderController.identifier
-        JOIN RenderControllerTexturesField
-            ON RenderControllerTexturesField.RenderController_fk = RenderController_pk
-        LEFT OUTER JOIN TextureFile
-            ON ClientEntityTextureField.identifier = TextureFile.identifier
-        WHERE
-            ClientEntityTextureField.shortName == RenderControllerTexturesField.shortName
-            AND RenderController_pk == ?
-            AND ClientEntity_pk == ?;
+        SELECT pk, shortName, path FROM (
+            SELECT
+                TextureFile_pk AS pk,
+                RenderControllerTexturesField.shortName AS shortName,
+                TextureFile.path AS path,
+                ClientEntityTextureField.identifier AS identifier
+            FROM
+                ClientEntity
+            JOIN ClientEntityRenderControllerField
+                ON ClientEntityRenderControllerField.ClientEntity_fk = ClientEntity_pk
+            JOIN ClientEntityTextureField
+                ON ClientEntityTextureField.ClientEntity_fk = ClientEntity_pk
+            JOIN RenderController
+                ON ClientEntityRenderControllerField.identifier = RenderController.identifier
+            JOIN RenderControllerTexturesField
+                ON RenderControllerTexturesField.RenderController_fk = RenderController_pk
+            LEFT OUTER JOIN TextureFile
+                ON ClientEntityTextureField.identifier = TextureFile.identifier
+            WHERE
+                ClientEntityTextureField.shortName == RenderControllerTexturesField.shortName
+                AND RenderController_pk == ?
+                AND ClientEntity_pk == ?
+            ORDER BY
+                TextureFile_pk DESC
+        )
+        GROUP BY
+            identifier,
+            shortName
+        ORDER BY
+            shortName;
         '''
         result = []
         not_found_counter = 0
