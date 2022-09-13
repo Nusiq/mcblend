@@ -748,18 +748,15 @@ class MCBLEND_PT_ProjectPanel(bpy.types.Panel):
 
     def draw(self, context):
         col = self.layout.column()
-        row = col.row()
         project = context.scene.mcblend_project
         project = cast(MCBLEND_ProjectProperties, project)
-        row.prop(
-            project, "rp_path", text="Resource Pack"
-        )
-        row.operator(
-            "mcblend.reload_rp",
-            text="", icon='FILE_REFRESH'
-        )
+
+        # col.operator("mcblend.load_database")
+        # col.operator("mcblend.save_database")
+        col.operator("mcblend.load_rp")
         if not get_db_handler().is_loaded:
             return
+        col.operator("mcblend.unload_rps")
         col.prop_search(
             data=project, property="selected_entity",
             search_data=project, search_property="entities",

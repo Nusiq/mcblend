@@ -3,6 +3,7 @@ This module contains all of the operators.
 '''
 # don't import future annotations Blender needs that
 import json
+from pathlib import Path
 from json.decoder import JSONDecodeError
 from typing import Any, List, Optional, Dict
 
@@ -19,7 +20,7 @@ from .operator_func.material import MATERIALS_MAP
 
 from .operator_func import (
     export_model, export_animation, fix_uvs, separate_mesh_cubes, set_uvs,
-    import_model, inflate_objects, reload_rp_entities,
+    import_model, inflate_objects, load_rp_entities, unload_rps,
     import_model_form_project, import_model_from_project_get_primary_keys,
     apply_materials, prepare_physics_simulation)
 from .operator_func.sqlite_bedrock_packs.better_json import (
@@ -1508,17 +1509,68 @@ class MCBLEND_OT_RemoveEffect(bpy.types.Operator):
         return {'FINISHED'}
 
 # Project - RP entity import
-class MCBLEND_OT_ReloadRp(bpy.types.Operator):
+class MCBLEND_OT_LoadRp(bpy.types.Operator, ImportHelper):
     '''Imports entity form Minecraft project into blender'''
     # pylint: disable=unused-argument, no-member
-    bl_idname = "mcblend.reload_rp"
-    bl_label = "Import entity"
+    bl_idname = "mcblend.load_rp"
+    bl_label = "Load Resource Pack"
     bl_options = {'REGISTER'}
-    bl_description = "Reloads the list of the entities from the resource pack."
+    bl_description = "Loads the resource pack to the database for importer."
+
+    filter_glob: StringProperty(  # type: ignore
+        default="",
+        options={'HIDDEN'},
+        maxlen=1000,
+    )
 
     def execute(self, context):
-        reload_rp_entities(context)
+        rp_path: Path = Path(self.filepath)
+        load_rp_entities(context, rp_path)
         return {'FINISHED'}
+
+class MCBLEND_OT_UnloadRps(bpy.types.Operator):
+    '''Unloads all resource packs from the database'''
+    bl_idname = "mcblend.unload_rps"
+    bl_label = "Unload Resource Packs"
+    bl_options = {'REGISTER'}
+    bl_description = "Unloads all resource packs from the database."
+
+    def execute(self, context):
+        unload_rps(context)
+        return {'FINISHED'}
+
+class MCBLEND_OT_LoadDatabase(bpy.types.Operator, ImportHelper):
+    '''Loads SQLite database with resource pack data.'''
+    # pylit: disable=unused-argument, no-member
+    bl_idname = "mcblend.load_database"
+    bl_label = "Load database"
+    bl_options = {'REGISTER'}
+    bl_description = "Loads SQLite database with resource pack data."
+
+    filter_glob: StringProperty(  # type: ignore
+        default="*.db",
+        options={'HIDDEN'},
+        maxlen=1000,
+    )
+
+    def execute(self, context):
+        self.report({'INFO'}, f"Loading database from {self.filepath}")
+        return {'FINISHED'}
+
+class MCBLEND_OT_SaveDatabase(bpy.types.Operator, ExportHelper):
+    '''Saves SQLite database with resource packs data.'''
+    # pylint: disable=unused-argument, no-member
+    bl_idname = "mcblend.save_database"
+    bl_label = "Save database"
+    bl_options = {'REGISTER'}
+    bl_description = "Saves SQLite database with resource packs data."
+
+    filename_ext = ".db"
+
+    def execute(self, context):
+        self.report({'INFO'}, f"Saving database to {self.filepath}")
+        return {'FINISHED'}
+
 
 class MCBLEND_OT_ImportRpEntity(bpy.types.Operator):
     '''Imports entity form Minecraft project into blender'''

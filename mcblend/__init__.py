@@ -46,7 +46,10 @@ from .operator import (
     MCBLEND_OT_RemoveEffect,
 
     MCBLEND_OT_ImportRpEntity,
-    MCBLEND_OT_ReloadRp,
+    MCBLEND_OT_LoadRp,
+    MCBLEND_OT_UnloadRps,
+    MCBLEND_OT_LoadDatabase,
+    MCBLEND_OT_SaveDatabase,
 
     MCBLEND_OT_AddFakeRc,
     MCBLEND_OT_RemoveFakeRc,
@@ -184,7 +187,10 @@ classes = (
     MCBLEND_OT_ImportUvGroup,
 
     MCBLEND_OT_ImportRpEntity,
-    MCBLEND_OT_ReloadRp,
+    MCBLEND_OT_LoadRp,
+    MCBLEND_OT_UnloadRps,
+    MCBLEND_OT_LoadDatabase,
+    MCBLEND_OT_SaveDatabase,
     MCBLEND_PT_ProjectPanel,
     MCBLEND_PT_BonePanel,
 

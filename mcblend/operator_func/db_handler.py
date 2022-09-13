@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from .sqlite_bedrock_packs import load_rp, create_db
+from .sqlite_bedrock_packs import load_rp, create_db, open_db
 from typing import Optional
 
 # Don't use lru_cache(maxsize=1) sometimes there are more than 1 lists of the
@@ -18,19 +18,37 @@ class DbHandler:
         self.db = create_db()
         self.is_loaded = False
 
-    def delete_db(self):
-        '''Delete all data from the database.'''
-        self.db.execute('DELETE FROM ResourcePack;')
+    def load_db_from_file(self, path: Path):
+        '''Loads existing database from a file.'''
+        self.db.close()
+        self.db = open_db(path)
+        self.is_loaded = True
+
+    def _clear_cache(self):
         self.gui_enum_materials_from_db.cache_clear()
+        self.gui_enum_fake_material_patterns_from_db.cache_clear()
         self.gui_enum_geometries_from_db.cache_clear()
+        self.gui_enum_geometries_for_fake_rc_from_db.cache_clear()
         self.gui_enum_textures_from_db.cache_clear()
+        self.gui_enum_textures_for_fake_rc_from_db.cache_clear()
         self.list_render_controllers_from_db.cache_clear()
         self.list_bone_name_patterns_from_rc.cache_clear()
         self.list_entities_with_models_and_rc_from_db.cache_clear()
+
+    def delete_db(self):
+        '''Delete all data from the database.'''
+        self._clear_cache()
+        self.db.execute('DELETE FROM ResourcePack;')
         self.is_loaded = False
 
     def load_resource_pack(self, path: Path):
         '''Load a resource pack into the database'''
+        # If the RP is already loaded, reload it. It must be deleted because
+        # otherwise load_rp() function would fail if the RP with that path is
+        # already loaded.
+        self._clear_cache()
+        self.db.execute(
+            'DELETE FROM ResourcePack WHERE path = ?;', (path.as_posix(),))
         load_rp(
             self.db, path,
             selection_mode='include',
@@ -295,7 +313,7 @@ class DbHandler:
         controller is not defined in the database.
         '''
         query = '''
-        SELECT
+        SELECT DISTINCT
             RenderController_pk,
             ClientEntityRenderControllerField.identifier
         FROM
@@ -305,7 +323,13 @@ class DbHandler:
         LEFT OUTER JOIN RenderController
             ON ClientEntityRenderControllerField.identifier = RenderController.identifier
         WHERE
-            ClientEntity_pk == ?;
+            ClientEntity_pk == ?
+        GROUP BY
+            -- TODO - it would be nice to remove this and to let the user
+            -- choose which one of the duplicated render controllers to use.
+            -- This line gets rid of the duplicates (when you have multiple
+            -- render controllers with the same identifier)
+            ClientEntityRenderControllerField.identifier;
         '''
         return [
             (rc_pk, identifier)

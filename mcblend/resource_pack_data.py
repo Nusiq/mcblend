@@ -1,6 +1,7 @@
 '''
 Custom Blender objects with properties of the resource pack.
 '''
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
 import bpy
@@ -8,7 +9,7 @@ from bpy.props import (
     CollectionProperty, EnumProperty, IntProperty, StringProperty)
 
 from .common_data import MCBLEND_DbEntry
-from .operator_func import reload_rp_entities
+from .operator_func import load_rp_entities
 from .operator_func.db_handler import get_db_handler
 from .extra_types import CollectionPropertyAnnotation
 
@@ -165,11 +166,6 @@ class MCBLEND_ProjectProperties(bpy.types.PropertyGroup):
     Used to store information about the resource pack for the GUI of the model
     importer.
     '''
-    rp_path: StringProperty(  # type: ignore
-        name="Resource pack path",
-        description="Path to resource pack connected to this project",
-        default="", subtype="DIR_PATH",
-        update=lambda self, context: reload_rp_entities(context))
     selected_entity: StringProperty(   # type: ignore
         default="",
         description="Name that identifies one of the loaded entities",

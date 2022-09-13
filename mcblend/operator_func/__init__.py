@@ -364,23 +364,25 @@ def inflate_objects(
             counter += 1
     return counter
 
-def reload_rp_entities(context: bpy_types.Context):
+def load_rp_entities(
+        context: bpy_types.Context, path: Path):
     '''
     Loads the names of the entities used in the resource pack.
 
     :param context: the context of running the operator.
+    :param path: path to the resource pack.
     '''
-    db_handler = get_db_handler()
-    db_handler.delete_db()
-    rp_path: Path = Path(context.scene.mcblend_project.rp_path)
-    if not rp_path.exists() or rp_path.is_file():
-        return
-    db_handler.load_resource_pack(rp_path)
     mcblend_project = context.scene.mcblend_project
     mcblend_project = cast(MCBLEND_ProjectProperties, mcblend_project)
+    # Cleared cached data for GUI it will be reloaded later
     mcblend_project.render_controllers.clear()
     mcblend_project.entities.clear()
     mcblend_project.selected_entity = ''
+    
+    db_handler = get_db_handler()
+    if not path.exists():
+        return
+    db_handler.load_resource_pack(path)
     duplicate_counter: int = 1
     last_name: Optional[str] = None
     for pk, name in db_handler.list_entities_with_models_and_rc_from_db():
@@ -395,6 +397,16 @@ def reload_rp_entities(context: bpy_types.Context):
             duplicate_counter = 1
             entity.name = name
         last_name = name
+
+def unload_rps(context: bpy_types.Context):
+    # Clear the selection in GUI
+    mcblend_project = context.scene.mcblend_project
+    mcblend_project = cast(MCBLEND_ProjectProperties, mcblend_project)
+    mcblend_project.render_controllers.clear()
+    mcblend_project.entities.clear()
+    mcblend_project.selected_entity = ''
+    db_handler = get_db_handler()
+    db_handler.delete_db()
 
 @dataclass
 class RcStackItem:
