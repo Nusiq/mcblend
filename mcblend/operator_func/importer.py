@@ -524,7 +524,13 @@ class ModelLoader:
                     'parent', bone['parent'], (str,), bone_path + ['parent'],
                     ErrorLevel.WARNING, more="Skipped.")
                 if success:
-                    result['parent'] = bone['parent']
+                    if 'name' in bone and bone['name'] == bone['parent']:
+                        self.append_warning(
+                            f"Bone {bone['name']} is parent is itself."
+                                " Skipped.",
+                            bone_path + ['parent'])
+                    else:
+                        result['parent'] = bone['parent']
             if 'pivot' in bone:
                 success = self._assert_vector_type(
                     'pivot', bone['pivot'], 3, (int, float),
