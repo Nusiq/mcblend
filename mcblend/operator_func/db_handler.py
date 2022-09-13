@@ -149,26 +149,38 @@ class DbHandler:
         GUI.
         '''
         query = '''
-        SELECT DISTINCT
-            Geometry_pk,
-            ClientEntityGeometryField.shortName,
-            ClientEntityGeometryField.identifier
-        FROM
-            ClientEntity
-        JOIN ClientEntityRenderControllerField
-            ON ClientEntityRenderControllerField.ClientEntity_fk = ClientEntity_pk
-        JOIN ClientEntityGeometryField
-            ON ClientEntityGeometryField.ClientEntity_fk = ClientEntity_pk
-        JOIN RenderController
-            ON ClientEntityRenderControllerField.identifier = RenderController.identifier
-        JOIN RenderControllerGeometryField
-            ON RenderControllerGeometryField.RenderController_fk = RenderController_pk
-        JOIN Geometry
-            ON ClientEntityGeometryField.identifier = Geometry.identifier
-        WHERE
-            ClientEntityGeometryField.shortName == RenderControllerGeometryField.shortName
-            AND RenderController_pk == ?
-            AND ClientEntity_pk == ?;
+        SELECT pk, shortName, identifier || '\n' || path FROM (
+            SELECT
+                Geometry_pk AS pk,
+                ClientEntityGeometryField.shortName AS shortName,
+                ClientEntityGeometryField.identifier AS identifier,
+                GeometryFile.path AS path
+            FROM
+                ClientEntity
+            JOIN ClientEntityRenderControllerField
+                ON ClientEntityRenderControllerField.ClientEntity_fk = ClientEntity_pk
+            JOIN ClientEntityGeometryField
+                ON ClientEntityGeometryField.ClientEntity_fk = ClientEntity_pk
+
+            JOIN RenderController
+                ON ClientEntityRenderControllerField.identifier = RenderController.identifier
+            JOIN RenderControllerGeometryField
+                ON RenderControllerGeometryField.RenderController_fk = RenderController_pk
+
+            JOIN Geometry
+                ON ClientEntityGeometryField.identifier = Geometry.identifier
+            JOIN GeometryFile
+                ON Geometry.GeometryFile_fk = GeometryFile_pk
+            WHERE
+                ClientEntityGeometryField.shortName == RenderControllerGeometryField.shortName
+                AND RenderController_pk == ?
+                AND ClientEntity_pk == ?
+            ORDER BY
+                Geometry_pk DESC
+        )
+        GROUP BY
+            shortName,
+            identifier;
         '''
         return [
             (str(geometry_pk), str(short_name), str(identifier))
