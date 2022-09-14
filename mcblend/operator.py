@@ -21,8 +21,8 @@ from .operator_func.material import MATERIALS_MAP
 from .operator_func import (
     export_model, export_animation, fix_uvs, separate_mesh_cubes, set_uvs,
     import_model, inflate_objects, load_rp_entities, unload_rps,
-    import_model_form_project, import_model_from_project_get_primary_keys,
-    apply_materials, prepare_physics_simulation)
+    import_model_form_project, apply_materials, prepare_physics_simulation)
+from .operator_func.rp_importer import get_pks_for_entity_improt
 from .operator_func.sqlite_bedrock_packs.better_json import (
     CompactEncoder, JSONCDecoder)
 from .operator_func.exception import NotEnoughTextureSpace, ImporterException
@@ -1586,7 +1586,7 @@ class MCBLEND_OT_ImportRpEntity(bpy.types.Operator):
 
     def execute(self, context):
         try:
-            query_data = import_model_from_project_get_primary_keys(context)
+            query_data = get_pks_for_entity_improt(context)
             warnings = import_model_form_project(context, query_data)
             if len(warnings) > 1:
                 for warning in warnings:

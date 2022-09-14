@@ -27,6 +27,7 @@ from .material import create_bone_material
 from .model import ModelExport
 from .uv import CoordinatesConverter, UvMapper
 from .db_handler import get_db_handler
+from .rp_importer import PksForEntityImport
 
 if TYPE_CHECKING:
     from ..resource_pack_data import MCBLEND_ProjectProperties
@@ -418,73 +419,9 @@ class RcStackItem:
     materials: Dict[str, str] = field(default_factory=dict)
     '''Materials dict with pattern keys and full material names values.'''
 
-
-# TODO - replace with names that actually make sense? Move it somewhere?
-class ImportModelFromProjectPrimaryKeysRenderController(TypedDict):
-    RenderController_pk: int
-    TextureFile_pk: int
-    Geometry_pk: int
-    ClientEntityMaterialField_pk: int
-    RenderControllerMaterialsField_pks: List[int]
-
-# TODO - replace with names that actually make sense? Move it somewhere?
-class ImportModelFromProjectPrimaryKeys(TypedDict):
-    ClientEntity_pk: int
-    render_controllers: List[ImportModelFromProjectPrimaryKeysRenderController]
-
-# TODO - replace with names that actually make sense? Move it somewhere?
-def import_model_from_project_get_primary_keys(
-        context: bpy_types.Context) -> ImportModelFromProjectPrimaryKeys:
-    # 1. Load cached data
-    project = context.scene.mcblend_project
-    project = cast(MCBLEND_ProjectProperties, project)
-
-    entity_pk = project.entities[
-        project.selected_entity].primary_key
-
-    # 2. Build a dictionary with PKs of all of the queries needed to load the
-    # data about the model
-    query_data: ImportModelFromProjectPrimaryKeys = {}
-    # Load client entity PK
-    query_data['ClientEntity_pk'] = entity_pk
-    query_data['render_controllers'] = []
-    # Load all render controllers PKs
-    for render_controller in project.render_controllers:
-        # Load render controller PK
-        rc_pk = render_controller.primary_key
-        query_data_rc = {}
-        query_data['render_controllers'].append(query_data_rc)
-        query_data_rc['RenderController_pk'] = rc_pk
-
-        # Load texture PK
-        try:
-            texture_file_pk = int(render_controller.textures)
-        except ValueError:
-            texture_file_pk = -1
-        query_data_rc['TextureFile_pk'] = texture_file_pk
-
-        # Load geometry PK
-        geo_pk = int(render_controller.geometries)
-        query_data_rc['Geometry_pk'] = geo_pk
-
-        # Load all materials PKs
-        query_data_rc_materials = []
-        query_data_rc['RenderControllerMaterialsField_pks'] = query_data_rc_materials
-        query_data_rc['ClientEntityMaterialField_pk'] = -1
-        if len(render_controller.material_patterns) > 0:
-            # Materials loaded from render controller
-            for material_pattern_obj in render_controller.material_patterns:
-                rc_material_field_pk = int(material_pattern_obj.materials)
-                query_data_rc_materials.append(rc_material_field_pk)
-        else:
-            # Materials loaded from the entity it's a fake render controller
-            ce_material_field_pk = int(render_controller.fake_material_patterns)
-            query_data_rc['ClientEntityMaterialField_pk'] = ce_material_field_pk
-    return query_data
-
 def import_model_form_project(
         context: bpy_types.Context,
-        query_data: ImportModelFromProjectPrimaryKeys) -> List[str]:
+        query_data: PksForEntityImport) -> List[str]:
     '''
     Imports model using data selected in Project menu.
 
