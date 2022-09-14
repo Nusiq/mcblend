@@ -51,12 +51,13 @@ class DbHandler:
             'DELETE FROM ResourcePack WHERE path = ?;', (path.as_posix(),))
         load_rp(
             self.db, path,
-            selection_mode='include',
-            client_entities=True,
-            attachables=True,
-            geometries=True,
-            render_controllers=True,
-            textures=True,
+            include=(
+                "client_entities",
+                "attachables",
+                "geometries",
+                "render_controllers",
+                "textures",
+            )
         )
         self.is_loaded = True
 
