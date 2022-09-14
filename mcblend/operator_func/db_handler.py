@@ -76,6 +76,10 @@ class DbHandler:
         The values are cached and prepared to be used as an enum property in
         GUI.
         '''
+
+        # There is no need to add additional constraints to the query to make
+        # it select the most recent resource pack because the query already
+        # requires the primary keys of RC and enity, which are unique.
         query = '''
         SELECT DISTINCT
             RenderControllerMaterialsField_pk,
