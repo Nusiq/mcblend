@@ -55,7 +55,7 @@ def get_pks_for_entity_improt(
     query_data['ClientEntity_pk'] = entity_pk
     query_data['render_controllers'] = []
     # Load all render controllers PKs
-    for render_controller in project.render_controllers:
+    for render_controller in project.entity_render_controllers:
         # Load render controller PK
         rc_pk = render_controller.primary_key
         query_data_rc = {}

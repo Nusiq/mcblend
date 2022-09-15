@@ -1535,6 +1535,10 @@ class MCBLEND_OT_UnloadRps(bpy.types.Operator):
     bl_options = {'REGISTER'}
     bl_description = "Unloads all resource packs from the database."
 
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_confirm(self, event)
+
     def execute(self, context):
         unload_rps(context)
         return {'FINISHED'}
@@ -1571,7 +1575,6 @@ class MCBLEND_OT_SaveDatabase(bpy.types.Operator, ExportHelper):
         self.report({'INFO'}, f"Saving database to {self.filepath}")
         return {'FINISHED'}
 
-
 class MCBLEND_OT_ImportRpEntity(bpy.types.Operator):
     '''Imports entity form Minecraft project into blender'''
     # pylint: disable=unused-argument, no-member
@@ -1602,6 +1605,39 @@ class MCBLEND_OT_ImportRpEntity(bpy.types.Operator):
             self.report(
                 {'ERROR'}, f'Invalid model: {e}'
             )
+        return {'FINISHED'}
+
+class MCBLEND_OT_ImportAttachable(bpy.types.Operator):
+    '''Imports attachable form Minecraft project into blender'''
+    # pylint: disable=unused-argument, no-member
+    bl_idname = "mcblend.import_attachable"
+    bl_label = "Import attachable from pack"
+    bl_options = {'UNDO', 'INTERNAL'}
+    bl_description = "Import attachable by it's name from the resource pack."
+
+    @classmethod
+    def poll(cls, context: bpy_types.Context):
+        return len(context.scene.mcblend_project.attachables) > 0
+
+    def execute(self, context):
+        self.report({'WARNING'}, "Not implemented!")
+        # try:
+        #     query_data = get_pks_for_attachable_improt(context)
+        #     warnings = import_model_form_project(context, query_data)
+        #     if len(warnings) > 1:
+        #         for warning in warnings:
+        #             self.report({'WARNING'}, warning)
+        #             self.report(
+        #                 {'WARNING'},
+        #                 f"Finished with {len(warnings)} warnings. "
+        #                 "See logs for more details."
+        #             )
+        #     elif len(warnings) == 1:
+        #         self.report({'WARNING'}, warnings[0])
+        # except ImporterException as e:
+        #     self.report(
+        #         {'ERROR'}, f'Invalid model: {e}'
+        #     )
         return {'FINISHED'}
 
 # Armature render controllers
@@ -1657,7 +1693,6 @@ class MCBLEND_OT_MoveFakeRc(bpy.types.Operator):
         rcs = context.object.mcblend.render_controllers
         rcs.move(self.rc_index, self.move_to)
         return {'FINISHED'}
-
 
 class MCBLEND_OT_FakeRcSelectTexture(bpy.types.Operator):
     '''Selects the name of the texture for render controller of a model.'''

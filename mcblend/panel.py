@@ -2,6 +2,7 @@
 This module contains all of the panels for mcblend GUI.
 '''
 # don't import future annotations Blender needs that
+from cProfile import label
 from typing import List, Optional, cast
 from dataclasses import dataclass
 
@@ -756,37 +757,71 @@ class MCBLEND_PT_ProjectPanel(bpy.types.Panel):
         if not get_db_handler().is_loaded:
             return
         col.operator("mcblend.unload_rps")
-        col.prop_search(
-            data=project, property="selected_entity",
-            search_data=project, search_property="entities",
-            text="Entity"
-        )
-        if not project.selected_entity in project.entities:
-            return
-        # if len(project.render_controllers) > 0:
-        for rc in project.render_controllers:
-            box = col.box()
-            box.label(text=rc.identifier)
-            if rc.primary_key == -1:
-                box.label(text="Render controller not found! Using data from client entity.", icon="ERROR")
-
-            box.prop(rc, "geometries", text="Geometry")
-            box.prop(rc, "textures", text="Texture")
-            materials_box = box.box()
-            materials_box.label(text="Materials")
-            if len(rc.material_patterns) > 0:
-                for material_pattern in rc.material_patterns:
-                    materials_box.prop(
-                        material_pattern, "materials",
-                        text=material_pattern.pattern)
-            else:
-                materials_box.prop(rc, "fake_material_patterns", text="*")
-
-        if project.selected_entity in project.entities:
-            col.operator(
-                "mcblend.import_rp_entity",
-                text="Import from project"
+        col.prop(project, "importer_type", text="")
+        if project.importer_type == "ENTITY":
+            col.prop_search(
+                data=project, property="selected_entity",
+                search_data=project, search_property="entities",
+                text="Entity"
             )
+            if not project.selected_entity in project.entities:
+                return
+            # if len(project.render_controllers) > 0:
+            for rc in project.entity_render_controllers:
+                box = col.box()
+                box.label(text=rc.identifier)
+                if rc.primary_key == -1:
+                    box.label(text="Render controller not found! Using data from client entity.", icon="ERROR")
+
+                box.prop(rc, "geometries", text="Geometry")
+                box.prop(rc, "textures", text="Texture")
+                materials_box = box.box()
+                materials_box.label(text="Materials")
+                if len(rc.material_patterns) > 0:
+                    for material_pattern in rc.material_patterns:
+                        materials_box.prop(
+                            material_pattern, "materials",
+                            text=material_pattern.pattern)
+                else:
+                    materials_box.prop(rc, "fake_material_patterns", text="*")
+
+            if project.selected_entity in project.entities:
+                col.operator(
+                    "mcblend.import_rp_entity",
+                    text="Import from project"
+                )
+        elif project.importer_type == "ATTACHABLE":
+            col.prop_search(
+                data=project, property="selected_attachable",
+                search_data=project, search_property="attachables",
+                text="Attachable"
+            )
+            if not project.selected_attachable in project.attachables:
+                return
+            # if len(project.render_controllers) > 0:
+            for rc in project.attachable_render_controllers:
+                box = col.box()
+                box.label(text=rc.identifier)
+                if rc.primary_key == -1:
+                    box.label(text="Render controller not found! Using data from attachable.", icon="ERROR")
+
+                box.prop(rc, "geometries", text="Geometry")
+                box.prop(rc, "textures", text="Texture")
+                materials_box = box.box()
+                materials_box.label(text="Materials")
+                if len(rc.material_patterns) > 0:
+                    for material_pattern in rc.material_patterns:
+                        materials_box.prop(
+                            material_pattern, "materials",
+                            text=material_pattern.pattern)
+                else:
+                    materials_box.prop(rc, "fake_material_patterns", text="*")
+
+            if project.selected_attachable in project.attachables:
+                col.operator(
+                    "mcblend.import_attachable",
+                    text="Import from project"
+                )
 
 # Resource pack panel
 class MCBLEND_PT_BonePanel(bpy.types.Panel):

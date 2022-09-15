@@ -46,6 +46,7 @@ from .operator import (
     MCBLEND_OT_RemoveEffect,
 
     MCBLEND_OT_ImportRpEntity,
+    MCBLEND_OT_ImportAttachable,
     MCBLEND_OT_LoadRp,
     MCBLEND_OT_UnloadRps,
     MCBLEND_OT_LoadDatabase,
@@ -69,8 +70,10 @@ from .common_data import (
 )
 
 from .resource_pack_data import (
-    MCBLEND_MaterialPattern,
-    MCBLEND_RenderController,
+    MCBLEND_EntityMaterialPattern,
+    MCBLEND_EntityRenderController,
+    MCBLEND_AttachableMaterialPattern,
+    MCBLEND_AttachableRenderController,
     MCBLEND_ProjectProperties,
 )
 
@@ -121,8 +124,10 @@ classes = (
     MCBLEND_JustName,
     MCBLEND_DbEntry,
 
-    MCBLEND_MaterialPattern,
-    MCBLEND_RenderController,
+    MCBLEND_EntityMaterialPattern,
+    MCBLEND_EntityRenderController,
+    MCBLEND_AttachableMaterialPattern,
+    MCBLEND_AttachableRenderController,
     MCBLEND_ProjectProperties,
 
     MCBLEND_PT_ObjectPropertiesPanel,
@@ -187,6 +192,7 @@ classes = (
     MCBLEND_OT_ImportUvGroup,
 
     MCBLEND_OT_ImportRpEntity,
+    MCBLEND_OT_ImportAttachable,
     MCBLEND_OT_LoadRp,
     MCBLEND_OT_UnloadRps,
     MCBLEND_OT_LoadDatabase,

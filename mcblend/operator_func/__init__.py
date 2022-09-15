@@ -376,17 +376,24 @@ def load_rp_entities(
     mcblend_project = context.scene.mcblend_project
     mcblend_project = cast(MCBLEND_ProjectProperties, mcblend_project)
     # Cleared cached data for GUI it will be reloaded later
-    mcblend_project.render_controllers.clear()
+    # Clear cached entity data
     mcblend_project.entities.clear()
     mcblend_project.selected_entity = ''
-    
+    mcblend_project.entity_render_controllers.clear()
+    # Clear cached attachable data
+    mcblend_project.attachables.clear()
+    mcblend_project.selected_attachable = ''
+    mcblend_project.attachable_render_controllers.clear()
+
     db_handler = get_db_handler()
     if not path.exists():
         return
     db_handler.load_resource_pack(path)
+
+    # Load entity data
     duplicate_counter: int = 1
     last_name: Optional[str] = None
-    for pk, name in db_handler.list_entities_with_models_and_rc_from_db():
+    for pk, name in db_handler.list_entities_with_models_and_rc():
         entity = mcblend_project.entities.add()
         # Add primary key property
         entity.primary_key = pk
@@ -399,11 +406,27 @@ def load_rp_entities(
             entity.name = name
         last_name = name
 
+    # Load attachable data
+    duplicate_counter: int = 1
+    last_name: Optional[str] = None
+    for pk, name in db_handler.list_attachables_with_models_and_rc():
+        attachable = mcblend_project.attachables.add()
+        # Add primary key property
+        attachable.primary_key = pk
+        # Add name (if duplicated add index to it)
+        if name == last_name:
+            duplicate_counter += 1
+            attachable.name = f'{name} ({duplicate_counter})'
+        else:
+            duplicate_counter = 1
+            attachable.name = name
+        last_name = name
+
 def unload_rps(context: bpy_types.Context):
     # Clear the selection in GUI
     mcblend_project = context.scene.mcblend_project
     mcblend_project = cast(MCBLEND_ProjectProperties, mcblend_project)
-    mcblend_project.render_controllers.clear()
+    mcblend_project.entity_render_controllers.clear()
     mcblend_project.entities.clear()
     mcblend_project.selected_entity = ''
     db_handler = get_db_handler()
@@ -447,7 +470,7 @@ def import_model_form_project(
         if len(material_pks) > 0:
             for rc_material_field_pk in material_pks:
                 pattern, material_full_name = (
-                    db_handler.get_material_pattern_and_material(
+                    db_handler.get_entity_material_pattern_and_material(
                         entity_pk, rc_material_field_pk))
                 new_rc_stack_item.materials[pattern] = material_full_name
         else:  # Pull materials from the entity it's a fake render controller
