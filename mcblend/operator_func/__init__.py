@@ -459,15 +459,15 @@ def import_model_form_project(
         try:
             # texture - Optional[Image] (bpy.types.Image)
             texture_file_path = db_handler.get_texture_file_path(
-                render_controller_data['TextureFile_pk'])
+                render_controller_data['texture_file_pk'])
             texture = bpy.data.images.load(texture_file_path.as_posix())
         except RuntimeError:
             texture = None
         new_rc_stack_item = RcStackItem(texture)
-        geo_rc_stacks[render_controller_data['Geometry_pk']].append(
+        geo_rc_stacks[render_controller_data['geometry_pk']].append(
             new_rc_stack_item)
         material_pks = render_controller_data[
-            'RenderControllerMaterialsField_pks']
+            'render_controller_materials_field_pks']
         if import_type == 'attachable':
             get_material_pattern_and_material = (
                 db_handler.get_attachable_material_pattern_and_material)

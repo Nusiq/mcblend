@@ -16,30 +16,42 @@ class PksForModelImport(TypedDict):
     '''
     A collection of all primary keys needed for database queries used to
     import an entity or attachable from a resource pack.
-
-    The key names are the same as the names of the database tables.
-
-    The 'pk' value is a primary key for an attachable or entity based of
-    the context of the import.
     '''
     pk: int
+    '''ClientEntity_pk or ClientAttachable_pk based on the context.'''
+
     render_controllers: list[PksForModelRc]
+    '''A list of with the data for each render controller.'''
 
 class PksForModelRc(TypedDict):
     '''
     Primary keys of one of the render controllers of an entity/attachable.
     Part of the EntityImportPks.
 
-    The key names are the same as the names of the database tables.
-
     source_entity_material_field_pk is either AttachableMaterialField_pk or
     ClientEntityMaterialField_pk based on the context of the import.
     '''
-    RenderController_pk: int
-    TextureFile_pk: int
-    Geometry_pk: int
+    render_controller_pk: int
+    '''The PK of the render controller (RenderController_pk)'''
+
+    texture_file_pk: int
+    '''The PK of the texture file (TextureFile_pk)'''
+
+    geometry_pk: int
+    '''The PK of the geometry (Geometry_pk)'''
+
     source_entity_material_field_pk: int
-    RenderControllerMaterialsField_pks: list[int]
+    '''
+    The PK of the material field (AttachableMaterialField_pk or
+    ClientEntityMaterialField_pk)
+    '''
+
+    render_controller_materials_field_pks: list[int]
+    '''
+    The PKs of the render controller material fields
+    (RenderControllerMaterialsField_pks)
+    '''
+
 
 def get_pks_for_model_improt(
         context: bpy_types.Context,
@@ -53,12 +65,10 @@ def get_pks_for_model_improt(
     project = cast(MCBLEND_ProjectProperties, project)
 
     if base_object == 'entity':
-        entity_pk = project.entities[
-            project.selected_entity].primary_key
+        pk = project.entities[project.selected_entity].primary_key
         render_controllers = project.entity_render_controllers
     elif base_object == 'attachable':
-        entity_pk = project.attachables[
-            project.selected_attachable].primary_key
+        pk = project.attachables[project.selected_attachable].primary_key
         render_controllers = project.attachable_render_controllers
     else:
         raise ValueError("Expected 'entity' or 'attachable'")
@@ -67,7 +77,7 @@ def get_pks_for_model_improt(
     # data about the model
     query_data: PksForModelImport = {}
     # Load client entity PK
-    query_data['pk'] = entity_pk
+    query_data['pk'] = pk
     query_data['render_controllers'] = []
     # Load all render controllers PKs
     for render_controller in render_controllers:
@@ -75,22 +85,23 @@ def get_pks_for_model_improt(
         rc_pk = render_controller.primary_key
         query_data_rc = {}
         query_data['render_controllers'].append(query_data_rc)
-        query_data_rc['RenderController_pk'] = rc_pk
+        query_data_rc['render_controller_pk'] = rc_pk
 
         # Load texture PK
         try:
             texture_file_pk = int(render_controller.textures)
         except ValueError:
             texture_file_pk = -1
-        query_data_rc['TextureFile_pk'] = texture_file_pk
+        query_data_rc['texture_file_pk'] = texture_file_pk
 
         # Load geometry PK
         geo_pk = int(render_controller.geometries)
-        query_data_rc['Geometry_pk'] = geo_pk
+        query_data_rc['geometry_pk'] = geo_pk
 
         # Load all materials PKs
         query_data_rc_materials = []
-        query_data_rc['RenderControllerMaterialsField_pks'] = query_data_rc_materials
+        query_data_rc['render_controller_materials_field_pks'] = (
+            query_data_rc_materials)
         query_data_rc['source_entity_material_field_pk'] = -1
         if len(render_controller.material_patterns) > 0:
             # Materials loaded from render controller
