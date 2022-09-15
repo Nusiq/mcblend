@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import json
-from typing import Dict, Iterable, List, Optional, Tuple, cast, TYPE_CHECKING, TypedDict
+from typing import Dict, Iterable, List, Literal, Optional, Tuple, cast, TYPE_CHECKING, TypedDict
 from dataclasses import dataclass, field
 from collections import defaultdict
 
@@ -442,19 +442,20 @@ class RcStackItem:
     materials: Dict[str, str] = field(default_factory=dict)
     '''Materials dict with pattern keys and full material names values.'''
 
-def import_entity_form_project(
+def import_model_form_project(
         context: bpy_types.Context,
+        import_type: Literal['entity', 'attachable'],
         query_data: PksForModelImport) -> List[str]:
     '''
     Imports model using data selected in Project menu.
 
     :returns: list of warnings
     '''
+    # 1. Create RcStackItems
     db_handler = get_db_handler()
-    entity_pk = query_data['pk']
+    pk = query_data['pk']
     geo_rc_stacks: Dict[int, List[RcStackItem]] = defaultdict(list)
     for render_controller_data in query_data['render_controllers']:
-        rc_pk = render_controller_data['RenderController_pk']
         try:
             # texture - Optional[Image] (bpy.types.Image)
             texture_file_path = db_handler.get_texture_file_path(
@@ -465,22 +466,33 @@ def import_entity_form_project(
         new_rc_stack_item = RcStackItem(texture)
         geo_rc_stacks[render_controller_data['Geometry_pk']].append(
             new_rc_stack_item)
-        material_pks = render_controller_data['RenderControllerMaterialsField_pks']
-
+        material_pks = render_controller_data[
+            'RenderControllerMaterialsField_pks']
+        if import_type == 'attachable':
+            get_material_pattern_and_material = (
+                db_handler.get_attachable_material_pattern_and_material)
+        elif import_type == 'entity':
+            get_material_pattern_and_material = (
+                db_handler.get_entity_material_pattern_and_material)
+        else:
+            raise ValueError("Expected 'entity' or 'attachable'")
         if len(material_pks) > 0:
             for rc_material_field_pk in material_pks:
                 pattern, material_full_name = (
-                    db_handler.get_entity_material_pattern_and_material(
-                        entity_pk, rc_material_field_pk))
+                    get_material_pattern_and_material(
+                        pk, rc_material_field_pk)
+                )
                 new_rc_stack_item.materials[pattern] = material_full_name
-        else:  # Pull materials from the entity it's a fake render controller
+        else:
+            # Pull materials from the attachable/entity it's a fake render
+            # controller
             ce_material_field_pk = render_controller_data[
-                'ClientEntityMaterialField_pk']
+                'source_entity_material_field_pk']
             material_full_name = db_handler.get_full_material_identifier(
                 ce_material_field_pk)
             new_rc_stack_item.materials['*'] = material_full_name
 
-    # 7. Load every geometry
+    # 2. Load every geometry
     # blender_materials - Prevents creating same material multiple times
     # it's a dictionary of materials which uses a tuple with pairs of
     # names of the texutes and minecraft materials as the identifiers
@@ -497,7 +509,7 @@ def import_entity_form_project(
         geometry = ImportGeometry(model_loader)
         armature = geometry.build_with_armature(context)
 
-        # 7.1. Set proper textures resolution and model bounds
+        # 2.1. Set proper textures resolution and model bounds
         model_properties = armature.mcblend
         model_properties = cast(
             MCBLEND_ObjectProperties, model_properties)
@@ -516,7 +528,7 @@ def import_entity_form_project(
             model_properties.model_name = geometry.identifier
             armature.name = geometry.identifier
 
-        # 7.2. Save render controller properties in the armature
+        # 2.2. Save render controller properties in the armature
         for rc_stack_item in rc_stack:
             armature_rc = armature.mcblend.\
                 render_controllers.add()
@@ -529,131 +541,7 @@ def import_entity_form_project(
                 armature_rc_material.pattern = pattern
                 armature_rc_material.material = material
 
-        # 7.3. For every bone of geometry, create blender material from.
-        # Materials are created from a list of pairs:
-        # (Image, minecraft material)
-        for bone_name, bone in geometry.bones.items():
-            # Create a list of materials applicable for this bone
-            bone_materials: List[Tuple[Image, str]] = []
-            bone_materials_id: List[Tuple[Optional[str], str]] = []
-            for rc_stack_item in reversed(rc_stack):
-                matched_material: Optional[str] = None
-                for pattern, material in rc_stack_item.materials.items():
-                    if star_pattern_match(bone_name, pattern):
-                        matched_material = material
-                # Add material to bone_materials only if something matched
-                if matched_material is not None:
-                    bone_materials.append(
-                        (rc_stack_item.texture, matched_material))
-                    if rc_stack_item.texture is None:
-                        bone_materials_id.append(
-                            (None, matched_material))
-                    else:
-                        bone_materials_id.append(
-                            (rc_stack_item.texture.name, matched_material))
-            if len(bone_materials) == 0:  # No material for this bone!
-                continue
-            try:  # try to use existing material
-                material = blender_materials[tuple(bone_materials_id)]
-            except: # pylint: disable=bare-except
-                # create material
-                material = create_bone_material("MC_Material", bone_materials)
-                blender_materials[tuple(bone_materials_id)] = material
-            for c in bone.cubes:
-                if c.blend_cube is None:
-                    continue
-                c.blend_cube.data.materials.append(
-                    blender_materials[tuple(bone_materials_id)])
-    return warnings
-
-def import_attachable_form_project(
-        context: bpy_types.Context,
-        query_data: PksForModelImport) -> List[str]:
-    '''
-    Imports model using data selected in Project menu.
-
-    :returns: list of warnings
-    '''
-    db_handler = get_db_handler()
-    attachable_pk = query_data['pk']
-    geo_rc_stacks: Dict[int, List[RcStackItem]] = defaultdict(list)
-    for render_controller_data in query_data['render_controllers']:
-        rc_pk = render_controller_data['RenderController_pk']
-        try:
-            # texture - Optional[Image] (bpy.types.Image)
-            texture_file_path = db_handler.get_texture_file_path(
-                render_controller_data['TextureFile_pk'])
-            texture = bpy.data.images.load(texture_file_path.as_posix())
-        except RuntimeError:
-            texture = None
-        new_rc_stack_item = RcStackItem(texture)
-        geo_rc_stacks[render_controller_data['Geometry_pk']].append(
-            new_rc_stack_item)
-        material_pks = render_controller_data['RenderControllerMaterialsField_pks']
-
-        if len(material_pks) > 0:
-            for rc_material_field_pk in material_pks:
-                pattern, material_full_name = (
-                    db_handler.get_attachable_material_pattern_and_material(
-                        attachable_pk, rc_material_field_pk))
-                new_rc_stack_item.materials[pattern] = material_full_name
-        else:  # Pull materials from the attachable it's a fake render controller
-            ce_material_field_pk = render_controller_data[
-                'AttachableMaterialField_pk']
-            material_full_name = db_handler.get_full_material_identifier(
-                ce_material_field_pk)
-            new_rc_stack_item.materials['*'] = material_full_name
-
-    # 7. Load every geometry
-    # blender_materials - Prevents creating same material multiple times
-    # it's a dictionary of materials which uses a tuple with pairs of
-    # names of the texutes and minecraft materials as the identifiers
-    # of the material to create.
-    blender_materials: Dict[
-        Tuple[Tuple[Optional[str], str], ...], Material] = {}
-    warnings: List[str] = []
-    for geo_pk, rc_stack in geo_rc_stacks.items():
-        geo_path, geo_identifier = db_handler.get_geometry(geo_pk)
-        geo_data = load_jsonc(geo_path).data
-        # # Import model
-        model_loader = ModelLoader(geo_data, geo_identifier)
-        warnings.extend(model_loader.warnings)
-        geometry = ImportGeometry(model_loader)
-        armature = geometry.build_with_armature(context)
-
-        # 7.1. Set proper textures resolution and model bounds
-        model_properties = armature.mcblend
-        model_properties = cast(
-            MCBLEND_ObjectProperties, model_properties)
-
-        model_properties.texture_width = geometry.texture_width
-        model_properties.texture_height = geometry.texture_height
-        model_properties.visible_bounds_offset = geometry.visible_bounds_offset
-        model_properties.visible_bounds_width = geometry.visible_bounds_width
-        model_properties.visible_bounds_height = geometry.visible_bounds_height
-
-        # TODO - is this necessary?
-        if geometry.identifier.startswith('geometry.'):
-            model_properties.model_name = geometry.identifier[9:]
-            armature.name = geometry.identifier[9:]
-        else:
-            model_properties.model_name = geometry.identifier
-            armature.name = geometry.identifier
-
-        # 7.2. Save render controller properties in the armature
-        for rc_stack_item in rc_stack:
-            armature_rc = armature.mcblend.\
-                render_controllers.add()
-            if rc_stack_item.texture is not None:
-                armature_rc.texture = rc_stack_item.texture.name
-            else:
-                armature_rc.texture = ""
-            for pattern, material in rc_stack_item.materials.items():
-                armature_rc_material = armature_rc.materials.add()
-                armature_rc_material.pattern = pattern
-                armature_rc_material.material = material
-
-        # 7.3. For every bone of geometry, create blender material from.
+        # 2.3. For every bone of geometry, create blender material from.
         # Materials are created from a list of pairs:
         # (Image, minecraft material)
         for bone_name, bone in geometry.bones.items():

@@ -31,11 +31,14 @@ class PksForModelRc(TypedDict):
     Part of the EntityImportPks.
 
     The key names are the same as the names of the database tables.
+
+    source_entity_material_field_pk is either AttachableMaterialField_pk or
+    ClientEntityMaterialField_pk based on the context of the import.
     '''
     RenderController_pk: int
     TextureFile_pk: int
     Geometry_pk: int
-    ClientEntityMaterialField_pk: int
+    source_entity_material_field_pk: int
     RenderControllerMaterialsField_pks: list[int]
 
 def get_pks_for_model_improt(
@@ -88,7 +91,7 @@ def get_pks_for_model_improt(
         # Load all materials PKs
         query_data_rc_materials = []
         query_data_rc['RenderControllerMaterialsField_pks'] = query_data_rc_materials
-        query_data_rc['ClientEntityMaterialField_pk'] = -1
+        query_data_rc['source_entity_material_field_pk'] = -1
         if len(render_controller.material_patterns) > 0:
             # Materials loaded from render controller
             for material_pattern_obj in render_controller.material_patterns:
@@ -97,5 +100,5 @@ def get_pks_for_model_improt(
         else:
             # Materials loaded from the entity it's a fake render controller
             ce_material_field_pk = int(render_controller.fake_material_patterns)
-            query_data_rc['ClientEntityMaterialField_pk'] = ce_material_field_pk
+            query_data_rc['source_entity_material_field_pk'] = ce_material_field_pk
     return query_data

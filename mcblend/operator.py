@@ -21,8 +21,7 @@ from .operator_func.material import MATERIALS_MAP
 from .operator_func import (
     export_model, export_animation, fix_uvs, separate_mesh_cubes, set_uvs,
     import_model, inflate_objects, load_rp_to_mcblned, unload_rps,
-    import_entity_form_project, import_attachable_form_project,
-    apply_materials, prepare_physics_simulation)
+    import_model_form_project, apply_materials, prepare_physics_simulation)
 from .operator_func.rp_importer import get_pks_for_model_improt
 from .operator_func.sqlite_bedrock_packs.better_json import (
     CompactEncoder, JSONCDecoder)
@@ -1591,7 +1590,8 @@ class MCBLEND_OT_ImportRpEntity(bpy.types.Operator):
     def execute(self, context):
         try:
             query_data = get_pks_for_model_improt(context, 'entity')
-            warnings = import_entity_form_project(context, query_data)
+            warnings = import_model_form_project(
+                context, 'entity', query_data)
             if len(warnings) > 1:
                 for warning in warnings:
                     self.report({'WARNING'}, warning)
@@ -1623,7 +1623,8 @@ class MCBLEND_OT_ImportAttachable(bpy.types.Operator):
     def execute(self, context):
         try:
             query_data = get_pks_for_model_improt(context, 'attachable')
-            warnings = import_attachable_form_project(context, query_data)
+            warnings = import_model_form_project(
+                context, 'attachable', query_data)
             if len(warnings) > 1:
                 for warning in warnings:
                     self.report({'WARNING'}, warning)
