@@ -133,7 +133,6 @@ class DbHandler:
             self.db.execute(query, (entity_pk,))
         ]
 
-
     @cache
     def gui_enum_geometries_from_db(
             self, rc_pk: int, entity_pk: int) -> list[tuple[str, str, str]]:

@@ -633,7 +633,6 @@ class MCBLEND_PT_ArmatureRenderControllersPanel(bpy.types.Panel):
                 op_props.material_index = material_index
 
 # Animation properties panel
-
 class MCBLEND_PT_AnimationPropertiesPanel(bpy.types.Panel):
     '''
     Panel used launching the animation export operator and changing its
