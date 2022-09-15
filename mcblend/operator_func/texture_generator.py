@@ -12,7 +12,7 @@ from enum import Enum
 
 import numpy as np
 
-from .bedrock_packs import Vector2d, Vector3d
+from .extra_types import Vector2d, Vector3d
 
 class UvMaskTypes(Enum):
     '''

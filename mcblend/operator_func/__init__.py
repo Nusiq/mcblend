@@ -4,7 +4,8 @@ Functions used directly by the blender operators.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Tuple
+import json
+from typing import Dict, Iterable, List, Literal, Optional, Tuple, cast, TYPE_CHECKING, TypedDict
 from dataclasses import dataclass, field
 from collections import defaultdict
 
@@ -13,18 +14,27 @@ from bpy.types import Image, Material
 import bpy_types
 import numpy as np
 
+from .sqlite_bedrock_packs.better_json import load_jsonc
+
 from .animation import AnimationExport
-from .bedrock_packs import Project, ResourcePack
 from .common import (
     MINECRAFT_SCALE_FACTOR, CubePolygon, McblendObject, McblendObjectGroup, MeshType,
     apply_obj_transform_keep_origin, fix_cube_rotation, star_pattern_match,
     MCObjType)
-from .bedrock_packs import Vector2di
+from .extra_types import Vector2di
 from .importer import ImportGeometry, ModelLoader
 from .material import create_bone_material
 from .model import ModelExport
 from .uv import CoordinatesConverter, UvMapper
+from .db_handler import get_db_handler
+from .rp_importer import PksForModelImport
 
+if TYPE_CHECKING:
+    from ..resource_pack_data import MCBLEND_ProjectProperties
+    from ..object_data import MCBLEND_ObjectProperties
+else:
+    MCBLEND_ProjectProperties = None
+    MCBLEND_ObjectProperties = None
 
 def export_model(
         context: bpy_types.Context) -> Tuple[Dict, Iterable[str]]:
@@ -355,95 +365,72 @@ def inflate_objects(
             counter += 1
     return counter
 
-def reload_rp_entities(context: bpy_types.Context):
+def load_rp_to_mcblned(
+        context: bpy_types.Context, path: Path):
     '''
-    Loads the names of the entities used in the resource pack.
+    Loads the resource pack to the mcblend dadtabase.
 
     :param context: the context of running the operator.
+    :param path: path to the resource pack.
     '''
-    project = context.scene.mcblend_project
-    project_entities = project.entities
-    project_rcs = project.render_controllers
-    rp_path: Path = Path(context.scene.mcblend_project.rp_path)
+    mcblend_project = context.scene.mcblend_project
+    mcblend_project = cast(MCBLEND_ProjectProperties, mcblend_project)
+    # Cleared cached data for GUI it will be reloaded later
+    # Clear cached entity data
+    mcblend_project.entities.clear()
+    mcblend_project.selected_entity = ''
+    mcblend_project.entity_render_controllers.clear()
+    # Clear cached attachable data
+    mcblend_project.attachables.clear()
+    mcblend_project.selected_attachable = ''
+    mcblend_project.attachable_render_controllers.clear()
 
-    # context.scene.mcblend_project.active_entity = -1
-    project_entities.clear()
-    project_rcs.clear()
-
-    if not rp_path.exists() or rp_path.is_file():
+    db_handler = get_db_handler()
+    if not path.exists():
         return
-    p = Project()
-    p.add_rp(ResourcePack(rp_path))
-    # Loud entity data into project
-    for rp_entity in p.rp_entities:
-        new_entity = project_entities.add()
-        new_entity.name = rp_entity.identifier
+    db_handler.load_resource_pack(path)
 
-        # new_entity.textures: Collection[NameValuePair]
-        for t in  rp_entity.textures:
-            new_texture = new_entity.textures.add()
-            new_texture.name = 'texture.' + t.short_name
-            new_texture.value = t.identifier
-        # new_entity.geometries: Collection[NameValuePair]
-        for g in rp_entity.geometries:
-            new_geometry = new_entity.geometries.add()
-            new_geometry.name = 'geometry.' + g.short_name
-            new_geometry.value = g.identifier
-        # new_entity.materials: Collection[NameValuePair]
-        for m in rp_entity.materials:
-            new_material = new_entity.materials.add()
-            new_material.name = 'material.' + m.short_name
-            new_material.value = m.identifier
-        # new_entity.render_controllers: Collection[JustName]
-        for rc in rp_entity.render_controllers:
-            new_rc = new_entity.render_controllers.add()
-            new_rc.name = rc.identifier
+    # Load entity data
+    duplicate_counter: int = 1
+    last_name: Optional[str] = None
+    for pk, name in db_handler.list_entities_with_models_and_rc():
+        entity = mcblend_project.entities.add()
+        # Add primary key property
+        entity.primary_key = pk
+        # Add name (if duplicated add index to it)
+        if name == last_name:
+            duplicate_counter += 1
+            entity.name = f'{name} ({duplicate_counter})'
+        else:
+            duplicate_counter = 1
+            entity.name = name
+        last_name = name
 
-    # Select existing entity for the entity_names enum of the Project
-    if len(project_entities) > 0:
-        entity = project_entities[0]
-        project.entity_names = entity.name
+    # Load attachable data
+    duplicate_counter: int = 1
+    last_name: Optional[str] = None
+    for pk, name in db_handler.list_attachables_with_models_and_rc():
+        attachable = mcblend_project.attachables.add()
+        # Add primary key property
+        attachable.primary_key = pk
+        # Add name (if duplicated add index to it)
+        if name == last_name:
+            duplicate_counter += 1
+            attachable.name = f'{name} ({duplicate_counter})'
+        else:
+            duplicate_counter = 1
+            attachable.name = name
+        last_name = name
 
-    # Load render controller data into project
-    for rc_file in p.rp_render_controllers:
-        for rc_obj in rc_file:
-            new_rc = project_rcs.add()
-            # new_rc.name: String
-            new_rc.name = rc_obj.json.parent_key
-            # new_rc.geometry_molang: String
-            new_rc.geometry_molang = rc_obj.geometry
-            # new_rc.texture_molang: String
-            if len(rc_obj.textures) > 0:  # Currently only one texture is allowed
-                new_rc.texture_molang =  rc_obj.textures[0]
-            else:
-                new_rc.texture_molang = ''
-            # new_rc.materials: Collection[MaterialProperties]
-            for k, v in rc_obj.materials.items():
-                material = new_rc.materials.add()
-                material.name = k  # pattern
-                material.value_molang = v
-                material.owner_name = new_rc.name
-            # new_rc.geometry_arrays: Collection[ArrayProperties]
-            for array_name, array_v in rc_obj.geometry_arrays.items():
-                geo_array = new_rc.geometry_arrays.add()
-                geo_array.name = array_name
-                for i in array_v:
-                    item = geo_array.items.add()
-                    item.name = i
-            # new_rc.texture_arrays: Collection[ArrayProperties]
-            for array_name, array_v in rc_obj.texture_arrays.items():
-                texture_array = new_rc.texture_arrays.add()
-                texture_array.name = array_name
-                for i in array_v:
-                    item = texture_array.items.add()
-                    item.name = i
-            # new_rc.material_arrays: Collection[ArrayProperties]
-            for array_name, array_v in rc_obj.material_arrays.items():
-                material_array = new_rc.material_arrays.add()
-                material_array.name = array_name
-                for i in array_v:
-                    item = material_array.items.add()
-                    item.name = i
+def unload_rps(context: bpy_types.Context):
+    # Clear the selection in GUI
+    mcblend_project = context.scene.mcblend_project
+    mcblend_project = cast(MCBLEND_ProjectProperties, mcblend_project)
+    mcblend_project.entity_render_controllers.clear()
+    mcblend_project.entities.clear()
+    mcblend_project.selected_entity = ''
+    db_handler = get_db_handler()
+    db_handler.delete_db()
 
 @dataclass
 class RcStackItem:
@@ -455,57 +442,57 @@ class RcStackItem:
     materials: Dict[str, str] = field(default_factory=dict)
     '''Materials dict with pattern keys and full material names values.'''
 
-def import_model_form_project(context: bpy_types.Context) -> List[str]:
+def import_model_form_project(
+        context: bpy_types.Context,
+        import_type: Literal['entity', 'attachable'],
+        query_data: PksForModelImport) -> List[str]:
     '''
     Imports model using data selected in Project menu.
 
     :returns: list of warnings
     '''
-    # 1. Load cached data
-    cached_project = context.scene.mcblend_project
-    # 2. Open project
-    rp_path: Path = Path(cached_project.rp_path)
-    if not rp_path.exists() or rp_path.is_file():
-        raise ValueError("Invalid resource pack path.")
-    p = Project()
-    p.add_rp(ResourcePack(rp_path))
-
-    # 3. Load the cached entity data
-    cached_entity = cached_project.entities[cached_project.entity_names]
-    # 5. Unpack the data (get full IDs instead of short names) from render
-    # controllers into a single object and group it by used geometry.
-    geo_rc_stacks: Dict[str, List[RcStackItem]] = defaultdict(list)
-    for rc_name in cached_entity.render_controllers.keys():
-        if rc_name in cached_project.render_controllers.keys():
-            cached_rc = cached_project.render_controllers[rc_name]
-        else:
-            cached_rc = cached_project.fake_render_controllers[rc_name]
-        texture = None
-        if cached_rc.texture in cached_entity.textures.keys():
-            texture_name = cached_entity.textures[cached_rc.texture].value
-            try:
-                texture = bpy.data.images.load(
-                    p.rp_texture_files[:texture_name:0].path.as_posix())
-            except RuntimeError:
-                texture = None
+    # 1. Create RcStackItems
+    db_handler = get_db_handler()
+    pk = query_data['pk']
+    geo_rc_stacks: Dict[int, List[RcStackItem]] = defaultdict(list)
+    for render_controller_data in query_data['render_controllers']:
+        try:
+            # texture - Optional[Image] (bpy.types.Image)
+            texture_file_path = db_handler.get_texture_file_path(
+                render_controller_data['texture_file_pk'])
+            texture = bpy.data.images.load(texture_file_path.as_posix())
+        except RuntimeError:
+            texture = None
         new_rc_stack_item = RcStackItem(texture)
-        if cached_rc.geometry not in cached_entity.geometries:
-            raise ValueError(
-                f"The render controller uses a geometry {cached_rc.geometry} "
-                "undefined by the selected entity")
-        geo_rc_stacks[
-            cached_entity.geometries[cached_rc.geometry].value
-        ].append(new_rc_stack_item)
-        for material in cached_rc.materials:
-            if material.value in cached_entity.materials.keys():
-                material_full_name = cached_entity.materials[
-                    material.value].value
-            else:
-                material_full_name = "entity_alphatest"  # default
-            # (pattern: full identifier) pair
-            new_rc_stack_item.materials[material.name] = material_full_name
+        geo_rc_stacks[render_controller_data['geometry_pk']].append(
+            new_rc_stack_item)
+        material_pks = render_controller_data[
+            'render_controller_materials_field_pks']
+        if import_type == 'attachable':
+            get_material_pattern_and_material = (
+                db_handler.get_attachable_material_pattern_and_material)
+        elif import_type == 'entity':
+            get_material_pattern_and_material = (
+                db_handler.get_entity_material_pattern_and_material)
+        else:
+            raise ValueError("Expected 'entity' or 'attachable'")
+        if len(material_pks) > 0:
+            for rc_material_field_pk in material_pks:
+                pattern, material_full_name = (
+                    get_material_pattern_and_material(
+                        pk, rc_material_field_pk)
+                )
+                new_rc_stack_item.materials[pattern] = material_full_name
+        else:
+            # Pull materials from the attachable/entity it's a fake render
+            # controller
+            ce_material_field_pk = render_controller_data[
+                'source_entity_material_field_pk']
+            material_full_name = db_handler.get_full_material_identifier(
+                ce_material_field_pk)
+            new_rc_stack_item.materials['*'] = material_full_name
 
-    # 7. Load every geometry
+    # 2. Load every geometry
     # blender_materials - Prevents creating same material multiple times
     # it's a dictionary of materials which uses a tuple with pairs of
     # names of the texutes and minecraft materials as the identifiers
@@ -513,36 +500,35 @@ def import_model_form_project(context: bpy_types.Context) -> List[str]:
     blender_materials: Dict[
         Tuple[Tuple[Optional[str], str], ...], Material] = {}
     warnings: List[str] = []
-    for geo_name, rc_stack in geo_rc_stacks.items():
-        try:
-            geometry_data: Dict = p.rp_models[:geo_name:0].json.data  # type: ignore
-        except KeyError:
-            warnings.append(
-                f"Geometry {geo_name} referenced by "
-                f"{cached_project.entity_names} is not defined in the "
-                "resource pack")
-            continue
-        # Import model
-        model_loader = ModelLoader(geometry_data, geo_name)
+    for geo_pk, rc_stack in geo_rc_stacks.items():
+        geo_path, geo_identifier = db_handler.get_geometry(geo_pk)
+        geo_data = load_jsonc(geo_path).data
+        # # Import model
+        model_loader = ModelLoader(geo_data, geo_identifier)
         warnings.extend(model_loader.warnings)
         geometry = ImportGeometry(model_loader)
         armature = geometry.build_with_armature(context)
 
-        # 7.1. Set proper textures resolution and model bounds
+        # 2.1. Set proper textures resolution and model bounds
         model_properties = armature.mcblend
+        model_properties = cast(
+            MCBLEND_ObjectProperties, model_properties)
 
         model_properties.texture_width = geometry.texture_width
         model_properties.texture_height = geometry.texture_height
         model_properties.visible_bounds_offset = geometry.visible_bounds_offset
         model_properties.visible_bounds_width = geometry.visible_bounds_width
         model_properties.visible_bounds_height = geometry.visible_bounds_height
+
+        # TODO - is this necessary?
         if geometry.identifier.startswith('geometry.'):
             model_properties.model_name = geometry.identifier[9:]
             armature.name = geometry.identifier[9:]
         else:
             model_properties.model_name = geometry.identifier
             armature.name = geometry.identifier
-        # 7.2. Save render controller properties in the armature
+
+        # 2.2. Save render controller properties in the armature
         for rc_stack_item in rc_stack:
             armature_rc = armature.mcblend.\
                 render_controllers.add()
@@ -555,7 +541,7 @@ def import_model_form_project(context: bpy_types.Context) -> List[str]:
                 armature_rc_material.pattern = pattern
                 armature_rc_material.material = material
 
-        # 7.3. For every bone of geometry, create blender material from.
+        # 2.3. For every bone of geometry, create blender material from.
         # Materials are created from a list of pairs:
         # (Image, minecraft material)
         for bone_name, bone in geometry.bones.items():

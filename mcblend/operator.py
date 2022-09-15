@@ -3,6 +3,7 @@ This module contains all of the operators.
 '''
 # don't import future annotations Blender needs that
 import json
+from pathlib import Path
 from json.decoder import JSONDecodeError
 from typing import Any, List, Optional, Dict
 
@@ -19,11 +20,12 @@ from .operator_func.material import MATERIALS_MAP
 
 from .operator_func import (
     export_model, export_animation, fix_uvs, separate_mesh_cubes, set_uvs,
-    import_model, inflate_objects, reload_rp_entities,
+    import_model, inflate_objects, load_rp_to_mcblned, unload_rps,
     import_model_form_project, apply_materials, prepare_physics_simulation)
-from .operator_func.bedrock_packs.json import CompactEncoder
+from .operator_func.rp_importer import get_pks_for_model_improt
+from .operator_func.sqlite_bedrock_packs.better_json import (
+    CompactEncoder, JSONCDecoder)
 from .operator_func.exception import NotEnoughTextureSpace, ImporterException
-from .operator_func.bedrock_packs.json import JSONCDecoder
 from .operator_func.texture_generator import (
     list_mask_types_as_blender_enum, UvMaskTypes, MixMaskMode)
 
@@ -1507,16 +1509,70 @@ class MCBLEND_OT_RemoveEffect(bpy.types.Operator):
         return {'FINISHED'}
 
 # Project - RP entity import
-class MCBLEND_OT_ReloadRp(bpy.types.Operator):
+class MCBLEND_OT_LoadRp(bpy.types.Operator, ImportHelper):
     '''Imports entity form Minecraft project into blender'''
     # pylint: disable=unused-argument, no-member
-    bl_idname = "mcblend.reload_rp"
-    bl_label = "Import entity"
+    bl_idname = "mcblend.load_rp"
+    bl_label = "Load Resource Pack"
     bl_options = {'REGISTER'}
-    bl_description = "Reloads the list of the entities from the resource pack."
+    bl_description = "Loads the resource pack to the database for importer."
+
+    filter_glob: StringProperty(  # type: ignore
+        default="",
+        options={'HIDDEN'},
+        maxlen=1000,
+    )
 
     def execute(self, context):
-        reload_rp_entities(context)
+        rp_path: Path = Path(self.filepath)
+        load_rp_to_mcblned(context, rp_path)
+        return {'FINISHED'}
+
+class MCBLEND_OT_UnloadRps(bpy.types.Operator):
+    '''Unloads all resource packs from the database'''
+    bl_idname = "mcblend.unload_rps"
+    bl_label = "Unload Resource Packs"
+    bl_options = {'REGISTER'}
+    bl_description = "Unloads all resource packs from the database."
+
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_confirm(self, event)
+
+    def execute(self, context):
+        unload_rps(context)
+        return {'FINISHED'}
+
+class MCBLEND_OT_LoadDatabase(bpy.types.Operator, ImportHelper):
+    '''Loads SQLite database with resource pack data.'''
+    # pylit: disable=unused-argument, no-member
+    bl_idname = "mcblend.load_database"
+    bl_label = "Load database"
+    bl_options = {'REGISTER'}
+    bl_description = "Loads SQLite database with resource pack data."
+
+    filter_glob: StringProperty(  # type: ignore
+        default="*.db",
+        options={'HIDDEN'},
+        maxlen=1000,
+    )
+
+    def execute(self, context):
+        self.report({'INFO'}, f"Loading database from {self.filepath}")
+        return {'FINISHED'}
+
+class MCBLEND_OT_SaveDatabase(bpy.types.Operator, ExportHelper):
+    '''Saves SQLite database with resource packs data.'''
+    # pylint: disable=unused-argument, no-member
+    bl_idname = "mcblend.save_database"
+    bl_label = "Save database"
+    bl_options = {'REGISTER'}
+    bl_description = "Saves SQLite database with resource packs data."
+
+    filename_ext = ".db"
+
+    def execute(self, context):
+        self.report({'INFO'}, f"Saving database to {self.filepath}")
         return {'FINISHED'}
 
 class MCBLEND_OT_ImportRpEntity(bpy.types.Operator):
@@ -1533,7 +1589,42 @@ class MCBLEND_OT_ImportRpEntity(bpy.types.Operator):
 
     def execute(self, context):
         try:
-            warnings = import_model_form_project(context)
+            query_data = get_pks_for_model_improt(context, 'entity')
+            warnings = import_model_form_project(
+                context, 'entity', query_data)
+            if len(warnings) > 1:
+                for warning in warnings:
+                    self.report({'WARNING'}, warning)
+                    self.report(
+                        {'WARNING'},
+                        f"Finished with {len(warnings)} warnings. "
+                        "See logs for more details."
+                    )
+            elif len(warnings) == 1:
+                self.report({'WARNING'}, warnings[0])
+        except ImporterException as e:
+            self.report(
+                {'ERROR'}, f'Invalid model: {e}'
+            )
+        return {'FINISHED'}
+
+class MCBLEND_OT_ImportAttachable(bpy.types.Operator):
+    '''Imports attachable form Minecraft project into blender'''
+    # pylint: disable=unused-argument, no-member
+    bl_idname = "mcblend.import_attachable"
+    bl_label = "Import attachable from pack"
+    bl_options = {'UNDO', 'INTERNAL'}
+    bl_description = "Import attachable by it's name from the resource pack."
+
+    @classmethod
+    def poll(cls, context: bpy_types.Context):
+        return len(context.scene.mcblend_project.attachables) > 0
+
+    def execute(self, context):
+        try:
+            query_data = get_pks_for_model_improt(context, 'attachable')
+            warnings = import_model_form_project(
+                context, 'attachable', query_data)
             if len(warnings) > 1:
                 for warning in warnings:
                     self.report({'WARNING'}, warning)
@@ -1603,7 +1694,6 @@ class MCBLEND_OT_MoveFakeRc(bpy.types.Operator):
         rcs = context.object.mcblend.render_controllers
         rcs.move(self.rc_index, self.move_to)
         return {'FINISHED'}
-
 
 class MCBLEND_OT_FakeRcSelectTexture(bpy.types.Operator):
     '''Selects the name of the texture for render controller of a model.'''

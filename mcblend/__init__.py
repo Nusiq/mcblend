@@ -46,7 +46,11 @@ from .operator import (
     MCBLEND_OT_RemoveEffect,
 
     MCBLEND_OT_ImportRpEntity,
-    MCBLEND_OT_ReloadRp,
+    MCBLEND_OT_ImportAttachable,
+    MCBLEND_OT_LoadRp,
+    MCBLEND_OT_UnloadRps,
+    MCBLEND_OT_LoadDatabase,
+    MCBLEND_OT_SaveDatabase,
 
     MCBLEND_OT_AddFakeRc,
     MCBLEND_OT_RemoveFakeRc,
@@ -62,15 +66,14 @@ from .operator import (
 
 from .common_data import (
     MCBLEND_JustName,
-    MCBLEND_NameValuePair,
-    MCBLEND_EnumCache,
+    MCBLEND_DbEntry,
 )
 
 from .resource_pack_data import (
-    MCBLEND_EntityProperties,
-    MCBLEND_MaterialProperties,
-    MCBLEND_RenderControllerArrayProperties,
-    MCBLEND_RenderControllersProperties,
+    MCBLEND_EntityMaterialPattern,
+    MCBLEND_EntityRenderController,
+    MCBLEND_AttachableMaterialPattern,
+    MCBLEND_AttachableRenderController,
     MCBLEND_ProjectProperties,
 )
 
@@ -119,12 +122,12 @@ bl_info = {
 
 classes = (
     MCBLEND_JustName,
-    MCBLEND_NameValuePair,
-    MCBLEND_EnumCache,
-    MCBLEND_EntityProperties,
-    MCBLEND_MaterialProperties,
-    MCBLEND_RenderControllerArrayProperties,
-    MCBLEND_RenderControllersProperties,
+    MCBLEND_DbEntry,
+
+    MCBLEND_EntityMaterialPattern,
+    MCBLEND_EntityRenderController,
+    MCBLEND_AttachableMaterialPattern,
+    MCBLEND_AttachableRenderController,
     MCBLEND_ProjectProperties,
 
     MCBLEND_PT_ObjectPropertiesPanel,
@@ -189,7 +192,11 @@ classes = (
     MCBLEND_OT_ImportUvGroup,
 
     MCBLEND_OT_ImportRpEntity,
-    MCBLEND_OT_ReloadRp,
+    MCBLEND_OT_ImportAttachable,
+    MCBLEND_OT_LoadRp,
+    MCBLEND_OT_UnloadRps,
+    MCBLEND_OT_LoadDatabase,
+    MCBLEND_OT_SaveDatabase,
     MCBLEND_PT_ProjectPanel,
     MCBLEND_PT_BonePanel,
 

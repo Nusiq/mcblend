@@ -2,12 +2,17 @@
 This module contains all of the panels for mcblend GUI.
 '''
 # don't import future annotations Blender needs that
-from typing import List, Optional
+from cProfile import label
+from typing import List, Optional, cast
 from dataclasses import dataclass
 
 import bpy
 
+
+from .resource_pack_data import MCBLEND_ProjectProperties
+
 from .object_data import EffectTypes
+from .operator_func.db_handler import get_db_handler
 from .operator_func.common import MeshType
 from .operator_func.texture_generator import UvMaskTypes
 
@@ -629,7 +634,6 @@ class MCBLEND_PT_ArmatureRenderControllersPanel(bpy.types.Panel):
                 op_props.material_index = material_index
 
 # Animation properties panel
-
 class MCBLEND_PT_AnimationPropertiesPanel(bpy.types.Panel):
     '''
     Panel used launching the animation export operator and changing its
@@ -742,81 +746,80 @@ class MCBLEND_PT_ProjectPanel(bpy.types.Panel):
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
 
-    def draw_render_controller(
-            self, rc, col: bpy.types.UILayout):
-        '''
-        Draws single render controller GUI
-        '''
-        geo_cache = rc.geometry_cache
-        texture_cache = rc.texture_cache
-        geo_choice = geo_cache.is_cached and len(geo_cache.values) > 1
-        texture_choice = texture_cache.is_cached and len(texture_cache.values) > 1
-        material_choice = False
-        for mat in rc.materials:
-            mat_cache = mat.value_cache
-            # Not cached (shouldn't happen) -> assume you can select something
-            # Cached -> check if there are at least 2 items (a choice for user)
-            if (
-                    not mat_cache.is_cached or
-                    (mat_cache.is_cached and len(mat_cache.values) > 1)):
-                material_choice = True
-                break
-        if (not geo_choice and not texture_choice and not material_choice):
-            return  # Nothing to draw
-        box = col.box()
-        col = box.column()
-        row = col.row()
-        row.label(text=f'{rc.name}')
-        if geo_choice:
-            col.prop(
-                rc, "geometry", text="Geometry"
-            )
-        if texture_choice:
-            col.prop(
-                rc, "texture", text="Texture"
-            )
-        if material_choice:
-            box = col.box()
-            col = box.column()
-            row = col.row()
-            row.label(text="Materials")
-            for mat in rc.materials:
-                mat_cache = mat.value_cache
-                if (
-                        not mat_cache.is_cached or
-                        (mat_cache.is_cached and len(mat_cache.values) > 1)):
-                    col.prop(mat, "value", text=mat.name)
-
     def draw(self, context):
         col = self.layout.column()
-        row = col.row()
-        row.prop(
-            context.scene.mcblend_project, "rp_path", text="Resource Pack"
-        )
-        row.operator(
-            "mcblend.reload_rp",
-            text="", icon='FILE_REFRESH'
-        )
         project = context.scene.mcblend_project
-        # Don't draw dropdown lists if they're empty
-        if len(project.entities) > 0:
+        project = cast(MCBLEND_ProjectProperties, project)
+
+        # col.operator("mcblend.load_database")
+        # col.operator("mcblend.save_database")
+        col.operator("mcblend.load_rp")
+        if not get_db_handler().is_loaded:
+            return
+        col.operator("mcblend.unload_rps")
+        col.prop(project, "importer_type", text="")
+        if project.importer_type == "ENTITY":
             col.prop_search(
-                data=project, property="entity_names",
+                data=project, property="selected_entity",
                 search_data=project, search_property="entities",
                 text="Entity"
             )
-            if project.entity_names in project.entities:
-                entity = project.entities[project.entity_names]
-                for rc_name in entity.render_controllers.keys():
-                    if rc_name not in project.render_controllers:
-                        # The definition should be on the list of fake RC
-                        rc = project.fake_render_controllers[rc_name]
-                    else:
-                        rc = project.render_controllers[rc_name]
-                    self.draw_render_controller(rc, col)
+            if not project.selected_entity in project.entities:
+                return
+            # if len(project.render_controllers) > 0:
+            for rc in project.entity_render_controllers:
+                box = col.box()
+                box.label(text=rc.identifier)
+                if rc.primary_key == -1:
+                    box.label(text="Render controller not found! Using data from client entity.", icon="ERROR")
 
+                box.prop(rc, "geometries", text="Geometry")
+                box.prop(rc, "textures", text="Texture")
+                materials_box = box.box()
+                materials_box.label(text="Materials")
+                if len(rc.material_patterns) > 0:
+                    for material_pattern in rc.material_patterns:
+                        materials_box.prop(
+                            material_pattern, "materials",
+                            text=material_pattern.pattern)
+                else:
+                    materials_box.prop(rc, "fake_material_patterns", text="*")
+
+            if project.selected_entity in project.entities:
                 col.operator(
                     "mcblend.import_rp_entity",
+                    text="Import from project"
+                )
+        elif project.importer_type == "ATTACHABLE":
+            col.prop_search(
+                data=project, property="selected_attachable",
+                search_data=project, search_property="attachables",
+                text="Attachable"
+            )
+            if not project.selected_attachable in project.attachables:
+                return
+            # if len(project.render_controllers) > 0:
+            for rc in project.attachable_render_controllers:
+                box = col.box()
+                box.label(text=rc.identifier)
+                if rc.primary_key == -1:
+                    box.label(text="Render controller not found! Using data from attachable.", icon="ERROR")
+
+                box.prop(rc, "geometries", text="Geometry")
+                box.prop(rc, "textures", text="Texture")
+                materials_box = box.box()
+                materials_box.label(text="Materials")
+                if len(rc.material_patterns) > 0:
+                    for material_pattern in rc.material_patterns:
+                        materials_box.prop(
+                            material_pattern, "materials",
+                            text=material_pattern.pattern)
+                else:
+                    materials_box.prop(rc, "fake_material_patterns", text="*")
+
+            if project.selected_attachable in project.attachables:
+                col.operator(
+                    "mcblend.import_attachable",
                     text="Import from project"
                 )
 

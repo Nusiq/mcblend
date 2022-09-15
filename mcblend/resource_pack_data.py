@@ -1,289 +1,368 @@
 '''
 Custom Blender objects with properties of the resource pack.
 '''
-from typing import Any
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, Literal, cast
 
 import bpy
 from bpy.props import (
-    CollectionProperty, EnumProperty, PointerProperty, StringProperty)
+    CollectionProperty, EnumProperty, IntProperty, StringProperty)
 
-from .operator_func import reload_rp_entities
-from .operator_func.molang import MolangExpressionResourcesStats
-from .common_data import (
-    MCBLEND_EnumCache, MCBLEND_JustName,
-    MCBLEND_NameValuePair)
+from .common_data import MCBLEND_DbEntry
+from .operator_func import load_rp_to_mcblned
+from .operator_func.db_handler import get_db_handler
+from .extra_types import CollectionPropertyAnnotation
 
-# Resource pack (importer)
-class MCBLEND_EntityProperties(bpy.types.PropertyGroup):
+# RENDER CONTROLLER'S MATERIAL FIELD FOR ENTITY SELECTION
+def enum_entity_materials(self, context) -> list[tuple[str, str, str]]:
     '''
-    Cached properties of an entity from resource pack.
+    Generates list for the materials enum property of the
+    MCBLEND_EntityMaterialPattern.
     '''
-    name: StringProperty(  # type: ignore
-        name="", description="Name of the entity.",
-        default="", maxlen=1024)
+    return get_db_handler().gui_enum_entity_materials(
+        self.active_rc_pk, self.active_entity_pk, self.pattern)
 
-    render_controllers: CollectionProperty(  # type: ignore
-        type=MCBLEND_JustName, name='Textures')
-    textures: CollectionProperty(  # type: ignore
-        type=MCBLEND_NameValuePair, name='Textures')
-    geometries: CollectionProperty(  # type: ignore
-        type=MCBLEND_NameValuePair, name='Geometries')
-    materials: CollectionProperty(  # type: ignore
-        type=MCBLEND_NameValuePair, name='Materials')
-
-def enum_rc_materials(self, context):
-    '''Lists materials available to be used by render controller'''
-    # Loading values from cache (optimal solution)
-    if self.value_cache.is_cached:
-        return [(i, i, i) for i in self.value_cache.values.keys()]
-    # Suboptimal solution loading values from string
-    # WARNING! The values can't be cached from this context. The
-    # method that create cache must be called somewhere else or the enum will
-    # always be generated from Molang string.
-    resources = self.get_molang_expression_stats(context).as_set()
-    return [
-        (i, i, i) for i in
-        sorted(resources)]
-
-class MCBLEND_MaterialProperties(bpy.types.PropertyGroup):
-    '''Properties of a material from a render controller'''
-    name: StringProperty(  # type: ignore
-        name="Pattern", description="Bone pattern of a material",
-        default="", maxlen=1024)
-    value_molang: StringProperty(  # type: ignore
-        name="Pattern", description="The molang value of the material",
-        default="", maxlen=1024)
-    value: EnumProperty(  # type: ignore
-        name="Texture", description=(
-            "The texture used by the importer for this render controller"),
-        items=enum_rc_materials)
-    value_cache: PointerProperty(type=MCBLEND_EnumCache)  # type: ignore
-    # Ugly hack to access the owner data
-    owner_name: StringProperty(  # type: ignore
-        name="Name", description=(
-            "Name of the render controller that owns this materials "
-            "properties"),
-        default="", maxlen=1024)
-
-    def get_molang_expression_stats(
-            self, context) -> MolangExpressionResourcesStats:
-        '''
-        Used for reloading and for easy access to this data for external tools
-        '''
-        owner = context.scene.mcblend_project.render_controllers[
-            self.owner_name]
-        return MolangExpressionResourcesStats(
-            self.value_molang, 'material', owner.material_arrays)
-
-    def try_reload_cached_values(self, context):
-        '''
-        Tries to load the list of the available material names from the
-        value_molang into value_cache. If the value_cache is already
-        loaded then does nothing.
-        '''
-        if self.value_cache.is_cached:
-            return  # nothing to do
-        resources = self.get_molang_expression_stats(context).as_set()
-        for resource_name in sorted(resources):
-            new_val = self.value_cache.values.add()
-            new_val.name = resource_name
-        self.value_cache.is_cached = True
-
-class MCBLEND_RenderControllerArrayProperties(bpy.types.PropertyGroup):
+class MCBLEND_EntityMaterialPattern(bpy.types.PropertyGroup):
     '''
-    Propertis of an array in render controller (geometry, texture or material
-    array)
+    Used to store information about material field in a render controller of
+    the selected entity in the GUI of the model importer.
     '''
-    name: StringProperty(  # type: ignore
-        name="Name", description="Name of the array",
-        default="", maxlen=1024)
-    items: CollectionProperty(  # type: ignore
-        type=MCBLEND_JustName,
-        description="The list of molang variables from the array")
-
-def enum_rc_geometries(self, context):
-    '''Lists geometries for render controller'''
-    # pylint: disable=unused-argument
-    # Loading values from cache (optimal solution)
-    if self.geometry_cache.is_cached:
-        return [(i, i, i) for i in self.geometry_cache.values.keys()]
-    # Suboptimal solution loading values from string
-    # WARNING! The values can't be cached from this context.
-    resources = self.get_geometry_molang_expression_stats().as_set()
-    return [
-        (i, i, i) for i in
-        sorted(resources)]
-
-def enum_rc_textures(self, context):
-    '''Lists textures for render controller'''
-    # pylint: disable=unused-argument
-    # Loading values from cache (optimal solution)
-    if self.texture_cache.is_cached:
-        return [(i, i, i) for i in self.texture_cache.values.keys()]
-    # Suboptimal solution loading values from string
-    # WARNING! The values can't be cached from this context.
-    resources = self.get_texture_molang_expression_stats().as_set()
-    return [
-        (i, i, i) for i in
-        sorted(resources)]
-
-class MCBLEND_RenderControllersProperties(bpy.types.PropertyGroup):
-    '''Properties of a render controller from resource pack.'''
-    name: StringProperty(  # type: ignore
-        name="Name", description="Name of the render controller",
-        default="", maxlen=1024)
-    geometry_arrays: CollectionProperty(  # type: ignore
-        type=MCBLEND_RenderControllerArrayProperties)
-    texture_arrays: CollectionProperty(  # type: ignore
-        type=MCBLEND_RenderControllerArrayProperties)
-    material_arrays: CollectionProperty(  # type: ignore
-        type=MCBLEND_RenderControllerArrayProperties)
-
-    geometry_molang: StringProperty(  # type: ignore
-        name="Geometry molang",
+    # Reused properties from parent objects for quick access
+    active_rc_pk: IntProperty(  # type: ignore
         description=(
-            "The Molang value of the geometry property straight from the "
-            "resource pack"),
-        default="", maxlen=1024)
-    geometry: EnumProperty(  # type: ignore
-        name="Geometry", description="The geometry used by the importer",
-        items=enum_rc_geometries)
-    geometry_cache: PointerProperty(type=MCBLEND_EnumCache)  # type: ignore
-    texture_molang: StringProperty(  # type: ignore
-        name="Texture molang",
+            "Primary key of the render controller that owns this material"
+            " pattern")
+    )
+    active_entity_pk: IntProperty(  # type: ignore
+        description="Primary key of the active entity")
+
+    # Actual properties of the object
+    pattern: StringProperty(  # type: ignore
+        description="The pattern value of this material pattern")
+    materials: EnumProperty(  # type: ignore
+        items=enum_entity_materials,
+        description="The material value of this material pattern")
+
+if TYPE_CHECKING:
+    class MCBLEND_EntityMaterialPattern:
+        active_rc_pk: int
+        active_entity_pk: int
+        pattern: str
+        materials: str
+
+# RENDER CONTROLLER FOR ENTITY SELECTION
+def enum_entity_geometries(self, context) -> list[tuple[str, str, str]]:
+    '''
+    Generates list for the geometries enum property of the
+    MCBLEND_EntityRenderController.
+    '''
+    # pylint: disable=unused-argument
+    entity_pk = self.active_entity_pk
+    if self.primary_key != -1:
+        return get_db_handler().gui_enum_entity_geometries(
+            self.primary_key, entity_pk)
+    else:
+        return get_db_handler().gui_enum_entity_geometries_for_fake_rc(
+            entity_pk)
+
+def enum_entity_textures(self, context) -> list[tuple[str, str, str]]:
+    '''
+    Generates list for the textues enum property of the
+    MCBLEND_EntityRenderController.
+    '''
+    # pylint: disable=unused-argument
+    entity_pk = self.active_entity_pk
+    if self.primary_key != -1:
+        return get_db_handler().gui_enum_entity_textures(
+                self.primary_key, entity_pk)
+    else:
+        return get_db_handler().gui_enum_entity_textures_for_fake_rc(
+            entity_pk)
+
+def enum_fake_entity_material_patterns(self, context) -> list[tuple[str, str, str]]:
+    '''
+    Generates list for the fake_material_patterns enum property of the
+    MCBLEND_EntityRenderController.
+
+    Fake marerial patterns are used only when the render controller is not
+    found. It lists all of the materials defined in the entity.
+    '''
+    # pylint: disable=unused-argument
+    return get_db_handler().gui_enum_entity_fake_material_patterns(
+        self.active_entity_pk)
+
+class MCBLEND_EntityRenderController(bpy.types.PropertyGroup):
+    '''
+    Used to store infromation about one of the render controllers of the
+    selected entity in the GUI of the model impoerter.
+    '''
+    # Reused properties from parent objects for quick access
+    active_entity_pk: IntProperty(  # type: ignore
+        description="Primary key of the selected entity")
+
+    # Actual properties of the object
+    primary_key: IntProperty(  # type: ignore
+        description="Primary key of this render controller")
+    identifier: StringProperty(   # type: ignore
+        description="Identifier of this render controller")
+
+    geometries: EnumProperty(  # type: ignore
+        items=enum_entity_geometries,
+        description="List of geometries of this render controller")
+        # update=update_geometries)
+    textures: EnumProperty(  # type: ignore
+        items=enum_entity_textures,
+        description="List of textures of this render controller")
+
+    # Material pattern is a star pattern that matches the names of the bones
+    # in the geometry to assign materials
+    material_patterns: CollectionProperty(  # type: ignore
+        type=MCBLEND_EntityMaterialPattern,
+        description="List of material patters used by this render controller")
+    fake_material_patterns: EnumProperty(  # type: ignore
         description=(
-            "The Molang value of the texture property straight from the "
-            "resource pack"),
-        default="", maxlen=1024)
-    texture: EnumProperty(  # type: ignore
-        name="Texture", description=(
-            "The texture used by the importer for this render controller"),
-        items=enum_rc_textures)
-    texture_cache: PointerProperty(type=MCBLEND_EnumCache)  # type: ignore
-    materials: CollectionProperty(  # type: ignore
-        type=MCBLEND_MaterialProperties)
+            "List of materials that can be used by this render controller "
+            "when it is a fake render controller (i.e. it is not in the "
+            "database). It's applied to '*' pattern."),
+        items=enum_fake_entity_material_patterns)
 
-    def get_geometry_molang_expression_stats(
-            self) -> MolangExpressionResourcesStats:
-        '''
-        Used for reloading and for easy access to this data for external tools
-        '''
-        return MolangExpressionResourcesStats(
-            self.geometry_molang, 'geometry', self.geometry_arrays)
+if TYPE_CHECKING:
+    class MCBLEND_EntityRenderController:
+        active_entity_pk: int
+        primary_key: int
+        identifier: str
+        geometries: str
+        textures: str
+        material_patterns: CollectionPropertyAnnotation[MCBLEND_EntityMaterialPattern]
+        fake_material_patterns: str
 
-    def get_texture_molang_expression_stats(
-            self) -> MolangExpressionResourcesStats:
-        '''
-        Used for reloading and for easy access to this data for external tools
-        '''
-        return MolangExpressionResourcesStats(
-            self.texture_molang, 'texture', self.texture_arrays)
-
-    def try_reload_cached_values(self):
-        '''
-        Tries to load the values for the 'geometry' and 'texture' enums from
-        the Molang in 'geometry_molang' and 'texture_molang' into the
-        'geometry_cache' and 'texture_cache' or does nothing if the values
-        are already loaded.
-        '''
-        # Load geometry if necessary
-        print("Trying to reload geometry")
-        if not self.geometry_cache.is_cached:
-            resources = self.get_geometry_molang_expression_stats().as_set()
-            for resource_name in sorted(resources):
-                new_val = self.geometry_cache.values.add()
-                new_val.name = resource_name
-            self.geometry_cache.is_cached = True
-        # Load texture if necessary
-        if not self.texture_cache.is_cached:
-            resources = self.get_texture_molang_expression_stats().as_set()
-            for resource_name in sorted(resources):
-                new_val = self.texture_cache.values.add()
-                new_val.name = resource_name
-            self.texture_cache.is_cached = True
-
-def enum_project_entities(self, context):
-    '''List project entities as blender enum list.'''
-    # pylint: disable=unused-argument
-    return [
-        (i, i, i) for i in
-        sorted(j.name for j in context.scene.mcblend_project.entities)
-    ]
-
-def update_entity_names(self, context):
+# RENDER CONTROLLER'S MATERIAL FIELD FOR ATTACHABLE SELECTION
+def enum_attachable_materials(self, context) -> list[tuple[str, str, str]]:
     '''
-    Called on update of project.entity_names. Resets the values of selected
-    enum items in 'entities' and 'render_controllers'. If necessary updates
-    the cached values of selected entity and its render controllers.
+    Generates list for the materials enum property of the
+    MCBLEND_AttachableMaterialPattern.
+    '''
+    return get_db_handler().gui_enum_attachable_materials(
+        self.active_rc_pk, self.active_attachable_pk, self.pattern)
+
+class MCBLEND_AttachableMaterialPattern(bpy.types.PropertyGroup):
+    '''
+    Used to store information about material field in a render controller of
+    the selected attachable in the GUI of the model importer.
+    '''
+    # Reused properties from parent objects for quick access
+    active_rc_pk: IntProperty(  # type: ignore
+        description=(
+            "Primary key of the render controller that owns this material"
+            " pattern")
+    )
+    active_attachable_pk: IntProperty(  # type: ignore
+        description="Primary key of the active attachable")
+
+    # Actual properties of the object
+    pattern: StringProperty(  # type: ignore
+        description="The pattern value of this material pattern")
+    materials: EnumProperty(  # type: ignore
+        items=enum_attachable_materials,
+        description="The material value of this material pattern")
+
+if TYPE_CHECKING:
+    class MCBLEND_AttachableMaterialPattern:
+        active_rc_pk: int
+        active_attachable_pk: int
+        pattern: str
+        materials: str
+
+# RENDER CONTROLLER FOR ATTACHABLE SELECTION
+def enum_attachable_geometries(self, context) -> list[tuple[str, str, str]]:
+    '''
+    Generates list for the geometries enum property of the
+    MCBLEND_AttachableRenderController.
     '''
     # pylint: disable=unused-argument
-    if self.entity_names not in self.entities:
-        return
-    entity = self.entities[self.entity_names]
-    render_controller_names = entity.render_controllers.keys()
-    # Reload all cached values of render controllers and their materials
-    # set the enum propreties to first item from the list
-    self.fake_render_controllers.clear()
-    for rc_name in render_controller_names:
-        if rc_name not in self.render_controllers.keys():  # Add fake RC
-            self.add_fake_render_controller(rc_name, entity)
-            continue
-        rc = self.render_controllers[rc_name]
-        rc.try_reload_cached_values()
-        if len(rc.geometry_cache.values) > 0:
-            rc.geometry = rc.geometry_cache.values[0].name
-        if len(rc.texture_cache.values) > 0:
-            rc.texture = rc.texture_cache.values[0].name
-        for material in rc.materials:
-            material.try_reload_cached_values(context)
-            if len(material.value_cache.values) > 0:
-                material.value = material.value_cache.values[0].name
+    attachable_pk = self.active_attachable_pk
+    if self.primary_key != -1:
+        return get_db_handler().gui_enum_attachable_geometries(
+            self.primary_key, attachable_pk)
+    else:
+        return get_db_handler().gui_enum_attachable_geometries_for_fake_rc(
+            attachable_pk)
+
+def enum_attachable_textures(self, context) -> list[tuple[str, str, str]]:
+    '''
+    Generates list for the textues enum property of the
+    MCBLEND_AttachableRenderController.
+    '''
+    # pylint: disable=unused-argument
+    attachable_pk = self.active_attachable_pk
+    if self.primary_key != -1:
+        return get_db_handler().gui_enum_attachable_textures(
+                self.primary_key, attachable_pk)
+    else:
+        return get_db_handler().gui_enum_attachable_textures_for_fake_rc(
+            attachable_pk)
+
+def enum_fake_attachable_material_patterns(self, context) -> list[tuple[str, str, str]]:
+    '''
+    Generates list for the fake_material_patterns enum property of the
+    MCBLEND_AttachableRenderController.
+
+    Fake marerial patterns are used only when the render controller is not
+    found. It lists all of the materials defined in the attachable.
+    '''
+    # pylint: disable=unused-argument
+    return get_db_handler().gui_enum_attachable_fake_material_patterns(
+        self.active_attachable_pk)
+
+class MCBLEND_AttachableRenderController(bpy.types.PropertyGroup):
+    '''
+    Used to store infromation about one of the render controllers of the
+    selected attachable in the GUI of the model impoerter.
+    '''
+    # Reused properties from parent objects for quick access
+    active_attachable_pk: IntProperty(  # type: ignore
+        description="Primary key of the selected attachable")
+
+    # Actual properties of the object
+    primary_key: IntProperty(  # type: ignore
+        description="Primary key of this render controller")
+    identifier: StringProperty(   # type: ignore
+        description="Identifier of this render controller")
+
+    geometries: EnumProperty(  # type: ignore
+        items=enum_attachable_geometries,
+        description="List of geometries of this render controller")
+        # update=update_geometries)
+    textures: EnumProperty(  # type: ignore
+        items=enum_attachable_textures,
+        description="List of textures of this render controller")
+
+    # Material pattern is a star pattern that matches the names of the bones
+    # in the geometry to assign materials
+    material_patterns: CollectionProperty(  # type: ignore
+        type=MCBLEND_AttachableMaterialPattern,
+        description="List of material patters used by this render controller")
+    fake_material_patterns: EnumProperty(  # type: ignore
+        description=(
+            "List of materials that can be used by this render controller "
+            "when it is a fake render controller (i.e. it is not in the "
+            "database). It's applied to '*' pattern."),
+        items=enum_fake_attachable_material_patterns)
+
+if TYPE_CHECKING:
+    class MCBLEND_AttachableRenderController:
+        active_attachable_pk: int
+        primary_key: int
+        identifier: str
+        geometries: str
+        textures: str
+        material_patterns: CollectionPropertyAnnotation[MCBLEND_AttachableMaterialPattern]
+        fake_material_patterns: str
+
+# RESOURCE PACK (PROJECT)
+def update_selected_entity(self, context) -> None:
+    '''
+    Called on update of selected_entity property of the
+    MCBLEND_ProjectProperties. Loads the data related to the selected entity
+    from the database and assigns it to self.entities and
+    self.render_Controllers.
+    '''
+    # pylint: disable=unused-argument
+    self = cast(MCBLEND_ProjectProperties, self)
+    pk = self.entities[self.selected_entity].primary_key
+    self.entity_render_controllers.clear()
+    db_handler = get_db_handler()
+    for rc_pk, rc_identifier in db_handler.list_entity_render_controllers(pk):
+        rc = self.entity_render_controllers.add()
+        rc.primary_key = -1 if rc_pk is None else rc_pk 
+        rc.identifier = rc_identifier
+        rc.active_entity_pk = pk
+        for pattern in db_handler.list_bone_name_patterns(rc_pk):
+            pattern_field = rc.material_patterns.add()
+            pattern_field.pattern = pattern
+            # Reused properties
+            pattern_field.active_entity_pk = pk
+            pattern_field.active_rc_pk = rc_pk
+
+def update_selected_attachable(self, context) -> None:
+    '''
+    Called on update of selected_attachable property of the
+    MCBLEND_ProjectProperties. Loads the data related to the selected
+    attachable from the database and assigns it to self.attachables and
+    self.render_Controllers.
+    '''
+    # pylint: disable=unused-argument
+    self = cast(MCBLEND_ProjectProperties, self)
+    pk = self.attachables[self.selected_attachable].primary_key
+    self.attachable_render_controllers.clear()
+    db_handler = get_db_handler()
+    for rc_pk, rc_identifier in db_handler.list_attachable_render_controllers(pk):
+        rc = self.attachable_render_controllers.add()
+        rc.primary_key = -1 if rc_pk is None else rc_pk 
+        rc.identifier = rc_identifier
+        rc.active_attachable_pk = pk
+        for pattern in db_handler.list_bone_name_patterns(rc_pk):
+            pattern_field = rc.material_patterns.add()
+            pattern_field.pattern = pattern
+            # Reused properties
+            pattern_field.active_attachable_pk = pk
+            pattern_field.active_rc_pk = rc_pk
 
 class MCBLEND_ProjectProperties(bpy.types.PropertyGroup):
     '''
-    The properties of the Resource Pack opened in this Blender project.
+    Used to store information about the resource pack for the GUI of the model
+    importer.
     '''
-    rp_path: StringProperty(  # type: ignore
-        name="Resource pack path",
-        description="Path to resource pack connected to this project",
-        default="", subtype="DIR_PATH",
-        update=lambda self, context: reload_rp_entities(context))
-    entities: CollectionProperty(  # type: ignore
-        type=MCBLEND_EntityProperties)
-    render_controllers: CollectionProperty(  # type: ignore
-        type=MCBLEND_RenderControllersProperties)
-    fake_render_controllers: CollectionProperty(  # type: ignore
-        type=MCBLEND_RenderControllersProperties,
+    importer_type: EnumProperty(  # type: ignore
+        items=[
+            (
+                "ENTITY",
+                "Import from entity",
+                "Imports models for entity selected from resource pack"
+            ),
+            (
+                "ATTACHABLE",
+                "Import from attachable",
+                "Imports models for attachable selected from resource pack"
+            )
+        ],
+        name="Importer type",
         description=(
-            "Render controllers not defined in the resource pack but with a "
-            "reference from the active in GUI.")
-        )
-    entity_names: EnumProperty(  # type: ignore
-        items=enum_project_entities,
-        update=update_entity_names)
+            "Selects the type of the importer to use for importing models"
+            "from the resource pack")
+    )
+    selected_entity: StringProperty(   # type: ignore
+        default="",
+        description="Name that identifies one of the loaded entities",
+        update=update_selected_entity)
+    entities: CollectionProperty(  # type: ignore
+        type=MCBLEND_DbEntry,
+        description="List of the loaded entities")
+    entity_render_controllers: CollectionProperty(  # type: ignore
+        type=MCBLEND_EntityRenderController,
+        description="List of render controllers of the entity")
 
-    def add_fake_render_controller(self, name: str , entity: Any):
-        '''
-        Populates a collection of fake_render_controllers with data from an
-        entity in order to give the user an option to configure the display
-        of render controllers that aren't defined in resource pack but
-        are used by the entity.
-        '''
-        if name in self.fake_render_controllers.keys():
-            return  # Already added
-        fake_rc = self.fake_render_controllers.add()
-        fake_rc.name = name
-        # Add full list of geometries to cache
-        fake_rc.geometry_cache.is_cached = True
-        for geo in entity.geometries.keys():
-            fake_rc.geometry_cache.values.add().name = geo
-        # Add full list of textures to cache
-        fake_rc.texture_cache.is_cached = True
-        for texture in entity.textures.keys():
-            fake_rc.texture_cache.values.add().name = texture
-        # Add full list of materials to cache
-        fake_material = fake_rc.materials.add()
-        fake_material.name = '*'
-        fake_material.value_cache.is_cached = True
-        for material in entity.materials.keys():
-            fake_material.value_cache.values.add().name = material
+    selected_attachable: StringProperty(   # type: ignore
+        default="",
+        description="Name that identifies one of the loaded attachables",
+        update=update_selected_attachable)
+    attachables: CollectionProperty(  # type: ignore
+        type=MCBLEND_DbEntry,
+        description="List of the loaded attachables")
+    attachable_render_controllers: CollectionProperty(  # type: ignore
+        type=MCBLEND_AttachableRenderController,
+        description="List of render controllers of the attachable")
+
+if TYPE_CHECKING:
+    class MCBLEND_ProjectProperties:
+        importer_type: Literal["ENTITY", "ATTACHABLE"]
+        rp_path: str
+        selected_entity: str
+        entities: CollectionPropertyAnnotation[MCBLEND_DbEntry]
+        entity_render_controllers: CollectionPropertyAnnotation[
+            MCBLEND_EntityRenderController]
+
+        selected_attachable: str
+        attachables: CollectionPropertyAnnotation[MCBLEND_DbEntry]
+        attachable_render_controllers: CollectionPropertyAnnotation[
+            MCBLEND_AttachableRenderController]
