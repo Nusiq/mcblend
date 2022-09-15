@@ -884,6 +884,30 @@ class DbHandler:
         return tuple(self.db.execute(
             query, (entity_pk, rc_material_field_pk)).fetchone())
 
+    def get_attachable_material_pattern_and_material(
+            self, attachable_pk: int, rc_material_field_pk: int) -> tuple[str, str]:
+        '''
+        Returns tuple with the material pattern and full material identifier
+        based on matching attachable and render controller material field primary
+        keys from the database.
+        '''
+        # The rc_material_field_pk also unambiguously identifies the render
+        # controller
+        query = '''
+        SELECT DISTINCT
+            RenderControllerMaterialsField.boneNamePattern,
+            AttachableMaterialField.identifier
+        FROM
+            RenderControllerMaterialsField
+        JOIN AttachableMaterialField
+            ON AttachableMaterialField.shortName = RenderControllerMaterialsField.shortName
+        WHERE
+            AttachableMaterialField.Attachable_fk = ?
+            AND RenderControllerMaterialsField_pk = ?;
+        '''
+        return tuple(self.db.execute(
+            query, (attachable_pk, rc_material_field_pk)).fetchone())
+
     def get_full_material_identifier(self, material_field_pk: int) -> str:
         '''
         Returns the full material identifier based on the material field

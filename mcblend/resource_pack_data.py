@@ -9,7 +9,7 @@ from bpy.props import (
     CollectionProperty, EnumProperty, IntProperty, StringProperty)
 
 from .common_data import MCBLEND_DbEntry
-from .operator_func import load_rp_entities
+from .operator_func import load_rp_to_mcblned
 from .operator_func.db_handler import get_db_handler
 from .extra_types import CollectionPropertyAnnotation
 

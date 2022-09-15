@@ -3,7 +3,7 @@ Functions related to imoporting models from resource packs.
 '''
 from __future__ import annotations
 import bpy_types
-from typing import TypedDict, TYPE_CHECKING, cast
+from typing import Literal, TypedDict, TYPE_CHECKING, cast
 
 
 if TYPE_CHECKING:
@@ -12,20 +12,23 @@ else:
     MCBLEND_ProjectProperties = None
     MCBLEND_ObjectProperties = None
 
-class PksForEntityImport(TypedDict):
+class PksForModelImport(TypedDict):
     '''
     A collection of all primary keys needed for database queries used to
-    import an entity from a resource pack.
+    import an entity or attachable from a resource pack.
 
     The key names are the same as the names of the database tables.
-    '''
-    ClientEntity_pk: int
-    render_controllers: list[PksForEntityRc]
 
-class PksForEntityRc(TypedDict):
+    The 'pk' value is a primary key for an attachable or entity based of
+    the context of the import.
     '''
-    Primary keys of one of the render controllers of an entity. Part of the
-    EntityImportPks.
+    pk: int
+    render_controllers: list[PksForModelRc]
+
+class PksForModelRc(TypedDict):
+    '''
+    Primary keys of one of the render controllers of an entity/attachable.
+    Part of the EntityImportPks.
 
     The key names are the same as the names of the database tables.
     '''
@@ -35,8 +38,9 @@ class PksForEntityRc(TypedDict):
     ClientEntityMaterialField_pk: int
     RenderControllerMaterialsField_pks: list[int]
 
-def get_pks_for_entity_improt(
-        context: bpy_types.Context) -> PksForEntityImport:
+def get_pks_for_model_improt(
+        context: bpy_types.Context,
+        base_object: Literal['entity', 'attachable']) -> PksForModelImport:
     '''
     Creates a dictionary of primary keys needed to import an entity from a
     resource pack based on the settings selected in the UI.
@@ -45,17 +49,25 @@ def get_pks_for_entity_improt(
     project = context.scene.mcblend_project
     project = cast(MCBLEND_ProjectProperties, project)
 
-    entity_pk = project.entities[
-        project.selected_entity].primary_key
+    if base_object == 'entity':
+        entity_pk = project.entities[
+            project.selected_entity].primary_key
+        render_controllers = project.entity_render_controllers
+    elif base_object == 'attachable':
+        entity_pk = project.attachables[
+            project.selected_attachable].primary_key
+        render_controllers = project.attachable_render_controllers
+    else:
+        raise ValueError("Expected 'entity' or 'attachable'")
 
     # 2. Build a dictionary with PKs of all of the queries needed to load the
     # data about the model
-    query_data: PksForEntityImport = {}
+    query_data: PksForModelImport = {}
     # Load client entity PK
-    query_data['ClientEntity_pk'] = entity_pk
+    query_data['pk'] = entity_pk
     query_data['render_controllers'] = []
     # Load all render controllers PKs
-    for render_controller in project.entity_render_controllers:
+    for render_controller in render_controllers:
         # Load render controller PK
         rc_pk = render_controller.primary_key
         query_data_rc = {}

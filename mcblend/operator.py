@@ -20,9 +20,10 @@ from .operator_func.material import MATERIALS_MAP
 
 from .operator_func import (
     export_model, export_animation, fix_uvs, separate_mesh_cubes, set_uvs,
-    import_model, inflate_objects, load_rp_entities, unload_rps,
-    import_model_form_project, apply_materials, prepare_physics_simulation)
-from .operator_func.rp_importer import get_pks_for_entity_improt
+    import_model, inflate_objects, load_rp_to_mcblned, unload_rps,
+    import_entity_form_project, import_attachable_form_project,
+    apply_materials, prepare_physics_simulation)
+from .operator_func.rp_importer import get_pks_for_model_improt
 from .operator_func.sqlite_bedrock_packs.better_json import (
     CompactEncoder, JSONCDecoder)
 from .operator_func.exception import NotEnoughTextureSpace, ImporterException
@@ -1525,7 +1526,7 @@ class MCBLEND_OT_LoadRp(bpy.types.Operator, ImportHelper):
 
     def execute(self, context):
         rp_path: Path = Path(self.filepath)
-        load_rp_entities(context, rp_path)
+        load_rp_to_mcblned(context, rp_path)
         return {'FINISHED'}
 
 class MCBLEND_OT_UnloadRps(bpy.types.Operator):
@@ -1589,8 +1590,8 @@ class MCBLEND_OT_ImportRpEntity(bpy.types.Operator):
 
     def execute(self, context):
         try:
-            query_data = get_pks_for_entity_improt(context)
-            warnings = import_model_form_project(context, query_data)
+            query_data = get_pks_for_model_improt(context, 'entity')
+            warnings = import_entity_form_project(context, query_data)
             if len(warnings) > 1:
                 for warning in warnings:
                     self.report({'WARNING'}, warning)
@@ -1620,24 +1621,23 @@ class MCBLEND_OT_ImportAttachable(bpy.types.Operator):
         return len(context.scene.mcblend_project.attachables) > 0
 
     def execute(self, context):
-        self.report({'WARNING'}, "Not implemented!")
-        # try:
-        #     query_data = get_pks_for_attachable_improt(context)
-        #     warnings = import_model_form_project(context, query_data)
-        #     if len(warnings) > 1:
-        #         for warning in warnings:
-        #             self.report({'WARNING'}, warning)
-        #             self.report(
-        #                 {'WARNING'},
-        #                 f"Finished with {len(warnings)} warnings. "
-        #                 "See logs for more details."
-        #             )
-        #     elif len(warnings) == 1:
-        #         self.report({'WARNING'}, warnings[0])
-        # except ImporterException as e:
-        #     self.report(
-        #         {'ERROR'}, f'Invalid model: {e}'
-        #     )
+        try:
+            query_data = get_pks_for_model_improt(context, 'attachable')
+            warnings = import_attachable_form_project(context, query_data)
+            if len(warnings) > 1:
+                for warning in warnings:
+                    self.report({'WARNING'}, warning)
+                    self.report(
+                        {'WARNING'},
+                        f"Finished with {len(warnings)} warnings. "
+                        "See logs for more details."
+                    )
+            elif len(warnings) == 1:
+                self.report({'WARNING'}, warnings[0])
+        except ImporterException as e:
+            self.report(
+                {'ERROR'}, f'Invalid model: {e}'
+            )
         return {'FINISHED'}
 
 # Armature render controllers
