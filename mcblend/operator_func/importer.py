@@ -18,6 +18,7 @@ from .common import (
 from .extra_types import Vector3di, Vector3d, Vector2d
 from .uv import CoordinatesConverter
 from .exception import ImporterException
+from .typed_bpy_access import get_context_object
 
 class ErrorLevel(Enum):
     '''
@@ -1372,7 +1373,7 @@ class ImportGeometry:
         # performance
 
         # Save the armature
-        armature = context.object
+        armature = get_context_object(context)
 
         # Create objects - and set their pivots
         for bone in self.bones.values():
@@ -1380,7 +1381,7 @@ class ImportGeometry:
             bpy.ops.object.empty_add(
                 type='SPHERE', location=(0, 0, 0), radius=0.2)
             bone_obj: Object
-            bone_obj = bone.blend_empty = context.object
+            bone_obj = bone.blend_empty = get_context_object(context)
             _mc_pivot(bone_obj, bone.pivot)  # 2. Apply translation
             bone_obj.name = bone.name  # 3. Apply custom properties
             for cube in bone.cubes:
@@ -1389,7 +1390,7 @@ class ImportGeometry:
                 bpy.ops.mesh.primitive_cube_add(
                     size=1, enter_editmode=False, location=(0, 0, 0)
                 )
-                cube_obj = cube.blend_cube = context.object
+                cube_obj = cube.blend_cube = get_context_object(context)
 
                 # 2. Set uv
                 # warning! Moving this code below cube transformation would
@@ -1476,7 +1477,7 @@ class ImportGeometry:
                 locator_obj: Object
                 bpy.ops.object.empty_add(
                     type='SPHERE', location=(0, 0, 0), radius=0.1)
-                locator_obj = locator.blend_empty = context.object
+                locator_obj = locator.blend_empty = get_context_object(context)
                 # 2. Apply translation
                 _mc_pivot(locator_obj, locator.position)
                 _mc_rotate(locator_obj, locator.rotation)

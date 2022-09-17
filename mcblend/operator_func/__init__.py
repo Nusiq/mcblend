@@ -13,6 +13,8 @@ import bpy
 from bpy.types import Image, Material, Context, Object
 import numpy as np
 
+from .typed_bpy_access import get_context_object
+
 from .sqlite_bedrock_packs.better_json import load_jsonc
 
 from .animation import AnimationExport
@@ -46,7 +48,7 @@ def export_model(
         warnings about exporting.
     '''
     result = ModelExport.json_outer()
-    armature = context.object  # an armature
+    armature = get_context_object(context)  # an armature
 
     mcblend_obj_group = McblendObjectGroup(armature, None)
     model_properties = armature.mcblend
@@ -74,8 +76,8 @@ def export_animation(
     :param old_dict: optional - JSON dict with animation to write into.
     :returns: JSON dict of Minecraft animations.
     '''
-    anim_data = context.object.mcblend.animations[
-        context.object.mcblend.active_animation]
+    anim_data = get_context_object(context).mcblend.animations[
+        get_context_object(context).mcblend.active_animation]
 
     # TODO - write this code nicer, passing world_origin as a string isn't
     # a perfect solution
@@ -84,7 +86,7 @@ def export_animation(
         world_origin = bpy.data.objects[anim_data.world_origin]
 
     # Check and create object properties
-    object_properties = McblendObjectGroup(context.object, world_origin)
+    object_properties = McblendObjectGroup(get_context_object(context), world_origin)
 
 
     animation = AnimationExport(
@@ -113,7 +115,7 @@ def set_uvs(context: Context):
 
     :param context: the execution context.
     '''
-    armature = context.object # an armature
+    armature = get_context_object(context) # an armature
 
     model_properties = armature.mcblend
     width = model_properties.texture_width
@@ -185,7 +187,7 @@ def fix_uvs(context: Context) -> Vector2di:
 
     :returns: The number of fixed cubes and the number of fixed faces.
     '''
-    object_properties = McblendObjectGroup(context.object, None)
+    object_properties = McblendObjectGroup(get_context_object(context), None)
     total_fixed_uv_faces = 0
     total_fixed_cubes = 0
 
@@ -586,7 +588,7 @@ def apply_materials(context: Context):
     '''
     blender_materials: Dict[
         Tuple[Tuple[Optional[str], str], ...], Material] = {}
-    armature = context.object
+    armature = get_context_object(context)
 
     mcblend_obj_group = McblendObjectGroup(armature, None)
     armature_properties = armature.mcblend
@@ -664,7 +666,7 @@ def prepare_physics_simulation(context: Context) -> Dict:
     :param context: the context of running the operator.
     '''
     result = ModelExport.json_outer()
-    armature = context.object  # an armature
+    armature = get_context_object(context)  # an armature
 
     mcblend_obj_group = McblendObjectGroup(armature, None)
 
@@ -712,7 +714,7 @@ def prepare_physics_simulation(context: Context) -> Dict:
                 c.select_set(True)
             context.view_layer.objects.active = cubes_group[-1]
             bpy.ops.object.join()
-            rigid_body = context.object
+            rigid_body = get_context_object(context)
         elif len(cubes_group) == 1:
             cubes_group[0].select_set(True)
             rigid_body = cubes_group[0]

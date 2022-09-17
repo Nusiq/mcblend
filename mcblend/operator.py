@@ -28,6 +28,7 @@ from .operator_func.sqlite_bedrock_packs.better_json import (
 from .operator_func.exception import NotEnoughTextureSpace, ImporterException
 from .operator_func.texture_generator import (
     list_mask_types_as_blender_enum, UvMaskTypes, MixMaskMode)
+from .operator_func.typed_bpy_access import get_context_object
 
 # Model exporter
 class MCBLEND_OT_ExportModel(
@@ -53,9 +54,9 @@ class MCBLEND_OT_ExportModel(
     def poll(cls, context: Context):
         if context.mode != 'OBJECT':
             return False
-        if context.object is None:
+        if get_context_object(context) is None:
             return False
-        return context.object.type == 'ARMATURE'
+        return get_context_object(context).type == 'ARMATURE'
 
     def execute(self, context):
         bpy.ops.screen.animation_cancel()
@@ -125,12 +126,12 @@ class MCBLEND_OT_ExportAnimation(
     def poll(cls, context: Context):
         if context.mode != 'OBJECT':
             return False
-        if context.object.type != 'ARMATURE':
+        if get_context_object(context).type != 'ARMATURE':
             return False
-        len_anims = len(context.object.mcblend.animations)
+        len_anims = len(get_context_object(context).mcblend.animations)
         if len_anims == 0:
             return False
-        curr_anim_id = context.object.mcblend.active_animation
+        curr_anim_id = get_context_object(context).mcblend.active_animation
         if 0 > curr_anim_id >= len_anims:
             return False
         return True
@@ -174,9 +175,9 @@ class MCBLEND_OT_MapUv(Operator):
     def poll(cls, context: Context):
         if context.mode != 'OBJECT':
             return False
-        if context.object is None:
+        if get_context_object(context) is None:
             return False
-        return context.object.type == 'ARMATURE'
+        return get_context_object(context).type == 'ARMATURE'
 
     def execute(self, context):
         bpy.ops.screen.animation_cancel()
@@ -221,9 +222,9 @@ class MCBLEND_OT_FixUv(Operator):
     def poll(cls, context: Context):
         if context.mode != 'OBJECT':
             return False
-        if context.object is None:
+        if get_context_object(context) is None:
             return False
-        return context.object.type == 'ARMATURE'
+        return get_context_object(context).type == 'ARMATURE'
 
     def execute(self, context):
         for obj in context.selected_objects:
@@ -1650,7 +1651,7 @@ class MCBLEND_OT_AddFakeRc(Operator):
 
     @classmethod
     def poll(cls, context: Context):
-        return context.object.type == 'ARMATURE'
+        return get_context_object(context).type == 'ARMATURE'
 
     def execute(self, context):
         obj = context.object
@@ -1670,7 +1671,7 @@ class MCBLEND_OT_RemoveFakeRc(Operator):
 
     @classmethod
     def poll(cls, context: Context):
-        return context.object.type == 'ARMATURE'
+        return get_context_object(context).type == 'ARMATURE'
 
     def execute(self, context):
         rcs = context.object.mcblend.render_controllers
@@ -1688,7 +1689,7 @@ class MCBLEND_OT_MoveFakeRc(Operator):
 
     @classmethod
     def poll(cls, context: Context):
-        return context.object.type == 'ARMATURE'
+        return get_context_object(context).type == 'ARMATURE'
 
     def execute(self, context):
         rcs = context.object.mcblend.render_controllers
@@ -1718,7 +1719,7 @@ class MCBLEND_OT_FakeRcSelectTexture(Operator):
 
     @classmethod
     def poll(cls, context: Context):
-        return context.object.type == 'ARMATURE'
+        return get_context_object(context).type == 'ARMATURE'
 
     def execute(self, context):
         context.object.mcblend.render_controllers[self.rc_index].\
@@ -1738,7 +1739,7 @@ class MCBLEND_OT_AddFakeRcMaterial(Operator):
 
     @classmethod
     def poll(cls, context: Context):
-        return context.object.type == 'ARMATURE'
+        return get_context_object(context).type == 'ARMATURE'
 
     def execute(self, context):
         rc = context.object.mcblend.render_controllers[
@@ -1761,7 +1762,7 @@ class MCBLEND_OT_RemoveFakeRcMaterial(Operator):
 
     @classmethod
     def poll(cls, context: Context):
-        return context.object.type == 'ARMATURE'
+        return get_context_object(context).type == 'ARMATURE'
 
     def execute(self, context):
         context.object.mcblend.render_controllers[
@@ -1783,7 +1784,7 @@ class MCBLEND_OT_MoveFakeRcMaterial(Operator):
 
     @classmethod
     def poll(cls, context: Context):
-        return context.object.type == 'ARMATURE'
+        return get_context_object(context).type == 'ARMATURE'
 
     def execute(self, context):
         context.object.mcblend.render_controllers[
@@ -1807,7 +1808,7 @@ class MCBLEND_OT_FakeRcSMaterailSelectTemplate(Operator):
 
     @classmethod
     def poll(cls, context: Context):
-        return context.object.type == 'ARMATURE'
+        return get_context_object(context).type == 'ARMATURE'
 
     def execute(self, context):
         context.object.mcblend.render_controllers[
@@ -1823,7 +1824,7 @@ class MCBLEND_OT_FakeRcApplyMaterials(Operator):
 
     @classmethod
     def poll(cls, context: Context):
-        return context.object.type == 'ARMATURE'
+        return get_context_object(context).type == 'ARMATURE'
 
     def execute(self, context):
         apply_materials(context)
@@ -1843,9 +1844,9 @@ class MCBLEND_OT_PreparePhysicsSimulation(Operator):
     def poll(cls, context: Context):
         if context.mode != 'OBJECT':
             return False
-        if context.object is None:
+        if get_context_object(context) is None:
             return False
-        return context.object.type == 'ARMATURE'
+        return get_context_object(context).type == 'ARMATURE'
 
     def execute(self, context):
         prepare_physics_simulation(context)
