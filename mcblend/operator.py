@@ -15,7 +15,10 @@ from bpy_extras.io_utils import ExportHelper, ImportHelper
 
 from .object_data import (
     get_unused_event_name, list_effect_types_as_blender_enum)
-from .operator_func.typed_bpy_access import get_context_scene_mcblend_project
+from .operator_func.typed_bpy_access import (
+    get_context_scene_mcblend_project, get_context_object,
+    get_context_scene_mcblend_events, get_context_scene_mcblend_active_event,
+    set_context_scene_mcblend_active_event)
 from .uv_data import get_unused_uv_group_name
 from .operator_func.material import MATERIALS_MAP
 
@@ -29,7 +32,6 @@ from .operator_func.sqlite_bedrock_packs.better_json import (
 from .operator_func.exception import NotEnoughTextureSpace, ImporterException
 from .operator_func.texture_generator import (
     list_mask_types_as_blender_enum, UvMaskTypes, MixMaskMode)
-from .operator_func.typed_bpy_access import get_context_object
 
 # Model exporter
 class MCBLEND_OT_ExportModel(
@@ -1426,7 +1428,7 @@ class MCBLEND_OT_AddEvent(Operator):
     bl_options = {'UNDO', 'INTERNAL'}
 
     def execute(self, context):
-        event_new = bpy.context.scene.mcblend_events.add()
+        event_new = get_context_scene_mcblend_events(context).add()
         event_new.name = get_unused_event_name('event')
         return {'FINISHED'}
 
@@ -1438,21 +1440,21 @@ class MCBLEND_OT_RemoveEvent(Operator):
 
     @classmethod
     def poll(cls, context: Context):
-        events = bpy.context.scene.mcblend_events
-        active_event_id = bpy.context.scene.mcblend_active_event
+        events = get_context_scene_mcblend_events(context)
+        active_event_id = get_context_scene_mcblend_active_event(context)
         if not 0 <= active_event_id < len(events):
             return False
         return True
 
     def execute(self, context):
-        active_event_id = bpy.context.scene.mcblend_active_event
+        active_event_id = get_context_scene_mcblend_active_event(context)
         # Remove animation
         bpy.context.scene.mcblend_events.remove(
             active_event_id)
 
         # Set new active event
         if active_event_id > 0:
-            bpy.context.scene.mcblend_active_event=active_event_id-1
+            set_context_scene_mcblend_active_event(context, active_event_id-1)
         return {'FINISHED'}
 
 class MCBLEND_OT_AddEffect(Operator):
@@ -1467,15 +1469,15 @@ class MCBLEND_OT_AddEffect(Operator):
 
     @classmethod
     def poll(cls, context: Context):
-        events = bpy.context.scene.mcblend_events
-        active_event_id = bpy.context.scene.mcblend_active_event
+        events = get_context_scene_mcblend_events(context)
+        active_event_id = get_context_scene_mcblend_active_event(context)
         if not 0 <= active_event_id < len(events):
             return False
         return True
 
     def execute(self, context):
-        events = bpy.context.scene.mcblend_events
-        active_event_id = bpy.context.scene.mcblend_active_event
+        events = get_context_scene_mcblend_events(context)
+        active_event_id = get_context_scene_mcblend_active_event(context)
         event = events[active_event_id]
 
         effect = event.effects.add()
@@ -1492,8 +1494,8 @@ class MCBLEND_OT_RemoveEffect(Operator):
 
     @classmethod
     def poll(cls, context: Context):
-        events = bpy.context.scene.mcblend_events
-        active_event_id = bpy.context.scene.mcblend_active_event
+        events = get_context_scene_mcblend_events(context)
+        active_event_id = get_context_scene_mcblend_active_event(context)
         if not 0 <= active_event_id < len(events):
             return False
         event = events[active_event_id]
@@ -1504,7 +1506,7 @@ class MCBLEND_OT_RemoveEffect(Operator):
 
     def execute(self, context):
         events = bpy.context.scene.mcblend_events
-        active_event_id = bpy.context.scene.mcblend_active_event
+        active_event_id = get_context_scene_mcblend_active_event(context)
         event = events[active_event_id]
         event.effects.remove(self.effect_index)
 

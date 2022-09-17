@@ -13,7 +13,10 @@ import bpy
 from bpy.types import Image, Material, Context, Object
 import numpy as np
 
-from .typed_bpy_access import get_context_object
+from .typed_bpy_access import (
+    get_context_object, get_context_scene_mcblend_project,
+    get_context_scene_mcblend_events)
+
 
 from .sqlite_bedrock_packs.better_json import load_jsonc
 
@@ -29,7 +32,6 @@ from .model import ModelExport
 from .uv import CoordinatesConverter, UvMapper
 from .db_handler import get_db_handler
 from .rp_importer import PksForModelImport
-from .typed_bpy_access import get_context_scene_mcblend_project
 
 # Import for static type checking only (to avoid circular imports)
 if TYPE_CHECKING:
@@ -100,7 +102,7 @@ def export_animation(
         fps=context.scene.render.fps,
         effect_events={
             event.name: event.get_effects_dict()
-            for event in context.scene.mcblend_events
+            for event in get_context_scene_mcblend_events(context)
         }
     )
     animation.load_poses(object_properties, context)
