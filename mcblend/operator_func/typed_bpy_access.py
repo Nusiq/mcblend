@@ -6,9 +6,14 @@ annotations.
 
 This is by no means an optimal solution, but it makes the static type checking
 possible and the code easier to maintain.
-'''
-from bpy.types import Context, Object
 
-def get_context_object(context: Context) -> Object:
-    '''Returns the object from the context.'''
-    return context.object  # type: ignore[attr-defined]
+The functions from this module are annotated in typed_bpy_access.pyi to avoid
+errors from mypy.
+'''
+def get_context_object(context):
+    '''Returns the object from the context'''
+    return context.object
+
+def get_context_scene_mcblend_project(context):
+    '''Returns the project properties from context'''
+    return context.scene.mcblend_project

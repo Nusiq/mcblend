@@ -15,6 +15,7 @@ from bpy_extras.io_utils import ExportHelper, ImportHelper
 
 from .object_data import (
     get_unused_event_name, list_effect_types_as_blender_enum)
+from .operator_func.typed_bpy_access import get_context_scene_mcblend_project
 from .uv_data import get_unused_uv_group_name
 from .operator_func.material import MATERIALS_MAP
 
@@ -1586,7 +1587,7 @@ class MCBLEND_OT_ImportRpEntity(Operator):
 
     @classmethod
     def poll(cls, context: Context):
-        return len(context.scene.mcblend_project.entities) > 0
+        return len(get_context_scene_mcblend_project(context).entities) > 0
 
     def execute(self, context):
         try:
@@ -1619,7 +1620,7 @@ class MCBLEND_OT_ImportAttachable(Operator):
 
     @classmethod
     def poll(cls, context: Context):
-        return len(context.scene.mcblend_project.attachables) > 0
+        return len(get_context_scene_mcblend_project(context).attachables) > 0
 
     def execute(self, context):
         try:

@@ -29,6 +29,7 @@ from .model import ModelExport
 from .uv import CoordinatesConverter, UvMapper
 from .db_handler import get_db_handler
 from .rp_importer import PksForModelImport
+from .typed_bpy_access import get_context_scene_mcblend_project
 
 # Import for static type checking only (to avoid circular imports)
 if TYPE_CHECKING:
@@ -375,7 +376,7 @@ def load_rp_to_mcblned(
     :param context: the context of running the operator.
     :param path: path to the resource pack.
     '''
-    mcblend_project = context.scene.mcblend_project
+    mcblend_project = get_context_scene_mcblend_project(context)
     mcblend_project = cast(MCBLEND_ProjectProperties, mcblend_project)
     # Cleared cached data for GUI it will be reloaded later
     # Clear cached entity data
@@ -426,7 +427,7 @@ def load_rp_to_mcblned(
 
 def unload_rps(context: Context):
     # Clear the selection in GUI
-    mcblend_project = context.scene.mcblend_project
+    mcblend_project = get_context_scene_mcblend_project(context)
     mcblend_project = cast(MCBLEND_ProjectProperties, mcblend_project)
     mcblend_project.entity_render_controllers.clear()
     mcblend_project.entities.clear()
