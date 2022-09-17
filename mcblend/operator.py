@@ -5,10 +5,10 @@ This module contains all of the operators.
 import json
 from pathlib import Path
 from json.decoder import JSONDecodeError
-from typing import Any, List, Optional, Dict
+from typing import Any, List, Optional, Dict, Any
 
-import bpy_types
 import bpy
+from bpy.types import Operator, Context
 from bpy.props import (
     StringProperty, FloatProperty, EnumProperty, BoolProperty, IntProperty)
 from bpy_extras.io_utils import ExportHelper, ImportHelper
@@ -31,7 +31,7 @@ from .operator_func.texture_generator import (
 
 # Model exporter
 class MCBLEND_OT_ExportModel(
-        bpy.types.Operator, ExportHelper):
+        Operator, ExportHelper):
     '''Operator used for exporting Minecraft models from blender.'''
     # pylint: disable=unused-argument, no-member
     bl_idname = "mcblend.export_model"
@@ -50,7 +50,7 @@ class MCBLEND_OT_ExportModel(
     )
 
     @classmethod
-    def poll(cls, context: bpy_types.Context):
+    def poll(cls, context: Context):
         if context.mode != 'OBJECT':
             return False
         if context.object is None:
@@ -103,7 +103,7 @@ def menu_func_mcblend_export_model(self, context):
 
 # Animation exporter
 class MCBLEND_OT_ExportAnimation(
-        bpy.types.Operator, ExportHelper):
+        Operator, ExportHelper):
     '''Operator used for exporting Minecraft animations from blender.'''
     # pylint: disable=unused-argument, no-member
     bl_idname = "mcblend.export_animation"
@@ -122,7 +122,7 @@ class MCBLEND_OT_ExportAnimation(
     )
 
     @classmethod
-    def poll(cls, context: bpy_types.Context):
+    def poll(cls, context: Context):
         if context.mode != 'OBJECT':
             return False
         if context.object.type != 'ARMATURE':
@@ -156,7 +156,7 @@ def menu_func_mcblend_export_animation(self, context):
     self.layout.operator(MCBLEND_OT_ExportAnimation.bl_idname)
 
 # UV mapper
-class MCBLEND_OT_MapUv(bpy.types.Operator):
+class MCBLEND_OT_MapUv(Operator):
     '''
     Operator used for creating UV-mapping and optionally the tamplate texture
     for Minecraft model.
@@ -171,7 +171,7 @@ class MCBLEND_OT_MapUv(bpy.types.Operator):
 
 
     @classmethod
-    def poll(cls, context: bpy_types.Context):
+    def poll(cls, context: Context):
         if context.mode != 'OBJECT':
             return False
         if context.object is None:
@@ -203,7 +203,7 @@ class MCBLEND_OT_MapUv(bpy.types.Operator):
         self.report({'INFO'}, 'UV maps created successfully.')
         return {'FINISHED'}
 
-class MCBLEND_OT_FixUv(bpy.types.Operator):
+class MCBLEND_OT_FixUv(Operator):
     '''
     Fixes the UV-mapping of the cubes connected to selected armature.
     After this operator the faces of the cubes on the UV-map are rectangular
@@ -218,7 +218,7 @@ class MCBLEND_OT_FixUv(bpy.types.Operator):
     )
 
     @classmethod
-    def poll(cls, context: bpy_types.Context):
+    def poll(cls, context: Context):
         if context.mode != 'OBJECT':
             return False
         if context.object is None:
@@ -243,7 +243,7 @@ class MCBLEND_OT_FixUv(bpy.types.Operator):
         return {'FINISHED'}
 
 # UV grouping
-class MCBLEND_OT_UvGroup(bpy.types.Operator):
+class MCBLEND_OT_UvGroup(Operator):
     '''Operator used for adding selected objects to an UV-group'''
     # pylint: disable=unused-argument, no-member
     bl_idname = "mcblend.uv_group"
@@ -264,7 +264,7 @@ class MCBLEND_OT_UvGroup(bpy.types.Operator):
         items=_list_uv_groups, name="UV Groups")
 
     @classmethod
-    def poll(cls, context: bpy_types.Context):
+    def poll(cls, context: Context):
         if context.mode != 'OBJECT':
             return False
         if len(context.selected_objects) < 1:
@@ -292,7 +292,7 @@ class MCBLEND_OT_UvGroup(bpy.types.Operator):
                 area.tag_redraw()
         return {'FINISHED'}
 
-class MCBLEND_OT_ClearUvGroup(bpy.types.Operator):
+class MCBLEND_OT_ClearUvGroup(Operator):
     '''Operator used for removing selected objects from their UV-groups'''
     # pylint: disable=unused-argument, no-member
     bl_idname = "mcblend.clear_uv_group"
@@ -301,7 +301,7 @@ class MCBLEND_OT_ClearUvGroup(bpy.types.Operator):
     bl_description = 'Clears the UV group from an object.'
 
     @classmethod
-    def poll(cls, context: bpy_types.Context):
+    def poll(cls, context: Context):
         if context.mode != 'OBJECT':
             return False
         if len(context.selected_objects) < 1:
@@ -324,7 +324,7 @@ class MCBLEND_OT_ClearUvGroup(bpy.types.Operator):
         return {'FINISHED'}
 
 # Inflate property
-class MCBLEND_OT_SetInflate(bpy.types.Operator):
+class MCBLEND_OT_SetInflate(Operator):
     '''
     Operator used for setting the inflate value of selected objects.
     '''
@@ -348,7 +348,7 @@ class MCBLEND_OT_SetInflate(bpy.types.Operator):
     )
 
     @classmethod
-    def poll(cls, context: bpy_types.Context):
+    def poll(cls, context: Context):
         if context.mode != 'OBJECT':
             return False
         if len(context.selected_objects) < 1:
@@ -372,7 +372,7 @@ class MCBLEND_OT_SetInflate(bpy.types.Operator):
         return {'FINISHED'}
 
 # Separate mesh cubes
-class MCBLEND_OT_SeparateMeshCubes(bpy.types.Operator):
+class MCBLEND_OT_SeparateMeshCubes(Operator):
     '''
     Separates object with mesh full of cuboids by the loose parts of the mesh.
     Adjusts the rotations of the newly created objects to match the rotations
@@ -388,7 +388,7 @@ class MCBLEND_OT_SeparateMeshCubes(bpy.types.Operator):
     )
 
     @classmethod
-    def poll(cls, context: bpy_types.Context):
+    def poll(cls, context: Context):
         if context.mode != 'OBJECT':
             return False
         if len(context.selected_objects) < 1:
@@ -405,7 +405,7 @@ class MCBLEND_OT_SeparateMeshCubes(bpy.types.Operator):
         return {'FINISHED'}
 
 # Model Importer
-class MCBLEND_OT_ImportModel(bpy.types.Operator, ImportHelper):
+class MCBLEND_OT_ImportModel(Operator, ImportHelper):
     '''Operator used for importing Minecraft models to Blender.'''
     # pylint: disable=unused-argument, no-member
     bl_idname = "mcblend.import_model"
@@ -497,7 +497,7 @@ def load_animation_properties(animation, context):
             if cached_nla_track.name in object_nla_tracks:
                 object_nla_tracks[cached_nla_track.name].mute = False
 
-class MCBLEND_OT_ListAnimations(bpy.types.Operator):
+class MCBLEND_OT_ListAnimations(Operator):
     '''
     Operator used for listing the animations for GUI.
     '''
@@ -551,7 +551,7 @@ class MCBLEND_OT_ListAnimations(bpy.types.Operator):
                 context.object.mcblend.animations[new_anim_id], context)
         return {'FINISHED'}
 
-class MCBLEND_OT_AddAnimation(bpy.types.Operator):
+class MCBLEND_OT_AddAnimation(Operator):
     '''Operator used creating animation settings templates.'''
     bl_idname = "mcblend.add_animation"
     bl_label = '''Adds new animation to the list.'''
@@ -598,7 +598,7 @@ class MCBLEND_OT_AddAnimation(bpy.types.Operator):
                 area.tag_redraw()
         return {'FINISHED'}
 
-class MCBLEND_OT_RemoveAnimation(bpy.types.Operator):
+class MCBLEND_OT_RemoveAnimation(Operator):
     '''
     Operator used for loading saved animation templates to the context.
     '''
@@ -650,7 +650,7 @@ class MCBLEND_OT_RemoveAnimation(bpy.types.Operator):
         return {'FINISHED'}
 
 # UV group (GUI)
-class MCBLEND_OT_ListUvGroups(bpy.types.Operator):
+class MCBLEND_OT_ListUvGroups(Operator):
     '''
     Operator that used for listing the UV-groups for GUI.
     '''
@@ -679,7 +679,7 @@ class MCBLEND_OT_ListUvGroups(bpy.types.Operator):
 
         return {'FINISHED'}
 
-class MCBLEND_OT_AddUvGroup(bpy.types.Operator):
+class MCBLEND_OT_AddUvGroup(Operator):
     '''Operator used for creating new UV-groups.'''
     bl_idname = "mcblend.add_uv_group"
     bl_label = '''Adds new uv_group to the list.'''
@@ -710,7 +710,7 @@ class MCBLEND_OT_AddUvGroup(bpy.types.Operator):
 
         return {'FINISHED'}
 
-class MCBLEND_OT_RemoveUvGroup(bpy.types.Operator):
+class MCBLEND_OT_RemoveUvGroup(Operator):
     '''Operator useful for removing UV-groups.'''
     bl_idname = "mcblend.remove_uv_group"
     bl_label = "Remove current uv_group from the list."
@@ -738,7 +738,7 @@ class MCBLEND_OT_RemoveUvGroup(bpy.types.Operator):
             context.scene.mcblend_active_uv_group=group_id-1
         return {'FINISHED'}
 
-class MCBLEND_OT_CopyUvGroupSide(bpy.types.Operator):
+class MCBLEND_OT_CopyUvGroupSide(Operator):
     '''Operator used for copying sides of UV-groups.'''
     bl_idname = "mcblend.copy_uv_group_side"
     bl_label = 'Copy active UV group side other to UV group'
@@ -863,7 +863,7 @@ def get_active_masks(context):
     masks = sides[int(context.scene.mcblend_active_uv_groups_side)]
     return masks
 
-class MCBLEND_OT_AddUvMask(bpy.types.Operator):
+class MCBLEND_OT_AddUvMask(Operator):
     '''Operator used for adding UV-masks to UV groups.'''
     bl_idname = "mcblend.add_uv_mask"
     bl_label = '''Adds new mask to active uv group at active face.'''
@@ -874,7 +874,7 @@ class MCBLEND_OT_AddUvMask(bpy.types.Operator):
     )
 
     @classmethod
-    def poll(cls, context: bpy_types.Context):
+    def poll(cls, context: Context):
         if len(context.scene.mcblend_uv_groups) < 1:
             return False
         return True
@@ -887,7 +887,7 @@ class MCBLEND_OT_AddUvMask(bpy.types.Operator):
         new_mask.stripes.add()
         return {'FINISHED'}
 
-class MCBLEND_OT_RemoveUvMask(bpy.types.Operator):
+class MCBLEND_OT_RemoveUvMask(Operator):
     '''Operator used for removing UV-masks from UV-groups.'''
     bl_idname = "mcblend.remove_uv_mask"
     bl_label = '''Removes mask from active face of active uv group.'''
@@ -896,7 +896,7 @@ class MCBLEND_OT_RemoveUvMask(bpy.types.Operator):
     target: IntProperty()  # type: ignore
 
     @classmethod
-    def poll(cls, context: bpy_types.Context):
+    def poll(cls, context: Context):
         if len(context.scene.mcblend_uv_groups) < 1:
             return False
         return True
@@ -906,7 +906,7 @@ class MCBLEND_OT_RemoveUvMask(bpy.types.Operator):
         masks.remove(self.target)
         return {'FINISHED'}
 
-class MCBLEND_OT_MoveUvMask(bpy.types.Operator):
+class MCBLEND_OT_MoveUvMask(Operator):
     '''Operator used for changing the order of UV-masks in UV groups.'''
     bl_idname = "mcblend.move_uv_mask"
     bl_label = (
@@ -918,7 +918,7 @@ class MCBLEND_OT_MoveUvMask(bpy.types.Operator):
     move_to: IntProperty()  # type: ignore
 
     @classmethod
-    def poll(cls, context: bpy_types.Context):
+    def poll(cls, context: Context):
         if len(context.scene.mcblend_uv_groups) < 1:
             return False
         return True
@@ -929,7 +929,7 @@ class MCBLEND_OT_MoveUvMask(bpy.types.Operator):
         return {'FINISHED'}
 
 # UV Mask side colors (GUI)
-class MCBLEND_OT_AddUvMaskColor(bpy.types.Operator):
+class MCBLEND_OT_AddUvMaskColor(Operator):
     '''Operator used for adding colors to UV-masks.'''
     bl_idname = "mcblend.add_uv_mask_color"
     bl_label = '''Adds new color to a mask.'''
@@ -938,7 +938,7 @@ class MCBLEND_OT_AddUvMaskColor(bpy.types.Operator):
     mask_index: IntProperty()  # type: ignore
 
     @classmethod
-    def poll(cls, context: bpy_types.Context):
+    def poll(cls, context: Context):
         if len(context.scene.mcblend_uv_groups) < 1:
             return False
         return True
@@ -949,7 +949,7 @@ class MCBLEND_OT_AddUvMaskColor(bpy.types.Operator):
         mask.colors.add()
         return {'FINISHED'}
 
-class MCBLEND_OT_RemoveUvMaskColor(bpy.types.Operator):
+class MCBLEND_OT_RemoveUvMaskColor(Operator):
     '''Operator used for removing colors from UV-masks.'''
     bl_idname = "mcblend.remove_uv_mask_color"
     bl_label = 'Removes color from colors of active face of active uv group.'
@@ -960,7 +960,7 @@ class MCBLEND_OT_RemoveUvMaskColor(bpy.types.Operator):
 
 
     @classmethod
-    def poll(cls, context: bpy_types.Context):
+    def poll(cls, context: Context):
         if len(context.scene.mcblend_uv_groups) < 1:
             return False
         return True
@@ -971,7 +971,7 @@ class MCBLEND_OT_RemoveUvMaskColor(bpy.types.Operator):
         mask.colors.remove(self.color_index)
         return {'FINISHED'}
 
-class MCBLEND_OT_MoveUvMaskColor(bpy.types.Operator):
+class MCBLEND_OT_MoveUvMaskColor(Operator):
     '''Operator used for changing the order of the colors in UV-masks.'''
     bl_idname = "mcblend.move_uv_mask_color"
     bl_label = (
@@ -984,7 +984,7 @@ class MCBLEND_OT_MoveUvMaskColor(bpy.types.Operator):
     move_to: IntProperty()  # type: ignore
 
     @classmethod
-    def poll(cls, context: bpy_types.Context):
+    def poll(cls, context: Context):
         if len(context.scene.mcblend_uv_groups) < 1:
             return False
         return True
@@ -996,7 +996,7 @@ class MCBLEND_OT_MoveUvMaskColor(bpy.types.Operator):
         return {'FINISHED'}
 
 # UV Mask side stripes (GUI)
-class MCBLEND_OT_AddUvMaskStripe(bpy.types.Operator):
+class MCBLEND_OT_AddUvMaskStripe(Operator):
     '''Operator used for adding stripes to UV-masks.'''
     bl_idname = "mcblend.add_uv_mask_stripe"
     bl_label = '''Adds new color to a mask.'''
@@ -1005,7 +1005,7 @@ class MCBLEND_OT_AddUvMaskStripe(bpy.types.Operator):
     mask_index: IntProperty()  # type: ignore
 
     @classmethod
-    def poll(cls, context: bpy_types.Context):
+    def poll(cls, context: Context):
         if len(context.scene.mcblend_uv_groups) < 1:
             return False
         return True
@@ -1016,7 +1016,7 @@ class MCBLEND_OT_AddUvMaskStripe(bpy.types.Operator):
         mask.stripes.add()
         return {'FINISHED'}
 
-class MCBLEND_OT_RemoveUvMaskStripe(bpy.types.Operator):
+class MCBLEND_OT_RemoveUvMaskStripe(Operator):
     '''Operator used for removing UV-masks from UV-groups.'''
     bl_idname = "mcblend.remove_uv_mask_stripe"
     bl_label = 'Removes color from colors of active face of active uv group.'
@@ -1027,7 +1027,7 @@ class MCBLEND_OT_RemoveUvMaskStripe(bpy.types.Operator):
 
 
     @classmethod
-    def poll(cls, context: bpy_types.Context):
+    def poll(cls, context: Context):
         if len(context.scene.mcblend_uv_groups) < 1:
             return False
         return True
@@ -1038,7 +1038,7 @@ class MCBLEND_OT_RemoveUvMaskStripe(bpy.types.Operator):
         mask.stripes.remove(self.stripe_index)
         return {'FINISHED'}
 
-class MCBLEND_OT_MoveUvMaskStripe(bpy.types.Operator):
+class MCBLEND_OT_MoveUvMaskStripe(Operator):
     '''Operator used for changing the order of the stripes in UV-groups.'''
     bl_idname = "mcblend.move_uv_mask_stripe"
     bl_label = (
@@ -1051,7 +1051,7 @@ class MCBLEND_OT_MoveUvMaskStripe(bpy.types.Operator):
     move_to: IntProperty()  # type: ignore
 
     @classmethod
-    def poll(cls, context: bpy_types.Context):
+    def poll(cls, context: Context):
         if len(context.scene.mcblend_uv_groups) < 1:
             return False
         return True
@@ -1064,7 +1064,7 @@ class MCBLEND_OT_MoveUvMaskStripe(bpy.types.Operator):
 
 # UV Mask exporter
 class MCBLEND_OT_ExportUvGroup(
-        bpy.types.Operator, ExportHelper):
+        Operator, ExportHelper):
     '''Operator used for exporting active UV-group from Blender.'''
     # pylint: disable=unused-argument, no-member
     bl_idname = "mcblend.export_uv_group"
@@ -1081,7 +1081,7 @@ class MCBLEND_OT_ExportUvGroup(
     )
 
     @classmethod
-    def poll(cls, context: bpy_types.Context):
+    def poll(cls, context: Context):
         return len(context.scene.mcblend_uv_groups) > 0
 
     def execute(self, context):
@@ -1094,7 +1094,7 @@ class MCBLEND_OT_ExportUvGroup(
         return {'FINISHED'}
 
 # UV Mask exporter
-class MCBLEND_OT_ImportUvGroup(bpy.types.Operator, ImportHelper):
+class MCBLEND_OT_ImportUvGroup(Operator, ImportHelper):
     '''Operator used for importing Minecraft models to Blender.'''
     # pylint: disable=unused-argument, no-member, too-many-boolean-expressions
     bl_idname = "mcblend.import_uv_group"
@@ -1417,7 +1417,7 @@ class MCBLEND_OT_ImportUvGroup(bpy.types.Operator, ImportHelper):
         return {'FINISHED'}
 
 # Events
-class MCBLEND_OT_AddEvent(bpy.types.Operator):
+class MCBLEND_OT_AddEvent(Operator):
     '''Operator used for adding events to scene.'''
     bl_idname = "mcblend.add_event"
     bl_label = '''Adds new event to scene.'''
@@ -1428,14 +1428,14 @@ class MCBLEND_OT_AddEvent(bpy.types.Operator):
         event_new.name = get_unused_event_name('event')
         return {'FINISHED'}
 
-class MCBLEND_OT_RemoveEvent(bpy.types.Operator):
+class MCBLEND_OT_RemoveEvent(Operator):
     '''Operator used for removing events.'''
     bl_idname = "mcblend.remove_event"
     bl_label = '''Removes event from scene.'''
     bl_options = {'UNDO', 'INTERNAL'}
 
     @classmethod
-    def poll(cls, context: bpy_types.Context):
+    def poll(cls, context: Context):
         events = bpy.context.scene.mcblend_events
         active_event_id = bpy.context.scene.mcblend_active_event
         if not 0 <= active_event_id < len(events):
@@ -1453,7 +1453,7 @@ class MCBLEND_OT_RemoveEvent(bpy.types.Operator):
             bpy.context.scene.mcblend_active_event=active_event_id-1
         return {'FINISHED'}
 
-class MCBLEND_OT_AddEffect(bpy.types.Operator):
+class MCBLEND_OT_AddEffect(Operator):
     '''Operator used for adding effects to events.'''
     bl_idname = "mcblend.add_effect"
     bl_label = '''Adds new effect to active event.'''
@@ -1464,7 +1464,7 @@ class MCBLEND_OT_AddEffect(bpy.types.Operator):
     )
 
     @classmethod
-    def poll(cls, context: bpy_types.Context):
+    def poll(cls, context: Context):
         events = bpy.context.scene.mcblend_events
         active_event_id = bpy.context.scene.mcblend_active_event
         if not 0 <= active_event_id < len(events):
@@ -1480,7 +1480,7 @@ class MCBLEND_OT_AddEffect(bpy.types.Operator):
         effect.effect_type = self.effect_type
         return {'FINISHED'}
 
-class MCBLEND_OT_RemoveEffect(bpy.types.Operator):
+class MCBLEND_OT_RemoveEffect(Operator):
     '''Operator used for removeing effects effects from events.'''
     bl_idname = "mcblend.remove_effect"
     bl_label = '''Remove effect from active event.'''
@@ -1489,7 +1489,7 @@ class MCBLEND_OT_RemoveEffect(bpy.types.Operator):
     effect_index: IntProperty()  # type: ignore
 
     @classmethod
-    def poll(cls, context: bpy_types.Context):
+    def poll(cls, context: Context):
         events = bpy.context.scene.mcblend_events
         active_event_id = bpy.context.scene.mcblend_active_event
         if not 0 <= active_event_id < len(events):
@@ -1509,7 +1509,7 @@ class MCBLEND_OT_RemoveEffect(bpy.types.Operator):
         return {'FINISHED'}
 
 # Project - RP entity import
-class MCBLEND_OT_LoadRp(bpy.types.Operator, ImportHelper):
+class MCBLEND_OT_LoadRp(Operator, ImportHelper):
     '''Imports entity form Minecraft project into blender'''
     # pylint: disable=unused-argument, no-member
     bl_idname = "mcblend.load_rp"
@@ -1528,7 +1528,7 @@ class MCBLEND_OT_LoadRp(bpy.types.Operator, ImportHelper):
         load_rp_to_mcblned(context, rp_path)
         return {'FINISHED'}
 
-class MCBLEND_OT_UnloadRps(bpy.types.Operator):
+class MCBLEND_OT_UnloadRps(Operator):
     '''Unloads all resource packs from the database'''
     bl_idname = "mcblend.unload_rps"
     bl_label = "Unload Resource Packs"
@@ -1543,7 +1543,7 @@ class MCBLEND_OT_UnloadRps(bpy.types.Operator):
         unload_rps(context)
         return {'FINISHED'}
 
-class MCBLEND_OT_LoadDatabase(bpy.types.Operator, ImportHelper):
+class MCBLEND_OT_LoadDatabase(Operator, ImportHelper):
     '''Loads SQLite database with resource pack data.'''
     # pylit: disable=unused-argument, no-member
     bl_idname = "mcblend.load_database"
@@ -1561,7 +1561,7 @@ class MCBLEND_OT_LoadDatabase(bpy.types.Operator, ImportHelper):
         self.report({'INFO'}, f"Loading database from {self.filepath}")
         return {'FINISHED'}
 
-class MCBLEND_OT_SaveDatabase(bpy.types.Operator, ExportHelper):
+class MCBLEND_OT_SaveDatabase(Operator, ExportHelper):
     '''Saves SQLite database with resource packs data.'''
     # pylint: disable=unused-argument, no-member
     bl_idname = "mcblend.save_database"
@@ -1575,7 +1575,7 @@ class MCBLEND_OT_SaveDatabase(bpy.types.Operator, ExportHelper):
         self.report({'INFO'}, f"Saving database to {self.filepath}")
         return {'FINISHED'}
 
-class MCBLEND_OT_ImportRpEntity(bpy.types.Operator):
+class MCBLEND_OT_ImportRpEntity(Operator):
     '''Imports entity form Minecraft project into blender'''
     # pylint: disable=unused-argument, no-member
     bl_idname = "mcblend.import_rp_entity"
@@ -1584,7 +1584,7 @@ class MCBLEND_OT_ImportRpEntity(bpy.types.Operator):
     bl_description = "Import entity by it's name from the resource pack."
 
     @classmethod
-    def poll(cls, context: bpy_types.Context):
+    def poll(cls, context: Context):
         return len(context.scene.mcblend_project.entities) > 0
 
     def execute(self, context):
@@ -1608,7 +1608,7 @@ class MCBLEND_OT_ImportRpEntity(bpy.types.Operator):
             )
         return {'FINISHED'}
 
-class MCBLEND_OT_ImportAttachable(bpy.types.Operator):
+class MCBLEND_OT_ImportAttachable(Operator):
     '''Imports attachable form Minecraft project into blender'''
     # pylint: disable=unused-argument, no-member
     bl_idname = "mcblend.import_attachable"
@@ -1617,7 +1617,7 @@ class MCBLEND_OT_ImportAttachable(bpy.types.Operator):
     bl_description = "Import attachable by it's name from the resource pack."
 
     @classmethod
-    def poll(cls, context: bpy_types.Context):
+    def poll(cls, context: Context):
         return len(context.scene.mcblend_project.attachables) > 0
 
     def execute(self, context):
@@ -1642,14 +1642,14 @@ class MCBLEND_OT_ImportAttachable(bpy.types.Operator):
         return {'FINISHED'}
 
 # Armature render controllers
-class MCBLEND_OT_AddFakeRc(bpy.types.Operator):
+class MCBLEND_OT_AddFakeRc(Operator):
     '''Adds new render controller to active model (armature).'''
     bl_idname = "mcblend.add_fake_rc"
     bl_label = 'Adds new render controller'
     bl_options = {'UNDO', 'INTERNAL'}
 
     @classmethod
-    def poll(cls, context: bpy_types.Context):
+    def poll(cls, context: Context):
         return context.object.type == 'ARMATURE'
 
     def execute(self, context):
@@ -1660,7 +1660,7 @@ class MCBLEND_OT_AddFakeRc(bpy.types.Operator):
         material.material = 'entity_alphatest'
         return {'FINISHED'}
 
-class MCBLEND_OT_RemoveFakeRc(bpy.types.Operator):
+class MCBLEND_OT_RemoveFakeRc(Operator):
     '''Removes render controller from active model (armature).'''
     bl_idname = "mcblend.remove_fake_rc"
     bl_label = 'Removes render controller'
@@ -1669,7 +1669,7 @@ class MCBLEND_OT_RemoveFakeRc(bpy.types.Operator):
     rc_index: IntProperty()  # type: ignore
 
     @classmethod
-    def poll(cls, context: bpy_types.Context):
+    def poll(cls, context: Context):
         return context.object.type == 'ARMATURE'
 
     def execute(self, context):
@@ -1677,7 +1677,7 @@ class MCBLEND_OT_RemoveFakeRc(bpy.types.Operator):
         rcs.remove(self.rc_index)
         return {'FINISHED'}
 
-class MCBLEND_OT_MoveFakeRc(bpy.types.Operator):
+class MCBLEND_OT_MoveFakeRc(Operator):
     '''Moves render controller in active to a different spot on the list.'''
     bl_idname = "mcblend.move_fake_rc"
     bl_label = 'Moves render controller'
@@ -1687,7 +1687,7 @@ class MCBLEND_OT_MoveFakeRc(bpy.types.Operator):
     move_to: IntProperty()  # type: ignore
 
     @classmethod
-    def poll(cls, context: bpy_types.Context):
+    def poll(cls, context: Context):
         return context.object.type == 'ARMATURE'
 
     def execute(self, context):
@@ -1695,7 +1695,7 @@ class MCBLEND_OT_MoveFakeRc(bpy.types.Operator):
         rcs.move(self.rc_index, self.move_to)
         return {'FINISHED'}
 
-class MCBLEND_OT_FakeRcSelectTexture(bpy.types.Operator):
+class MCBLEND_OT_FakeRcSelectTexture(Operator):
     '''Selects the name of the texture for render controller of a model.'''
     bl_idname = "mcblend.fake_rc_select_texture"
     bl_label = "Selects the texture name"
@@ -1717,7 +1717,7 @@ class MCBLEND_OT_FakeRcSelectTexture(bpy.types.Operator):
         return context.window_manager.invoke_props_dialog(self)
 
     @classmethod
-    def poll(cls, context: bpy_types.Context):
+    def poll(cls, context: Context):
         return context.object.type == 'ARMATURE'
 
     def execute(self, context):
@@ -1726,7 +1726,7 @@ class MCBLEND_OT_FakeRcSelectTexture(bpy.types.Operator):
         return {'FINISHED'}
 
 # Armature render controllers materials
-class MCBLEND_OT_AddFakeRcMaterial(bpy.types.Operator):
+class MCBLEND_OT_AddFakeRcMaterial(Operator):
     '''
     Adds new material to active render controller of active model (armature)
     '''
@@ -1737,7 +1737,7 @@ class MCBLEND_OT_AddFakeRcMaterial(bpy.types.Operator):
     rc_index: IntProperty()  # type: ignore
 
     @classmethod
-    def poll(cls, context: bpy_types.Context):
+    def poll(cls, context: Context):
         return context.object.type == 'ARMATURE'
 
     def execute(self, context):
@@ -1748,7 +1748,7 @@ class MCBLEND_OT_AddFakeRcMaterial(bpy.types.Operator):
         material.material = 'entity_alphatest'
         return {'FINISHED'}
 
-class MCBLEND_OT_RemoveFakeRcMaterial(bpy.types.Operator):
+class MCBLEND_OT_RemoveFakeRcMaterial(Operator):
     '''
     Removes material from active render controller of active model (armature).
     '''
@@ -1760,7 +1760,7 @@ class MCBLEND_OT_RemoveFakeRcMaterial(bpy.types.Operator):
     material_index: IntProperty()  # type: ignore
 
     @classmethod
-    def poll(cls, context: bpy_types.Context):
+    def poll(cls, context: Context):
         return context.object.type == 'ARMATURE'
 
     def execute(self, context):
@@ -1768,7 +1768,7 @@ class MCBLEND_OT_RemoveFakeRcMaterial(bpy.types.Operator):
             self.rc_index].materials.remove(self.material_index)
         return {'FINISHED'}
 
-class MCBLEND_OT_MoveFakeRcMaterial(bpy.types.Operator):
+class MCBLEND_OT_MoveFakeRcMaterial(Operator):
     '''
     Moves material of active render controller in active model to a
     different spot on the list.
@@ -1782,7 +1782,7 @@ class MCBLEND_OT_MoveFakeRcMaterial(bpy.types.Operator):
     move_to: IntProperty()  # type: ignore
 
     @classmethod
-    def poll(cls, context: bpy_types.Context):
+    def poll(cls, context: Context):
         return context.object.type == 'ARMATURE'
 
     def execute(self, context):
@@ -1790,7 +1790,7 @@ class MCBLEND_OT_MoveFakeRcMaterial(bpy.types.Operator):
             self.rc_index].materials.move(self.material_index, self.move_to)
         return {'FINISHED'}
 
-class MCBLEND_OT_FakeRcSMaterailSelectTemplate(bpy.types.Operator):
+class MCBLEND_OT_FakeRcSMaterailSelectTemplate(Operator):
     '''Selects the material type.'''
     bl_idname = "mcblend.fake_rc_material_select_template"
     bl_label = 'Selects the material type'
@@ -1806,7 +1806,7 @@ class MCBLEND_OT_FakeRcSMaterailSelectTemplate(bpy.types.Operator):
         return context.window_manager.invoke_props_dialog(self)
 
     @classmethod
-    def poll(cls, context: bpy_types.Context):
+    def poll(cls, context: Context):
         return context.object.type == 'ARMATURE'
 
     def execute(self, context):
@@ -1815,14 +1815,14 @@ class MCBLEND_OT_FakeRcSMaterailSelectTemplate(bpy.types.Operator):
                 self.material_index].material = self.material
         return {'FINISHED'}
 
-class MCBLEND_OT_FakeRcApplyMaterials(bpy.types.Operator):
+class MCBLEND_OT_FakeRcApplyMaterials(Operator):
     '''Applies the materials to the model'''
     bl_idname = "mcblend.fake_rc_apply_materials"
     bl_label = 'Applies the materials to the model'
     bl_options = {'UNDO', 'INTERNAL'}
 
     @classmethod
-    def poll(cls, context: bpy_types.Context):
+    def poll(cls, context: Context):
         return context.object.type == 'ARMATURE'
 
     def execute(self, context):
@@ -1830,7 +1830,7 @@ class MCBLEND_OT_FakeRcApplyMaterials(bpy.types.Operator):
         return {'FINISHED'}
 
 # Physics
-class MCBLEND_OT_PreparePhysicsSimulation(bpy.types.Operator):
+class MCBLEND_OT_PreparePhysicsSimulation(Operator):
     '''Operator used for adding objects used for rigid body simulation.'''
     # pylint: disable=unused-argument, no-member
     bl_idname = "mcblend.prepare_physics_simulation"
@@ -1840,7 +1840,7 @@ class MCBLEND_OT_PreparePhysicsSimulation(bpy.types.Operator):
         "Operator used for adding objects used for rigid body simulation.")
 
     @classmethod
-    def poll(cls, context: bpy_types.Context):
+    def poll(cls, context: Context):
         if context.mode != 'OBJECT':
             return False
         if context.object is None:

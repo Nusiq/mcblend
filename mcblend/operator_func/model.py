@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 import numpy as np
 import mathutils
 import bpy
-import bpy_types
+from bpy.types import MeshUVLoopLayer, MeshPolygon
 
 from .common import (
     MINECRAFT_SCALE_FACTOR, McblendObject, McblendObjectGroup, MCObjType,
@@ -398,7 +398,7 @@ class UvExportFactory:
             system.
         :returns: The JSON with UV, and the mirror property
         '''
-        layer: Optional[bpy.types.MeshUVLoopLayer] = (
+        layer: Optional[MeshUVLoopLayer] = (
             mcobj.obj_data.uv_layers.active)
         if layer is None:  # Make sure that UV exists
             raise ExporterException(
@@ -424,7 +424,7 @@ class UvExportFactory:
                 ) from e
 
     def _get_uv(
-            self, uv_layer: bpy.types.MeshUVLoopLayer,
+            self, uv_layer: MeshUVLoopLayer,
             cube_polygon: CubePolygon, name: str) -> np.ndarray:
         '''
         Get certain UV coordinates identified by a name from a face.
@@ -432,7 +432,7 @@ class UvExportFactory:
         :param cube_polygon: The face of the cube
         :param name: The identifier of a loop in the UV
         '''
-        face: bpy_types.MeshPolygon = cube_polygon.side
+        face: MeshPolygon = cube_polygon.side
         name_index = cube_polygon.orientation.index(name)
 
         uv_layer_data_index = face.loop_indices[name_index]
@@ -442,7 +442,7 @@ class UvExportFactory:
 
     def _get_standard_cube_uv_export(
             self, cube_polygons: CubePolygons,
-            uv_layer: bpy.types.MeshUVLoopLayer, cube_size: np.ndarray
+            uv_layer: MeshUVLoopLayer, cube_size: np.ndarray
         ) -> Tuple[Any, bool]:
         '''
         Attempts to return UV and mirror for standard UV-mapping. Raises
@@ -542,7 +542,7 @@ class UvExportFactory:
 
     def _get_per_face_uv_export(
             self, cube_polygons: CubePolygons,
-            uv_layer: bpy.types.MeshUVLoopLayer) -> Tuple[Any, bool]:
+            uv_layer: MeshUVLoopLayer) -> Tuple[Any, bool]:
         result = {}
 
         def map_face(cube_polygon: CubePolygon, side_name: str):

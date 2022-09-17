@@ -7,7 +7,7 @@ from typing import List, Optional, cast
 from dataclasses import dataclass
 
 import bpy
-
+from bpy.types import UILayout, UIList, Panel
 
 from .resource_pack_data import MCBLEND_ProjectProperties
 
@@ -18,7 +18,7 @@ from .operator_func.texture_generator import UvMaskTypes
 
 # GUI
 # UV-groups names list
-class MCBLEND_UL_UVGroupList(bpy.types.UIList):
+class MCBLEND_UL_UVGroupList(UIList):
     '''GUI item used for drawing list of names of UV-groups.'''
     def draw_item(
             self, context, layout, data, item, icon, active_data,
@@ -52,17 +52,17 @@ class _UIStackItem():
     Object used in MCBLEND_PT_UVGroupPanel for saving the
     information about nested UV-groups in stack data structure.
     '''
-    ui: Optional[bpy.types.UILayout]  # None if parent is collapsed
+    ui: Optional[UILayout]  # None if parent is collapsed
     depth: int
 
-class MCBLEND_PT_UVGroupPanel(bpy.types.Panel):
+class MCBLEND_PT_UVGroupPanel(Panel):
     '''Panel used for editing UV-groups.'''
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = 'scene'
     bl_label = "Mcblend: UV-groups"
 
-    def draw_colors(self, mask, mask_index: int, col: bpy.types.UILayout):
+    def draw_colors(self, mask, mask_index: int, col: UILayout):
         '''Draws colors of UV-mask.'''
         box = col.box()
         row = box.row()
@@ -98,7 +98,7 @@ class MCBLEND_PT_UVGroupPanel(bpy.types.Panel):
             op_props.mask_index = mask_index
             op_props.color_index = color_index
 
-    def draw_stripes(self, mask, mask_index: int, col: bpy.types.UILayout):
+    def draw_stripes(self, mask, mask_index: int, col: UILayout):
         '''Draws stripes of UV-mask.'''
         box = col.box()
         row = box.row()
@@ -143,7 +143,7 @@ class MCBLEND_PT_UVGroupPanel(bpy.types.Panel):
             op_props.stripe_index = stripe_index
 
     def draw_mask_properties(
-            self, mask, index: int, col: bpy.types.UILayout, *,
+            self, mask, index: int, col: UILayout, *,
             colors=False, interpolate=False,
             normalize=False, p1p2=False, stripes=False,
             relative_boundaries=False, expotent=False, strength=False,
@@ -368,7 +368,7 @@ class MCBLEND_PT_UVGroupPanel(bpy.types.Panel):
                         break
 
 # Event group panel
-class MCBLEND_UL_EventsList(bpy.types.UIList):
+class MCBLEND_UL_EventsList(UIList):
     '''GUI item used for drawing list of names of events.'''
     def draw_item(
             self, context, layout, data, item, icon, active_data,
@@ -394,7 +394,7 @@ class MCBLEND_UL_EventsList(bpy.types.UIList):
             # With rename functionality:
             layout.prop(item, "name", text="", emboss=False)
 
-class MCBLEND_PT_EventsPanel(bpy.types.Panel):
+class MCBLEND_PT_EventsPanel(Panel):
     '''Panel used for editing events.'''
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
@@ -402,7 +402,7 @@ class MCBLEND_PT_EventsPanel(bpy.types.Panel):
     bl_label = "Mcblend: Animation Events"
 
 
-    def draw_effect(self, effect, index: int, col: bpy.types.UILayout):
+    def draw_effect(self, effect, index: int, col: UILayout):
         '''Draw single effect in the event'''
 
         # If parent is collapsed don't draw anything
@@ -456,7 +456,7 @@ class MCBLEND_PT_EventsPanel(bpy.types.Panel):
                     self.draw_effect(effect, i, col)
 
 # Custom object properties panel
-class MCBLEND_PT_ObjectPropertiesPanel(bpy.types.Panel):
+class MCBLEND_PT_ObjectPropertiesPanel(Panel):
     '''Panel used for editing custom model object properties.'''
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
@@ -490,7 +490,7 @@ class MCBLEND_PT_ObjectPropertiesPanel(bpy.types.Panel):
                 object_properties, "min_uv_size", text="Min UV bound")
 
 # Custom object properties panel
-class MCBLEND_PT_ModelPropertiesPanel(bpy.types.Panel):
+class MCBLEND_PT_ModelPropertiesPanel(Panel):
     '''Panel used for editing model properties.'''
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
@@ -538,7 +538,7 @@ class MCBLEND_PT_ModelPropertiesPanel(bpy.types.Panel):
         col.operator("mcblend.map_uv", text="Set minecraft UVs")
 
 # Armature render controllers properties
-class MCBLEND_PT_ArmatureRenderControllersPanel(bpy.types.Panel):
+class MCBLEND_PT_ArmatureRenderControllersPanel(Panel):
     '''Panel used for editing custom model object properties.'''
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
@@ -634,7 +634,7 @@ class MCBLEND_PT_ArmatureRenderControllersPanel(bpy.types.Panel):
                 op_props.material_index = material_index
 
 # Animation properties panel
-class MCBLEND_PT_AnimationPropertiesPanel(bpy.types.Panel):
+class MCBLEND_PT_AnimationPropertiesPanel(Panel):
     '''
     Panel used launching the animation export operator and changing its
     settings.
@@ -693,7 +693,7 @@ class MCBLEND_PT_AnimationPropertiesPanel(bpy.types.Panel):
             col.prop(active_anim, "world_origin", text="World Origin Object")
 
 # "Other" operators panel
-class MCBLEND_PT_OperatorsPanel(bpy.types.Panel):
+class MCBLEND_PT_OperatorsPanel(Panel):
     '''
     Panel that gives the user access to various operators used by Mcblend.
     '''
@@ -735,7 +735,7 @@ class MCBLEND_PT_OperatorsPanel(bpy.types.Panel):
         )
 
 # Resource pack panel
-class MCBLEND_PT_ProjectPanel(bpy.types.Panel):
+class MCBLEND_PT_ProjectPanel(Panel):
     '''
     Panel that represents a connection of the blender project with
     a Minecraft project (resource- and behavior- pack)
@@ -824,7 +824,7 @@ class MCBLEND_PT_ProjectPanel(bpy.types.Panel):
                 )
 
 # Resource pack panel
-class MCBLEND_PT_BonePanel(bpy.types.Panel):
+class MCBLEND_PT_BonePanel(Panel):
     '''
     Panel that represents a connection of the blender project with
     a Minecraft project (resource- and behavior- pack)

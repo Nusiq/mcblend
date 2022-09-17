@@ -2,10 +2,10 @@
 Functions related to imoporting models from resource packs.
 '''
 from __future__ import annotations
-import bpy_types
 from typing import Literal, TypedDict, TYPE_CHECKING, cast
+from bpy.types import Context
 
-
+# Import for static type checking only (to avoid circular imports)
 if TYPE_CHECKING:
     from ..resource_pack_data import MCBLEND_ProjectProperties
 else:
@@ -54,7 +54,7 @@ class PksForModelRc(TypedDict):
 
 
 def get_pks_for_model_improt(
-        context: bpy_types.Context,
+        context: Context,
         base_object: Literal['entity', 'attachable']) -> PksForModelImport:
     '''
     Creates a dictionary of primary keys needed to import an entity from a

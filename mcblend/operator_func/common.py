@@ -12,8 +12,9 @@ from collections import deque
 
 import numpy as np
 
-import bpy_types
 import bpy
+from bpy.types import MeshUVLoopLayer, Object, MeshPolygon, PoseBone
+
 import mathutils
 
 from .texture_generator import Mask, ColorMask, get_masks_from_side
@@ -73,11 +74,11 @@ class McblendObject:
         :class:`McblendObject`s being processed with this object.
     '''
     def __init__(
-            self, thisobj_id: ObjectId, thisobj: bpy.types.Object,
+            self, thisobj_id: ObjectId, thisobj: Object,
             parentobj_id: Optional[ObjectId], children_ids: List[ObjectId],
             mctype: MCObjType, group: McblendObjectGroup):
         self.thisobj_id = thisobj_id
-        self.thisobj: bpy.types.Object = thisobj
+        self.thisobj: Object = thisobj
         self.parentobj_id: Optional[ObjectId] = parentobj_id
         self.children_ids: List[ObjectId] = children_ids
         self.mctype: MCObjType = mctype
@@ -160,7 +161,7 @@ class McblendObject:
         return self.thisobj.data
 
     @property
-    def this_pose_bone(self) -> bpy.types.PoseBone:
+    def this_pose_bone(self) -> PoseBone:
         '''The pose bone of this object (doesn't work for non-bone objects)'''
         return self.thisobj.pose.bones[self.thisobj_id.bone_name]
 
@@ -461,7 +462,7 @@ class CubePolygonsSolver:
 
     def __init__(
             self, p_options: List[List[str]],
-            polygons: bpy_types.MeshPolygon):
+            polygons: MeshPolygon):
         self.p_options = p_options
         self.polygons = polygons
         self.solved = False
@@ -563,7 +564,7 @@ class CubePolygons(NamedTuple):
     down: CubePolygon  # Cube Down
 
     @staticmethod
-    def build(cube: bpy.types.Object, mirror: bool) -> CubePolygons:
+    def build(cube: Object, mirror: bool) -> CubePolygons:
         '''
         Creates :class:`CubePolygons` object for given blender object cube.
 
@@ -644,7 +645,7 @@ class CubePolygon(NamedTuple):
     '''
     Single face in :class:`CubePolygons`.
 
-    :param side: :class:`bpy_types.MeshPolygon` object from blender mesh.
+    :param side: :class:`MeshPolygon` object from blender mesh.
     :param orientation: The names of the vertices of the Mesh polygon. Vertices
         are named with 3-character-string (using only '+' and '-'). Where each
         character symbolizes whether the vertex is on increasing (+) or
@@ -654,12 +655,12 @@ class CubePolygon(NamedTuple):
         the face should be rearranged to match this: 0 left bottom corner,
         1 right bottom corner, 2 right top corner, 3 left top corner.
     '''
-    side: bpy_types.MeshPolygon
+    side: MeshPolygon
     orientation: Tuple[str, str, str, str]
     order: Tuple[int, int, int, int]
 
     def uv_layer_coordinates(
-            self, uv_layer: bpy.types.MeshUVLoopLayer) -> np.ndarray:
+            self, uv_layer: MeshUVLoopLayer) -> np.ndarray:
         '''
         Returns 4x2 numpy array with UV coordinates of this cube polygon loops
         from the uv_layer. The order of the coordinates in the array is
@@ -727,11 +728,11 @@ class McblendObjectGroup:
         equivalent to animating everything else in opposite way.
     '''
     def __init__(
-            self, armature: bpy.types.Object,
-            world_origin: Optional[bpy.types.Object]):
+            self, armature: Object,
+            world_origin: Optional[Object]):
         self.data: Dict[ObjectId, McblendObject] = {}
         '''the content of the group.'''
-        self.world_origin: Optional[bpy.types.Object] = world_origin
+        self.world_origin: Optional[Object] = world_origin
         self._load_objects(armature)
 
     def get_world_origin_matrix(self):
@@ -767,7 +768,7 @@ class McblendObjectGroup:
         '''Iterator going through pairs of keys and values of this group.'''
         return self.data.items()
 
-    def _load_objects(self, armature: bpy.types.Object):
+    def _load_objects(self, armature: Object):
         '''
         Loops offspring of an armature and and creates :class:`McblendObjects`
         for this group. Used by constructor.
@@ -796,7 +797,7 @@ class McblendObjectGroup:
                 self.data[parentobj_id].children_ids.append(obj_id)
                 # Further offspring of the "child" (share same parent in mc
                 # model)
-                offspring: Deque[bpy.types.Object] = deque(obj.children)
+                offspring: Deque[Object] = deque(obj.children)
                 while offspring:
                     child = offspring.pop()
                     child_id: ObjectId = ObjectId(child.name, "")
@@ -844,7 +845,7 @@ def cyclic_equiv(u: List, v: List) -> bool:
             j += k
     return False
 
-def apply_obj_transform_keep_origin(obj: bpy.types.Object):
+def apply_obj_transform_keep_origin(obj: Object):
     '''
     Apply object transformations but keep the origin in place. Resets object
     rotation and scale but keeps location the same.
@@ -862,7 +863,7 @@ def apply_obj_transform_keep_origin(obj: bpy.types.Object):
     for vertex in obj.data.vertices:
         vertex.co =  rot_mat @ scl_mat @ vertex.co
 
-def fix_cube_rotation(obj: bpy.types.Object):
+def fix_cube_rotation(obj: Object):
     '''
     Rotate the bounding box of a cuboid so  it's aligned with
     the cube rotation. The scale and rotation of the object must

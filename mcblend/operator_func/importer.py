@@ -9,8 +9,8 @@ from enum import Enum
 
 import numpy as np
 
-import bpy_types
 import mathutils
+from bpy.types import Object
 import bpy
 
 from .common import (
@@ -1198,7 +1198,7 @@ class ImportLocator:
         self.position = position
         self.rotation = rotation
 
-        self.blend_empty: Optional[bpy.types.Object] = None
+        self.blend_empty: Optional[Object] = None
 
 
 class ImportCube:
@@ -1218,7 +1218,7 @@ class ImportCube:
         - `data: Dict` - the part of the Minecraft model JSON file that
         represents the cube.
         '''
-        self.blend_cube: Optional[bpy.types.Object] = None
+        self.blend_cube: Optional[Object] = None
 
         self.uv: Dict = data['uv']
         self.mirror: bool = data['mirror']
@@ -1249,7 +1249,7 @@ class ImportPolyMesh:
         :param data: The part of the Minecraft model JSON file that represents
         the poly_mesh.
         '''
-        self.blend_object: Optional[bpy.types.Object] = None
+        self.blend_object: Optional[Object] = None
 
         self.normalized_uvs: bool = data['normalized_uvs']
         self.positions: List[Vector3d] = data['positions']
@@ -1297,7 +1297,7 @@ class ImportBone:
         bone.
     '''
     def __init__(self, data: Dict):
-        self.blend_empty: Optional[bpy.types.Object] = None
+        self.blend_empty: Optional[Object] = None
 
         # Locators
         locators: List[ImportLocator] = []
@@ -1352,7 +1352,7 @@ class ImportGeometry:
             self.bones[import_bone.name] = import_bone
 
     def build_with_empties(
-            self, context: bpy_types.Context) -> bpy.types.Object:
+            self, context: bpy.types.Context) -> Object:
         '''
         Builds the geometry in Blender. Uses empties to represent Minecraft
         bones.
@@ -1379,12 +1379,12 @@ class ImportGeometry:
             # 1. Spawn bone (empty)
             bpy.ops.object.empty_add(
                 type='SPHERE', location=(0, 0, 0), radius=0.2)
-            bone_obj: bpy.types.Object
+            bone_obj: Object
             bone_obj = bone.blend_empty = context.object
             _mc_pivot(bone_obj, bone.pivot)  # 2. Apply translation
             bone_obj.name = bone.name  # 3. Apply custom properties
             for cube in bone.cubes:
-                cube_obj: bpy.types.Object
+                cube_obj: Object
                 # 1. Spawn cube
                 bpy.ops.mesh.primitive_cube_add(
                     size=1, enter_editmode=False, location=(0, 0, 0)
@@ -1473,7 +1473,7 @@ class ImportGeometry:
 
             for locator in bone.locators:
                 # 1. Spawn locator (empty)
-                locator_obj: bpy.types.Object
+                locator_obj: Object
                 bpy.ops.object.empty_add(
                     type='SPHERE', location=(0, 0, 0), radius=0.1)
                 locator_obj = locator.blend_empty = context.object
@@ -1488,7 +1488,7 @@ class ImportGeometry:
             bone_obj = bone.blend_empty
             # 1. Parent bone keep transform
             if bone.parent is not None and bone.parent in self.bones:
-                parent_obj: bpy.types.Object = self.bones[
+                parent_obj: Object = self.bones[
                     bone.parent
                 ].blend_empty
                 context.view_layer.update()
@@ -1532,7 +1532,7 @@ class ImportGeometry:
                 _mc_rotate(cube_obj, cube.rotation)
         return armature
 
-    def build_with_armature(self, context: bpy_types.Context):
+    def build_with_armature(self, context: bpy.types.Context):
         '''
         Builds the geometry in Blender. Uses armature and bones to represent
         the Minecraft bones.
@@ -1557,7 +1557,7 @@ class ImportGeometry:
         for bone in self.bones.values():
             # 1. Parent bone keep transform
             if bone.parent is not None and bone.parent in self.bones:
-                parent_obj: bpy.types.Object = self.bones[
+                parent_obj: Object = self.bones[
                     bone.parent
                 ]
                 # context.view_layer.update()
@@ -1571,7 +1571,7 @@ class ImportGeometry:
                 pose_bones[bone.name].mcblend.binding = bone.binding
 
         def parent_bone_keep_transform(
-                obj: bpy.types.Object, bone: ImportBone):
+                obj: Object, bone: ImportBone):
             '''
             Used for replacing empty parent with new bone parent
             '''
@@ -1624,7 +1624,7 @@ class ImportGeometry:
         return armature
 
 def _mc_translate(
-        obj: bpy.types.Object, mctranslation: Vector3d,
+        obj: Object, mctranslation: Vector3d,
         mcsize: Vector3d,
         mcpivot: Vector3d
     ):
@@ -1650,7 +1650,7 @@ def _mc_translate(
         vertex.co += (translation - pivot_offset + size_offset)
 
 def _mc_set_size(
-        obj: bpy.types.Object, mcsize: Vector3d,
+        obj: Object, mcsize: Vector3d,
         inflate: Optional[float]=None):
     '''
     Scales a Blender object using scale vector written in Minecraft coordinates
@@ -1682,7 +1682,7 @@ def _mc_set_size(
     data.vertices[6].co = mathutils.Vector(pos_delta * np.array([1, 1, -1]))
     data.vertices[7].co = mathutils.Vector(pos_delta * np.array([1, 1, 1]))
 
-def _mc_pivot(obj: bpy.types.Object, mcpivot: Vector3d):
+def _mc_pivot(obj: Object, mcpivot: Vector3d):
     '''
     Moves a pivot of an Blender object using pivot value in Minecraft
     coordinates system.
@@ -1696,7 +1696,7 @@ def _mc_pivot(obj: bpy.types.Object, mcpivot: Vector3d):
     obj.location += translation
 
 def _mc_rotate(
-        obj: bpy.types.Object, mcrotation: Vector3d
+        obj: Object, mcrotation: Vector3d
     ):
     '''
     Rotates a Blender object using rotation written in Minecraft coordinates

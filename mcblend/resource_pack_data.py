@@ -1,17 +1,14 @@
 '''
 Custom Blender objects with properties of the resource pack.
 '''
-from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal, cast
+from typing import cast
 
-import bpy
+from bpy.types import PropertyGroup
 from bpy.props import (
     CollectionProperty, EnumProperty, IntProperty, StringProperty)
 
 from .common_data import MCBLEND_DbEntry
-from .operator_func import load_rp_to_mcblned
 from .operator_func.db_handler import get_db_handler
-from .extra_types import CollectionPropertyAnnotation
 
 # RENDER CONTROLLER'S MATERIAL FIELD FOR ENTITY SELECTION
 def enum_entity_materials(self, context) -> list[tuple[str, str, str]]:
@@ -22,7 +19,8 @@ def enum_entity_materials(self, context) -> list[tuple[str, str, str]]:
     return get_db_handler().gui_enum_entity_materials(
         self.active_rc_pk, self.active_entity_pk, self.pattern)
 
-class MCBLEND_EntityMaterialPattern(bpy.types.PropertyGroup):
+
+class MCBLEND_EntityMaterialPattern(PropertyGroup):
     '''
     Used to store information about material field in a render controller of
     the selected entity in the GUI of the model importer.
@@ -42,13 +40,6 @@ class MCBLEND_EntityMaterialPattern(bpy.types.PropertyGroup):
     materials: EnumProperty(  # type: ignore
         items=enum_entity_materials,
         description="The material value of this material pattern")
-
-if TYPE_CHECKING:
-    class MCBLEND_EntityMaterialPattern:
-        active_rc_pk: int
-        active_entity_pk: int
-        pattern: str
-        materials: str
 
 # RENDER CONTROLLER FOR ENTITY SELECTION
 def enum_entity_geometries(self, context) -> list[tuple[str, str, str]]:
@@ -91,7 +82,8 @@ def enum_fake_entity_material_patterns(self, context) -> list[tuple[str, str, st
     return get_db_handler().gui_enum_entity_fake_material_patterns(
         self.active_entity_pk)
 
-class MCBLEND_EntityRenderController(bpy.types.PropertyGroup):
+
+class MCBLEND_EntityRenderController(PropertyGroup):
     '''
     Used to store infromation about one of the render controllers of the
     selected entity in the GUI of the model impoerter.
@@ -126,16 +118,6 @@ class MCBLEND_EntityRenderController(bpy.types.PropertyGroup):
             "database). It's applied to '*' pattern."),
         items=enum_fake_entity_material_patterns)
 
-if TYPE_CHECKING:
-    class MCBLEND_EntityRenderController:
-        active_entity_pk: int
-        primary_key: int
-        identifier: str
-        geometries: str
-        textures: str
-        material_patterns: CollectionPropertyAnnotation[MCBLEND_EntityMaterialPattern]
-        fake_material_patterns: str
-
 # RENDER CONTROLLER'S MATERIAL FIELD FOR ATTACHABLE SELECTION
 def enum_attachable_materials(self, context) -> list[tuple[str, str, str]]:
     '''
@@ -145,7 +127,8 @@ def enum_attachable_materials(self, context) -> list[tuple[str, str, str]]:
     return get_db_handler().gui_enum_attachable_materials(
         self.active_rc_pk, self.active_attachable_pk, self.pattern)
 
-class MCBLEND_AttachableMaterialPattern(bpy.types.PropertyGroup):
+
+class MCBLEND_AttachableMaterialPattern(PropertyGroup):
     '''
     Used to store information about material field in a render controller of
     the selected attachable in the GUI of the model importer.
@@ -165,13 +148,6 @@ class MCBLEND_AttachableMaterialPattern(bpy.types.PropertyGroup):
     materials: EnumProperty(  # type: ignore
         items=enum_attachable_materials,
         description="The material value of this material pattern")
-
-if TYPE_CHECKING:
-    class MCBLEND_AttachableMaterialPattern:
-        active_rc_pk: int
-        active_attachable_pk: int
-        pattern: str
-        materials: str
 
 # RENDER CONTROLLER FOR ATTACHABLE SELECTION
 def enum_attachable_geometries(self, context) -> list[tuple[str, str, str]]:
@@ -214,7 +190,8 @@ def enum_fake_attachable_material_patterns(self, context) -> list[tuple[str, str
     return get_db_handler().gui_enum_attachable_fake_material_patterns(
         self.active_attachable_pk)
 
-class MCBLEND_AttachableRenderController(bpy.types.PropertyGroup):
+
+class MCBLEND_AttachableRenderController(PropertyGroup):
     '''
     Used to store infromation about one of the render controllers of the
     selected attachable in the GUI of the model impoerter.
@@ -248,16 +225,6 @@ class MCBLEND_AttachableRenderController(bpy.types.PropertyGroup):
             "when it is a fake render controller (i.e. it is not in the "
             "database). It's applied to '*' pattern."),
         items=enum_fake_attachable_material_patterns)
-
-if TYPE_CHECKING:
-    class MCBLEND_AttachableRenderController:
-        active_attachable_pk: int
-        primary_key: int
-        identifier: str
-        geometries: str
-        textures: str
-        material_patterns: CollectionPropertyAnnotation[MCBLEND_AttachableMaterialPattern]
-        fake_material_patterns: str
 
 # RESOURCE PACK (PROJECT)
 def update_selected_entity(self, context) -> None:
@@ -308,7 +275,8 @@ def update_selected_attachable(self, context) -> None:
             pattern_field.active_attachable_pk = pk
             pattern_field.active_rc_pk = rc_pk
 
-class MCBLEND_ProjectProperties(bpy.types.PropertyGroup):
+
+class MCBLEND_ProjectProperties(PropertyGroup):
     '''
     Used to store information about the resource pack for the GUI of the model
     importer.
@@ -352,17 +320,3 @@ class MCBLEND_ProjectProperties(bpy.types.PropertyGroup):
     attachable_render_controllers: CollectionProperty(  # type: ignore
         type=MCBLEND_AttachableRenderController,
         description="List of render controllers of the attachable")
-
-if TYPE_CHECKING:
-    class MCBLEND_ProjectProperties:
-        importer_type: Literal["ENTITY", "ATTACHABLE"]
-        rp_path: str
-        selected_entity: str
-        entities: CollectionPropertyAnnotation[MCBLEND_DbEntry]
-        entity_render_controllers: CollectionPropertyAnnotation[
-            MCBLEND_EntityRenderController]
-
-        selected_attachable: str
-        attachables: CollectionPropertyAnnotation[MCBLEND_DbEntry]
-        attachable_render_controllers: CollectionPropertyAnnotation[
-            MCBLEND_AttachableRenderController]

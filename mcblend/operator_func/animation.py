@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from itertools import tee, islice
 
 import bpy
-import bpy_types
+from bpy.types import Action, Context
 
 import numpy as np
 from .json_tools import get_vect_json
@@ -79,7 +79,7 @@ def _pick_closest_rotation(
         return choice2
     return choice1
 
-def _get_keyframes(context: bpy_types.Context) -> List[int]:
+def _get_keyframes(context: Context) -> List[int]:
     '''
     Lists keyframe numbers of the animation from keyframes of NLA tracks and
     actions of selected objects.
@@ -89,7 +89,7 @@ def _get_keyframes(context: bpy_types.Context) -> List[int]:
     '''
     # pylint: disable=too-many-nested-blocks
 
-    def get_action_keyframes(action: bpy.types.Action) -> Set[int]:
+    def get_action_keyframes(action: Action) -> Set[int]:
         '''Gets set of keyframes from an action.'''
         if action.fcurves is None:
             return set()
@@ -237,7 +237,7 @@ class AnimationExport:
 
     def load_poses(
             self, object_properties: McblendObjectGroup,
-            context: bpy_types.Context
+            context: Context
         ):
         '''
         Populates the poses dictionary of this object.

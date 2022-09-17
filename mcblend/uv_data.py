@@ -4,6 +4,7 @@ Custom blender objects with additional properties of the UV.
 from typing import Dict, List
 
 import bpy
+from bpy.types import PropertyGroup
 from bpy.props import (
     BoolProperty, CollectionProperty, EnumProperty, FloatProperty,
     FloatVectorProperty, IntProperty, IntVectorProperty,
@@ -14,7 +15,7 @@ from .operator_func.texture_generator import (
     list_mix_mask_modes_as_blender_enum)
 
 # UV-mask
-class MCBLEND_StripeProperties(bpy.types.PropertyGroup):
+class MCBLEND_StripeProperties(PropertyGroup):
     '''Properties of a UV-mask stripe.'''
     width: IntProperty(  # type: ignore
         name='Width', default=1)
@@ -34,7 +35,7 @@ class MCBLEND_StripeProperties(bpy.types.PropertyGroup):
             result['width'] = self.width
         return result
 
-class MCBLEND_ColorProperties(bpy.types.PropertyGroup):
+class MCBLEND_ColorProperties(PropertyGroup):
     '''Properties of a UV-mask color.'''
     color: FloatVectorProperty(  # type: ignore
         name='Color',  subtype='COLOR',
@@ -47,7 +48,7 @@ class MCBLEND_ColorProperties(bpy.types.PropertyGroup):
         # 1/256 = 0.00390625 (8 digits precision)
         return [round(i, 8) for i in self.color]
 
-class MCBLEND_UvMaskProperties(bpy.types.PropertyGroup):
+class MCBLEND_UvMaskProperties(PropertyGroup):
     '''Properties of UV-mask.'''
     ui_hidden: BoolProperty(  # type: ignore
         name='Hide', default=False)
@@ -237,7 +238,7 @@ def _get_uv_group_name(self):
         return ''
     return self['name']
 
-class MCBLEND_UvGroupProperties(bpy.types.PropertyGroup):
+class MCBLEND_UvGroupProperties(PropertyGroup):
     '''Properties of UV-group.'''
     name: StringProperty(  # type: ignore
         name="Name",

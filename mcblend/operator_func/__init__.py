@@ -5,13 +5,12 @@ from __future__ import annotations
 
 from pathlib import Path
 import json
-from typing import Dict, Iterable, List, Literal, Optional, Tuple, cast, TYPE_CHECKING, TypedDict
+from typing import Dict, Iterable, List, Literal, Optional, Tuple, cast, TYPE_CHECKING
 from dataclasses import dataclass, field
 from collections import defaultdict
 
 import bpy
-from bpy.types import Image, Material
-import bpy_types
+from bpy.types import Image, Material, Context, Object
 import numpy as np
 
 from .sqlite_bedrock_packs.better_json import load_jsonc
@@ -29,6 +28,7 @@ from .uv import CoordinatesConverter, UvMapper
 from .db_handler import get_db_handler
 from .rp_importer import PksForModelImport
 
+# Import for static type checking only (to avoid circular imports)
 if TYPE_CHECKING:
     from ..resource_pack_data import MCBLEND_ProjectProperties
     from ..object_data import MCBLEND_ObjectProperties
@@ -37,7 +37,7 @@ else:
     MCBLEND_ObjectProperties = None
 
 def export_model(
-        context: bpy_types.Context) -> Tuple[Dict, Iterable[str]]:
+        context: Context) -> Tuple[Dict, Iterable[str]]:
     '''
     Creates a Minecraft model JSON dict from selected objects.
 
@@ -65,7 +65,7 @@ def export_model(
     return result, model.yield_warnings()
 
 def export_animation(
-        context: bpy_types.Context, old_dict: Optional[Dict]
+        context: Context, old_dict: Optional[Dict]
     ) -> Dict:
     '''
     Creates a Minecraft animation (dictionary) from selected objects.
@@ -104,7 +104,7 @@ def export_animation(
     return animation.json(
         old_json=old_dict, skip_rest_poses=anim_data.skip_rest_poses)
 
-def set_uvs(context: bpy_types.Context):
+def set_uvs(context: Context):
     '''
     Maps the UV for selected objects.
 
@@ -175,7 +175,7 @@ def set_uvs(context: bpy_types.Context):
         curr_uv.new_uv_layer()
         curr_uv.set_blender_uv(converter)
 
-def fix_uvs(context: bpy_types.Context) -> Vector2di:
+def fix_uvs(context: Context) -> Vector2di:
     '''
     Fixes the UV-mapping of selected objects.
 
@@ -249,7 +249,7 @@ def fix_uvs(context: bpy_types.Context) -> Vector2di:
             total_fixed_uv_faces += fixed_faces
     return total_fixed_cubes, total_fixed_uv_faces
 
-def import_model(data: Dict, geometry_name: str, context: bpy_types.Context) -> List[str]:
+def import_model(data: Dict, geometry_name: str, context: Context) -> List[str]:
     '''
     Import and build model from JSON dict.
 
@@ -278,7 +278,7 @@ def import_model(data: Dict, geometry_name: str, context: bpy_types.Context) -> 
         armature.name = geometry.identifier
     return model_loader.warnings
 
-def separate_mesh_cubes(context: bpy_types.Context):
+def separate_mesh_cubes(context: Context):
     '''
     Separate selected object with meshes that use cuboids only by the lose
     parts. Rotate bound boxes of the objects to fit them to the rotation of the
@@ -297,7 +297,7 @@ def separate_mesh_cubes(context: bpy_types.Context):
     return edited_objects
 
 def inflate_objects(
-        context: bpy_types.Context, objects: List[bpy.types.Object],
+        context: Context, objects: List[Object],
         inflate: float, mode: str) -> int:
     '''
     Adds inflate property to objects and changes their dimensions. Returns
@@ -366,7 +366,7 @@ def inflate_objects(
     return counter
 
 def load_rp_to_mcblned(
-        context: bpy_types.Context, path: Path):
+        context: Context, path: Path):
     '''
     Loads the resource pack to the mcblend dadtabase.
 
@@ -422,7 +422,7 @@ def load_rp_to_mcblned(
             attachable.name = name
         last_name = name
 
-def unload_rps(context: bpy_types.Context):
+def unload_rps(context: Context):
     # Clear the selection in GUI
     mcblend_project = context.scene.mcblend_project
     mcblend_project = cast(MCBLEND_ProjectProperties, mcblend_project)
@@ -443,7 +443,7 @@ class RcStackItem:
     '''Materials dict with pattern keys and full material names values.'''
 
 def import_model_form_project(
-        context: bpy_types.Context,
+        context: Context,
         import_type: Literal['entity', 'attachable'],
         query_data: PksForModelImport) -> List[str]:
     '''
@@ -578,7 +578,7 @@ def import_model_form_project(
                     blender_materials[tuple(bone_materials_id)])
     return warnings
 
-def apply_materials(context: bpy.types.Context):
+def apply_materials(context: Context):
     '''
     Applies materials from render controller menu into the model.
 
@@ -652,11 +652,11 @@ class _PhysicsObjectsGroup:
     '''
     Group of objects used for rigid body simulation of single bone of armature.
     '''
-    rigid_body: Optional[bpy.types.Object] = None
-    rigid_body_constraint: Optional[bpy.types.Object] = None
-    object_parent_empty: Optional[bpy.types.Object] = None
+    rigid_body: Optional[Object] = None
+    rigid_body_constraint: Optional[Object] = None
+    object_parent_empty: Optional[Object] = None
 
-def prepare_physics_simulation(context: bpy_types.Context) -> Dict:
+def prepare_physics_simulation(context: Context) -> Dict:
     '''
     Creates objects necessary for the rigid body simulation of the Minecraft
     model.
@@ -696,7 +696,7 @@ def prepare_physics_simulation(context: bpy_types.Context) -> Dict:
             continue
         physics_objects_groups[bone] = _PhysicsObjectsGroup()
         # Create children cubes
-        cubes_group: List[bpy.types.Object] = []
+        cubes_group: List[Object] = []
         for child in bone.children:
             if not child.mctype == MCObjType.CUBE:
                 continue
@@ -706,7 +706,7 @@ def prepare_physics_simulation(context: bpy_types.Context) -> Dict:
             context.collection.objects.link(new_obj)
             cubes_group.append(new_obj)
         bpy.ops.object.select_all(action='DESELECT')
-        rigid_body: Optional[bpy.types.Object] = None
+        rigid_body: Optional[Object] = None
         if len(cubes_group) > 1:
             for c in cubes_group:
                 c.select_set(True)
