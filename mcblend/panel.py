@@ -15,7 +15,8 @@ from .object_data import EffectTypes
 from .operator_func.db_handler import get_db_handler
 from .operator_func.common import MeshType
 from .operator_func.texture_generator import UvMaskTypes
-from .operator_func.typed_bpy_access import set_operator_property
+from .operator_func.typed_bpy_access import (
+    get_armature_data_bones, set_operator_property)
 
 # GUI
 # UV-groups names list
@@ -842,7 +843,7 @@ class MCBLEND_PT_BonePanel(Panel):
             return False
         try:
             pose_bone = context.object.pose.bones[
-                context.object.data.bones.active.name]
+                get_armature_data_bones(context.object).active.name]
         except:  # pylint: disable=bare-except
             return False
         return pose_bone is not None
@@ -850,7 +851,7 @@ class MCBLEND_PT_BonePanel(Panel):
     def draw(self, context):
         try:
             pose_bone = context.object.pose.bones[
-                context.object.data.bones.active.name]
+                get_armature_data_bones(context.object).active.name]
         except:  # pylint: disable=bare-except
             return
         col = self.layout.column()

@@ -131,3 +131,12 @@ def get_object_material_slots(object):
     >>> object.material_slots
     '''
     return object.material_slots
+
+def get_armature_data_bones(armature):
+    '''
+    Returns bones of the armature object.
+    This function works under the assumption that the object is an armature.
+
+    >>> armature.data.bones
+    '''
+    return armature.data.bones

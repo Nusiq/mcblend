@@ -2,7 +2,7 @@ from bpy.types import (
     Context, Object, OperatorProperties, Collection, CollectionObjects,
     CollectionChildren, ViewLayer, LayerObjects, MaterialSlot)
 
-from .pyi_types import CollectionProperty, DataObjects
+from .pyi_types import CollectionProperty, DataObjects, ArmatureDataBones
 
 from ..object_data import MCBLEND_EventProperties, MCBLEND_ObjectProperties
 from ..uv_data import MCBLEND_UvGroupProperties
@@ -43,3 +43,5 @@ def get_collection_children(collection: Collection) -> CollectionChildren: ...
 def get_view_layer_objects(view_layer: ViewLayer) -> LayerObjects: ...
 
 def get_object_material_slots(object: Object) -> list[MaterialSlot]: ...
+
+def get_armature_data_bones(armature: Object) -> ArmatureDataBones: ...

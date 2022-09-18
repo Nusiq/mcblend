@@ -17,6 +17,8 @@ from bpy.types import MeshUVLoopLayer, Object, MeshPolygon, PoseBone
 
 import mathutils
 
+from .typed_bpy_access import get_armature_data_bones
+
 from .texture_generator import Mask, ColorMask, get_masks_from_side
 from .exception import ExporterException
 
@@ -776,7 +778,7 @@ class McblendObjectGroup:
         :param armature: the armature used as a root of the object group.
         '''
         # Loop bones
-        for bone in armature.data.bones:
+        for bone in get_armature_data_bones(armature):
             obj_id: ObjectId = ObjectId(armature.name, bone.name)
             parent_bone_id: Optional[ObjectId] = None
             if bone.parent is not None:

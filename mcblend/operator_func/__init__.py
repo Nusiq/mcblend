@@ -14,11 +14,11 @@ from bpy.types import Image, Material, Context, Object
 import numpy as np
 
 from .typed_bpy_access import (
-    get_collection_children, get_collection_objects, get_context_object,
-    get_context_scene_mcblend_project, get_context_scene_mcblend_events,
-    get_context_selected_objects, get_data_objects, get_object_mcblend,
-    get_view_layer_objects, new_colection, get_object_material_slots)
-
+    get_armature_data_bones, get_collection_children, get_collection_objects,
+    get_context_object, get_context_scene_mcblend_project,
+    get_context_scene_mcblend_events, get_context_selected_objects,
+    get_data_objects, get_object_mcblend, get_view_layer_objects,
+    new_colection, get_object_material_slots)
 
 from .sqlite_bedrock_packs.better_json import load_jsonc
 
@@ -671,7 +671,9 @@ def prepare_physics_simulation(context: Context) -> Dict:
     :param context: the context of running the operator.
     '''
     result = ModelExport.json_outer()
-    armature = get_context_object(context)  # an armature
+    armature = get_context_object(context)
+    if armature.type != 'ARMATURE':
+        raise ValueError("Object is not an armature")
 
     mcblend_obj_group = McblendObjectGroup(armature, None)
 
@@ -762,8 +764,9 @@ def prepare_physics_simulation(context: Context) -> Dict:
             get_view_layer_objects(context.view_layer).active = armature
             bpy.ops.object.posemode_toggle()  # Pose mode
             bpy.ops.pose.select_all(action='DESELECT')
-            armature.data.bones.active = armature.data.bones[
-                bone.thisobj_id.bone_name]
+            
+            get_armature_data_bones(armature).active = get_armature_data_bones(
+                armature)[bone.thisobj_id.bone_name]
             bpy.ops.pose.constraint_add(type='COPY_TRANSFORMS')
             constraint = bone.this_pose_bone.constraints["Copy Transforms"]
             constraint.target = empty
