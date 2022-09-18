@@ -16,7 +16,7 @@ import numpy as np
 from .typed_bpy_access import (
     get_collection_children, get_collection_objects, get_context_object, get_context_scene_mcblend_project,
     get_context_scene_mcblend_events, get_context_selected_objects,
-    get_object_mcblend, new_colection)
+    get_object_mcblend, get_view_layer_objects, new_colection)
 
 
 from .sqlite_bedrock_packs.better_json import load_jsonc
@@ -716,7 +716,7 @@ def prepare_physics_simulation(context: Context) -> Dict:
         if len(cubes_group) > 1:
             for c in cubes_group:
                 c.select_set(True)
-            context.view_layer.objects.active = cubes_group[-1]
+            get_view_layer_objects(context.view_layer).active = cubes_group[-1]
             bpy.ops.object.join()
             rigid_body = get_context_object(context)
         elif len(cubes_group) == 1:
@@ -758,7 +758,7 @@ def prepare_physics_simulation(context: Context) -> Dict:
             empty.matrix_world = bone.obj_matrix_world
             physics_objects_groups[bone].object_parent_empty = empty
             # Add "Copy Transforms" constraint to the bone
-            context.view_layer.objects.active = armature
+            get_view_layer_objects(context.view_layer).active = armature
             bpy.ops.object.posemode_toggle()  # Pose mode
             bpy.ops.pose.select_all(action='DESELECT')
             armature.data.bones.active = armature.data.bones[
@@ -778,7 +778,7 @@ def prepare_physics_simulation(context: Context) -> Dict:
             bpy.ops.object.posemode_toggle()  # Object mode
 
             # Add "Child of" constraint to parent empty
-            context.view_layer.objects.active = empty
+            get_view_layer_objects(context.view_layer).active = empty
             bpy.ops.object.constraint_add(type='CHILD_OF')
             empty.constraints["Child Of"].target = rigid_body
 

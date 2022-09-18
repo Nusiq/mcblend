@@ -107,3 +107,11 @@ def get_collection_children(collection):
     >>> collection.children
     '''
     return collection.children
+
+def get_view_layer_objects(view_layer):
+    '''
+    Returns the objects from view layer
+
+    >>> view_layer.objects
+    '''
+    return view_layer.objects

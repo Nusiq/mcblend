@@ -1,6 +1,6 @@
 from bpy.types import (
     Context, Object, OperatorProperties, Collection, CollectionObjects,
-    CollectionChildren)
+    CollectionChildren, ViewLayer, LayerObjects)
 from .pyi_types import CollectionProperty
 
 from ..object_data import MCBLEND_EventProperties, MCBLEND_ObjectProperties
@@ -36,3 +36,5 @@ def new_colection(name: str) -> Collection: ...
 def get_collection_objects(collection: Collection) -> CollectionObjects: ...
 
 def get_collection_children(collection: Collection) -> CollectionChildren: ...
+
+def get_view_layer_objects(view_layer: ViewLayer) -> LayerObjects: ...
