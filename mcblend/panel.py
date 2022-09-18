@@ -15,6 +15,7 @@ from .object_data import EffectTypes
 from .operator_func.db_handler import get_db_handler
 from .operator_func.common import MeshType
 from .operator_func.texture_generator import UvMaskTypes
+from .operator_func.typed_bpy_access import set_operator_property
 
 # GUI
 # UV-groups names list
@@ -69,7 +70,7 @@ class MCBLEND_PT_UVGroupPanel(Panel):
         row.label(text='Colors')
         op_props = row.operator(
             "mcblend.add_uv_mask_color", text="", icon='ADD')
-        op_props.mask_index = mask_index
+        set_operator_property(op_props, "mask_index", mask_index)
 
         colors_len = len(mask.colors)
         for color_index, color in enumerate(mask.colors):
@@ -81,22 +82,22 @@ class MCBLEND_PT_UVGroupPanel(Panel):
                 op_props = up_down_row.operator(
                     "mcblend.move_uv_mask_color", icon='TRIA_UP',
                     text='')
-                op_props.mask_index = mask_index
-                op_props.move_from = color_index
-                op_props.move_to = color_index - 1
+                set_operator_property(op_props, "mask_index", mask_index)
+                set_operator_property(op_props, "move_from", color_index)
+                set_operator_property(op_props, "move_to", color_index - 1)
             # Move up
             if color_index + 1 < colors_len:
                 op_props = up_down_row.operator(
                     "mcblend.move_uv_mask_color", icon='TRIA_DOWN',
                     text='')
-                op_props.mask_index = mask_index
-                op_props.move_from = color_index
-                op_props.move_to = color_index + 1
+                set_operator_property(op_props, "mask_index", mask_index)
+                set_operator_property(op_props, "move_from", color_index)
+                set_operator_property(op_props, "move_to", color_index + 1)
             # Delete button
             op_props = row.operator(
                 "mcblend.remove_uv_mask_color", icon='X', text='')
-            op_props.mask_index = mask_index
-            op_props.color_index = color_index
+            set_operator_property(op_props, "mask_index", mask_index)
+            set_operator_property(op_props, "color_index", color_index)
 
     def draw_stripes(self, mask, mask_index: int, col: UILayout):
         '''Draws stripes of UV-mask.'''
@@ -105,7 +106,7 @@ class MCBLEND_PT_UVGroupPanel(Panel):
         row.label(text='Stripes')
         op_props = row.operator(
             "mcblend.add_uv_mask_stripe", text="", icon='ADD')
-        op_props.mask_index = mask_index
+        set_operator_property(op_props, "mask_index", mask_index)
 
         stripes_len = len(mask.stripes)
         for stripe_index, stripe in enumerate(mask.stripes):
@@ -124,23 +125,23 @@ class MCBLEND_PT_UVGroupPanel(Panel):
                 op_props = up_down_row.operator(
                     "mcblend.move_uv_mask_stripe", icon='TRIA_UP',
                     text='')
-                op_props.mask_index = mask_index
-                op_props.move_from = stripe_index
-                op_props.move_to = stripe_index - 1
+                set_operator_property(op_props, "mask_index", mask_index)
+                set_operator_property(op_props, "move_from", stripe_index)
+                set_operator_property(op_props, "move_to", stripe_index - 1)
             # Move up
             if stripe_index + 1 < stripes_len:
                 op_props = up_down_row.operator(
                     "mcblend.move_uv_mask_stripe", icon='TRIA_DOWN',
                     text='')
-                op_props.mask_index = mask_index
-                op_props.move_from = stripe_index
-                op_props.move_to = stripe_index + 1
+                set_operator_property(op_props, "mask_index", mask_index)
+                set_operator_property(op_props, "move_from", stripe_index)
+                set_operator_property(op_props, "move_to", stripe_index + 1)
             # Delete button
             op_props = row.operator(
                 "mcblend.remove_uv_mask_stripe", icon='X',
                 text='')
-            op_props.mask_index = mask_index
-            op_props.stripe_index = stripe_index
+            set_operator_property(op_props, "mask_index", mask_index)
+            set_operator_property(op_props, "stripe_index", stripe_index)
 
     def draw_mask_properties(
             self, mask, index: int, col: UILayout, *,
@@ -221,15 +222,15 @@ class MCBLEND_PT_UVGroupPanel(Panel):
                 op_props = up_down_row.operator(
                     "mcblend.move_uv_mask", icon='TRIA_UP',
                     text='')
-                op_props.move_from = index
-                op_props.move_to = index - 1
+                set_operator_property(op_props, "move_from", index)
+                set_operator_property(op_props, "move_to", index - 1)
             # Move up
             if index + 1 < masks_len:
                 op_props = up_down_row.operator(
                     "mcblend.move_uv_mask", icon='TRIA_DOWN',
                     text='')
-                op_props.move_from = index
-                op_props.move_to = index + 1
+                set_operator_property(op_props, "move_from", index)
+                set_operator_property(op_props, "move_to", index + 1)
             # Hide button
             if mask.ui_hidden:
                 row.prop(
@@ -242,7 +243,7 @@ class MCBLEND_PT_UVGroupPanel(Panel):
             # Delete button
             op_props = row.operator(
                 "mcblend.remove_uv_mask", icon='X', text='')
-            op_props.target = index
+            set_operator_property(op_props, "target", index)
 
             # Drawing the mask itself unless collapsed
             if not mask.ui_collapsed:
@@ -414,7 +415,7 @@ class MCBLEND_PT_EventsPanel(Panel):
         # Delete button
         op_props = row.operator(
             "mcblend.remove_effect", icon='X', text='')
-        op_props.effect_index = index
+        set_operator_property(op_props, "effect_index", index)
         if effect.effect_type == EffectTypes.PARTICLE_EFFECT.value:
             col.prop(effect, "effect", text="Effect")
             col.prop(effect, "locator", text="Locator")
@@ -575,32 +576,32 @@ class MCBLEND_PT_ArmatureRenderControllersPanel(Panel):
                 op_props = up_down_row.operator(
                     "mcblend.move_fake_rc", icon='TRIA_UP',
                     text='')
-                op_props.rc_index = rc_index
-                op_props.move_to = rc_index-1
+                set_operator_property(op_props, "rc_index", rc_index)
+                set_operator_property(op_props, "move_to", rc_index-1)
             if rc_index+1 < len_rc:
                 op_props = up_down_row.operator(
                     "mcblend.move_fake_rc", icon='TRIA_DOWN',
                     text='')
-                op_props.rc_index = rc_index
-                op_props.move_to = rc_index+1
+                set_operator_property(op_props, "rc_index", rc_index)
+                set_operator_property(op_props, "move_to", rc_index+1)
             op_props = up_down_row.operator(
                 "mcblend.remove_fake_rc", icon='X',
                 text='')
-            op_props.rc_index = rc_index
+            set_operator_property(op_props, "rc_index", rc_index)
             row = box_col.row(align=True)
             row.prop(rc, "texture", text="Texture")
             op_props = row.operator(
                 "mcblend.fake_rc_select_texture", icon='TEXTURE',
                 text='')
 
-            op_props.rc_index = rc_index
+            set_operator_property(op_props, "rc_index", rc_index)
             box_col.separator()
             row = box_col.row()
             row.label(text="Materials:")
             op_props = row.operator(
                 "mcblend.add_fake_rc_material", icon='ADD',
                 text='')
-            op_props.rc_index = rc_index
+            set_operator_property(op_props, "rc_index", rc_index)
 
             len_rc_materials = len(rc.materials)
             for material_index, rc_material in enumerate(rc.materials):
@@ -610,28 +611,28 @@ class MCBLEND_PT_ArmatureRenderControllersPanel(Panel):
                 op_props = row.operator(
                     "mcblend.fake_rc_material_select_template",
                     icon='NODE_MATERIAL', text='')
-                op_props.rc_index = rc_index
-                op_props.material_index = material_index
+                set_operator_property(op_props, "rc_index", rc_index)
+                set_operator_property(op_props, "material_index", material_index)
                 row.separator()
                 if material_index-1 >= 0:
                     op_props = row.operator(
                         "mcblend.move_fake_rc_material", icon='TRIA_UP',
                         text='')
-                    op_props.rc_index = rc_index
-                    op_props.material_index = material_index
-                    op_props.move_to = material_index - 1
+                    set_operator_property(op_props, "rc_index", rc_index)
+                    set_operator_property(op_props, "material_index", material_index)
+                    set_operator_property(op_props, "move_to", material_index - 1)
                 if material_index+1 < len_rc_materials:
                     op_props = row.operator(
                         "mcblend.move_fake_rc_material", icon='TRIA_DOWN',
                         text='')
-                    op_props.rc_index = rc_index
-                    op_props.material_index = material_index
-                    op_props.move_to = material_index + 1
+                    set_operator_property(op_props, "rc_index", rc_index)
+                    set_operator_property(op_props, "material_index", material_index)
+                    set_operator_property(op_props, "move_to", material_index + 1)
                 op_props = row.operator(
                     "mcblend.remove_fake_rc_material", icon='X',
                     text='')
-                op_props.rc_index = rc_index
-                op_props.material_index = material_index
+                set_operator_property(op_props, "rc_index", rc_index)
+                set_operator_property(op_props, "material_index", material_index)
 
 # Animation properties panel
 class MCBLEND_PT_AnimationPropertiesPanel(Panel):

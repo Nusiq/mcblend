@@ -1,4 +1,4 @@
-from bpy.types import Context, Object
+from bpy.types import Context, Object, OperatorProperties
 from .pyi_types import CollectionProperty
 
 from ..object_data import MCBLEND_EventProperties, MCBLEND_ObjectProperties
@@ -24,3 +24,7 @@ def get_context_scene_mcblend_uv_groups(context: Context) ->\
 def get_context_selected_objects(context: Context) -> list[Object]: ...
 
 def get_object_mcblend(object: Object) -> MCBLEND_ObjectProperties: ...
+
+def set_operator_property(
+    operator: OperatorProperties, name: str,
+    value: bool | int | float | str | list | dict) -> None: ...

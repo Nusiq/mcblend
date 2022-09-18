@@ -72,3 +72,11 @@ def get_object_mcblend(object):
     >>> object.mcblend
     '''
     return object.mcblend
+
+def set_operator_property(operator, name, value):
+    '''
+    Sets the property of the operator
+
+    >>> operator.name = value
+    '''
+    operator.__setattr__(name, value)
