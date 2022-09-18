@@ -75,6 +75,14 @@ def get_data_objects():
     '''
     return bpy.data.objects
 
+def get_data_images():
+    '''
+    Returns the images from data
+
+    >>> bpy.data.images
+    '''
+    return bpy.data.images
+
 def get_object_mcblend(object):
     '''
     Returns the mcblend property from object

@@ -2,7 +2,7 @@
 Extra types used only in the PYI files.
 '''
 from typing import Any, Iterator, TypeVar, Generic, Sized, Optional
-from bpy.types import Object, Mesh
+from bpy.types import Object, Mesh, Image
 
 T = TypeVar("T")
 
@@ -25,6 +25,16 @@ class DataObjects(Sized):
     def __getitem__(self, key: Any) -> Object: ...
     def __iter__(self) -> Iterator[Object]: ...
     def new(self, name: str, object_data: Optional[Mesh] = None) -> Object: ...
+
+class DataImages(Sized):
+    '''
+    Fake class defined as a result of:
+    >>> bpy.data.images
+    '''
+    def __getitem__(self, key: Any) -> Image: ...
+    def __iter__(self) -> Iterator[Image]: ...
+    def new(self, name: str, width: int, height: int) -> Image: ...
+    def load(self, filepath: str) -> Image: ...
 
 class ArmatureDataBones(Sized):
     '''

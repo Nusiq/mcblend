@@ -3,7 +3,8 @@ from bpy.types import (
     CollectionChildren, ViewLayer, LayerObjects, MaterialSlot, Constraint,
     ObjectConstraints, PoseBoneConstraints)
 
-from .pyi_types import CollectionProperty, DataObjects, ArmatureDataBones
+from .pyi_types import (
+    CollectionProperty, DataObjects, ArmatureDataBones, DataImages)
 
 from ..object_data import MCBLEND_EventProperties, MCBLEND_ObjectProperties
 from ..uv_data import MCBLEND_UvGroupProperties
@@ -27,7 +28,9 @@ def get_context_scene_mcblend_uv_groups(context: Context) ->\
 
 def get_context_selected_objects(context: Context) -> list[Object]: ...
 
-def get_data_objects() -> DataObjects[Object]: ...
+def get_data_objects() -> DataObjects: ...
+
+def get_data_images() -> DataImages: ...
 
 def get_object_mcblend(object: Object) -> MCBLEND_ObjectProperties: ...
 

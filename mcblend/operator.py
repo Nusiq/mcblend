@@ -18,9 +18,9 @@ from .object_data import (
 from .operator_func.typed_bpy_access import (
     get_context_scene_mcblend_project, get_context_object,
     get_context_scene_mcblend_events, get_context_scene_mcblend_active_event,
-    get_data_objects, get_object_mcblend,
+    get_data_objects, get_object_mcblend, get_data_images,
     set_context_scene_mcblend_active_event,
-get_context_scene_mcblend_uv_groups, get_context_selected_objects)
+    get_context_scene_mcblend_uv_groups, get_context_selected_objects)
 from .uv_data import get_unused_uv_group_name
 from .operator_func.material import MATERIALS_MAP
 
@@ -1721,7 +1721,7 @@ class MCBLEND_OT_FakeRcSelectTexture(Operator):
         # pylint: disable=unused-argument
         items = [
             (x.name, x.name, x.name)
-            for x in bpy.data.images]
+            for x in get_data_images()]
         return items
     image: bpy.props.EnumProperty(  # type: ignore
         items=list_images, name="Image")
