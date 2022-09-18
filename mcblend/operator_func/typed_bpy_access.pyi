@@ -1,5 +1,5 @@
 from bpy.types import Context, Object
-from .extra_types import CollectionProperty
+from .pyi_types import CollectionProperty
 
 from ..object_data import MCBLEND_EventProperties
 from ..resource_pack_data import MCBLEND_ProjectProperties
