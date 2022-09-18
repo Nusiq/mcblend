@@ -115,3 +115,11 @@ def get_view_layer_objects(view_layer):
     >>> view_layer.objects
     '''
     return view_layer.objects
+
+def get_object_material_slots(object):
+    '''
+    Returns the material slots from object
+
+    >>> object.material_slots
+    '''
+    return object.material_slots

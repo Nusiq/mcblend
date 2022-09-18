@@ -14,9 +14,10 @@ from bpy.types import Image, Material, Context, Object
 import numpy as np
 
 from .typed_bpy_access import (
-    get_collection_children, get_collection_objects, get_context_object, get_context_scene_mcblend_project,
-    get_context_scene_mcblend_events, get_context_selected_objects,
-    get_object_mcblend, get_view_layer_objects, new_colection)
+    get_collection_children, get_collection_objects, get_context_object,
+    get_context_scene_mcblend_project, get_context_scene_mcblend_events,
+    get_context_selected_objects, get_object_mcblend,
+    get_view_layer_objects, new_colection, get_object_material_slots)
 
 
 from .sqlite_bedrock_packs.better_json import load_jsonc
@@ -724,12 +725,12 @@ def prepare_physics_simulation(context: Context) -> Dict:
             rigid_body = cubes_group[0]
         # Move origin to the center of mass and rename the object
         if rigid_body is not None:
-            for material_slot in rigid_body.material_slots:
-                material_slot.material = None
+            for material_slot in get_object_material_slots(rigid_body):
+                material_slot.material = None  # type: ignore
             bpy.ops.object.origin_set(type='ORIGIN_CENTER_OF_VOLUME', center='MEDIAN')
             bpy.ops.object.visual_transform_apply()
             matrix_world = rigid_body.matrix_world.copy()
-            rigid_body.parent = None
+            rigid_body.parent = None  # type: ignore
             rigid_body.matrix_world = matrix_world
             get_collection_objects(rigidbody_world.collection).link(rigid_body)
             # Move to rigid body colleciton

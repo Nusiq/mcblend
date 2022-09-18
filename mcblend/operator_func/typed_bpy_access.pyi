@@ -1,6 +1,6 @@
 from bpy.types import (
     Context, Object, OperatorProperties, Collection, CollectionObjects,
-    CollectionChildren, ViewLayer, LayerObjects)
+    CollectionChildren, ViewLayer, LayerObjects, MaterialSlot)
 from .pyi_types import CollectionProperty
 
 from ..object_data import MCBLEND_EventProperties, MCBLEND_ObjectProperties
@@ -38,3 +38,5 @@ def get_collection_objects(collection: Collection) -> CollectionObjects: ...
 def get_collection_children(collection: Collection) -> CollectionChildren: ...
 
 def get_view_layer_objects(view_layer: ViewLayer) -> LayerObjects: ...
+
+def get_object_material_slots(object: Object) -> list[MaterialSlot]: ...
