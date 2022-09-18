@@ -613,9 +613,8 @@ def apply_materials(context: Context):
     model.load(mcblend_obj_group)
     for bone in model.bones:
         # Create a list of materials applicable for this bone
-        bone_materials: List[Tuple[Image, str]] = []
-        bone_materials_id: List[Tuple[Image, str]] = []
-
+        bone_materials: List[Tuple[Optional[Image], str]] = []
+        bone_materials_id: List[Tuple[Optional[str], str]] = []
 
         for rc in reversed(armature_properties.render_controllers):
             texture: Optional[Image] = None
@@ -627,9 +626,9 @@ def apply_materials(context: Context):
                     rc_material.pattern] = rc_material.material
 
             matched_material: Optional[str] = None
-            for pattern, material in rc_stack_item.materials.items():
+            for pattern, material_name in rc_stack_item.materials.items():
                 if star_pattern_match(bone.name, pattern):
-                    matched_material = material
+                    matched_material = material_name
             # Add material to bone_materials only if something matched
             if matched_material is not None:
                 bone_materials.append(
