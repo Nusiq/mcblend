@@ -9,6 +9,8 @@ possible and the code easier to maintain.
 
 The functions from this module are annotated in typed_bpy_access.pyi
 '''
+import bpy
+
 def get_context_object(context):
     '''
     Returns the object from the context
@@ -80,3 +82,28 @@ def set_operator_property(operator, name, value):
     >>> operator.name = value
     '''
     operator.__setattr__(name, value)
+
+def new_colection(name):
+    '''
+    Creates new collection with given name
+
+    >>> bpy.data.collections.new(name)
+    '''
+    return bpy.data.collections.new(name)
+
+
+def get_collection_objects(collection):
+    '''
+    Returns the objects from collection
+
+    >>> collection.objects
+    '''
+    return collection.objects
+
+def get_collection_children(collection):
+    '''
+    Returns the children from collection
+
+    >>> collection.children
+    '''
+    return collection.children

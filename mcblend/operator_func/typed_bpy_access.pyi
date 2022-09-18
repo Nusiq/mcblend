@@ -1,4 +1,6 @@
-from bpy.types import Context, Object, OperatorProperties
+from bpy.types import (
+    Context, Object, OperatorProperties, Collection, CollectionObjects,
+    CollectionChildren)
 from .pyi_types import CollectionProperty
 
 from ..object_data import MCBLEND_EventProperties, MCBLEND_ObjectProperties
@@ -28,3 +30,9 @@ def get_object_mcblend(object: Object) -> MCBLEND_ObjectProperties: ...
 def set_operator_property(
     operator: OperatorProperties, name: str,
     value: bool | int | float | str | list | dict) -> None: ...
+
+def new_colection(name: str) -> Collection: ...
+
+def get_collection_objects(collection: Collection) -> CollectionObjects: ...
+
+def get_collection_children(collection: Collection) -> CollectionChildren: ...

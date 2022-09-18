@@ -14,9 +14,9 @@ from bpy.types import Image, Material, Context, Object
 import numpy as np
 
 from .typed_bpy_access import (
-    get_context_object, get_context_scene_mcblend_project,
+    get_collection_children, get_collection_objects, get_context_object, get_context_scene_mcblend_project,
     get_context_scene_mcblend_events, get_context_selected_objects,
-    get_object_mcblend)
+    get_object_mcblend, new_colection)
 
 
 from .sqlite_bedrock_packs.better_json import load_jsonc
@@ -680,22 +680,22 @@ def prepare_physics_simulation(context: Context) -> Dict:
         bpy.ops.rigidbody.world_add()
         rigidbody_world = context.scene.rigidbody_world
     if rigidbody_world.collection is None:
-        collection = bpy.data.collections.new("RigidBodyWorld")
+        collection = new_colection("RigidBodyWorld")
         rigidbody_world.collection = collection
     if rigidbody_world.constraints is None:
-        collection = bpy.data.collections.new("RigidBodyConstraints")
+        collection = new_colection("RigidBodyConstraints")
         rigidbody_world.constraints = collection
 
     # Create new collections for the scene
     physics_objects_groups: Dict[McblendObject, _PhysicsObjectsGroup] = {}
-    main_collection = bpy.data.collections.new("Mcblend: Physics")
-    rb_collection = bpy.data.collections.new("Rigid Body")
-    rbc_collection = bpy.data.collections.new("Rigid Body Constraints")
-    bp_collection = bpy.data.collections.new("Bone Parents")
-    context.scene.collection.children.link(main_collection)
-    main_collection.children.link(rb_collection)
-    main_collection.children.link(rbc_collection)
-    main_collection.children.link(bp_collection)
+    main_collection = new_colection("Mcblend: Physics")
+    rb_collection = new_colection("Rigid Body")
+    rbc_collection = new_colection("Rigid Body Constraints")
+    bp_collection = new_colection("Bone Parents")
+    get_collection_children(context.scene.collection).link(main_collection)
+    get_collection_children(main_collection).link(rb_collection)
+    get_collection_children(main_collection).link(rbc_collection)
+    get_collection_children(main_collection).link(bp_collection)
 
     for _, bone in mcblend_obj_group.items():
         if not bone.mctype == MCObjType.BONE:
@@ -709,7 +709,7 @@ def prepare_physics_simulation(context: Context) -> Dict:
             new_obj = child.thisobj.copy()
             new_obj.data = child.obj_data.copy()
             new_obj.animation_data_clear()
-            context.collection.objects.link(new_obj)
+            get_collection_objects(context.collection).link(new_obj)
             cubes_group.append(new_obj)
         bpy.ops.object.select_all(action='DESELECT')
         rigid_body: Optional[Object] = None
@@ -731,10 +731,10 @@ def prepare_physics_simulation(context: Context) -> Dict:
             matrix_world = rigid_body.matrix_world.copy()
             rigid_body.parent = None
             rigid_body.matrix_world = matrix_world
-            rigidbody_world.collection.objects.link(rigid_body)  # type: ignore
+            get_collection_objects(rigidbody_world.collection).link(rigid_body)
             # Move to rigid body colleciton
-            context.collection.objects.unlink(rigid_body)
-            rb_collection.objects.link(rigid_body)
+            get_collection_objects(context.collection).unlink(rigid_body)
+            get_collection_objects(rb_collection).link(rigid_body)
             # Add keyframes to the rigid body "animated"/"kinematic" property (
             # enable it 1 frame after current frame)
             rigid_body.rigid_body.kinematic = True
@@ -752,7 +752,7 @@ def prepare_physics_simulation(context: Context) -> Dict:
             # Add bone parent empty
             empty = bpy.data.objects.new(
                 f'{bone.obj_name}_bp', None)  # bp - bone parent
-            bp_collection.objects.link(empty)
+            get_collection_objects(bp_collection).link(empty)
             empty.empty_display_type = 'CONE'
             empty.empty_display_size = 0.1
             empty.matrix_world = bone.obj_matrix_world
@@ -784,7 +784,7 @@ def prepare_physics_simulation(context: Context) -> Dict:
 
         empty = bpy.data.objects.new(
             f'{bone.obj_name}_rbc', None)  # bp - bone parent
-        rbc_collection.objects.link(empty)
+        get_collection_objects(rbc_collection).link(empty)
         empty.empty_display_type = 'PLAIN_AXES'
         empty.empty_display_size = 0.1
         empty.matrix_world = bone.obj_matrix_world
