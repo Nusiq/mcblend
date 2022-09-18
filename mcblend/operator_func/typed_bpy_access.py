@@ -28,3 +28,7 @@ def get_context_scene_mcblend_active_event(context):
 def set_context_scene_mcblend_active_event(context, value):
     '''Sets the active event id in context'''
     context.scene.mcblend_active_event = value
+
+def get_context_scene_mcblend_uv_groups(context):
+    '''Returns the uv groups from context'''
+    return context.scene.mcblend_uv_groups
