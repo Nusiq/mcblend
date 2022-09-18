@@ -32,3 +32,7 @@ def set_context_scene_mcblend_active_event(context, value):
 def get_context_scene_mcblend_uv_groups(context):
     '''Returns the uv groups from context'''
     return context.scene.mcblend_uv_groups
+
+def get_context_selected_objects(context):
+    '''Returns selected objects list from context'''
+    return context.selected_objects

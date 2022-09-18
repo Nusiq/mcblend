@@ -15,7 +15,7 @@ import numpy as np
 
 from .typed_bpy_access import (
     get_context_object, get_context_scene_mcblend_project,
-    get_context_scene_mcblend_events)
+    get_context_scene_mcblend_events, get_context_selected_objects)
 
 
 from .sqlite_bedrock_packs.better_json import load_jsonc
@@ -292,8 +292,8 @@ def separate_mesh_cubes(context: Context):
     :returns: the number of created objects
     '''
     bpy.ops.mesh.separate(type='LOOSE')
-    edited_objects = len(context.selected_objects)
-    for obj in context.selected_objects:
+    edited_objects = len(get_context_selected_objects(context))
+    for obj in get_context_selected_objects(context):
         if obj.type != 'MESH':
             continue
         apply_obj_transform_keep_origin(obj)
