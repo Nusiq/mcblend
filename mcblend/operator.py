@@ -18,8 +18,9 @@ from .object_data import (
 from .operator_func.typed_bpy_access import (
     get_context_scene_mcblend_project, get_context_object,
     get_context_scene_mcblend_events, get_context_scene_mcblend_active_event,
-    get_object_mcblend, set_context_scene_mcblend_active_event,
-    get_context_scene_mcblend_uv_groups, get_context_selected_objects)
+    get_data_objects, get_object_mcblend,
+    set_context_scene_mcblend_active_event,
+get_context_scene_mcblend_uv_groups, get_context_selected_objects)
 from .uv_data import get_unused_uv_group_name
 from .operator_func.material import MATERIALS_MAP
 
@@ -737,7 +738,7 @@ class MCBLEND_OT_RemoveUvGroup(Operator):
         get_context_scene_mcblend_uv_groups(context).remove(group_id)
 
         # Update the names of all of the meshes
-        for obj in bpy.data.objects:
+        for obj in get_data_objects():
             if obj.type == "MESH":
                 obj_props = obj.mcblend
                 if obj_props.uv_group == group_name:

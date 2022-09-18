@@ -1,7 +1,8 @@
 from bpy.types import (
     Context, Object, OperatorProperties, Collection, CollectionObjects,
     CollectionChildren, ViewLayer, LayerObjects, MaterialSlot)
-from .pyi_types import CollectionProperty
+
+from .pyi_types import CollectionProperty, DataObjects
 
 from ..object_data import MCBLEND_EventProperties, MCBLEND_ObjectProperties
 from ..uv_data import MCBLEND_UvGroupProperties
@@ -24,6 +25,8 @@ def get_context_scene_mcblend_uv_groups(context: Context) ->\
     CollectionProperty[MCBLEND_UvGroupProperties]: ...
 
 def get_context_selected_objects(context: Context) -> list[Object]: ...
+
+def get_data_objects() -> DataObjects[Object]: ...
 
 def get_object_mcblend(object: Object) -> MCBLEND_ObjectProperties: ...
 

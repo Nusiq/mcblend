@@ -10,6 +10,7 @@ from bpy.props import (
     FloatVectorProperty, IntProperty, IntVectorProperty,
     PointerProperty, StringProperty)
 
+from .operator_func.typed_bpy_access import get_data_objects
 from .operator_func.texture_generator import (
     UvMaskTypes, list_mask_types_as_blender_enum,
     list_mix_mask_modes_as_blender_enum)
@@ -192,7 +193,7 @@ def get_unused_uv_group_name(base_name: str, i=1):
 def _update_uv_group_name(uv_group, new_name: str, update_references: bool):
     # Update the names of all of the meshes
     if update_references:
-        for obj in bpy.data.objects:
+        for obj in get_data_objects():
             if obj.type == "MESH":
                 obj_props = obj.mcblend
                 if obj_props.uv_group == uv_group.name:

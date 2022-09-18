@@ -16,7 +16,7 @@ import numpy as np
 from .typed_bpy_access import (
     get_collection_children, get_collection_objects, get_context_object,
     get_context_scene_mcblend_project, get_context_scene_mcblend_events,
-    get_context_selected_objects, get_object_mcblend,
+    get_context_selected_objects, get_data_objects, get_object_mcblend,
     get_view_layer_objects, new_colection, get_object_material_slots)
 
 
@@ -88,7 +88,7 @@ def export_animation(
     # a perfect solution
     world_origin = None
     if anim_data.world_origin != "":
-        world_origin = bpy.data.objects[anim_data.world_origin]
+        world_origin = get_data_objects()[anim_data.world_origin]
 
     # Check and create object properties
     object_properties = McblendObjectGroup(get_context_object(context), world_origin)
@@ -751,7 +751,7 @@ def prepare_physics_simulation(context: Context) -> Dict:
 
 
             # Add bone parent empty
-            empty = bpy.data.objects.new(
+            empty = get_data_objects().new(
                 f'{bone.obj_name}_bp', None)  # bp - bone parent
             get_collection_objects(bp_collection).link(empty)
             empty.empty_display_type = 'CONE'
@@ -783,7 +783,7 @@ def prepare_physics_simulation(context: Context) -> Dict:
             bpy.ops.object.constraint_add(type='CHILD_OF')
             empty.constraints["Child Of"].target = rigid_body
 
-        empty = bpy.data.objects.new(
+        empty = get_data_objects().new(
             f'{bone.obj_name}_rbc', None)  # bp - bone parent
         get_collection_objects(rbc_collection).link(empty)
         empty.empty_display_type = 'PLAIN_AXES'

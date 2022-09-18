@@ -67,6 +67,14 @@ def get_context_selected_objects(context):
     '''
     return context.selected_objects
 
+def get_data_objects():
+    '''
+    Returns the objects from data
+
+    >>> bpy.data.objects
+    '''
+    return bpy.data.objects
+
 def get_object_mcblend(object):
     '''
     Returns the mcblend property from object
