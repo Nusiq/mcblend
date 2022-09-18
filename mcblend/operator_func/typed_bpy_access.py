@@ -87,7 +87,7 @@ def set_operator_property(operator, name, value):
     '''
     Sets the property of the operator
 
-    >>> operator.name = value
+    >>> operator.<name> = value
     '''
     operator.__setattr__(name, value)
 
@@ -140,3 +140,35 @@ def get_armature_data_bones(armature):
     >>> armature.data.bones
     '''
     return armature.data.bones
+
+def set_constraint_property(constraint, name, value):
+    '''
+    Sets the property of the constraint
+
+    >>> constraint.<name> = value
+    '''
+    constraint.__setattr__(name, value)
+
+def get_object_constraints(object):
+    '''
+    Returns the constraints from object
+
+    >>> object.constraints
+    '''
+    return object.constraints
+
+def get_pose_bone_constraints(pose_bone):
+    '''
+    Returns the constraints from pose bone
+
+    >>> pose_bone.constraints
+    '''
+    return pose_bone.constraints
+
+def set_pose_bone_constraint_property(constraint, name, value):
+    '''
+    Sets the property of the constraint
+
+    >>> constraint.<name> = value
+    '''
+    constraint.__setattr__(name, value)

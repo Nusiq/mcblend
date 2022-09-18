@@ -17,8 +17,8 @@ from .typed_bpy_access import (
     get_armature_data_bones, get_collection_children, get_collection_objects,
     get_context_object, get_context_scene_mcblend_project,
     get_context_scene_mcblend_events, get_context_selected_objects,
-    get_data_objects, get_object_mcblend, get_view_layer_objects,
-    new_colection, get_object_material_slots)
+    get_data_objects, get_object_constraints, get_object_mcblend, get_pose_bone_constraints, get_view_layer_objects,
+    new_colection, get_object_material_slots, set_constraint_property, set_pose_bone_constraint_property)
 
 from .sqlite_bedrock_packs.better_json import load_jsonc
 
@@ -767,24 +767,26 @@ def prepare_physics_simulation(context: Context) -> Dict:
             
             get_armature_data_bones(armature).active = get_armature_data_bones(
                 armature)[bone.thisobj_id.bone_name]
-            bpy.ops.pose.constraint_add(type='COPY_TRANSFORMS')
-            constraint = bone.this_pose_bone.constraints["Copy Transforms"]
-            constraint.target = empty
+            # bpy.ops.pose.constraint_add(type='COPY_TRANSFORMS')
+            constraint = get_pose_bone_constraints(
+                bone.this_pose_bone).new(type='COPY_TRANSFORMS')
+            set_pose_bone_constraint_property(constraint, 'target', empty)
             # Add keyframes to the "copy transformation" constraint (
             # enable it 1 frame after current frame)
-            constraint.influence = 0
+            set_pose_bone_constraint_property(constraint, 'influence', 0)
             constraint.keyframe_insert("influence", frame=0)
             constraint.keyframe_insert(
                 "influence", frame=bpy.context.scene.frame_current)
-            constraint.influence = 1
+            set_pose_bone_constraint_property(constraint, 'influence', 1)
             constraint.keyframe_insert(
                 "influence", frame=bpy.context.scene.frame_current+1)
             bpy.ops.object.posemode_toggle()  # Object mode
 
             # Add "Child of" constraint to parent empty
             get_view_layer_objects(context.view_layer).active = empty
-            bpy.ops.object.constraint_add(type='CHILD_OF')
-            empty.constraints["Child Of"].target = rigid_body
+            set_constraint_property(
+                get_object_constraints(empty).new(type='CHILD_OF'),
+                'target', rigid_body)
 
         empty = get_data_objects().new(
             f'{bone.obj_name}_rbc', None)  # bp - bone parent
@@ -808,7 +810,7 @@ def prepare_physics_simulation(context: Context) -> Dict:
             continue
         context.scene.rigidbody_world.constraints.objects.link(  # type: ignore
             rbc)
-        rbc.rigid_body_constraint.object1 = pog.rigid_body
+        rbc.rigid_body_constraint.object1 = pog.rigid_body  # type: ignore
         rbc.rigid_body_constraint.object2 = parent_rb
 
     return result
