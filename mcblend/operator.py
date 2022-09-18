@@ -18,7 +18,7 @@ from .object_data import (
 from .operator_func.typed_bpy_access import (
     get_context_scene_mcblend_project, get_context_object,
     get_context_scene_mcblend_events, get_context_scene_mcblend_active_event,
-    set_context_scene_mcblend_active_event,
+    get_object_mcblend, set_context_scene_mcblend_active_event,
     get_context_scene_mcblend_uv_groups, get_context_selected_objects)
 from .uv_data import get_unused_uv_group_name
 from .operator_func.material import MATERIALS_MAP
@@ -132,10 +132,12 @@ class MCBLEND_OT_ExportAnimation(
             return False
         if get_context_object(context).type != 'ARMATURE':
             return False
-        len_anims = len(get_context_object(context).mcblend.animations)
+        len_anims = len(
+            get_object_mcblend(get_context_object(context)).animations)
         if len_anims == 0:
             return False
-        curr_anim_id = get_context_object(context).mcblend.active_animation
+        curr_anim_id = get_object_mcblend(
+            get_context_object(context)).active_animation
         if 0 > curr_anim_id >= len_anims:
             return False
         return True

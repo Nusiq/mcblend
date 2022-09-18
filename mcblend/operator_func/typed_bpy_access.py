@@ -36,3 +36,7 @@ def get_context_scene_mcblend_uv_groups(context):
 def get_context_selected_objects(context):
     '''Returns selected objects list from context'''
     return context.selected_objects
+
+def get_object_mcblend(object):
+    '''Returns the mcblend property from object'''
+    return object.mcblend

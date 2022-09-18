@@ -15,7 +15,8 @@ import numpy as np
 
 from .typed_bpy_access import (
     get_context_object, get_context_scene_mcblend_project,
-    get_context_scene_mcblend_events, get_context_selected_objects)
+    get_context_scene_mcblend_events, get_context_selected_objects,
+    get_object_mcblend)
 
 
 from .sqlite_bedrock_packs.better_json import load_jsonc
@@ -54,7 +55,7 @@ def export_model(
     armature = get_context_object(context)  # an armature
 
     mcblend_obj_group = McblendObjectGroup(armature, None)
-    model_properties = armature.mcblend
+    model_properties = get_object_mcblend(armature)
 
     model = ModelExport(
         texture_width=model_properties.texture_width,
@@ -79,8 +80,8 @@ def export_animation(
     :param old_dict: optional - JSON dict with animation to write into.
     :returns: JSON dict of Minecraft animations.
     '''
-    anim_data = get_context_object(context).mcblend.animations[
-        get_context_object(context).mcblend.active_animation]
+    anim_data = get_object_mcblend(get_context_object(context)).animations[
+        get_object_mcblend(get_context_object(context)).active_animation]
 
     # TODO - write this code nicer, passing world_origin as a string isn't
     # a perfect solution
@@ -120,7 +121,7 @@ def set_uvs(context: Context):
     '''
     armature = get_context_object(context) # an armature
 
-    model_properties = armature.mcblend
+    model_properties = get_object_mcblend(armature)
     width = model_properties.texture_width
     height = model_properties.texture_height
     allow_expanding = model_properties.allow_expanding
@@ -329,21 +330,21 @@ def inflate_objects(
     for obj in objects:
         if (
                 obj.type == 'MESH' and
-                obj.mcblend.mesh_type ==
+                get_object_mcblend(obj).mesh_type ==
                 MeshType.CUBE.value):
-            if obj.mcblend.inflate != 0.0:
+            if get_object_mcblend(obj).inflate != 0.0:
                 if relative:
                     effective_inflate = (
-                        obj.mcblend.inflate + inflate)
+                        get_object_mcblend(obj).inflate + inflate)
                 else:
                     effective_inflate = inflate
                 delta_inflate = (
                     effective_inflate -
-                    obj.mcblend.inflate)
-                obj.mcblend.inflate = effective_inflate
+                    get_object_mcblend(obj).inflate)
+                get_object_mcblend(obj).inflate = effective_inflate
             else:
                 delta_inflate = inflate
-                obj.mcblend.inflate = inflate
+                get_object_mcblend(obj).inflate = inflate
             # Clear parent from children for a moment
             children = obj.children
             for child in children:
@@ -594,7 +595,7 @@ def apply_materials(context: Context):
     armature = get_context_object(context)
 
     mcblend_obj_group = McblendObjectGroup(armature, None)
-    armature_properties = armature.mcblend
+    armature_properties = get_object_mcblend(armature)
 
     model = ModelExport(
         texture_width=armature_properties.texture_width,

@@ -18,7 +18,7 @@ from .common import (
 from .extra_types import Vector3di, Vector3d, Vector2d
 from .uv import CoordinatesConverter
 from .exception import ImporterException
-from .typed_bpy_access import get_context_object
+from .typed_bpy_access import get_context_object, get_object_mcblend
 
 class ErrorLevel(Enum):
     '''
@@ -1396,14 +1396,14 @@ class ImportGeometry:
                 # warning! Moving this code below cube transformation would
                 # break it because bound_box is not getting updated properly
                 # before the end of running of the opperator.
-                cube_obj.mcblend.mirror = cube.mirror
+                get_object_mcblend(cube_obj).mirror = cube.mirror
                 _set_uv(
                     self.uv_converter,
                     CubePolygons.build(cube_obj, cube.mirror),
                     cube.uv, cube_obj.data.uv_layers.active)
 
                 # 3. Set size & inflate
-                cube.blend_cube.mcblend.inflate = (
+                get_object_mcblend(cube.blend_cube).inflate = (
                     cube.inflate)
                 _mc_set_size(cube_obj, cube.size, inflate=cube.inflate)
                 _mc_pivot(cube_obj, cube.pivot)  # 4. Move pivot
