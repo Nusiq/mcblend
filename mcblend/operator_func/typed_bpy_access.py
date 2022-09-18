@@ -7,38 +7,24 @@ annotations.
 This is by no means an optimal solution, but it makes the static type checking
 possible and the code easier to maintain.
 
+The functions from this module are annotated in typed_bpy_access.pyi
 '''
-from typing import TYPE_CHECKING
-from bpy.types import Context, Object
-
-if TYPE_CHECKING:
-    from ..object_data import MCBLEND_EventProperties
-    from ..resource_pack_data import MCBLEND_ProjectProperties
-    from .pyi_types import CollectionProperty
-else:
-    MCBLEND_EventProperties = None
-    MCBLEND_ProjectProperties = None
-    CollectionProperty = None
-
-def get_context_object(context: Context) -> Object:
+def get_context_object(context):
     '''Returns the object from the context'''
-    return context.object  # type: ignore[attr-defined]
+    return context.object
 
-def get_context_scene_mcblend_project(
-        context: Context) -> MCBLEND_ProjectProperties:
+def get_context_scene_mcblend_project(context):
     '''Returns the project properties from context'''
-    return context.scene.mcblend_project  # type: ignore[attr-defined]
+    return context.scene.mcblend_project
 
-def get_context_scene_mcblend_events(
-        context: Context) -> CollectionProperty[MCBLEND_EventProperties]:
+def get_context_scene_mcblend_events(context):
     '''Returns the events properties from context'''
-    return context.scene.mcblend_events  # type: ignore[attr-defined]
+    return context.scene.mcblend_events
 
-def get_context_scene_mcblend_active_event(context: Context) -> int:
+def get_context_scene_mcblend_active_event(context):
     '''Returns the active event id from context'''
-    return context.scene.mcblend_active_event  # type: ignore[attr-defined]
+    return context.scene.mcblend_active_event
 
-def set_context_scene_mcblend_active_event(
-        context: Context, value: int) -> None:
+def set_context_scene_mcblend_active_event(context, value):
     '''Sets the active event id in context'''
-    context.scene.mcblend_active_event = value  # type: ignore[attr-defined]
+    context.scene.mcblend_active_event = value
