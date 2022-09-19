@@ -1695,7 +1695,7 @@ def _mc_set_size(
     data.vertices[6].co = mathutils.Vector(pos_delta * np.array([1, 1, -1]))
     data.vertices[7].co = mathutils.Vector(pos_delta * np.array([1, 1, 1]))
 
-def _mc_pivot(obj: Object, mcpivot: Vector3d):
+def _mc_pivot(obj: Object, mcpivot: Vector3d) -> None:
     '''
     Moves a pivot of an Blender object using pivot value in Minecraft
     coordinates system.
@@ -1706,7 +1706,7 @@ def _mc_pivot(obj: Object, mcpivot: Vector3d):
     translation = mathutils.Vector(
         np.array(mcpivot)[[0, 2, 1]] / MINECRAFT_SCALE_FACTOR
     )
-    obj.location += translation
+    obj.location += translation  # type: ignore
 
 def _mc_rotate(
         obj: Object, mcrotation: Vector3d

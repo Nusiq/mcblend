@@ -234,3 +234,15 @@ def get_rotation_euler(obj):
     >>> obj.rotation_euler
     '''
     return obj.rotation_euler
+
+def get_location(obj):
+    '''
+    >>> obj.location
+    '''
+    return obj.location
+
+def set_location(obj, value):
+    '''
+    >>> obj.location = value
+    '''
+    obj.location = value
