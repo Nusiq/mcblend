@@ -1622,17 +1622,21 @@ class ImportGeometry:
 
             # 2. Parent cubes keep transform
             for cube in bone.cubes:
+                assert cube.blend_cube is not None
                 parent_bone_keep_transform(cube.blend_cube, bone)
 
             # 3. Parent poly_mesh keep transform
             if bone.poly_mesh is not None:
+                assert bone.poly_mesh.blend_object is not None
                 parent_bone_keep_transform(bone.poly_mesh.blend_object, bone)
 
             # 4. Parent locators keep transform
             for locator in bone.locators:
+                assert locator.blend_empty is not None
                 parent_bone_keep_transform(locator.blend_empty, bone)
 
             # remove the locators
+            assert bone_obj is not None
             get_data_objects().remove(bone_obj)
 
         return armature
@@ -1661,7 +1665,7 @@ def _mc_translate(
         np.array(mctranslation)[[0, 2, 1]] / MINECRAFT_SCALE_FACTOR
     )
     for vertex in get_data_vertices(obj):
-        vertex.co += (translation - pivot_offset + size_offset)
+        vertex.co += (translation - pivot_offset + size_offset)  # type: ignore
 
 def _mc_set_size(
         obj: Object, mcsize: Vector3d,
