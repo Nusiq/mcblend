@@ -167,10 +167,8 @@ def set_constraint_property(constraint, name, value):
     '''
     constraint.__setattr__(name, value)
 
-def get_object_constraints(object):
+def get_constraints(object):
     '''
-    Returns the constraints from object
-
     >>> object.constraints
     '''
     return object.constraints
@@ -192,14 +190,6 @@ def set_parent(obj, value):
     >>> obj.parent = value
     '''
     obj.parent = value
-
-def get_pose_bone_constraints(pose_bone):
-    '''
-    Returns the constraints from pose bone
-
-    >>> pose_bone.constraints
-    '''
-    return pose_bone.constraints
 
 def set_pose_bone_constraint_property(constraint, name, value):
     '''
