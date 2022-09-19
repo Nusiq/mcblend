@@ -1,7 +1,8 @@
+from typing import Iterable
 from bpy.types import (
     Context, Object, OperatorProperties, Collection, CollectionObjects,
     CollectionChildren, ViewLayer, LayerObjects, MaterialSlot, Constraint,
-    ObjectConstraints, PoseBoneConstraints)
+    ObjectConstraints, PoseBoneConstraints, Image)
 from mathutils import Matrix
 
 from .pyi_types import (
@@ -33,6 +34,8 @@ def get_context_selected_objects(context: Context) -> list[Object]: ...
 def get_data_objects() -> DataObjects: ...
 
 def get_data_images() -> DataImages: ...
+
+def set_image_pixels(image: Image, pixels: Iterable[float]) -> None: ...
 
 def get_object_mcblend(object: Object) -> MCBLEND_ObjectProperties: ...
 

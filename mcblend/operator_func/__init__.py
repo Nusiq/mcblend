@@ -23,7 +23,7 @@ from .typed_bpy_access import (
     get_data_images, get_data_objects, get_object_children,
     get_object_constraints, get_object_matrix_world, get_object_mcblend,
     get_pose_bone_constraints, get_view_layer_objects, new_colection,
-    get_object_material_slots, set_constraint_property,
+    get_object_material_slots, set_constraint_property, set_image_pixels,
     set_object_matrix_parent_inverse, set_object_matrix_world,
     set_object_parent, set_pose_bone_constraint_property,
     get_object_data_materials)
@@ -179,7 +179,7 @@ def set_uvs(context: Context):
 
         for uv_cube in mapper.uv_boxes:
             uv_cube.paint_texture(arr, resolution)
-        image.pixels = arr.ravel()  # Apply texture pixels values
+        set_image_pixels(image, arr.ravel())  # Apply texture pixels values
 
     # Set blender UVs
     converter = CoordinatesConverter(

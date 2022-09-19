@@ -83,6 +83,14 @@ def get_data_images():
     '''
     return bpy.data.images
 
+def set_image_pixels(image, pixels):
+    '''
+    Sets the pixels of the image
+
+    >>> image.pixels = pixels
+    '''
+    image.pixels = pixels
+
 def get_object_mcblend(object):
     '''
     Returns the mcblend property from object
@@ -106,7 +114,6 @@ def new_colection(name):
     >>> bpy.data.collections.new(name)
     '''
     return bpy.data.collections.new(name)
-
 
 def get_collection_objects(collection):
     '''
@@ -213,7 +220,6 @@ def set_pose_bone_constraint_property(constraint, name, value):
     '''
     constraint.__setattr__(name, value)
 
-
 def set_object_matrix_world(object, matrix):
     '''
     Sets the world matrix of the object
@@ -237,7 +243,6 @@ def set_object_matrix_parent_inverse(object, matrix):
     >>> object.matrix_parent_inverse = matrix
     '''
     object.matrix_parent_inverse = matrix
-
 
 def get_object_matrix_parent_inverse(object):
     '''
