@@ -4,7 +4,7 @@ Functions and objects related to importing Minecraft models to Blender.
 from __future__ import annotations
 
 import math
-from typing import Dict, List, Optional, Any, Tuple, Set, Union
+from typing import Dict, List, Optional, Any, Tuple, Set, Union, TYPE_CHECKING
 from enum import Enum
 
 import numpy as np
@@ -14,7 +14,7 @@ from bpy.types import Object
 import bpy
 
 from .typed_bpy_access import (
-    get_object_matrix_world, set_object_matrix_parent_inverse,
+    get_armature_data_edit_bones, get_object_matrix_world, set_object_matrix_parent_inverse,
     set_object_matrix_world, get_object_matrix_parent_inverse)
 from .common import (
     MINECRAFT_SCALE_FACTOR, CubePolygons, CubePolygon, MeshType)
@@ -23,6 +23,11 @@ from .uv import CoordinatesConverter
 from .exception import ImporterException
 from .typed_bpy_access import (
     get_context_object, get_data_objects, get_object_mcblend)
+
+if TYPE_CHECKING:
+    from .pyi_types import ArmatureDataEditBones
+else:
+    ArmatureDataEditBones = bpy.types.bpy_prop_collection  # type: ignore
 
 class ErrorLevel(Enum):
     '''
@@ -1555,8 +1560,7 @@ class ImportGeometry:
         context.view_layer.objects.active = armature
         bpy.ops.object.mode_set(mode='EDIT')
 
-        edit_bones = armature.data.edit_bones
-
+        edit_bones = get_armature_data_edit_bones(armature)
 
         # Create bones
         for bone in self.bones.values():
@@ -1766,7 +1770,7 @@ def _set_uv(
     set_uv(cube_polygons.down, uv["down"]["uv_size"], uv["down"]["uv"])
 
 def add_bone(
-        edit_bones: bpy.types.bpy_prop_collection,
+        edit_bones: ArmatureDataEditBones,
         length: float, import_bone: ImportBone):
     '''
     :param edit_bones: edit bones of the armature (from

@@ -164,6 +164,14 @@ def get_armature_data_bones(armature):
     '''
     return armature.data.bones
 
+def get_armature_data_edit_bones(armature):
+    '''
+    Returns the edit bones from armature
+
+    >>> armature.data.edit_bones
+    '''
+    return armature.data.edit_bones
+
 def set_constraint_property(constraint, name, value):
     '''
     Sets the property of the constraint

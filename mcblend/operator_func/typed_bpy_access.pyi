@@ -7,7 +7,7 @@ from mathutils import Matrix
 
 from .pyi_types import (
     CollectionProperty, DataObjects, ArmatureDataBones, DataImages,
-    ObjectDataMaterials)
+    ObjectDataMaterials, ArmatureDataEditBones)
 
 from ..object_data import MCBLEND_EventProperties, MCBLEND_ObjectProperties
 from ..uv_data import MCBLEND_UvGroupProperties
@@ -56,6 +56,9 @@ def get_object_material_slots(object: Object) -> list[MaterialSlot]: ...
 def get_object_data_materials(object) -> ObjectDataMaterials: ...
 
 def get_armature_data_bones(armature: Object) -> ArmatureDataBones: ...
+
+def get_armature_data_edit_bones(
+    armature: Object) -> ArmatureDataEditBones: ...
 
 def set_constraint_property(
     constraint: Constraint, name: str,
