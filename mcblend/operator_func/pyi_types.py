@@ -3,7 +3,7 @@ Extra types used only in the PYI files.
 '''
 from typing import Any, Iterator, TypeVar, Generic, Sized, Optional
 from bpy.types import (
-    Object, Mesh, Image, Material, Bone, EditBone, MeshUVLoopLayer)
+    Object, Mesh, Image, Material, Bone, EditBone, MeshUVLoopLayer, MeshUVLoop)
 
 T = TypeVar("T")
 
@@ -77,3 +77,11 @@ class ObjectDataUvLayers(Sized):
     def __getitem__(self, key: MeshUVLoopLayer) -> MeshUVLoopLayer: ...
     def __iter__(self) -> Iterator[MeshUVLoopLayer]: ...
     def new(self, name: str) -> MeshUVLoopLayer: ...
+
+class MeshUVLoopLayerData(Sized):
+    '''
+    Fake class defined as a result of:
+    >>> uv_layer.data
+    '''
+    def __getitem__(self, key: Any) -> MeshUVLoop: ...
+    def __iter__(self) -> Iterator[MeshUVLoop]: ...

@@ -2,12 +2,14 @@ from typing import Iterable
 from bpy.types import (
     Context, Object, OperatorProperties, Collection, CollectionObjects,
     CollectionChildren, ViewLayer, LayerObjects, MaterialSlot, Constraint,
-    ObjectConstraints, PoseBoneConstraints, Image, EditBone)
+    ObjectConstraints, PoseBoneConstraints, Image, EditBone,
+    MeshUVLoopLayer)
 from mathutils import Matrix
 
 from .pyi_types import (
     CollectionProperty, DataObjects, ArmatureDataBones, DataImages,
-    ObjectDataMaterials, ArmatureDataEditBones, ObjectDataUvLayers)
+    ObjectDataMaterials, ArmatureDataEditBones, ObjectDataUvLayers,
+    MeshUVLoopLayerData)
 
 from ..object_data import MCBLEND_EventProperties, MCBLEND_ObjectProperties
 from ..uv_data import MCBLEND_UvGroupProperties
@@ -56,6 +58,8 @@ def get_object_material_slots(object: Object) -> list[MaterialSlot]: ...
 def get_object_data_materials(object: Object) -> ObjectDataMaterials: ...
 
 def get_object_data_uv_layers(object: Object) -> ObjectDataUvLayers: ...
+
+def get_uv_layer_data(uv_layer: MeshUVLoopLayer) -> MeshUVLoopLayerData: ...
 
 def get_armature_data_bones(armature: Object) -> ArmatureDataBones: ...
 

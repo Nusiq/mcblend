@@ -15,7 +15,7 @@ from bpy.types import Object, MeshUVLoopLayer
 import bpy
 
 from .typed_bpy_access import (
-    get_armature_data_edit_bones, get_object_data_uv_layers, get_object_matrix_world, set_bone_matrix, set_object_matrix_parent_inverse,
+    get_armature_data_edit_bones, get_object_data_uv_layers, get_object_matrix_world, get_uv_layer_data, set_bone_matrix, set_object_matrix_parent_inverse,
     set_object_matrix_world, get_object_matrix_parent_inverse)
 from .common import (
     MINECRAFT_SCALE_FACTOR, CubePolygons, CubePolygon, MeshType)
@@ -1738,8 +1738,7 @@ def _set_uv(
     :param uv: UV mapping for each face.
     :param uv_layer: UV layer of the mesh.
     '''
-    uv_data = uv_layer.data
-
+    uv_data = get_uv_layer_data(uv_layer)
     def set_uv(
             cube_polygon: CubePolygon, size: Vector2d,
             uv: Vector2d):
