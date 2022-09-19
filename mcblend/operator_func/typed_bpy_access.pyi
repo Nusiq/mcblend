@@ -4,7 +4,7 @@ from bpy.types import (
     CollectionChildren, ViewLayer, LayerObjects, MaterialSlot, Constraint,
     ObjectConstraints, PoseBoneConstraints, Image, EditBone,
     MeshUVLoopLayer, MeshPolygon)
-from mathutils import Matrix
+from mathutils import Matrix, Euler
 
 from .pyi_types import (
     CollectionProperty, DataObjects, ArmatureDataBones, DataImages,
@@ -103,3 +103,5 @@ def set_matrix_parent_inverse(
 def get_matrix_parent_inverse(obj: Object) -> Matrix: ...
 
 def get_loop_indices(obj: MeshPolygon) -> list[int]: ...
+
+def get_rotation_euler(obj: Object) -> Euler: ...

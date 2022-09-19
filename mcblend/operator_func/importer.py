@@ -15,7 +15,8 @@ from bpy.types import Object, MeshUVLoopLayer
 import bpy
 
 from .typed_bpy_access import (
-    get_data_edit_bones, get_data_uv_layers, get_loop_indices, get_matrix_world, get_data, set_matrix, set_matrix_parent_inverse,
+    get_data_edit_bones, get_data_uv_layers, get_loop_indices,
+    get_matrix_world, get_data, get_rotation_euler, set_matrix, set_matrix_parent_inverse,
     set_matrix_world, get_matrix_parent_inverse)
 from .common import (
     MINECRAFT_SCALE_FACTOR, CubePolygons, CubePolygon, MeshType)
@@ -1709,7 +1710,7 @@ def _mc_pivot(obj: Object, mcpivot: Vector3d):
 
 def _mc_rotate(
         obj: Object, mcrotation: Vector3d
-    ):
+    ) -> None:
     '''
     Rotates a Blender object using rotation written in Minecraft coordinates
     system.
@@ -1722,7 +1723,7 @@ def _mc_rotate(
         (np.array(mcrotation)[[0, 2, 1]] * np.array([1, 1, -1])) * math.pi/180,
         'XZY'
     )
-    obj.rotation_euler.rotate(rotation)
+    get_rotation_euler(obj).rotate(rotation)
 
 def _set_uv(
         uv_converter: CoordinatesConverter, cube_polygons: CubePolygons,
@@ -1750,11 +1751,14 @@ def _set_uv(
         right_up = cp_loop_indices[cp_order[2]]
         left_up = cp_loop_indices[cp_order[3]]
 
-        uv_data[left_down].uv = uv_converter.convert((uv[0], uv[1] + size[1]))
-        uv_data[right_down].uv = uv_converter.convert(
-            (uv[0] + size[0], uv[1] + size[1]))
-        uv_data[right_up].uv = uv_converter.convert((uv[0] + size[0], uv[1]))
-        uv_data[left_up].uv = uv_converter.convert((uv[0], uv[1]))
+        uv_data[left_down].uv = cast(
+            list[float], uv_converter.convert((uv[0], uv[1] + size[1])))
+        uv_data[right_down].uv = cast(
+            list[float], uv_converter.convert((uv[0] + size[0], uv[1] + size[1])))
+        uv_data[right_up].uv = cast(
+            list[float], uv_converter.convert((uv[0] + size[0], uv[1])))
+        uv_data[left_up].uv = cast(
+            list[float], uv_converter.convert((uv[0], uv[1])))
 
     # right/left
     set_uv(cube_polygons.east, uv["east"]["uv_size"], uv["east"]["uv"])

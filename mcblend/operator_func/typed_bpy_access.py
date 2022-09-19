@@ -228,3 +228,9 @@ def get_loop_indices(obj):
     >>> obj.loop_indices
     '''
     return obj.loop_indices
+
+def get_rotation_euler(obj):
+    '''
+    >>> obj.rotation_euler
+    '''
+    return obj.rotation_euler
