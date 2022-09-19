@@ -17,12 +17,12 @@ from bpy.types import Image, Material, Context, Object
 import numpy as np
 
 from .typed_bpy_access import (
-    get_armature_data_bones, get_collection_children, get_collection_objects,
+    get_armature_data_bones, get_collection_children, get_objects,
     get_context_object, get_context_scene_mcblend_project,
     get_context_scene_mcblend_events, get_context_selected_objects,
     get_data_images, get_data_objects, get_object_children,
     get_object_constraints, get_object_matrix_world, get_object_mcblend,
-    get_pose_bone_constraints, get_view_layer_objects, new_colection,
+    get_pose_bone_constraints, new_colection,
     get_object_material_slots, set_constraint_property, set_image_pixels,
     set_object_matrix_parent_inverse, set_object_matrix_world,
     set_object_parent, set_pose_bone_constraint_property,
@@ -724,14 +724,14 @@ def prepare_physics_simulation(context: Context) -> Dict:
             new_obj = child.thisobj.copy()
             new_obj.data = child.obj_data.copy()
             new_obj.animation_data_clear()
-            get_collection_objects(context.collection).link(new_obj)
+            get_objects(context.collection).link(new_obj)
             cubes_group.append(new_obj)
         bpy.ops.object.select_all(action='DESELECT')
         rigid_body: Optional[Object] = None
         if len(cubes_group) > 1:
             for c in cubes_group:
                 c.select_set(True)
-            get_view_layer_objects(context.view_layer).active = cubes_group[-1]
+            get_objects(context.view_layer).active = cubes_group[-1]
             bpy.ops.object.join()
             rigid_body = get_context_object(context)
         elif len(cubes_group) == 1:
@@ -746,10 +746,10 @@ def prepare_physics_simulation(context: Context) -> Dict:
             matrix_world = get_object_matrix_world(rigid_body).copy()
             rigid_body.parent = None  # type: ignore
             set_object_matrix_world(rigid_body, matrix_world)
-            get_collection_objects(rigidbody_world.collection).link(rigid_body)
+            get_objects(rigidbody_world.collection).link(rigid_body)
             # Move to rigid body colleciton
-            get_collection_objects(context.collection).unlink(rigid_body)
-            get_collection_objects(rb_collection).link(rigid_body)
+            get_objects(context.collection).unlink(rigid_body)
+            get_objects(rb_collection).link(rigid_body)
             # Add keyframes to the rigid body "animated"/"kinematic" property (
             # enable it 1 frame after current frame)
             rigid_body.rigid_body.kinematic = True
@@ -767,13 +767,13 @@ def prepare_physics_simulation(context: Context) -> Dict:
             # Add bone parent empty
             empty = get_data_objects().new(
                 f'{bone.obj_name}_bp', None)  # bp - bone parent
-            get_collection_objects(bp_collection).link(empty)
+            get_objects(bp_collection).link(empty)
             empty.empty_display_type = 'CONE'
             empty.empty_display_size = 0.1
             set_object_matrix_world(empty, get_object_matrix_world(bone.obj_matrix_world))
             physics_objects_groups[bone].object_parent_empty = empty
             # Add "Copy Transforms" constraint to the bone
-            get_view_layer_objects(context.view_layer).active = armature
+            get_objects(context.view_layer).active = armature
             bpy.ops.object.posemode_toggle()  # Pose mode
             bpy.ops.pose.select_all(action='DESELECT')
             
@@ -795,14 +795,14 @@ def prepare_physics_simulation(context: Context) -> Dict:
             bpy.ops.object.posemode_toggle()  # Object mode
 
             # Add "Child of" constraint to parent empty
-            get_view_layer_objects(context.view_layer).active = empty
+            get_objects(context.view_layer).active = empty
             set_constraint_property(
                 get_object_constraints(empty).new(type='CHILD_OF'),
                 'target', rigid_body)
 
         empty = get_data_objects().new(
             f'{bone.obj_name}_rbc', None)  # bp - bone parent
-        get_collection_objects(rbc_collection).link(empty)
+        get_objects(rbc_collection).link(empty)
         empty.empty_display_type = 'PLAIN_AXES'
         empty.empty_display_size = 0.1
         set_object_matrix_world(
