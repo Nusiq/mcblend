@@ -69,7 +69,7 @@ class MCBLEND_FakeRcProperties:
 class MCBLEND_ObjectProperties:
     model_name: str
     texture_template_resolution: int
-    allow_expanding: str
+    allow_expanding: bool
     generate_texture: bool
     visible_bounds_offset: tuple[float, float, float]
     visible_bounds_width: float
