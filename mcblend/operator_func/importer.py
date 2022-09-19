@@ -13,7 +13,9 @@ import mathutils
 from bpy.types import Object
 import bpy
 
-from .typed_bpy_access import get_object_matrix_world, set_object_matrix_world
+from .typed_bpy_access import (
+    get_object_matrix_world, set_object_matrix_parent_inverse,
+    set_object_matrix_world, get_object_matrix_parent_inverse)
 from .common import (
     MINECRAFT_SCALE_FACTOR, CubePolygons, CubePolygon, MeshType)
 from .extra_types import Vector3di, Vector3d, Vector2d
@@ -1496,7 +1498,8 @@ class ImportGeometry:
                 ].blend_empty
                 context.view_layer.update()
                 bone_obj.parent = parent_obj
-                bone_obj.matrix_parent_inverse = (
+                set_object_matrix_parent_inverse(
+                    bone_obj,
                     get_object_matrix_world(parent_obj).inverted()
                 )
             # 2. Parent cubes keep transform
@@ -1504,7 +1507,8 @@ class ImportGeometry:
                 cube_obj = cube.blend_cube
                 context.view_layer.update()
                 cube_obj.parent = bone_obj
-                cube_obj.matrix_parent_inverse = (
+                set_object_matrix_parent_inverse(
+                    cube_obj,
                     get_object_matrix_world(bone_obj).inverted()
                 )
             # 3. Parent poly_mesh keep transform
@@ -1512,7 +1516,8 @@ class ImportGeometry:
                 poly_mesh_obj = bone.poly_mesh.blend_object
                 context.view_layer.update()
                 poly_mesh_obj.parent = bone_obj
-                poly_mesh_obj.matrix_parent_inverse = (
+                set_object_matrix_parent_inverse(
+                    poly_mesh_obj,
                     get_object_matrix_world(bone_obj).inverted()
                 )
 
@@ -1521,7 +1526,8 @@ class ImportGeometry:
                 locator_obj = locator.blend_empty
                 context.view_layer.update()
                 locator_obj.parent = bone_obj
-                locator_obj.matrix_parent_inverse = (
+                set_object_matrix_parent_inverse(
+                    locator_obj,
                     get_object_matrix_world(bone_obj).inverted()
                 )
 
@@ -1583,15 +1589,13 @@ class ImportGeometry:
             # Copy matrix_parent_inverse from previous parent
             # It can be copied because old parent (locator) has the same
             # transformation as the new one (bone)
-            parent_inverse = (
-                obj.matrix_parent_inverse.copy()  # type:ignore
-            )
+            parent_inverse = get_object_matrix_parent_inverse(obj).copy()
 
             obj.parent = armature  # type: ignore
             obj.parent_bone = bone.name  # type: ignore
             obj.parent_type = 'BONE'  # type: ignore
 
-            obj.matrix_parent_inverse = parent_inverse  # type: ignore
+            set_object_matrix_parent_inverse(obj, parent_inverse)
 
             # Correct parenting to tail of the bone instead of head
             context.view_layer.update()
