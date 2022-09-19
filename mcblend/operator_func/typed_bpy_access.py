@@ -83,21 +83,17 @@ def get_data_images():
     '''
     return bpy.data.images
 
-def set_image_pixels(image, pixels):
+def set_pixels(obj, pixels):
     '''
-    Sets the pixels of the image
+    >>> obj.pixels = pixels
+    '''
+    obj.pixels = pixels
 
-    >>> image.pixels = pixels
+def get_mcblend(obj):
     '''
-    image.pixels = pixels
-
-def get_object_mcblend(object):
+    >>> obj.mcblend
     '''
-    Returns the mcblend property from object
-
-    >>> object.mcblend
-    '''
-    return object.mcblend
+    return obj.mcblend
 
 def set_operator_property(operator, name, value):
     '''
@@ -121,62 +117,47 @@ def get_objects(obj):
     '''
     return obj.objects
 
-def get_object_material_slots(object):
+def get_material_slots(obj):
     '''
-    Returns the material slots from object
+    >>> obj.material_slots
+    '''
+    return obj.material_slots
 
-    >>> object.material_slots
+def get_data_materials(obj):
     '''
-    return object.material_slots
+    >>> obj.data.materials
+    '''
+    return obj.data.materials
 
-def get_object_data_materials(object):
+def get_data_uv_layers(obj):
     '''
-    Returns the materials from object
+    >>> obj.data.uv_layers
+    '''
+    return obj.data.uv_layers
 
-    >>> object.data.materials
+def get_data(obj):
     '''
-    return object.data.materials
+    >>> obj.data
+    '''
+    return obj.data
 
-def get_object_data_uv_layers(object):
+def get_data_bones(obj):
     '''
-    Returns the uv layers from object
+    >>> obj.data.bones
+    '''
+    return obj.data.bones
 
-    >>> object.data.uv_layers
+def get_data_edit_bones(obj):
     '''
-    return object.data.uv_layers
+    >>> obj.data.edit_bones
+    '''
+    return obj.data.edit_bones
 
-def get_uv_layer_data(uv_layer):
+def set_matrix(obj, matrix):
     '''
-    Returns the data from uv layer
-
-    >>> uv_layer.data
+    >>> obj.matrix = matrix
     '''
-    return uv_layer.data
-
-def get_armature_data_bones(armature):
-    '''
-    Returns bones of the armature object.
-    This function works under the assumption that the object is an armature.
-
-    >>> armature.data.bones
-    '''
-    return armature.data.bones
-
-def get_armature_data_edit_bones(armature):
-    '''
-    Returns the edit bones from armature
-
-    >>> armature.data.edit_bones
-    '''
-    return armature.data.edit_bones
-
-def set_bone_matrix(bone, matrix):
-    '''
-    Sets the matrix of the bone
-
-    >>> bone.matrix = matrix
-    '''
-    bone.matrix = matrix
+    obj.matrix = matrix
 
 def set_constraint_property(constraint, name, value):
     '''
@@ -200,21 +181,17 @@ def get_children(obj):
     '''
     return obj.children
 
-def get_object_parent(object):
+def get_parent(obj):
     '''
-    Returns the parent from object
+    >>> obj.parent
+    '''
+    return obj.parent
 
-    >>> object.parent
+def set_parent(obj, value):
     '''
-    return object.parent
-
-def set_object_parent(object, value):
+    >>> obj.parent = value
     '''
-    Sets the parent of the object
-
-    >>> object.parent = value
-    '''
-    object.parent = value
+    obj.parent = value
 
 def get_pose_bone_constraints(pose_bone):
     '''
@@ -232,34 +209,26 @@ def set_pose_bone_constraint_property(constraint, name, value):
     '''
     constraint.__setattr__(name, value)
 
-def set_object_matrix_world(object, matrix):
+def set_matrix_world(obj, matrix):
     '''
-    Sets the world matrix of the object
+    >>> obj.matrix_world = matrix
+    '''
+    obj.matrix_world = matrix
 
-    >>> object.matrix_world = matrix
+def get_matrix_world(obj):
     '''
-    object.matrix_world = matrix
+    >>> obj.matrix_world
+    '''
+    return obj.matrix_world
 
-def get_object_matrix_world(object):
+def set_matrix_parent_inverse(obj, matrix):
     '''
-    Returns the world matrix of the object
+    >>> obj.matrix_parent_inverse = matrix
+    '''
+    obj.matrix_parent_inverse = matrix
 
-    >>> object.matrix_world
+def get_matrix_parent_inverse(obj):
     '''
-    return object.matrix_world
-
-def set_object_matrix_parent_inverse(object, matrix):
+    >>> obj.matrix_parent_inverse
     '''
-    Sets the parent inverse matrix of the object
-
-    >>> object.matrix_parent_inverse = matrix
-    '''
-    object.matrix_parent_inverse = matrix
-
-def get_object_matrix_parent_inverse(object):
-    '''
-    Returns the parent inverse matrix of the object
-
-    >>> object.matrix_parent_inverse
-    '''
-    return object.matrix_parent_inverse
+    return obj.matrix_parent_inverse

@@ -17,7 +17,7 @@ from bpy.types import MeshUVLoopLayer, Object, MeshPolygon, PoseBone
 
 import mathutils
 
-from .typed_bpy_access import get_armature_data_bones, get_object_matrix_world
+from .typed_bpy_access import get_data_bones, get_matrix_world
 
 from .texture_generator import Mask, ColorMask, get_masks_from_side
 from .exception import ExporterException
@@ -195,7 +195,7 @@ class McblendObject:
         The copy of the translation matrix (matrix_world) of the blender
         wrapped inside this object.
         '''
-        this_obj_matrix_world = get_object_matrix_world(self.thisobj).copy()
+        this_obj_matrix_world = get_matrix_world(self.thisobj).copy()
         if self.thisobj.type == 'ARMATURE':
             return this_obj_matrix_world @ self.thisobj.pose.bones[
                 self.thisobj_id.bone_name
@@ -745,7 +745,7 @@ class McblendObjectGroup:
         '''
         if self.world_origin is None:
             raise RuntimeError("World origin not defined")
-        return get_object_matrix_world(self.world_origin)
+        return get_matrix_world(self.world_origin)
 
     def __len__(self):
         return len(self.data)
@@ -779,7 +779,7 @@ class McblendObjectGroup:
         :param armature: the armature used as a root of the object group.
         '''
         # Loop bones
-        for bone in get_armature_data_bones(armature):
+        for bone in get_data_bones(armature):
             obj_id: ObjectId = ObjectId(armature.name, bone.name)
             parent_bone_id: Optional[ObjectId] = None
             if bone.parent is not None:

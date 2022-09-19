@@ -17,16 +17,16 @@ from bpy.types import Image, Material, Context, Object
 import numpy as np
 
 from .typed_bpy_access import (
-    get_armature_data_bones, get_objects,
+    get_data_bones, get_objects,
     get_context_object, get_context_scene_mcblend_project,
     get_context_scene_mcblend_events, get_context_selected_objects,
     get_data_images, get_data_objects, get_children,
-    get_object_constraints, get_object_matrix_world, get_object_mcblend,
+    get_object_constraints, get_matrix_world, get_mcblend,
     get_pose_bone_constraints, new_colection,
-    get_object_material_slots, set_constraint_property, set_image_pixels,
-    set_object_matrix_parent_inverse, set_object_matrix_world,
-    set_object_parent, set_pose_bone_constraint_property,
-    get_object_data_materials)
+    get_material_slots, set_constraint_property, set_pixels,
+    set_matrix_parent_inverse, set_matrix_world,
+    set_parent, set_pose_bone_constraint_property,
+    get_data_materials)
 
 from .sqlite_bedrock_packs.better_json import load_jsonc
 
@@ -64,7 +64,7 @@ def export_model(
     armature = get_context_object(context)  # an armature
 
     mcblend_obj_group = McblendObjectGroup(armature, None)
-    model_properties = get_object_mcblend(armature)
+    model_properties = get_mcblend(armature)
 
     model = ModelExport(
         texture_width=model_properties.texture_width,
@@ -89,8 +89,8 @@ def export_animation(
     :param old_dict: optional - JSON dict with animation to write into.
     :returns: JSON dict of Minecraft animations.
     '''
-    anim_data = get_object_mcblend(get_context_object(context)).animations[
-        get_object_mcblend(get_context_object(context)).active_animation]
+    anim_data = get_mcblend(get_context_object(context)).animations[
+        get_mcblend(get_context_object(context)).active_animation]
 
     # TODO - write this code nicer, passing world_origin as a string isn't
     # a perfect solution
@@ -130,7 +130,7 @@ def set_uvs(context: Context):
     '''
     armature = get_context_object(context) # an armature
 
-    model_properties = get_object_mcblend(armature)
+    model_properties = get_mcblend(armature)
     width = model_properties.texture_width
     height = model_properties.texture_height
     allow_expanding = model_properties.allow_expanding
@@ -179,7 +179,7 @@ def set_uvs(context: Context):
 
         for uv_cube in mapper.uv_boxes:
             uv_cube.paint_texture(arr, resolution)
-        set_image_pixels(image, arr.ravel())  # Apply texture pixels values
+        set_pixels(image, arr.ravel())  # Apply texture pixels values
 
     # Set blender UVs
     converter = CoordinatesConverter(
@@ -339,27 +339,27 @@ def inflate_objects(
     for obj in objects:
         if (
                 obj.type == 'MESH' and
-                get_object_mcblend(obj).mesh_type ==
+                get_mcblend(obj).mesh_type ==
                 MeshType.CUBE.value):
-            if get_object_mcblend(obj).inflate != 0.0:
+            if get_mcblend(obj).inflate != 0.0:
                 if relative:
                     effective_inflate = (
-                        get_object_mcblend(obj).inflate + inflate)
+                        get_mcblend(obj).inflate + inflate)
                 else:
                     effective_inflate = inflate
                 delta_inflate = (
                     effective_inflate -
-                    get_object_mcblend(obj).inflate)
-                get_object_mcblend(obj).inflate = effective_inflate
+                    get_mcblend(obj).inflate)
+                get_mcblend(obj).inflate = effective_inflate
             else:
                 delta_inflate = inflate
-                get_object_mcblend(obj).inflate = inflate
+                get_mcblend(obj).inflate = inflate
             # Clear parent from children for a moment
             children = get_children(obj)
             for child in children:
-                old_matrix = get_object_matrix_world(child).copy()
-                set_object_parent(child, None)
-                set_object_matrix_world(child, old_matrix)
+                old_matrix = get_matrix_world(child).copy()
+                set_parent(child, None)
+                set_matrix_world(child, old_matrix)
 
             dimensions = np.array(obj.dimensions)
 
@@ -373,10 +373,10 @@ def inflate_objects(
 
             # Add children back and set their previous transformations
             for child in children:
-                set_object_parent(child, obj)
-                set_object_matrix_parent_inverse(
+                set_parent(child, obj)
+                set_matrix_parent_inverse(
                     child,
-                    get_object_matrix_world(obj).inverted())
+                    get_matrix_world(obj).inverted())
 
             counter += 1
     return counter
@@ -594,7 +594,7 @@ def import_model_form_project(
             for c in bone.cubes:
                 if c.blend_cube is None:
                     continue
-                get_object_data_materials(c.blend_cube).append(
+                get_data_materials(c.blend_cube).append(
                     blender_materials[tuple(bone_materials_id)])
     return warnings
 
@@ -609,7 +609,7 @@ def apply_materials(context: Context):
     armature = get_context_object(context)
 
     mcblend_obj_group = McblendObjectGroup(armature, None)
-    armature_properties = get_object_mcblend(armature)
+    armature_properties = get_mcblend(armature)
 
     model = ModelExport(
         texture_width=armature_properties.texture_width,
@@ -739,13 +739,13 @@ def prepare_physics_simulation(context: Context) -> Dict:
             rigid_body = cubes_group[0]
         # Move origin to the center of mass and rename the object
         if rigid_body is not None:
-            for material_slot in get_object_material_slots(rigid_body):
+            for material_slot in get_material_slots(rigid_body):
                 material_slot.material = None  # type: ignore
             bpy.ops.object.origin_set(type='ORIGIN_CENTER_OF_VOLUME', center='MEDIAN')
             bpy.ops.object.visual_transform_apply()
-            matrix_world = get_object_matrix_world(rigid_body).copy()
+            matrix_world = get_matrix_world(rigid_body).copy()
             rigid_body.parent = None  # type: ignore
-            set_object_matrix_world(rigid_body, matrix_world)
+            set_matrix_world(rigid_body, matrix_world)
             get_objects(rigidbody_world.collection).link(rigid_body)
             # Move to rigid body colleciton
             get_objects(context.collection).unlink(rigid_body)
@@ -770,14 +770,14 @@ def prepare_physics_simulation(context: Context) -> Dict:
             get_objects(bp_collection).link(empty)
             empty.empty_display_type = 'CONE'
             empty.empty_display_size = 0.1
-            set_object_matrix_world(empty, get_object_matrix_world(bone.obj_matrix_world))
+            set_matrix_world(empty, get_matrix_world(bone.obj_matrix_world))
             physics_objects_groups[bone].object_parent_empty = empty
             # Add "Copy Transforms" constraint to the bone
             get_objects(context.view_layer).active = armature
             bpy.ops.object.posemode_toggle()  # Pose mode
             bpy.ops.pose.select_all(action='DESELECT')
             
-            get_armature_data_bones(armature).active = get_armature_data_bones(
+            get_data_bones(armature).active = get_data_bones(
                 armature)[bone.thisobj_id.bone_name]
             # bpy.ops.pose.constraint_add(type='COPY_TRANSFORMS')
             constraint = get_pose_bone_constraints(
@@ -805,8 +805,8 @@ def prepare_physics_simulation(context: Context) -> Dict:
         get_objects(rbc_collection).link(empty)
         empty.empty_display_type = 'PLAIN_AXES'
         empty.empty_display_size = 0.1
-        set_object_matrix_world(
-            empty, get_object_matrix_world(bone.obj_matrix_world))
+        set_matrix_world(
+            empty, get_matrix_world(bone.obj_matrix_world))
         physics_objects_groups[bone].rigid_body_constraint = empty
 
     # Add constraints to rigid body constraints empty
