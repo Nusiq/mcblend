@@ -17,10 +17,10 @@ from bpy.types import Image, Material, Context, Object
 import numpy as np
 
 from .typed_bpy_access import (
-    get_armature_data_bones, get_collection_children, get_objects,
+    get_armature_data_bones, get_objects,
     get_context_object, get_context_scene_mcblend_project,
     get_context_scene_mcblend_events, get_context_selected_objects,
-    get_data_images, get_data_objects, get_object_children,
+    get_data_images, get_data_objects, get_children,
     get_object_constraints, get_object_matrix_world, get_object_mcblend,
     get_pose_bone_constraints, new_colection,
     get_object_material_slots, set_constraint_property, set_image_pixels,
@@ -355,7 +355,7 @@ def inflate_objects(
                 delta_inflate = inflate
                 get_object_mcblend(obj).inflate = inflate
             # Clear parent from children for a moment
-            children = get_object_children(obj)
+            children = get_children(obj)
             for child in children:
                 old_matrix = get_object_matrix_world(child).copy()
                 set_object_parent(child, None)
@@ -707,10 +707,10 @@ def prepare_physics_simulation(context: Context) -> Dict:
     rb_collection = new_colection("Rigid Body")
     rbc_collection = new_colection("Rigid Body Constraints")
     bp_collection = new_colection("Bone Parents")
-    get_collection_children(context.scene.collection).link(main_collection)
-    get_collection_children(main_collection).link(rb_collection)
-    get_collection_children(main_collection).link(rbc_collection)
-    get_collection_children(main_collection).link(bp_collection)
+    get_children(context.scene.collection).link(main_collection)
+    get_children(main_collection).link(rb_collection)
+    get_children(main_collection).link(rbc_collection)
+    get_children(main_collection).link(bp_collection)
 
     for _, bone in mcblend_obj_group.items():
         if not bone.mctype == MCObjType.BONE:

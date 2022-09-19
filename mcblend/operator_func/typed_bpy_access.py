@@ -121,14 +121,6 @@ def get_objects(obj):
     '''
     return obj.objects
 
-def get_collection_children(collection):
-    '''
-    Returns the children from collection
-
-    >>> collection.children
-    '''
-    return collection.children
-
 def get_object_material_slots(object):
     '''
     Returns the material slots from object
@@ -202,13 +194,11 @@ def get_object_constraints(object):
     '''
     return object.constraints
 
-def get_object_children(object):
+def get_children(obj):
     '''
-    Returns the children from object
-
-    >>> object.children
+    >>> obj.children
     '''
-    return object.children
+    return obj.children
 
 def get_object_parent(object):
     '''
