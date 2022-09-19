@@ -246,3 +246,9 @@ def set_location(obj, value):
     >>> obj.location = value
     '''
     obj.location = value
+
+def get_data_vertices(obj):
+    '''
+    >>> obj.data.vertices
+    '''
+    return obj.data.vertices

@@ -3,7 +3,8 @@ Extra types used only in the PYI files.
 '''
 from typing import Any, Iterator, TypeVar, Generic, Sized, Optional
 from bpy.types import (
-    Object, Mesh, Image, Material, Bone, EditBone, MeshUVLoopLayer, MeshUVLoop)
+    Object, Mesh, Image, Material, Bone, EditBone, MeshUVLoopLayer,
+    MeshUVLoop, MeshVertex)
 
 T = TypeVar("T")
 
@@ -85,3 +86,11 @@ class MeshUVLoopLayerData(Sized):
     '''
     def __getitem__(self, key: Any) -> MeshUVLoop: ...
     def __iter__(self) -> Iterator[MeshUVLoop]: ...
+
+class ObjectDataVertices(Sized):
+    '''
+    Fake class defined as a result of:
+    >>> object.data.vertices
+    '''
+    def __getitem__(self, key: Any) -> MeshVertex: ...
+    def __iter__(self) -> Iterator[MeshVertex]: ...

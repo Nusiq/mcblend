@@ -15,9 +15,10 @@ from bpy.types import Object, MeshUVLoopLayer
 import bpy
 
 from .typed_bpy_access import (
-    get_data_edit_bones, get_data_uv_layers, get_loop_indices,
-    get_matrix_world, get_data, get_rotation_euler, set_matrix, set_matrix_parent_inverse,
-    set_matrix_world, get_matrix_parent_inverse)
+    get_data_edit_bones, get_data_uv_layers, get_data_vertices,
+    get_loop_indices, get_matrix_world, get_data, get_rotation_euler,
+    set_matrix, set_matrix_parent_inverse, set_matrix_world,
+    get_matrix_parent_inverse)
 from .common import (
     MINECRAFT_SCALE_FACTOR, CubePolygons, CubePolygon, MeshType)
 from .extra_types import Vector3di, Vector3d, Vector2d
@@ -1659,7 +1660,7 @@ def _mc_translate(
     translation = mathutils.Vector(
         np.array(mctranslation)[[0, 2, 1]] / MINECRAFT_SCALE_FACTOR
     )
-    for vertex in obj.data.vertices:
+    for vertex in get_data_vertices(obj):
         vertex.co += (translation - pivot_offset + size_offset)
 
 def _mc_set_size(
@@ -1684,16 +1685,24 @@ def _mc_set_size(
         (np.array(mcsize)[[0, 2, 1]] / 2) / MINECRAFT_SCALE_FACTOR
     )
     pos_delta += effective_inflate
-    data = obj.data
+    vertices = get_data_vertices(obj)
     # 0. ---; 1. --+; 2. -+-; 3. -++; 4. +--; 5. +-+; 6. ++- 7. +++
-    data.vertices[0].co = mathutils.Vector(pos_delta * np.array([-1, -1, -1]))
-    data.vertices[1].co = mathutils.Vector(pos_delta * np.array([-1, -1, 1]))
-    data.vertices[2].co = mathutils.Vector(pos_delta * np.array([-1, 1, -1]))
-    data.vertices[3].co = mathutils.Vector(pos_delta * np.array([-1, 1, 1]))
-    data.vertices[4].co = mathutils.Vector(pos_delta * np.array([1, -1, -1]))
-    data.vertices[5].co = mathutils.Vector(pos_delta * np.array([1, -1, 1]))
-    data.vertices[6].co = mathutils.Vector(pos_delta * np.array([1, 1, -1]))
-    data.vertices[7].co = mathutils.Vector(pos_delta * np.array([1, 1, 1]))
+    vertices[0].co = cast(
+        list[float], mathutils.Vector(pos_delta * np.array([-1, -1, -1])))
+    vertices[1].co = cast(
+        list[float], mathutils.Vector(pos_delta * np.array([-1, -1, 1])))
+    vertices[2].co = cast(
+        list[float], mathutils.Vector(pos_delta * np.array([-1, 1, -1])))
+    vertices[3].co = cast(
+        list[float], mathutils.Vector(pos_delta * np.array([-1, 1, 1])))
+    vertices[4].co = cast(
+        list[float], mathutils.Vector(pos_delta * np.array([1, -1, -1])))
+    vertices[5].co = cast(
+        list[float], mathutils.Vector(pos_delta * np.array([1, -1, 1])))
+    vertices[6].co = cast(
+        list[float], mathutils.Vector(pos_delta * np.array([1, 1, -1])))
+    vertices[7].co = cast(
+        list[float], mathutils.Vector(pos_delta * np.array([1, 1, 1])))
 
 def _mc_pivot(obj: Object, mcpivot: Vector3d) -> None:
     '''

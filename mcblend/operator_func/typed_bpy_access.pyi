@@ -9,7 +9,7 @@ from mathutils import Matrix, Euler, Vector
 from .pyi_types import (
     CollectionProperty, DataObjects, ArmatureDataBones, DataImages,
     ObjectDataMaterials, ArmatureDataEditBones, ObjectDataUvLayers,
-    MeshUVLoopLayerData)
+    MeshUVLoopLayerData, ObjectDataVertices)
 
 from ..object_data import MCBLEND_EventProperties, MCBLEND_ObjectProperties
 from ..uv_data import MCBLEND_UvGroupProperties
@@ -109,3 +109,5 @@ def get_rotation_euler(obj: Object) -> Euler: ...
 def get_location(obj: Object) -> Vector: ...
 
 def set_location(obj: Object, location: Vector) -> None: ...
+
+def get_data_vertices(obj: Object) -> ObjectDataVertices: ...
