@@ -4,7 +4,8 @@ Functions and objects related to importing Minecraft models to Blender.
 from __future__ import annotations
 
 import math
-from typing import Dict, List, Optional, Any, Tuple, Set, Union, TYPE_CHECKING
+from typing import (
+    Dict, List, Optional, Any, Tuple, Set, Union, TYPE_CHECKING, cast)
 from enum import Enum
 
 import numpy as np
@@ -14,7 +15,7 @@ from bpy.types import Object
 import bpy
 
 from .typed_bpy_access import (
-    get_armature_data_edit_bones, get_object_matrix_world, set_object_matrix_parent_inverse,
+    get_armature_data_edit_bones, get_object_matrix_world, set_bone_matrix, set_object_matrix_parent_inverse,
     set_object_matrix_world, get_object_matrix_parent_inverse)
 from .common import (
     MINECRAFT_SCALE_FACTOR, CubePolygons, CubePolygon, MeshType)
@@ -1784,5 +1785,6 @@ def add_bone(
         raise ValueError("Failed to add bone.")
     matrix_world = get_object_matrix_world(import_bone_blend_empty)
     bone = edit_bones.new(import_bone.name)
-    bone.head, bone.tail = (0.0, 0.0, 0.0), (0.0, length, 0.0)
-    bone.matrix = matrix_world
+    bone.head = cast(List[float], (0.0, 0.0, 0.0))
+    bone.tail = cast(List[float], (0.0, length, 0.0))
+    set_bone_matrix(bone, matrix_world)

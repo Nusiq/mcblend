@@ -172,6 +172,14 @@ def get_armature_data_edit_bones(armature):
     '''
     return armature.data.edit_bones
 
+def set_bone_matrix(bone, matrix):
+    '''
+    Sets the matrix of the bone
+
+    >>> bone.matrix = matrix
+    '''
+    bone.matrix = matrix
+
 def set_constraint_property(constraint, name, value):
     '''
     Sets the property of the constraint

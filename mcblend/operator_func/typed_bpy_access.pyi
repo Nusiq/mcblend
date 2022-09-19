@@ -2,7 +2,7 @@ from typing import Iterable
 from bpy.types import (
     Context, Object, OperatorProperties, Collection, CollectionObjects,
     CollectionChildren, ViewLayer, LayerObjects, MaterialSlot, Constraint,
-    ObjectConstraints, PoseBoneConstraints, Image)
+    ObjectConstraints, PoseBoneConstraints, Image, EditBone)
 from mathutils import Matrix
 
 from .pyi_types import (
@@ -59,6 +59,8 @@ def get_armature_data_bones(armature: Object) -> ArmatureDataBones: ...
 
 def get_armature_data_edit_bones(
     armature: Object) -> ArmatureDataEditBones: ...
+
+def set_bone_matrix(bone: EditBone, matrix: Matrix) -> None: ...
 
 def set_constraint_property(
     constraint: Constraint, name: str,
