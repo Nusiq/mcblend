@@ -17,7 +17,7 @@ from bpy.types import MeshUVLoopLayer, Object, MeshPolygon, PoseBone
 
 import mathutils
 
-from .typed_bpy_access import get_armature_data_bones
+from .typed_bpy_access import get_armature_data_bones, get_object_matrix_world
 
 from .texture_generator import Mask, ColorMask, get_masks_from_side
 from .exception import ExporterException
@@ -195,11 +195,12 @@ class McblendObject:
         The copy of the translation matrix (matrix_world) of the blender
         wrapped inside this object.
         '''
+        this_obj_matrix_world = get_object_matrix_world(self.thisobj).copy()
         if self.thisobj.type == 'ARMATURE':
-            return self.thisobj.matrix_world.copy() @ self.thisobj.pose.bones[
+            return this_obj_matrix_world @ self.thisobj.pose.bones[
                 self.thisobj_id.bone_name
             ].matrix.copy()
-        return self.thisobj.matrix_world.copy()
+        return this_obj_matrix_world
 
     @property
     def mcube_size(self) -> np.ndarray:
@@ -744,7 +745,7 @@ class McblendObjectGroup:
         '''
         if self.world_origin is None:
             raise RuntimeError("World origin not defined")
-        return self.world_origin.matrix_world
+        return get_object_matrix_world(self.world_origin)
 
     def __len__(self):
         return len(self.data)

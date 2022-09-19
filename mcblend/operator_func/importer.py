@@ -13,6 +13,7 @@ import mathutils
 from bpy.types import Object
 import bpy
 
+from .typed_bpy_access import get_object_matrix_world, set_object_matrix_world
 from .common import (
     MINECRAFT_SCALE_FACTOR, CubePolygons, CubePolygon, MeshType)
 from .extra_types import Vector3di, Vector3d, Vector2d
@@ -1496,7 +1497,7 @@ class ImportGeometry:
                 context.view_layer.update()
                 bone_obj.parent = parent_obj
                 bone_obj.matrix_parent_inverse = (
-                    parent_obj.matrix_world.inverted()
+                    get_object_matrix_world(parent_obj).inverted()
                 )
             # 2. Parent cubes keep transform
             for cube in bone.cubes:
@@ -1504,7 +1505,7 @@ class ImportGeometry:
                 context.view_layer.update()
                 cube_obj.parent = bone_obj
                 cube_obj.matrix_parent_inverse = (
-                    bone_obj.matrix_world.inverted()
+                    get_object_matrix_world(bone_obj).inverted()
                 )
             # 3. Parent poly_mesh keep transform
             if bone.poly_mesh is not None:
@@ -1512,7 +1513,7 @@ class ImportGeometry:
                 context.view_layer.update()
                 poly_mesh_obj.parent = bone_obj
                 poly_mesh_obj.matrix_parent_inverse = (
-                    bone_obj.matrix_world.inverted()
+                    get_object_matrix_world(bone_obj).inverted()
                 )
 
             # 4. Parent locators keep transform
@@ -1521,7 +1522,7 @@ class ImportGeometry:
                 context.view_layer.update()
                 locator_obj.parent = bone_obj
                 locator_obj.matrix_parent_inverse = (
-                    bone_obj.matrix_world.inverted()
+                    get_object_matrix_world(bone_obj).inverted()
                 )
 
         # Rotate objects
@@ -1599,9 +1600,9 @@ class ImportGeometry:
             correction = mathutils.Matrix.Translation(
                 blend_bone.head-blend_bone.tail
             )
-            obj.matrix_world = (  # type: ignore
-                correction @
-                obj.matrix_world  # type: ignore
+            set_object_matrix_world(
+                obj,
+                correction @ get_object_matrix_world(obj)
             )
 
         # Replace empties with bones
@@ -1770,9 +1771,10 @@ def add_bone(
     :param import_bone: import bone with all of the Minecraft data
         and the reference to empty object that currently represents the bone.
     '''
-    matrix_world: mathutils.Matrix = (
-        import_bone.blend_empty.matrix_world  # type: ignore
-    )
+    import_bone_blend_empty = import_bone.blend_empty
+    if import_bone_blend_empty is None:
+        raise ValueError("Failed to add bone.")
+    matrix_world = get_object_matrix_world(import_bone_blend_empty)
     bone = edit_bones.new(import_bone.name)
     bone.head, bone.tail = (0.0, 0.0, 0.0), (0.0, length, 0.0)
     bone.matrix = matrix_world

@@ -20,10 +20,13 @@ from .typed_bpy_access import (
     get_armature_data_bones, get_collection_children, get_collection_objects,
     get_context_object, get_context_scene_mcblend_project,
     get_context_scene_mcblend_events, get_context_selected_objects,
-    get_data_images, get_data_objects, get_object_children, get_object_constraints, get_object_matrix_workd,
-    get_object_mcblend, get_pose_bone_constraints, get_view_layer_objects,
-    new_colection, get_object_material_slots, set_constraint_property, set_object_matrix_parent_inverse, set_object_parent,
-    set_pose_bone_constraint_property, get_object_data_materials)
+    get_data_images, get_data_objects, get_object_children,
+    get_object_constraints, get_object_matrix_world, get_object_mcblend,
+    get_pose_bone_constraints, get_view_layer_objects, new_colection,
+    get_object_material_slots, set_constraint_property,
+    set_object_matrix_parent_inverse, set_object_matrix_world,
+    set_object_parent, set_pose_bone_constraint_property,
+    get_object_data_materials)
 
 from .sqlite_bedrock_packs.better_json import load_jsonc
 
@@ -354,9 +357,9 @@ def inflate_objects(
             # Clear parent from children for a moment
             children = get_object_children(obj)
             for child in children:
-                old_matrix = child.matrix_world.copy()
+                old_matrix = get_object_matrix_world(child).copy()
                 set_object_parent(child, None)
-                child.matrix_world = old_matrix
+                set_object_matrix_world(child, old_matrix)
 
             dimensions = np.array(obj.dimensions)
 
@@ -371,11 +374,9 @@ def inflate_objects(
             # Add children back and set their previous transformations
             for child in children:
                 set_object_parent(child, obj)
-
-                # child.matrix_parent_inverse = obj.matrix_world.inverted()
                 set_object_matrix_parent_inverse(
                     child,
-                    get_object_matrix_workd(obj).inverted())
+                    get_object_matrix_world(obj).inverted())
 
             counter += 1
     return counter
@@ -742,9 +743,9 @@ def prepare_physics_simulation(context: Context) -> Dict:
                 material_slot.material = None  # type: ignore
             bpy.ops.object.origin_set(type='ORIGIN_CENTER_OF_VOLUME', center='MEDIAN')
             bpy.ops.object.visual_transform_apply()
-            matrix_world = rigid_body.matrix_world.copy()
+            matrix_world = get_object_matrix_world(rigid_body).copy()
             rigid_body.parent = None  # type: ignore
-            rigid_body.matrix_world = matrix_world
+            set_object_matrix_world(rigid_body, matrix_world)
             get_collection_objects(rigidbody_world.collection).link(rigid_body)
             # Move to rigid body colleciton
             get_collection_objects(context.collection).unlink(rigid_body)
@@ -769,7 +770,7 @@ def prepare_physics_simulation(context: Context) -> Dict:
             get_collection_objects(bp_collection).link(empty)
             empty.empty_display_type = 'CONE'
             empty.empty_display_size = 0.1
-            empty.matrix_world = bone.obj_matrix_world
+            set_object_matrix_world(empty, get_object_matrix_world(bone.obj_matrix_world))
             physics_objects_groups[bone].object_parent_empty = empty
             # Add "Copy Transforms" constraint to the bone
             get_view_layer_objects(context.view_layer).active = armature
@@ -804,7 +805,8 @@ def prepare_physics_simulation(context: Context) -> Dict:
         get_collection_objects(rbc_collection).link(empty)
         empty.empty_display_type = 'PLAIN_AXES'
         empty.empty_display_size = 0.1
-        empty.matrix_world = bone.obj_matrix_world
+        set_object_matrix_world(
+            empty, get_object_matrix_world(bone.obj_matrix_world))
         physics_objects_groups[bone].rigid_body_constraint = empty
 
     # Add constraints to rigid body constraints empty

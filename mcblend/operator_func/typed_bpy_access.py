@@ -214,7 +214,7 @@ def set_pose_bone_constraint_property(constraint, name, value):
     constraint.__setattr__(name, value)
 
 
-def set_object_matrix_workd(object, matrix):
+def set_object_matrix_world(object, matrix):
     '''
     Sets the world matrix of the object
 
@@ -222,7 +222,7 @@ def set_object_matrix_workd(object, matrix):
     '''
     object.matrix_world = matrix
 
-def get_object_matrix_workd(object):
+def get_object_matrix_world(object):
     '''
     Returns the world matrix of the object
 
