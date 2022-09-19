@@ -15,7 +15,7 @@ from bpy.types import Object, MeshUVLoopLayer
 import bpy
 
 from .typed_bpy_access import (
-    get_data_edit_bones, get_data_uv_layers, get_matrix_world, get_data, set_matrix, set_matrix_parent_inverse,
+    get_data_edit_bones, get_data_uv_layers, get_loop_indices, get_matrix_world, get_data, set_matrix, set_matrix_parent_inverse,
     set_matrix_world, get_matrix_parent_inverse)
 from .common import (
     MINECRAFT_SCALE_FACTOR, CubePolygons, CubePolygon, MeshType)
@@ -1742,7 +1742,7 @@ def _set_uv(
     def set_uv(
             cube_polygon: CubePolygon, size: Vector2d,
             uv: Vector2d):
-        cp_loop_indices = cube_polygon.side.loop_indices
+        cp_loop_indices = get_loop_indices(cube_polygon.side)
         cp_order = cube_polygon.order
 
         left_down = cp_loop_indices[cp_order[0]]

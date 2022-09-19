@@ -222,3 +222,9 @@ def get_matrix_parent_inverse(obj):
     >>> obj.matrix_parent_inverse
     '''
     return obj.matrix_parent_inverse
+
+def get_loop_indices(obj):
+    '''
+    >>> obj.loop_indices
+    '''
+    return obj.loop_indices

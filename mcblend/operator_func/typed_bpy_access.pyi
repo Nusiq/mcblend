@@ -3,7 +3,7 @@ from bpy.types import (
     Context, Object, OperatorProperties, Collection, CollectionObjects,
     CollectionChildren, ViewLayer, LayerObjects, MaterialSlot, Constraint,
     ObjectConstraints, PoseBoneConstraints, Image, EditBone,
-    MeshUVLoopLayer)
+    MeshUVLoopLayer, MeshPolygon)
 from mathutils import Matrix
 
 from .pyi_types import (
@@ -101,3 +101,5 @@ def set_matrix_parent_inverse(
     obj: Object, matrix: Matrix) -> None: ...
 
 def get_matrix_parent_inverse(obj: Object) -> Matrix: ...
+
+def get_loop_indices(obj: MeshPolygon) -> list[int]: ...
