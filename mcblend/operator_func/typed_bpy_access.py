@@ -155,6 +155,14 @@ def get_object_data_materials(object):
     '''
     return object.data.materials
 
+def get_object_data_uv_layers(object):
+    '''
+    Returns the uv layers from object
+
+    >>> object.data.uv_layers
+    '''
+    return object.data.uv_layers
+
 def get_armature_data_bones(armature):
     '''
     Returns bones of the armature object.

@@ -7,7 +7,7 @@ from mathutils import Matrix
 
 from .pyi_types import (
     CollectionProperty, DataObjects, ArmatureDataBones, DataImages,
-    ObjectDataMaterials, ArmatureDataEditBones)
+    ObjectDataMaterials, ArmatureDataEditBones, ObjectDataUvLayers)
 
 from ..object_data import MCBLEND_EventProperties, MCBLEND_ObjectProperties
 from ..uv_data import MCBLEND_UvGroupProperties
@@ -53,7 +53,9 @@ def get_view_layer_objects(view_layer: ViewLayer) -> LayerObjects: ...
 
 def get_object_material_slots(object: Object) -> list[MaterialSlot]: ...
 
-def get_object_data_materials(object) -> ObjectDataMaterials: ...
+def get_object_data_materials(object: Object) -> ObjectDataMaterials: ...
+
+def get_object_data_uv_layers(object: Object) -> ObjectDataUvLayers: ...
 
 def get_armature_data_bones(armature: Object) -> ArmatureDataBones: ...
 

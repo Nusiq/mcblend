@@ -11,11 +11,11 @@ from enum import Enum
 import numpy as np
 
 import mathutils
-from bpy.types import Object
+from bpy.types import Object, MeshUVLoopLayer
 import bpy
 
 from .typed_bpy_access import (
-    get_armature_data_edit_bones, get_object_matrix_world, set_bone_matrix, set_object_matrix_parent_inverse,
+    get_armature_data_edit_bones, get_object_data_uv_layers, get_object_matrix_world, set_bone_matrix, set_object_matrix_parent_inverse,
     set_object_matrix_world, get_object_matrix_parent_inverse)
 from .common import (
     MINECRAFT_SCALE_FACTOR, CubePolygons, CubePolygon, MeshType)
@@ -1410,7 +1410,7 @@ class ImportGeometry:
                 _set_uv(
                     self.uv_converter,
                     CubePolygons.build(cube_obj, cube.mirror),
-                    cube.uv, cube_obj.data.uv_layers.active)
+                    cube.uv, get_object_data_uv_layers(cube_obj).active)
 
                 # 3. Set size & inflate
                 get_object_mcblend(cube.blend_cube).inflate = (
@@ -1726,7 +1726,7 @@ def _mc_rotate(
 
 def _set_uv(
         uv_converter: CoordinatesConverter, cube_polygons: CubePolygons,
-        uv: Dict, uv_layer: bpy.types.MeshUVLoopLayer):
+        uv: Dict, uv_layer: MeshUVLoopLayer):
     '''
     Sets the UV of a face of a Blender cube mesh based on some Minecraft
     properties.
