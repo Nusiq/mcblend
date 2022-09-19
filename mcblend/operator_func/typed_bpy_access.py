@@ -140,6 +140,14 @@ def get_object_material_slots(object):
     '''
     return object.material_slots
 
+def get_object_data_materials(object):
+    '''
+    Returns the materials from object
+
+    >>> object.data.materials
+    '''
+    return object.data.materials
+
 def get_armature_data_bones(armature):
     '''
     Returns bones of the armature object.
@@ -165,6 +173,30 @@ def get_object_constraints(object):
     '''
     return object.constraints
 
+def get_object_children(object):
+    '''
+    Returns the children from object
+
+    >>> object.children
+    '''
+    return object.children
+
+def get_object_parent(object):
+    '''
+    Returns the parent from object
+
+    >>> object.parent
+    '''
+    return object.parent
+
+def set_object_parent(object, value):
+    '''
+    Sets the parent of the object
+
+    >>> object.parent = value
+    '''
+    object.parent = value
+
 def get_pose_bone_constraints(pose_bone):
     '''
     Returns the constraints from pose bone
@@ -180,3 +212,37 @@ def set_pose_bone_constraint_property(constraint, name, value):
     >>> constraint.<name> = value
     '''
     constraint.__setattr__(name, value)
+
+
+def set_object_matrix_workd(object, matrix):
+    '''
+    Sets the world matrix of the object
+
+    >>> object.matrix_world = matrix
+    '''
+    object.matrix_world = matrix
+
+def get_object_matrix_workd(object):
+    '''
+    Returns the world matrix of the object
+
+    >>> object.matrix_world
+    '''
+    return object.matrix_world
+
+def set_object_matrix_parent_inverse(object, matrix):
+    '''
+    Sets the parent inverse matrix of the object
+
+    >>> object.matrix_parent_inverse = matrix
+    '''
+    object.matrix_parent_inverse = matrix
+
+
+def get_object_matrix_parent_inverse(object):
+    '''
+    Returns the parent inverse matrix of the object
+
+    >>> object.matrix_parent_inverse
+    '''
+    return object.matrix_parent_inverse

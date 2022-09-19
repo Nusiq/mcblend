@@ -5,11 +5,14 @@ from __future__ import annotations
 
 from pathlib import Path
 import json
-from typing import Dict, Iterable, List, Literal, Optional, Tuple, cast, TYPE_CHECKING
+from typing import (
+    Dict, Iterable, List, Literal, Optional, Tuple, cast, TYPE_CHECKING,
+    Callable)
 from dataclasses import dataclass, field
 from collections import defaultdict
 
 import bpy
+from mathutils import Matrix
 from bpy.types import Image, Material, Context, Object
 import numpy as np
 
@@ -17,10 +20,10 @@ from .typed_bpy_access import (
     get_armature_data_bones, get_collection_children, get_collection_objects,
     get_context_object, get_context_scene_mcblend_project,
     get_context_scene_mcblend_events, get_context_selected_objects,
-    get_data_images, get_data_objects, get_object_constraints,
+    get_data_images, get_data_objects, get_object_children, get_object_constraints, get_object_matrix_workd,
     get_object_mcblend, get_pose_bone_constraints, get_view_layer_objects,
-    new_colection, get_object_material_slots, set_constraint_property,
-    set_pose_bone_constraint_property)
+    new_colection, get_object_material_slots, set_constraint_property, set_object_matrix_parent_inverse, set_object_parent,
+    set_pose_bone_constraint_property, get_object_data_materials)
 
 from .sqlite_bedrock_packs.better_json import load_jsonc
 
@@ -349,10 +352,10 @@ def inflate_objects(
                 delta_inflate = inflate
                 get_object_mcblend(obj).inflate = inflate
             # Clear parent from children for a moment
-            children = obj.children
+            children = get_object_children(obj)
             for child in children:
                 old_matrix = child.matrix_world.copy()
-                child.parent = None
+                set_object_parent(child, None)
                 child.matrix_world = old_matrix
 
             dimensions = np.array(obj.dimensions)
@@ -362,14 +365,17 @@ def inflate_objects(
                 dimensions +
                 (2*delta_inflate/MINECRAFT_SCALE_FACTOR)
             )
-
-            obj.dimensions = dimensions
+            obj.dimensions = cast(list[float], dimensions)
             context.view_layer.update()
 
             # Add children back and set their previous transformations
             for child in children:
-                child.parent = obj
-                child.matrix_parent_inverse = obj.matrix_world.inverted()
+                set_object_parent(child, obj)
+
+                # child.matrix_parent_inverse = obj.matrix_world.inverted()
+                set_object_matrix_parent_inverse(
+                    child,
+                    get_object_matrix_workd(obj).inverted())
 
             counter += 1
     return counter
@@ -479,8 +485,9 @@ def import_model_form_project(
         material_pks = render_controller_data[
             'render_controller_materials_field_pks']
         if import_type == 'attachable':
-            get_material_pattern_and_material = (
-                db_handler.get_attachable_material_pattern_and_material)
+            get_material_pattern_and_material: Callable[
+                [int, int], tuple[str, str]
+            ] = db_handler.get_attachable_material_pattern_and_material
         elif import_type == 'entity':
             get_material_pattern_and_material = (
                 db_handler.get_entity_material_pattern_and_material)
@@ -513,6 +520,8 @@ def import_model_form_project(
     for geo_pk, rc_stack in geo_rc_stacks.items():
         geo_path, geo_identifier = db_handler.get_geometry(geo_pk)
         geo_data = load_jsonc(geo_path).data
+        if not isinstance(geo_data, dict):
+            raise ValueError(f"File {geo_path} is not a valid geometry file")
         # # Import model
         model_loader = ModelLoader(geo_data, geo_identifier)
         warnings.extend(model_loader.warnings)
@@ -546,23 +555,23 @@ def import_model_form_project(
                 armature_rc.texture = rc_stack_item.texture.name
             else:
                 armature_rc.texture = ""
-            for pattern, material in rc_stack_item.materials.items():
+            for pattern, material_name in rc_stack_item.materials.items():
                 armature_rc_material = armature_rc.materials.add()
                 armature_rc_material.pattern = pattern
-                armature_rc_material.material = material
+                armature_rc_material.material = material_name
 
         # 2.3. For every bone of geometry, create blender material from.
         # Materials are created from a list of pairs:
         # (Image, minecraft material)
         for bone_name, bone in geometry.bones.items():
             # Create a list of materials applicable for this bone
-            bone_materials: List[Tuple[Image, str]] = []
+            bone_materials: List[Tuple[Optional[Image], str]] = []
             bone_materials_id: List[Tuple[Optional[str], str]] = []
             for rc_stack_item in reversed(rc_stack):
                 matched_material: Optional[str] = None
-                for pattern, material in rc_stack_item.materials.items():
+                for pattern, material_name in rc_stack_item.materials.items():
                     if star_pattern_match(bone_name, pattern):
-                        matched_material = material
+                        matched_material = material_name
                 # Add material to bone_materials only if something matched
                 if matched_material is not None:
                     bone_materials.append(
@@ -584,7 +593,7 @@ def import_model_form_project(
             for c in bone.cubes:
                 if c.blend_cube is None:
                     continue
-                c.blend_cube.data.materials.append(
+                get_object_data_materials(c.blend_cube).append(
                     blender_materials[tuple(bone_materials_id)])
     return warnings
 
