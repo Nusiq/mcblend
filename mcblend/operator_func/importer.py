@@ -15,10 +15,10 @@ from bpy.types import Object, MeshUVLoopLayer
 import bpy
 
 from .typed_bpy_access import (
-    get_data_edit_bones, get_data_uv_layers, get_data_vertices,
-    get_loop_indices, get_matrix_world, get_data, get_rotation_euler,
+    add, get_data_edit_bones, get_data_uv_layers, get_data_vertices, get_head,
+    get_loop_indices, get_matrix_world, get_data, get_rotation_euler, get_tail,
     set_matrix, set_matrix_parent_inverse, set_matrix_world,
-    get_matrix_parent_inverse)
+    get_matrix_parent_inverse, get_pose_bones, subtract)
 from .common import (
     MINECRAFT_SCALE_FACTOR, CubePolygons, CubePolygon, MeshType)
 from .extra_types import Vector3di, Vector3d, Vector2d
@@ -1581,7 +1581,7 @@ class ImportGeometry:
         bpy.ops.object.mode_set(mode='OBJECT')
 
         # Add bindings to pose bones
-        pose_bones = armature.pose.bones
+        pose_bones = get_pose_bones(armature)
         for bone in self.bones.values():
             if bone.binding is not None:
                 pose_bones[bone.name].mcblend.binding = bone.binding
@@ -1606,10 +1606,10 @@ class ImportGeometry:
 
             # Correct parenting to tail of the bone instead of head
             context.view_layer.update()
-            blend_bone = armature.pose.bones[bone.name]
+            blend_bone = get_pose_bones(armature)[bone.name]
             # pylint: disable=no-member
             correction = mathutils.Matrix.Translation(
-                blend_bone.head-blend_bone.tail
+                subtract(get_head(blend_bone), get_tail(blend_bone))
             )
             set_matrix_world(
                 obj,

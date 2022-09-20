@@ -153,6 +153,12 @@ def get_data_edit_bones(obj):
     '''
     return obj.data.edit_bones
 
+def get_pose_bones(obj):
+    '''
+    >>> obj.pose.bones
+    '''
+    return obj.pose.bones
+
 def set_matrix(obj, matrix):
     '''
     >>> obj.matrix = matrix
@@ -252,3 +258,28 @@ def get_data_vertices(obj):
     >>> obj.data.vertices
     '''
     return obj.data.vertices
+
+
+def get_head(obj):
+    '''
+    >>> obj.head
+    '''
+    return obj.head
+
+def get_tail(obj):
+    '''
+    >>> obj.tail
+    '''
+    return obj.tail
+
+def add(obj1, obj2):
+    '''
+    >>> obj1 + obj2
+    '''
+    return obj1 + obj2
+
+def subtract(obj1, obj2):
+    '''
+    >>> obj1 - obj2
+    '''
+    return obj1 - obj2
