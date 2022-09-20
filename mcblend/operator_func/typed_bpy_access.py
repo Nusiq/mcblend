@@ -75,6 +75,14 @@ def get_data_objects():
     '''
     return bpy.data.objects
 
+def get_data_meshes():
+    '''
+    Returns the objects from data
+
+    >>> bpy.data.meshes
+    '''
+    return bpy.data.meshes
+
 def get_data_images():
     '''
     Returns the images from data
@@ -134,6 +142,12 @@ def get_data_uv_layers(obj):
     >>> obj.data.uv_layers
     '''
     return obj.data.uv_layers
+
+def get_uv_layers(obj):
+    '''
+    >>> obj.uv_layers
+    '''
+    return obj.uv_layers
 
 def get_data(obj):
     '''
@@ -283,3 +297,9 @@ def subtract(obj1, obj2):
     >>> obj1 - obj2
     '''
     return obj1 - obj2
+
+def matmul(obj1, obj2):
+    '''
+    >>> obj1 @ obj2
+    '''
+    return obj1 @ obj2

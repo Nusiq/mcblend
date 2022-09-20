@@ -4,18 +4,21 @@ Functions related to exporting models.
 from __future__ import annotations
 
 from copy import copy
-from typing import Iterable, List, Dict, Tuple, Any, Optional
+from typing import Iterable, List, Dict, Tuple, Any, Optional, cast
 from dataclasses import dataclass, field
 
 import numpy as np
 import mathutils
+from mathutils import Vector
 import bpy
 from bpy.types import MeshUVLoopLayer, MeshPolygon
+
 
 from .common import (
     MINECRAFT_SCALE_FACTOR, McblendObject, McblendObjectGroup, MCObjType,
     CubePolygons, CubePolygon, MeshType
 )
+from .typed_bpy_access import get_data, get_loop_indices, get_mcblend
 from .extra_types import Vector2di, Vector3d, Vector3di
 from .json_tools import get_vect_json
 from .exception import ExporterException
@@ -156,7 +159,8 @@ class BoneExport:
 
         def _scale(objprop: McblendObject) -> np.ndarray:
             '''Scale of a bone'''
-            _, _, scale = objprop.obj_matrix_world.decompose()
+            _, _, scale = objprop.obj_matrix_world.decompose()  # type: ignore
+            scale = cast(Vector, scale)  # type: ignore
             return np.array(scale.xzy)
 
         # Set locators
@@ -228,7 +232,12 @@ class BoneExport:
                     transformed_normal = mathutils.Vector(
                             np.array(loop.normal)[[0, 2, 1]]
                     ).normalized()
-                    normals.append(list(transformed_normal))
+                    normals.append(
+                        cast(
+                            list[float],
+                            list(transformed_normal)  # type: ignore
+                        )
+                    )
                 for poly in polygons:
                     # vertex data -> List[(positions, normals, uvs)]
                     curr_poly: List[Vector3di] = []
@@ -255,7 +264,7 @@ class BoneExport:
             mcbone['parent'] = self.parent
         mcbone['pivot'] = get_vect_json(self.pivot)
         mcbone['rotation'] = get_vect_json(self.rotation)
-        binding = self.mcblend_obj.this_pose_bone.mcblend.binding
+        binding = get_mcblend(self.mcblend_obj.this_pose_bone).binding
         if binding != "":
             mcbone['binding'] = binding
 
@@ -435,9 +444,9 @@ class UvExportFactory:
         face: MeshPolygon = cube_polygon.side
         name_index = cube_polygon.orientation.index(name)
 
-        uv_layer_data_index = face.loop_indices[name_index]
+        uv_layer_data_index = get_loop_indices(face)[name_index]
         return self.blend_to_mc_converter.convert(
-            np.array(uv_layer.data[uv_layer_data_index].uv)
+            np.array(get_data(uv_layer)[uv_layer_data_index].uv)
         )
 
     def _get_standard_cube_uv_export(
@@ -451,7 +460,7 @@ class UvExportFactory:
         '''
         # Get min and max value of he loop coordinates
         loop_crds_list: List[np.ndarray] = []
-        for loop in uv_layer.data:
+        for loop in get_data(uv_layer):
             loop_crds_list.append(
                 self.blend_to_mc_converter.convert(np.array(loop.uv))
             )

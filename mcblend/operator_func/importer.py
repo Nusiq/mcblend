@@ -15,9 +15,9 @@ from bpy.types import Object, MeshUVLoopLayer
 import bpy
 
 from .typed_bpy_access import (
-    add, get_data_edit_bones, get_data_uv_layers, get_data_vertices, get_head,
-    get_loop_indices, get_matrix_world, get_data, get_rotation_euler, get_tail,
-    set_matrix, set_matrix_parent_inverse, set_matrix_world,
+    add, get_data_edit_bones, get_data_meshes, get_data_uv_layers, get_data_vertices, get_head,
+    get_loop_indices, get_matrix_world, get_data, get_objects, get_rotation_euler, get_tail, get_uv_layers,
+    matmul, set_matrix, set_matrix_parent_inverse, set_matrix_world,
     get_matrix_parent_inverse, get_pose_bones, subtract)
 from .common import (
     MINECRAFT_SCALE_FACTOR, CubePolygons, CubePolygon, MeshType)
@@ -1377,7 +1377,7 @@ class ImportGeometry:
         # Build armature:
         # Create empty armature and enter edit mode:
         bpy.ops.object.armature_add(
-            enter_editmode=True, align='WORLD', location=(0, 0, 0))
+            enter_editmode=True, align='WORLD', location=[0, 0, 0])
         bpy.ops.armature.select_all(action='SELECT')
         bpy.ops.armature.delete()
         bpy.ops.object.mode_set(mode='OBJECT')
@@ -1391,7 +1391,7 @@ class ImportGeometry:
         for bone in self.bones.values():
             # 1. Spawn bone (empty)
             bpy.ops.object.empty_add(
-                type='SPHERE', location=(0, 0, 0), radius=0.2)
+                type='SPHERE', location=[0, 0, 0], radius=0.2)
             bone_obj: Object
             bone_obj = bone.blend_empty = get_context_object(context)
             _mc_pivot(bone_obj, bone.pivot)  # 2. Apply translation
@@ -1400,7 +1400,7 @@ class ImportGeometry:
                 cube_obj: Object
                 # 1. Spawn cube
                 bpy.ops.mesh.primitive_cube_add(
-                    size=1, enter_editmode=False, location=(0, 0, 0)
+                    size=1, enter_editmode=False, location=[0, 0, 0]
                 )
                 cube_obj = cube.blend_cube = get_context_object(context)
 
@@ -1458,27 +1458,29 @@ class ImportGeometry:
                     blender_polygons.append(curr_polygon)
 
                 # 2. Create mesh
-                mesh = bpy.data.meshes.new(name='poly_mesh')
+                mesh = get_data_meshes().new(name='poly_mesh')
                 mesh.from_pydata(blender_vertices, [], blender_polygons)
 
                 if not mesh.validate():  # Valid geometry
                     # 3. Create an object and connect mesh to it, mark as
                     # polymesh
                     poly_mesh_obj = get_data_objects().new('poly_mesh', mesh)
-                    context.collection.objects.link(poly_mesh_obj)
+                    get_objects(context.collection).link(poly_mesh_obj)
                     bone.poly_mesh.blend_object = poly_mesh_obj
-                    poly_mesh_obj.mcblend.mesh_type = (
+                    get_mcblend(poly_mesh_obj).mesh_type = (
                         MeshType.POLY_MESH.value)
 
                     # 4. Set mesh normals and UVs
                     mesh.create_normals_split()
                     mesh.use_auto_smooth = True
-                    mesh.normals_split_custom_set(blender_normals)
-                    if mesh.uv_layers.active is None:
-                        mesh.uv_layers.new()
-                    uv_layer = mesh.uv_layers.active.data  # type: ignore
+                    mesh.normals_split_custom_set(
+                        blender_normals)  # type: ignore
+                    
+                    if get_uv_layers(mesh).active is None:
+                        get_uv_layers(mesh).new()
+                    uv_layer = get_data(get_uv_layers(mesh).active)
                     for i, uv in enumerate(blender_uvs):
-                        uv_layer[i].uv = uv
+                        uv_layer[i].uv = cast(list[float],uv)
                 else:
                     del mesh
                     raise ImporterException(
@@ -1488,7 +1490,7 @@ class ImportGeometry:
                 # 1. Spawn locator (empty)
                 locator_obj: Object
                 bpy.ops.object.empty_add(
-                    type='SPHERE', location=(0, 0, 0), radius=0.1)
+                    type='SPHERE', location=[0, 0, 0], radius=0.1)
                 locator_obj = locator.blend_empty = get_context_object(context)
                 # 2. Apply translation
                 _mc_pivot(locator_obj, locator.position)
@@ -1498,12 +1500,13 @@ class ImportGeometry:
 
         # Parent objects (keep offset)
         for bone in self.bones.values():
+            assert bone.blend_empty is not None
             bone_obj = bone.blend_empty
             # 1. Parent bone keep transform
             if bone.parent is not None and bone.parent in self.bones:
-                parent_obj: Object = self.bones[
+                parent_obj = cast(Object, self.bones[
                     bone.parent
-                ].blend_empty
+                ].blend_empty)
                 context.view_layer.update()
                 bone_obj.parent = parent_obj
                 set_matrix_parent_inverse(
@@ -1512,7 +1515,7 @@ class ImportGeometry:
                 )
             # 2. Parent cubes keep transform
             for cube in bone.cubes:
-                cube_obj = cube.blend_cube
+                cube_obj = cast(Object, cube.blend_cube)
                 context.view_layer.update()
                 cube_obj.parent = bone_obj
                 set_matrix_parent_inverse(
@@ -1521,7 +1524,7 @@ class ImportGeometry:
                 )
             # 3. Parent poly_mesh keep transform
             if bone.poly_mesh is not None:
-                poly_mesh_obj = bone.poly_mesh.blend_object
+                poly_mesh_obj = cast(Object, bone.poly_mesh.blend_object)
                 context.view_layer.update()
                 poly_mesh_obj.parent = bone_obj
                 set_matrix_parent_inverse(
@@ -1531,7 +1534,7 @@ class ImportGeometry:
 
             # 4. Parent locators keep transform
             for locator in bone.locators:
-                locator_obj = locator.blend_empty
+                locator_obj = cast(Object, locator.blend_empty)
                 context.view_layer.update()
                 locator_obj.parent = bone_obj
                 set_matrix_parent_inverse(
@@ -1541,11 +1544,11 @@ class ImportGeometry:
 
         # Rotate objects
         for bone in self.bones.values():
-            bone_obj = bone.blend_empty
+            bone_obj = cast(Object, bone.blend_empty)
             context.view_layer.update()
             _mc_rotate(bone_obj, bone.rotation)
             for cube in bone.cubes:
-                cube_obj = cube.blend_cube
+                cube_obj = cast(Object, cube.blend_cube)
                 _mc_rotate(cube_obj, cube.rotation)
         return armature
 
@@ -1560,7 +1563,7 @@ class ImportGeometry:
         '''
         # Build everything using empties
         armature = self.build_with_empties(context)
-        context.view_layer.objects.active = armature
+        get_objects(context.view_layer).active = armature
         bpy.ops.object.mode_set(mode='EDIT')
 
         edit_bones = get_data_edit_bones(armature)
@@ -1573,9 +1576,7 @@ class ImportGeometry:
         for bone in self.bones.values():
             # 1. Parent bone keep transform
             if bone.parent is not None and bone.parent in self.bones:
-                parent_obj: Object = self.bones[
-                    bone.parent
-                ]
+                parent_obj = self.bones[bone.parent]
                 # context.view_layer.update()
                 edit_bones[bone.name].parent = edit_bones[parent_obj.name]
         bpy.ops.object.mode_set(mode='OBJECT')
@@ -1584,7 +1585,7 @@ class ImportGeometry:
         pose_bones = get_pose_bones(armature)
         for bone in self.bones.values():
             if bone.binding is not None:
-                pose_bones[bone.name].mcblend.binding = bone.binding
+                get_mcblend(pose_bones[bone.name]).binding = bone.binding
 
         def parent_bone_keep_transform(
                 obj: Object, bone: ImportBone):
@@ -1612,8 +1613,7 @@ class ImportGeometry:
                 subtract(get_head(blend_bone), get_tail(blend_bone))
             )
             set_matrix_world(
-                obj,
-                correction @ get_matrix_world(obj)
+                obj, matmul(correction, get_matrix_world(obj))
             )
 
         # Replace empties with bones

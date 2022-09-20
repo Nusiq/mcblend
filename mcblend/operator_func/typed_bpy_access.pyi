@@ -3,16 +3,17 @@ from bpy.types import (
     Context, Object, OperatorProperties, Collection, CollectionObjects,
     CollectionChildren, ViewLayer, LayerObjects, MaterialSlot, Constraint,
     ObjectConstraints, PoseBoneConstraints, Image, EditBone,
-    MeshUVLoopLayer, MeshPolygon, PoseBone)
+    MeshUVLoopLayer, MeshPolygon, PoseBone, Mesh)
 from mathutils import Matrix, Euler, Vector
 
 
 from .pyi_types import (
-    CollectionProperty, DataObjects, ArmatureDataBones, DataImages,
+    CollectionProperty, DataObjects, DataMeshes, ArmatureDataBones, DataImages,
     ObjectDataMaterials, ArmatureDataEditBones, ObjectDataUvLayers,
     MeshUVLoopLayerData, ObjectDataVertices, ArmaturePoseBones)
 
-from ..object_data import MCBLEND_EventProperties, MCBLEND_ObjectProperties
+from ..object_data import (
+    MCBLEND_EventProperties, MCBLEND_ObjectProperties, MCBLEND_BoneProperties)
 from ..uv_data import MCBLEND_UvGroupProperties
 from ..resource_pack_data import MCBLEND_ProjectProperties
 
@@ -36,11 +37,17 @@ def get_context_selected_objects(context: Context) -> list[Object]: ...
 
 def get_data_objects() -> DataObjects: ...
 
+def get_data_meshes() -> DataMeshes: ...
+
 def get_data_images() -> DataImages: ...
 
 def set_pixels(obj: Image, pixels: Iterable[float]) -> None: ...
 
+@overload
 def get_mcblend(obj: Object) -> MCBLEND_ObjectProperties: ...
+
+@overload
+def get_mcblend(obj: PoseBone) -> MCBLEND_BoneProperties: ...
 
 def set_operator_property(
     operator: OperatorProperties, name: str,
@@ -65,6 +72,8 @@ def get_material_slots(obj: Object) -> list[MaterialSlot]: ...
 def get_data_materials(obj: Object) -> ObjectDataMaterials: ...
 
 def get_data_uv_layers(obj: Object) -> ObjectDataUvLayers: ...
+
+def get_uv_layers(mesh: Mesh) -> ObjectDataUvLayers: ...
 
 def get_data(obj: MeshUVLoopLayer) -> MeshUVLoopLayerData: ...
 
@@ -121,3 +130,5 @@ def get_tail(obj: PoseBone) -> Vector: ...
 def add(obj1: Vector, obj2: Vector) -> Vector: ...
 
 def subtract(obj1: Vector, obj2: Vector) -> Vector: ...
+
+def matmul(obj1: Matrix, obj2: Matrix) -> Matrix: ...
