@@ -4,7 +4,8 @@ Extra types used only in the PYI files.
 from typing import Any, Iterator, TypeVar, Generic, Sized, Optional
 from bpy.types import (
     Object, Mesh, Image, Material, Bone, EditBone, MeshUVLoopLayer, PoseBone,
-    MeshUVLoop, MeshVertex)
+    MeshUVLoop, MeshVertex, MeshPolygon, TimelineMarker, FCurve, Keyframe,
+    NlaTrack, NlaStrip)
 
 T = TypeVar("T")
 
@@ -115,3 +116,51 @@ class ObjectDataVertices(Sized):
     '''
     def __getitem__(self, key: Any) -> MeshVertex: ...
     def __iter__(self) -> Iterator[MeshVertex]: ...
+
+class ObjectDataPolygons(Sized):
+    '''
+    Fake class defined as a result of:
+    >>> object.data.polygons
+    '''
+    def __getitem__(self, key: Any) -> MeshPolygon: ...
+    def __iter__(self) -> Iterator[MeshPolygon]: ...
+
+class SceneTimelineMarkers(Sized):
+    '''
+    Fake class defined as a result of:
+    >>> object.timeline_markers
+    '''
+    def __getitem__(self, key: Any) -> TimelineMarker: ...
+    def __iter__(self) -> Iterator[TimelineMarker]: ...
+
+class ActionFCurves(Sized):
+    '''
+    Fake class defined as a result of:
+    >>> object.fcurves
+    '''
+    def __getitem__(self, key: Any) -> FCurve: ...
+    def __iter__(self) -> Iterator[FCurve]: ...
+
+class FCurveKeyframePoints(Sized):
+    '''
+    Fake class defined as a result of:
+    >>> object.keyframe_points
+    '''
+    def __getitem__(self, key: Any) -> Keyframe: ...
+    def __iter__(self) -> Iterator[Keyframe]: ...
+
+class AnimationDataNlaTracks(Sized):
+    '''
+    Fake class defined as a result of:
+    >>> object.nla_tracks
+    '''
+    def __getitem__(self, key: Any) -> NlaTrack: ...
+    def __iter__(self) -> Iterator[NlaTrack]: ...
+
+class NlaTrackNlaStrips(Sized):
+    '''
+    Fake class defined as a result of:
+    >>> object.strips
+    '''
+    def __getitem__(self, key: Any) -> NlaStrip: ...
+    def __iter__(self) -> Iterator[NlaStrip]: ...

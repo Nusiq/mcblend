@@ -20,7 +20,7 @@ from .operator_func.typed_bpy_access import (
     get_context_scene_mcblend_events, get_context_scene_mcblend_active_event,
     get_data_objects, get_mcblend, get_data_images,
     set_context_scene_mcblend_active_event,
-    get_context_scene_mcblend_uv_groups, get_context_selected_objects)
+    get_context_scene_mcblend_uv_groups, get_selected_objects)
 from .uv_data import get_unused_uv_group_name
 from .operator_func.material import MATERIALS_MAP
 
@@ -234,7 +234,7 @@ class MCBLEND_OT_FixUv(Operator):
         return get_context_object(context).type == 'ARMATURE'
 
     def execute(self, context):
-        for obj in get_context_selected_objects(context):
+        for obj in get_selected_objects(context):
             if obj.type == 'MESH' and any(map(lambda x: x < 0, obj.scale)):
                 self.report(
                     {'ERROR'},
@@ -275,7 +275,7 @@ class MCBLEND_OT_UvGroup(Operator):
     def poll(cls, context: Context):
         if context.mode != 'OBJECT':
             return False
-        if len(get_context_selected_objects(context)) < 1:
+        if len(get_selected_objects(context)) < 1:
             return False
         if len(get_context_scene_mcblend_uv_groups(context)) == 0:
             return False
@@ -285,7 +285,7 @@ class MCBLEND_OT_UvGroup(Operator):
         return context.window_manager.invoke_props_dialog(self)
 
     def execute(self, context):
-        for obj in get_context_selected_objects(context):
+        for obj in get_selected_objects(context):
             if obj.type == 'MESH':
                 obj.mcblend.uv_group = (
                     self.uv_groups_enum)
@@ -312,14 +312,14 @@ class MCBLEND_OT_ClearUvGroup(Operator):
     def poll(cls, context: Context):
         if context.mode != 'OBJECT':
             return False
-        if len(get_context_selected_objects(context)) < 1:
+        if len(get_selected_objects(context)) < 1:
             return False
         if len(get_context_scene_mcblend_uv_groups(context)) == 0:
             return False
         return True
 
     def execute(self, context):
-        for obj in get_context_selected_objects(context):
+        for obj in get_selected_objects(context):
             if obj.type == 'MESH':
                 obj.mcblend.uv_group = ''
         self.report({'INFO'}, 'Cleared UV group of selected objects.')
@@ -359,12 +359,12 @@ class MCBLEND_OT_SetInflate(Operator):
     def poll(cls, context: Context):
         if context.mode != 'OBJECT':
             return False
-        if len(get_context_selected_objects(context)) < 1:
+        if len(get_selected_objects(context)) < 1:
             return False
         return True
 
     def invoke(self, context, event):
-        for obj in get_context_selected_objects(context):
+        for obj in get_selected_objects(context):
             if obj.type == 'MESH':
                 break
         else:
@@ -376,7 +376,7 @@ class MCBLEND_OT_SetInflate(Operator):
 
     def execute(self, context):
         inflate_objects(
-            context, get_context_selected_objects(context),
+            context, get_selected_objects(context),
             self.inflate_value, self.mode)
         return {'FINISHED'}
 
@@ -400,7 +400,7 @@ class MCBLEND_OT_SeparateMeshCubes(Operator):
     def poll(cls, context: Context):
         if context.mode != 'OBJECT':
             return False
-        if len(get_context_selected_objects(context)) < 1:
+        if len(get_selected_objects(context)) < 1:
             return False
         return True
 

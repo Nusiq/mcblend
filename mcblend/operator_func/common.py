@@ -7,7 +7,8 @@ from ctypes import c_int
 import math
 from enum import Enum
 from typing import (
-    Deque, Dict, Iterator, NamedTuple, List, Optional, Tuple, Any, Iterable, Sequence)
+    Deque, Dict, Iterator, NamedTuple, List, Optional, Tuple, Any, Iterable,
+    Sequence, cast)
 from collections import deque
 
 import numpy as np
@@ -15,9 +16,11 @@ import numpy as np
 import bpy
 from bpy.types import MeshUVLoopLayer, Object, MeshPolygon, PoseBone
 
-import mathutils
+from mathutils import Vector, Matrix, Euler
 
-from .typed_bpy_access import get_data_bones, get_matrix_world
+from .typed_bpy_access import (
+    decompose, get_co, get_data_bones, get_data_polygons, get_data_vertices, get_matrix_local, get_matrix_world, matmul, set_co,
+    subtract, cross, neg)
 
 from .texture_generator import Mask, ColorMask, get_masks_from_side
 from .exception import ExporterException
@@ -190,7 +193,7 @@ class McblendObject:
         return self.thisobj.bound_box
 
     @property
-    def obj_matrix_world(self) -> mathutils.Matrix:
+    def obj_matrix_world(self) -> Matrix:
         '''
         The copy of the translation matrix (matrix_world) of the blender
         wrapped inside this object.
@@ -227,7 +230,7 @@ class McblendObject:
         '''
         def local_crds(
                 parent: McblendObject, child: McblendObject
-            ) -> mathutils.Vector:
+            ) -> Vector:
             '''Local coordinates of child matrix inside parent matrix'''
             # Applying normalize() function to matrix world of parent and child
             # suppose to fix some errors with scaling but tests doesn't show any
@@ -236,7 +239,7 @@ class McblendObject:
             return child.get_local_matrix(
                 parent, normalize=True).to_translation()
 
-        def _get_mcpivot(objprop: McblendObject) -> mathutils.Vector:
+        def _get_mcpivot(objprop: McblendObject) -> Vector:
             if objprop.parent is not None:
                 result = local_crds(objprop.parent, objprop)
                 result += _get_mcpivot(objprop.parent)
@@ -248,7 +251,7 @@ class McblendObject:
 
     def get_local_matrix(
             self, other: Optional[McblendObject] = None, normalize: bool = False
-        ) -> mathutils.Matrix:
+        ) -> Matrix:
         '''
         Returns translation matrix of this object optionally in translation
         space of the other :class:`McblendObject`.
@@ -267,7 +270,7 @@ class McblendObject:
         else:
             p_matrix = (
                 # pylint: disable=no-value-for-parameter
-                mathutils.Matrix()
+                Matrix()
             )
         c_matrix = self.obj_matrix_world
         if normalize:
@@ -288,8 +291,8 @@ class McblendObject:
             format.
         '''
         def local_rotation(
-                child_matrix: mathutils.Matrix, parent_matrix: mathutils.Matrix
-            ) -> mathutils.Euler:
+                child_matrix: Matrix, parent_matrix: Matrix
+            ) -> Euler:
             '''
             Returns Euler rotation of a child matrix in relation to parent matrix
             '''
@@ -403,7 +406,7 @@ class McblendObject:
 
         # List that represents the grouping - index: the index of vertex
         # value: the pointer to identifier of a group of that vertex
-        groups = [c_int(-1) for _ in range(len(obj.data.vertices))]
+        groups = [c_int(-1) for _ in range(len(get_data_vertices(obj)))]
 
         for edge in obj.data.edges:
             a, b = edge.vertices
@@ -582,11 +585,11 @@ class CubePolygons(NamedTuple):
                 f"Object {cube.name.split('.')[0]} is not a cube. Number of edges != 12."
             )
         # 1. Check if object has 6 quadrilateral faces
-        if len(cube.data.polygons) != 6:
+        if len(get_data_polygons(cube)) != 6:
             raise ExporterException(
                 f"Object {cube.name.split('.')[0]} is not a cube. Number of faces != 6."
             )
-        for polygon in cube.data.polygons:
+        for polygon in get_data_polygons(cube):
             if len(polygon.vertices) != 4:
                 raise ExporterException(
                     f"Object {cube.name.split('.')[0]} is not a cube. Not all faces are "
@@ -855,15 +858,15 @@ def apply_obj_transform_keep_origin(obj: Object):
     '''
     # Decompose object transformations
     loc, rot, scl = obj.matrix_local.decompose()
-    loc_mat = mathutils.Matrix.Translation(loc)
+    loc_mat = Matrix.Translation(loc)
     rot_mat = rot.to_matrix().to_4x4()
     scl_mat =  (
-        mathutils.Matrix.Scale(scl[0],4,(1,0,0)) @
-        mathutils.Matrix.Scale(scl[1],4,(0,1,0)) @
-        mathutils.Matrix.Scale(scl[2],4,(0,0,1)))
+        Matrix.Scale(scl[0],4,(1,0,0)) @
+        Matrix.Scale(scl[1],4,(0,1,0)) @
+        Matrix.Scale(scl[2],4,(0,0,1)))
     obj.matrix_local = loc_mat
 
-    for vertex in obj.data.vertices:
+    for vertex in get_data_vertices(obj):
         vertex.co =  rot_mat @ scl_mat @ vertex.co
 
 def fix_cube_rotation(obj: Object):
@@ -878,27 +881,28 @@ def fix_cube_rotation(obj: Object):
     # I'm assuming this is a cuboid so I also can assume that
     # vectors u and v are not planar:
     # u = vector(b, a) and v = (b, c)
-    poly = obj.data.polygons[0]
+    poly = get_data_polygons(obj)[0]
 
-    vertices = obj.data.vertices
-    a = vertices[poly.vertices[0]].co
-    b = vertices[poly.vertices[1]].co
-    c = vertices[poly.vertices[2]].co
+    vertices = get_data_vertices(obj)
+    a = cast(Vector, vertices[poly.vertices[0]].co)
+    b = cast(Vector, vertices[poly.vertices[1]].co)
+    c = cast(Vector, vertices[poly.vertices[2]].co)
 
     # Calculate the normal vector of the surface with points
     # a, b and c
-    u: mathutils.Vector = (a-b).normalized()
-    v: mathutils.Vector = (c-b).normalized()
+    u: Vector = subtract(a, b).normalized()
+    v: Vector = subtract(c, b).normalized()
 
     # The cross product creates the 3rd vector that defines
     # the rotated space
-    w = u.cross(v).normalized()
+    
+    w = cross(u, v).normalized()
     # Recalculate V to make sure that all of the vectors are at
     # the right angle (even though they should be)
-    v = w.cross(u).normalized()
+    v = cross(w, u).normalized()
 
     # Create rotation matrix (unit vectors x, y, z in columns)
-    rotation_matrix = mathutils.Matrix((w, v, -u))
+    rotation_matrix = Matrix((w, v, neg(u)))
     # (w, v, -u) - this order of normals in rotation matrix is set up in
     # such way that applying the operator to the default cube (without
     # rotations) will not change its rotation and won't flip its scale to -1.
@@ -906,19 +910,19 @@ def fix_cube_rotation(obj: Object):
 
 
     # Rotate the mesh
-    for vertex in obj.data.vertices:
-        vertex.co = rotation_matrix @ vertex.co
+    for vertex in get_data_vertices(obj):
+        set_co(vertex, matmul(rotation_matrix, get_co(vertex)))
 
     # Counter rotate object around its origin
     counter_rotation = rotation_matrix.to_4x4().inverted()
 
-    loc, rot, scl = obj.matrix_local.decompose()
-    loc_mat = mathutils.Matrix.Translation(loc)
+    loc, rot, scl = decompose(get_matrix_local(obj))
+    loc_mat = Matrix.Translation(loc)
     rot_mat = rot.to_matrix().to_4x4()
     scl_mat =  (
-        mathutils.Matrix.Scale(scl[0],4,(1,0,0)) @
-        mathutils.Matrix.Scale(scl[1],4,(0,1,0)) @
-        mathutils.Matrix.Scale(scl[2],4,(0,0,1)))
+        Matrix.Scale(scl[0],4,(1,0,0)) @
+        Matrix.Scale(scl[1],4,(0,1,0)) @
+        Matrix.Scale(scl[2],4,(0,0,1)))
 
     obj.matrix_local = loc_mat @ counter_rotation @ rot_mat @ scl_mat
 

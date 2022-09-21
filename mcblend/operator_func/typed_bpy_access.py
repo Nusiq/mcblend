@@ -59,7 +59,7 @@ def get_context_scene_mcblend_uv_groups(context):
     '''
     return context.scene.mcblend_uv_groups
 
-def get_context_selected_objects(context):
+def get_selected_objects(context):
     '''
     Returns selected objects list from context
 
@@ -231,6 +231,12 @@ def get_matrix_world(obj):
     '''
     return obj.matrix_world
 
+def get_matrix_local(obj):
+    '''
+    >>> obj.matrix_local
+    '''
+    return obj.matrix_local
+
 def set_matrix_parent_inverse(obj, matrix):
     '''
     >>> obj.matrix_parent_inverse = matrix
@@ -273,6 +279,11 @@ def get_data_vertices(obj):
     '''
     return obj.data.vertices
 
+def get_data_polygons(obj):
+    '''
+    >>> obj.data.polygons
+    '''
+    return obj.data.polygons
 
 def get_head(obj):
     '''
@@ -303,3 +314,65 @@ def matmul(obj1, obj2):
     >>> obj1 @ obj2
     '''
     return obj1 @ obj2
+
+def get_timeline_markers(obj):
+    '''
+    >>> obj.timeline_markers
+    '''
+    return obj.timeline_markers
+
+def get_fcurves(obj):
+    '''
+    >>> obj.fcurves
+    '''
+    return obj.fcurves
+
+def get_keyframe_points(obj):
+    '''
+    >>> obj.keyframe_points
+    '''
+    return obj.keyframe_points
+
+def get_nla_tracks(obj):
+    '''
+    >>> obj.nla_tracks
+    '''
+    return obj.nla_tracks
+
+
+def get_strips(obj):
+    '''
+    >>> obj.strips
+    '''
+    return obj.strips
+
+def cross(a, b):
+    '''
+    >>> a.cross(b)
+    '''
+    return a.cross(b)
+
+def neg(a):
+    '''
+    >>> -a
+    '''
+    return -a
+
+def get_co(obj):
+    '''
+    >>> obj.co
+    '''
+    return obj.co
+
+
+def set_co(obj, co):
+    '''
+    >>> obj.co = co
+    '''
+    obj.co = co
+
+def decompose(obj):
+    '''
+    >>> obj.decompose()
+    '''
+    return obj.decompose()

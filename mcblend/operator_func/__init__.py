@@ -19,7 +19,7 @@ import numpy as np
 from .typed_bpy_access import (
     get_data_bones, get_objects,
     get_context_object, get_context_scene_mcblend_project,
-    get_context_scene_mcblend_events, get_context_selected_objects,
+    get_context_scene_mcblend_events, get_selected_objects,
     get_data_images, get_data_objects, get_children,
     get_constraints, get_matrix_world, get_mcblend,
     new_colection,
@@ -302,8 +302,8 @@ def separate_mesh_cubes(context: Context):
     :returns: the number of created objects
     '''
     bpy.ops.mesh.separate(type='LOOSE')
-    edited_objects = len(get_context_selected_objects(context))
-    for obj in get_context_selected_objects(context):
+    edited_objects = len(get_selected_objects(context))
+    for obj in get_selected_objects(context):
         if obj.type != 'MESH':
             continue
         apply_obj_transform_keep_origin(obj)
