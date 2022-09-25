@@ -2,15 +2,20 @@
 Functions related to imoporting models from resource packs.
 '''
 from __future__ import annotations
-import bpy_types
-from typing import Literal, TypedDict, TYPE_CHECKING, cast
+from typing import Literal, TypedDict, TYPE_CHECKING, cast, Union
+from bpy.types import Context
+from .pyi_types import CollectionProperty
+from .typed_bpy_access import get_scene_mcblend_project
 
-
+# Import for static type checking only (to avoid circular imports)
 if TYPE_CHECKING:
-    from ..resource_pack_data import MCBLEND_ProjectProperties
+    from ..resource_pack_data import (
+        MCBLEND_ProjectProperties, MCBLEND_AttachableRenderController,
+        MCBLEND_EntityRenderController)
 else:
     MCBLEND_ProjectProperties = None
-    MCBLEND_ObjectProperties = None
+    MCBLEND_AttachableRenderController = None
+    MCBLEND_EntityRenderController = None
 
 class PksForModelImport(TypedDict):
     '''
@@ -54,16 +59,18 @@ class PksForModelRc(TypedDict):
 
 
 def get_pks_for_model_improt(
-        context: bpy_types.Context,
+        context: Context,
         base_object: Literal['entity', 'attachable']) -> PksForModelImport:
     '''
     Creates a dictionary of primary keys needed to import an entity from a
     resource pack based on the settings selected in the UI.
     '''
     # 1. Load cached data
-    project = context.scene.mcblend_project
+    project = get_scene_mcblend_project(context)
     project = cast(MCBLEND_ProjectProperties, project)
-
+    render_controllers: Union[
+        CollectionProperty[MCBLEND_AttachableRenderController],
+        CollectionProperty[MCBLEND_EntityRenderController]]
     if base_object == 'entity':
         pk = project.entities[project.selected_entity].primary_key
         render_controllers = project.entity_render_controllers
@@ -75,7 +82,7 @@ def get_pks_for_model_improt(
 
     # 2. Build a dictionary with PKs of all of the queries needed to load the
     # data about the model
-    query_data: PksForModelImport = {}
+    query_data: PksForModelImport = {}  # type: ignore
     # Load client entity PK
     query_data['pk'] = pk
     query_data['render_controllers'] = []
@@ -83,7 +90,7 @@ def get_pks_for_model_improt(
     for render_controller in render_controllers:
         # Load render controller PK
         rc_pk = render_controller.primary_key
-        query_data_rc = {}
+        query_data_rc: PksForModelRc = {}  # type: ignore
         query_data['render_controllers'].append(query_data_rc)
         query_data_rc['render_controller_pk'] = rc_pk
 
@@ -99,7 +106,7 @@ def get_pks_for_model_improt(
         query_data_rc['geometry_pk'] = geo_pk
 
         # Load all materials PKs
-        query_data_rc_materials = []
+        query_data_rc_materials: list[int] = []
         query_data_rc['render_controller_materials_field_pks'] = (
             query_data_rc_materials)
         query_data_rc['source_entity_material_field_pk'] = -1

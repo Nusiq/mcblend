@@ -21,7 +21,7 @@ class DbHandler:
     def load_db_from_file(self, path: Path):
         '''Loads existing database from a file.'''
         self.db.close()
-        self.db = open_db(path)
+        self.db = open_db(path)  # type: ignore
         self.is_loaded = True
 
     def _clear_cache(self):
@@ -858,7 +858,9 @@ class DbHandler:
         WHERE
             Geometry_pk == ?;
         '''
-        return tuple(self.db.execute(query, (geometry_pk,)).fetchone())
+        return tuple(  # type: ignore
+            self.db.execute(query, (geometry_pk,)
+        ).fetchone())
 
     def get_entity_material_pattern_and_material(
             self, entity_pk: int, rc_material_field_pk: int) -> tuple[str, str]:
@@ -881,8 +883,10 @@ class DbHandler:
             ClientEntityMaterialField.ClientEntity_fk = ?
             AND RenderControllerMaterialsField_pk = ?;
         '''
-        return tuple(self.db.execute(
-            query, (entity_pk, rc_material_field_pk)).fetchone())
+        return tuple(self.db.execute(  # type: ignore
+            query,
+            (entity_pk, rc_material_field_pk)).fetchone()
+        )
 
     def get_attachable_material_pattern_and_material(
             self, attachable_pk: int, rc_material_field_pk: int) -> tuple[str, str]:
@@ -905,8 +909,10 @@ class DbHandler:
             AttachableMaterialField.Attachable_fk = ?
             AND RenderControllerMaterialsField_pk = ?;
         '''
-        return tuple(self.db.execute(
-            query, (attachable_pk, rc_material_field_pk)).fetchone())
+        return tuple(self.db.execute(  # type: ignore
+            query,
+            (attachable_pk, rc_material_field_pk)).fetchone()
+        )
 
     def get_full_material_identifier(self, material_field_pk: int) -> str:
         '''

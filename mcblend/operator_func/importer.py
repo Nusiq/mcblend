@@ -4,20 +4,33 @@ Functions and objects related to importing Minecraft models to Blender.
 from __future__ import annotations
 
 import math
-from typing import Dict, List, Optional, Any, Tuple, Set, Union
+from typing import (
+    Dict, List, Optional, Any, Tuple, Set, Union, TYPE_CHECKING, cast)
 from enum import Enum
 
 import numpy as np
 
-import bpy_types
 import mathutils
+from bpy.types import Object, MeshUVLoopLayer
 import bpy
 
+from .typed_bpy_access import (
+    add, get_data_edit_bones, get_data_meshes, get_data_uv_layers, get_data_vertices, get_head,
+    get_loop_indices, get_matrix_world, get_data, get_objects, get_rotation_euler, get_tail, get_uv_layers,
+    matmul, set_matrix, set_matrix_parent_inverse, set_matrix_world,
+    get_matrix_parent_inverse, get_pose_bones, subtract)
 from .common import (
     MINECRAFT_SCALE_FACTOR, CubePolygons, CubePolygon, MeshType)
 from .extra_types import Vector3di, Vector3d, Vector2d
 from .uv import CoordinatesConverter
 from .exception import ImporterException
+from .typed_bpy_access import (
+    get_context_object, get_data_objects, get_mcblend)
+
+if TYPE_CHECKING:
+    from .pyi_types import ArmatureDataEditBones
+else:
+    ArmatureDataEditBones = bpy.types.bpy_prop_collection  # type: ignore
 
 class ErrorLevel(Enum):
     '''
@@ -1198,7 +1211,7 @@ class ImportLocator:
         self.position = position
         self.rotation = rotation
 
-        self.blend_empty: Optional[bpy.types.Object] = None
+        self.blend_empty: Optional[Object] = None
 
 
 class ImportCube:
@@ -1218,7 +1231,7 @@ class ImportCube:
         - `data: Dict` - the part of the Minecraft model JSON file that
         represents the cube.
         '''
-        self.blend_cube: Optional[bpy.types.Object] = None
+        self.blend_cube: Optional[Object] = None
 
         self.uv: Dict = data['uv']
         self.mirror: bool = data['mirror']
@@ -1249,7 +1262,7 @@ class ImportPolyMesh:
         :param data: The part of the Minecraft model JSON file that represents
         the poly_mesh.
         '''
-        self.blend_object: Optional[bpy.types.Object] = None
+        self.blend_object: Optional[Object] = None
 
         self.normalized_uvs: bool = data['normalized_uvs']
         self.positions: List[Vector3d] = data['positions']
@@ -1297,7 +1310,7 @@ class ImportBone:
         bone.
     '''
     def __init__(self, data: Dict):
-        self.blend_empty: Optional[bpy.types.Object] = None
+        self.blend_empty: Optional[Object] = None
 
         # Locators
         locators: List[ImportLocator] = []
@@ -1352,7 +1365,7 @@ class ImportGeometry:
             self.bones[import_bone.name] = import_bone
 
     def build_with_empties(
-            self, context: bpy_types.Context) -> bpy.types.Object:
+            self, context: bpy.types.Context) -> Object:
         '''
         Builds the geometry in Blender. Uses empties to represent Minecraft
         bones.
@@ -1364,7 +1377,7 @@ class ImportGeometry:
         # Build armature:
         # Create empty armature and enter edit mode:
         bpy.ops.object.armature_add(
-            enter_editmode=True, align='WORLD', location=(0, 0, 0))
+            enter_editmode=True, align='WORLD', location=[0, 0, 0])
         bpy.ops.armature.select_all(action='SELECT')
         bpy.ops.armature.delete()
         bpy.ops.object.mode_set(mode='OBJECT')
@@ -1372,37 +1385,37 @@ class ImportGeometry:
         # performance
 
         # Save the armature
-        armature = context.object
+        armature = get_context_object(context)
 
         # Create objects - and set their pivots
         for bone in self.bones.values():
             # 1. Spawn bone (empty)
             bpy.ops.object.empty_add(
-                type='SPHERE', location=(0, 0, 0), radius=0.2)
-            bone_obj: bpy.types.Object
-            bone_obj = bone.blend_empty = context.object
+                type='SPHERE', location=[0, 0, 0], radius=0.2)
+            bone_obj: Object
+            bone_obj = bone.blend_empty = get_context_object(context)
             _mc_pivot(bone_obj, bone.pivot)  # 2. Apply translation
             bone_obj.name = bone.name  # 3. Apply custom properties
             for cube in bone.cubes:
-                cube_obj: bpy.types.Object
+                cube_obj: Object
                 # 1. Spawn cube
                 bpy.ops.mesh.primitive_cube_add(
-                    size=1, enter_editmode=False, location=(0, 0, 0)
+                    size=1, enter_editmode=False, location=[0, 0, 0]
                 )
-                cube_obj = cube.blend_cube = context.object
+                cube_obj = cube.blend_cube = get_context_object(context)
 
                 # 2. Set uv
                 # warning! Moving this code below cube transformation would
                 # break it because bound_box is not getting updated properly
                 # before the end of running of the opperator.
-                cube_obj.mcblend.mirror = cube.mirror
+                get_mcblend(cube_obj).mirror = cube.mirror
                 _set_uv(
                     self.uv_converter,
                     CubePolygons.build(cube_obj, cube.mirror),
-                    cube.uv, cube_obj.data.uv_layers.active)
+                    cube.uv, get_data_uv_layers(cube_obj).active)
 
                 # 3. Set size & inflate
-                cube.blend_cube.mcblend.inflate = (
+                get_mcblend(cube.blend_cube).inflate = (
                     cube.inflate)
                 _mc_set_size(cube_obj, cube.size, inflate=cube.inflate)
                 _mc_pivot(cube_obj, cube.pivot)  # 4. Move pivot
@@ -1445,27 +1458,29 @@ class ImportGeometry:
                     blender_polygons.append(curr_polygon)
 
                 # 2. Create mesh
-                mesh = bpy.data.meshes.new(name='poly_mesh')
+                mesh = get_data_meshes().new(name='poly_mesh')
                 mesh.from_pydata(blender_vertices, [], blender_polygons)
 
                 if not mesh.validate():  # Valid geometry
                     # 3. Create an object and connect mesh to it, mark as
                     # polymesh
-                    poly_mesh_obj = bpy.data.objects.new('poly_mesh', mesh)
-                    context.collection.objects.link(poly_mesh_obj)
+                    poly_mesh_obj = get_data_objects().new('poly_mesh', mesh)
+                    get_objects(context.collection).link(poly_mesh_obj)
                     bone.poly_mesh.blend_object = poly_mesh_obj
-                    poly_mesh_obj.mcblend.mesh_type = (
+                    get_mcblend(poly_mesh_obj).mesh_type = (
                         MeshType.POLY_MESH.value)
 
                     # 4. Set mesh normals and UVs
                     mesh.create_normals_split()
                     mesh.use_auto_smooth = True
-                    mesh.normals_split_custom_set(blender_normals)
-                    if mesh.uv_layers.active is None:
-                        mesh.uv_layers.new()
-                    uv_layer = mesh.uv_layers.active.data  # type: ignore
+                    mesh.normals_split_custom_set(
+                        blender_normals)  # type: ignore
+                    
+                    if get_uv_layers(mesh).active is None:
+                        get_uv_layers(mesh).new()
+                    uv_layer = get_data(get_uv_layers(mesh).active)
                     for i, uv in enumerate(blender_uvs):
-                        uv_layer[i].uv = uv
+                        uv_layer[i].uv = cast(list[float],uv)
                 else:
                     del mesh
                     raise ImporterException(
@@ -1473,10 +1488,10 @@ class ImportGeometry:
 
             for locator in bone.locators:
                 # 1. Spawn locator (empty)
-                locator_obj: bpy.types.Object
+                locator_obj: Object
                 bpy.ops.object.empty_add(
-                    type='SPHERE', location=(0, 0, 0), radius=0.1)
-                locator_obj = locator.blend_empty = context.object
+                    type='SPHERE', location=[0, 0, 0], radius=0.1)
+                locator_obj = locator.blend_empty = get_context_object(context)
                 # 2. Apply translation
                 _mc_pivot(locator_obj, locator.position)
                 _mc_rotate(locator_obj, locator.rotation)
@@ -1485,54 +1500,59 @@ class ImportGeometry:
 
         # Parent objects (keep offset)
         for bone in self.bones.values():
+            assert bone.blend_empty is not None
             bone_obj = bone.blend_empty
             # 1. Parent bone keep transform
             if bone.parent is not None and bone.parent in self.bones:
-                parent_obj: bpy.types.Object = self.bones[
+                parent_obj = cast(Object, self.bones[
                     bone.parent
-                ].blend_empty
+                ].blend_empty)
                 context.view_layer.update()
                 bone_obj.parent = parent_obj
-                bone_obj.matrix_parent_inverse = (
-                    parent_obj.matrix_world.inverted()
+                set_matrix_parent_inverse(
+                    bone_obj,
+                    get_matrix_world(parent_obj).inverted()
                 )
             # 2. Parent cubes keep transform
             for cube in bone.cubes:
-                cube_obj = cube.blend_cube
+                cube_obj = cast(Object, cube.blend_cube)
                 context.view_layer.update()
                 cube_obj.parent = bone_obj
-                cube_obj.matrix_parent_inverse = (
-                    bone_obj.matrix_world.inverted()
+                set_matrix_parent_inverse(
+                    cube_obj,
+                    get_matrix_world(bone_obj).inverted()
                 )
             # 3. Parent poly_mesh keep transform
             if bone.poly_mesh is not None:
-                poly_mesh_obj = bone.poly_mesh.blend_object
+                poly_mesh_obj = cast(Object, bone.poly_mesh.blend_object)
                 context.view_layer.update()
                 poly_mesh_obj.parent = bone_obj
-                poly_mesh_obj.matrix_parent_inverse = (
-                    bone_obj.matrix_world.inverted()
+                set_matrix_parent_inverse(
+                    poly_mesh_obj,
+                    get_matrix_world(bone_obj).inverted()
                 )
 
             # 4. Parent locators keep transform
             for locator in bone.locators:
-                locator_obj = locator.blend_empty
+                locator_obj = cast(Object, locator.blend_empty)
                 context.view_layer.update()
                 locator_obj.parent = bone_obj
-                locator_obj.matrix_parent_inverse = (
-                    bone_obj.matrix_world.inverted()
+                set_matrix_parent_inverse(
+                    locator_obj,
+                    get_matrix_world(bone_obj).inverted()
                 )
 
         # Rotate objects
         for bone in self.bones.values():
-            bone_obj = bone.blend_empty
+            bone_obj = cast(Object, bone.blend_empty)
             context.view_layer.update()
             _mc_rotate(bone_obj, bone.rotation)
             for cube in bone.cubes:
-                cube_obj = cube.blend_cube
+                cube_obj = cast(Object, cube.blend_cube)
                 _mc_rotate(cube_obj, cube.rotation)
         return armature
 
-    def build_with_armature(self, context: bpy_types.Context):
+    def build_with_armature(self, context: bpy.types.Context):
         '''
         Builds the geometry in Blender. Uses armature and bones to represent
         the Minecraft bones.
@@ -1543,11 +1563,10 @@ class ImportGeometry:
         '''
         # Build everything using empties
         armature = self.build_with_empties(context)
-        context.view_layer.objects.active = armature
+        get_objects(context.view_layer).active = armature
         bpy.ops.object.mode_set(mode='EDIT')
 
-        edit_bones = armature.data.edit_bones
-
+        edit_bones = get_data_edit_bones(armature)
 
         # Create bones
         for bone in self.bones.values():
@@ -1557,21 +1576,19 @@ class ImportGeometry:
         for bone in self.bones.values():
             # 1. Parent bone keep transform
             if bone.parent is not None and bone.parent in self.bones:
-                parent_obj: bpy.types.Object = self.bones[
-                    bone.parent
-                ]
+                parent_obj = self.bones[bone.parent]
                 # context.view_layer.update()
                 edit_bones[bone.name].parent = edit_bones[parent_obj.name]
         bpy.ops.object.mode_set(mode='OBJECT')
 
         # Add bindings to pose bones
-        pose_bones = armature.pose.bones
+        pose_bones = get_pose_bones(armature)
         for bone in self.bones.values():
             if bone.binding is not None:
-                pose_bones[bone.name].mcblend.binding = bone.binding
+                get_mcblend(pose_bones[bone.name]).binding = bone.binding
 
         def parent_bone_keep_transform(
-                obj: bpy.types.Object, bone: ImportBone):
+                obj: Object, bone: ImportBone):
             '''
             Used for replacing empty parent with new bone parent
             '''
@@ -1580,26 +1597,23 @@ class ImportGeometry:
             # Copy matrix_parent_inverse from previous parent
             # It can be copied because old parent (locator) has the same
             # transformation as the new one (bone)
-            parent_inverse = (
-                obj.matrix_parent_inverse.copy()  # type:ignore
-            )
+            parent_inverse = get_matrix_parent_inverse(obj).copy()
 
             obj.parent = armature  # type: ignore
             obj.parent_bone = bone.name  # type: ignore
             obj.parent_type = 'BONE'  # type: ignore
 
-            obj.matrix_parent_inverse = parent_inverse  # type: ignore
+            set_matrix_parent_inverse(obj, parent_inverse)
 
             # Correct parenting to tail of the bone instead of head
             context.view_layer.update()
-            blend_bone = armature.pose.bones[bone.name]
+            blend_bone = get_pose_bones(armature)[bone.name]
             # pylint: disable=no-member
             correction = mathutils.Matrix.Translation(
-                blend_bone.head-blend_bone.tail
+                subtract(get_head(blend_bone), get_tail(blend_bone))
             )
-            obj.matrix_world = (  # type: ignore
-                correction @
-                obj.matrix_world  # type: ignore
+            set_matrix_world(
+                obj, matmul(correction, get_matrix_world(obj))
             )
 
         # Replace empties with bones
@@ -1608,23 +1622,27 @@ class ImportGeometry:
 
             # 2. Parent cubes keep transform
             for cube in bone.cubes:
+                assert cube.blend_cube is not None
                 parent_bone_keep_transform(cube.blend_cube, bone)
 
             # 3. Parent poly_mesh keep transform
             if bone.poly_mesh is not None:
+                assert bone.poly_mesh.blend_object is not None
                 parent_bone_keep_transform(bone.poly_mesh.blend_object, bone)
 
             # 4. Parent locators keep transform
             for locator in bone.locators:
+                assert locator.blend_empty is not None
                 parent_bone_keep_transform(locator.blend_empty, bone)
 
             # remove the locators
-            bpy.data.objects.remove(bone_obj)
+            assert bone_obj is not None
+            get_data_objects().remove(bone_obj)
 
         return armature
 
 def _mc_translate(
-        obj: bpy.types.Object, mctranslation: Vector3d,
+        obj: Object, mctranslation: Vector3d,
         mcsize: Vector3d,
         mcpivot: Vector3d
     ):
@@ -1646,11 +1664,11 @@ def _mc_translate(
     translation = mathutils.Vector(
         np.array(mctranslation)[[0, 2, 1]] / MINECRAFT_SCALE_FACTOR
     )
-    for vertex in obj.data.vertices:
-        vertex.co += (translation - pivot_offset + size_offset)
+    for vertex in get_data_vertices(obj):
+        vertex.co += (translation - pivot_offset + size_offset)  # type: ignore
 
 def _mc_set_size(
-        obj: bpy.types.Object, mcsize: Vector3d,
+        obj: Object, mcsize: Vector3d,
         inflate: Optional[float]=None):
     '''
     Scales a Blender object using scale vector written in Minecraft coordinates
@@ -1671,18 +1689,26 @@ def _mc_set_size(
         (np.array(mcsize)[[0, 2, 1]] / 2) / MINECRAFT_SCALE_FACTOR
     )
     pos_delta += effective_inflate
-    data = obj.data
+    vertices = get_data_vertices(obj)
     # 0. ---; 1. --+; 2. -+-; 3. -++; 4. +--; 5. +-+; 6. ++- 7. +++
-    data.vertices[0].co = mathutils.Vector(pos_delta * np.array([-1, -1, -1]))
-    data.vertices[1].co = mathutils.Vector(pos_delta * np.array([-1, -1, 1]))
-    data.vertices[2].co = mathutils.Vector(pos_delta * np.array([-1, 1, -1]))
-    data.vertices[3].co = mathutils.Vector(pos_delta * np.array([-1, 1, 1]))
-    data.vertices[4].co = mathutils.Vector(pos_delta * np.array([1, -1, -1]))
-    data.vertices[5].co = mathutils.Vector(pos_delta * np.array([1, -1, 1]))
-    data.vertices[6].co = mathutils.Vector(pos_delta * np.array([1, 1, -1]))
-    data.vertices[7].co = mathutils.Vector(pos_delta * np.array([1, 1, 1]))
+    vertices[0].co = cast(
+        list[float], mathutils.Vector(pos_delta * np.array([-1, -1, -1])))
+    vertices[1].co = cast(
+        list[float], mathutils.Vector(pos_delta * np.array([-1, -1, 1])))
+    vertices[2].co = cast(
+        list[float], mathutils.Vector(pos_delta * np.array([-1, 1, -1])))
+    vertices[3].co = cast(
+        list[float], mathutils.Vector(pos_delta * np.array([-1, 1, 1])))
+    vertices[4].co = cast(
+        list[float], mathutils.Vector(pos_delta * np.array([1, -1, -1])))
+    vertices[5].co = cast(
+        list[float], mathutils.Vector(pos_delta * np.array([1, -1, 1])))
+    vertices[6].co = cast(
+        list[float], mathutils.Vector(pos_delta * np.array([1, 1, -1])))
+    vertices[7].co = cast(
+        list[float], mathutils.Vector(pos_delta * np.array([1, 1, 1])))
 
-def _mc_pivot(obj: bpy.types.Object, mcpivot: Vector3d):
+def _mc_pivot(obj: Object, mcpivot: Vector3d) -> None:
     '''
     Moves a pivot of an Blender object using pivot value in Minecraft
     coordinates system.
@@ -1693,11 +1719,11 @@ def _mc_pivot(obj: bpy.types.Object, mcpivot: Vector3d):
     translation = mathutils.Vector(
         np.array(mcpivot)[[0, 2, 1]] / MINECRAFT_SCALE_FACTOR
     )
-    obj.location += translation
+    obj.location += translation  # type: ignore
 
 def _mc_rotate(
-        obj: bpy.types.Object, mcrotation: Vector3d
-    ):
+        obj: Object, mcrotation: Vector3d
+    ) -> None:
     '''
     Rotates a Blender object using rotation written in Minecraft coordinates
     system.
@@ -1710,11 +1736,11 @@ def _mc_rotate(
         (np.array(mcrotation)[[0, 2, 1]] * np.array([1, 1, -1])) * math.pi/180,
         'XZY'
     )
-    obj.rotation_euler.rotate(rotation)
+    get_rotation_euler(obj).rotate(rotation)
 
 def _set_uv(
         uv_converter: CoordinatesConverter, cube_polygons: CubePolygons,
-        uv: Dict, uv_layer: bpy.types.MeshUVLoopLayer):
+        uv: Dict, uv_layer: MeshUVLoopLayer):
     '''
     Sets the UV of a face of a Blender cube mesh based on some Minecraft
     properties.
@@ -1726,12 +1752,11 @@ def _set_uv(
     :param uv: UV mapping for each face.
     :param uv_layer: UV layer of the mesh.
     '''
-    uv_data = uv_layer.data
-
+    uv_data = get_data(uv_layer)
     def set_uv(
             cube_polygon: CubePolygon, size: Vector2d,
             uv: Vector2d):
-        cp_loop_indices = cube_polygon.side.loop_indices
+        cp_loop_indices = get_loop_indices(cube_polygon.side)
         cp_order = cube_polygon.order
 
         left_down = cp_loop_indices[cp_order[0]]
@@ -1739,11 +1764,14 @@ def _set_uv(
         right_up = cp_loop_indices[cp_order[2]]
         left_up = cp_loop_indices[cp_order[3]]
 
-        uv_data[left_down].uv = uv_converter.convert((uv[0], uv[1] + size[1]))
-        uv_data[right_down].uv = uv_converter.convert(
-            (uv[0] + size[0], uv[1] + size[1]))
-        uv_data[right_up].uv = uv_converter.convert((uv[0] + size[0], uv[1]))
-        uv_data[left_up].uv = uv_converter.convert((uv[0], uv[1]))
+        uv_data[left_down].uv = cast(
+            list[float], uv_converter.convert((uv[0], uv[1] + size[1])))
+        uv_data[right_down].uv = cast(
+            list[float], uv_converter.convert((uv[0] + size[0], uv[1] + size[1])))
+        uv_data[right_up].uv = cast(
+            list[float], uv_converter.convert((uv[0] + size[0], uv[1])))
+        uv_data[left_up].uv = cast(
+            list[float], uv_converter.convert((uv[0], uv[1])))
 
     # right/left
     set_uv(cube_polygons.east, uv["east"]["uv_size"], uv["east"]["uv"])
@@ -1759,7 +1787,7 @@ def _set_uv(
     set_uv(cube_polygons.down, uv["down"]["uv_size"], uv["down"]["uv"])
 
 def add_bone(
-        edit_bones: bpy.types.bpy_prop_collection,
+        edit_bones: ArmatureDataEditBones,
         length: float, import_bone: ImportBone):
     '''
     :param edit_bones: edit bones of the armature (from
@@ -1768,9 +1796,11 @@ def add_bone(
     :param import_bone: import bone with all of the Minecraft data
         and the reference to empty object that currently represents the bone.
     '''
-    matrix_world: mathutils.Matrix = (
-        import_bone.blend_empty.matrix_world  # type: ignore
-    )
+    import_bone_blend_empty = import_bone.blend_empty
+    if import_bone_blend_empty is None:
+        raise ValueError("Failed to add bone.")
+    matrix_world = get_matrix_world(import_bone_blend_empty)
     bone = edit_bones.new(import_bone.name)
-    bone.head, bone.tail = (0.0, 0.0, 0.0), (0.0, length, 0.0)
-    bone.matrix = matrix_world
+    bone.head = cast(List[float], (0.0, 0.0, 0.0))
+    bone.tail = cast(List[float], (0.0, length, 0.0))
+    set_matrix(bone, matrix_world)

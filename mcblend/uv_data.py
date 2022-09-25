@@ -1,20 +1,22 @@
 '''
 Custom blender objects with additional properties of the UV.
 '''
-from typing import Dict, List
+from typing import Dict, List, cast
 
 import bpy
+from bpy.types import PropertyGroup, Context
 from bpy.props import (
     BoolProperty, CollectionProperty, EnumProperty, FloatProperty,
     FloatVectorProperty, IntProperty, IntVectorProperty,
     PointerProperty, StringProperty)
 
+from .operator_func.typed_bpy_access import get_data_objects, get_mcblend, get_scene_mcblend_uv_groups
 from .operator_func.texture_generator import (
     UvMaskTypes, list_mask_types_as_blender_enum,
     list_mix_mask_modes_as_blender_enum)
 
 # UV-mask
-class MCBLEND_StripeProperties(bpy.types.PropertyGroup):
+class MCBLEND_StripeProperties(PropertyGroup):
     '''Properties of a UV-mask stripe.'''
     width: IntProperty(  # type: ignore
         name='Width', default=1)
@@ -34,7 +36,7 @@ class MCBLEND_StripeProperties(bpy.types.PropertyGroup):
             result['width'] = self.width
         return result
 
-class MCBLEND_ColorProperties(bpy.types.PropertyGroup):
+class MCBLEND_ColorProperties(PropertyGroup):
     '''Properties of a UV-mask color.'''
     color: FloatVectorProperty(  # type: ignore
         name='Color',  subtype='COLOR',
@@ -47,7 +49,7 @@ class MCBLEND_ColorProperties(bpy.types.PropertyGroup):
         # 1/256 = 0.00390625 (8 digits precision)
         return [round(i, 8) for i in self.color]
 
-class MCBLEND_UvMaskProperties(bpy.types.PropertyGroup):
+class MCBLEND_UvMaskProperties(PropertyGroup):
     '''Properties of UV-mask.'''
     ui_hidden: BoolProperty(  # type: ignore
         name='Hide', default=False)
@@ -181,7 +183,7 @@ def get_unused_uv_group_name(base_name: str, i=1):
     the base name and adds number at the end of it to find unique name with
     pattern :code:`{base_name}.{number:04}`.
     '''
-    uv_groups = bpy.context.scene.mcblend_uv_groups
+    uv_groups = get_scene_mcblend_uv_groups(cast(Context, bpy.context))
     name = base_name  # f'{base_name}.{i:04}'
     while name in uv_groups.keys():
         name = f'{base_name}.{i:04}'
@@ -191,9 +193,9 @@ def get_unused_uv_group_name(base_name: str, i=1):
 def _update_uv_group_name(uv_group, new_name: str, update_references: bool):
     # Update the names of all of the meshes
     if update_references:
-        for obj in bpy.data.objects:
+        for obj in get_data_objects():
             if obj.type == "MESH":
-                obj_props = obj.mcblend
+                obj_props = get_mcblend(obj)
                 if obj_props.uv_group == uv_group.name:
                     obj_props.uv_group = new_name
     # Update the name of the UV group
@@ -237,7 +239,7 @@ def _get_uv_group_name(self):
         return ''
     return self['name']
 
-class MCBLEND_UvGroupProperties(bpy.types.PropertyGroup):
+class MCBLEND_UvGroupProperties(PropertyGroup):
     '''Properties of UV-group.'''
     name: StringProperty(  # type: ignore
         name="Name",

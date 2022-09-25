@@ -5,10 +5,12 @@ from typing import Dict, List, Tuple
 from enum import Enum
 
 import bpy
+from bpy.types import PropertyGroup
 from bpy.props import (
     FloatProperty, IntVectorProperty, FloatVectorProperty,
     BoolProperty, CollectionProperty, EnumProperty, IntProperty,
     StringProperty)
+    
 
 from .operator_func.common import MeshType, AnimationLoopType
 from .common_data import MCBLEND_JustName
@@ -28,7 +30,7 @@ def list_effect_types_as_blender_enum(self, context):
     # pylint: disable=unused-argument
     return [(i.value, i.value, i.value) for i in EffectTypes]
 
-class MCBLEND_EffectProperties(bpy.types.PropertyGroup):
+class MCBLEND_EffectProperties(PropertyGroup):
     '''
     An effect of an event (sound or particles)
     '''
@@ -107,7 +109,7 @@ def _get_event_name(self):
         return ''
     return self['name']
 
-class MCBLEND_EventProperties(bpy.types.PropertyGroup):
+class MCBLEND_EventProperties(PropertyGroup):
     '''
     A collection of sound and particle events.
     '''
@@ -148,7 +150,7 @@ class MCBLEND_EventProperties(bpy.types.PropertyGroup):
                 raise ValueError('Unknown effect type.')
         return sound_effects, particle_effects
 
-class MCBLEND_TimelineMarkerProperties(bpy.types.PropertyGroup):
+class MCBLEND_TimelineMarkerProperties(PropertyGroup):
     '''Saves the data about a timeline marker.'''
     name: StringProperty(  # type: ignore
         name="Name",
@@ -161,7 +163,7 @@ class MCBLEND_TimelineMarkerProperties(bpy.types.PropertyGroup):
         default=0
     )
 
-class MCBLEND_AnimationProperties(bpy.types.PropertyGroup):
+class MCBLEND_AnimationProperties(PropertyGroup):
     '''Properties of an animation template.'''
     name: StringProperty(  # type: ignore
         name="Name",
@@ -246,7 +248,7 @@ def list_mesh_types_as_blender_enum(self, context):
     # pylint: disable=unused-argument
     return [(i.value, i.value, i.value) for i in MeshType]
 
-class MCBLEND_FakeRcMaterialProperties(bpy.types.PropertyGroup):
+class MCBLEND_FakeRcMaterialProperties(PropertyGroup):
     '''
     Pattern-material pair for MCBLEND_FakeRcProperties object.
     '''
@@ -260,7 +262,7 @@ class MCBLEND_FakeRcMaterialProperties(bpy.types.PropertyGroup):
         maxlen=1024
     )
 
-class MCBLEND_FakeRcProperties(bpy.types.PropertyGroup):
+class MCBLEND_FakeRcProperties(PropertyGroup):
     '''
     Armature property group similar to Minecraft render controller used for
     generating Minecraft materials.
@@ -274,7 +276,7 @@ class MCBLEND_FakeRcProperties(bpy.types.PropertyGroup):
     materials: CollectionProperty(  # type: ignore
         type=MCBLEND_FakeRcMaterialProperties, name='Materials')
 
-class MCBLEND_ObjectProperties(bpy.types.PropertyGroup):
+class MCBLEND_ObjectProperties(PropertyGroup):
     '''Custom properties of an object.'''
     # ARMATURE PROPERTIES (equivalent of minecraft model)
     model_name: StringProperty(  # type: ignore
@@ -377,7 +379,7 @@ class MCBLEND_ObjectProperties(bpy.types.PropertyGroup):
             "if the X were equal to this value.")
     )
 
-class MCBLEND_BoneProperties(bpy.types.PropertyGroup):
+class MCBLEND_BoneProperties(PropertyGroup):
     '''
     Custom properties of a bone
     '''

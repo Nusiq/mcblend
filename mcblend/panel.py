@@ -7,7 +7,7 @@ from typing import List, Optional, cast
 from dataclasses import dataclass
 
 import bpy
-
+from bpy.types import UILayout, UIList, Panel
 
 from .resource_pack_data import MCBLEND_ProjectProperties
 
@@ -15,10 +15,12 @@ from .object_data import EffectTypes
 from .operator_func.db_handler import get_db_handler
 from .operator_func.common import MeshType
 from .operator_func.texture_generator import UvMaskTypes
+from .operator_func.typed_bpy_access import (
+    get_data_bones, set_operator_property)
 
 # GUI
 # UV-groups names list
-class MCBLEND_UL_UVGroupList(bpy.types.UIList):
+class MCBLEND_UL_UVGroupList(UIList):
     '''GUI item used for drawing list of names of UV-groups.'''
     def draw_item(
             self, context, layout, data, item, icon, active_data,
@@ -52,24 +54,24 @@ class _UIStackItem():
     Object used in MCBLEND_PT_UVGroupPanel for saving the
     information about nested UV-groups in stack data structure.
     '''
-    ui: Optional[bpy.types.UILayout]  # None if parent is collapsed
+    ui: Optional[UILayout]  # None if parent is collapsed
     depth: int
 
-class MCBLEND_PT_UVGroupPanel(bpy.types.Panel):
+class MCBLEND_PT_UVGroupPanel(Panel):
     '''Panel used for editing UV-groups.'''
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = 'scene'
     bl_label = "Mcblend: UV-groups"
 
-    def draw_colors(self, mask, mask_index: int, col: bpy.types.UILayout):
+    def draw_colors(self, mask, mask_index: int, col: UILayout):
         '''Draws colors of UV-mask.'''
         box = col.box()
         row = box.row()
         row.label(text='Colors')
         op_props = row.operator(
             "mcblend.add_uv_mask_color", text="", icon='ADD')
-        op_props.mask_index = mask_index
+        set_operator_property(op_props, "mask_index", mask_index)
 
         colors_len = len(mask.colors)
         for color_index, color in enumerate(mask.colors):
@@ -81,31 +83,31 @@ class MCBLEND_PT_UVGroupPanel(bpy.types.Panel):
                 op_props = up_down_row.operator(
                     "mcblend.move_uv_mask_color", icon='TRIA_UP',
                     text='')
-                op_props.mask_index = mask_index
-                op_props.move_from = color_index
-                op_props.move_to = color_index - 1
+                set_operator_property(op_props, "mask_index", mask_index)
+                set_operator_property(op_props, "move_from", color_index)
+                set_operator_property(op_props, "move_to", color_index - 1)
             # Move up
             if color_index + 1 < colors_len:
                 op_props = up_down_row.operator(
                     "mcblend.move_uv_mask_color", icon='TRIA_DOWN',
                     text='')
-                op_props.mask_index = mask_index
-                op_props.move_from = color_index
-                op_props.move_to = color_index + 1
+                set_operator_property(op_props, "mask_index", mask_index)
+                set_operator_property(op_props, "move_from", color_index)
+                set_operator_property(op_props, "move_to", color_index + 1)
             # Delete button
             op_props = row.operator(
                 "mcblend.remove_uv_mask_color", icon='X', text='')
-            op_props.mask_index = mask_index
-            op_props.color_index = color_index
+            set_operator_property(op_props, "mask_index", mask_index)
+            set_operator_property(op_props, "color_index", color_index)
 
-    def draw_stripes(self, mask, mask_index: int, col: bpy.types.UILayout):
+    def draw_stripes(self, mask, mask_index: int, col: UILayout):
         '''Draws stripes of UV-mask.'''
         box = col.box()
         row = box.row()
         row.label(text='Stripes')
         op_props = row.operator(
             "mcblend.add_uv_mask_stripe", text="", icon='ADD')
-        op_props.mask_index = mask_index
+        set_operator_property(op_props, "mask_index", mask_index)
 
         stripes_len = len(mask.stripes)
         for stripe_index, stripe in enumerate(mask.stripes):
@@ -124,26 +126,26 @@ class MCBLEND_PT_UVGroupPanel(bpy.types.Panel):
                 op_props = up_down_row.operator(
                     "mcblend.move_uv_mask_stripe", icon='TRIA_UP',
                     text='')
-                op_props.mask_index = mask_index
-                op_props.move_from = stripe_index
-                op_props.move_to = stripe_index - 1
+                set_operator_property(op_props, "mask_index", mask_index)
+                set_operator_property(op_props, "move_from", stripe_index)
+                set_operator_property(op_props, "move_to", stripe_index - 1)
             # Move up
             if stripe_index + 1 < stripes_len:
                 op_props = up_down_row.operator(
                     "mcblend.move_uv_mask_stripe", icon='TRIA_DOWN',
                     text='')
-                op_props.mask_index = mask_index
-                op_props.move_from = stripe_index
-                op_props.move_to = stripe_index + 1
+                set_operator_property(op_props, "mask_index", mask_index)
+                set_operator_property(op_props, "move_from", stripe_index)
+                set_operator_property(op_props, "move_to", stripe_index + 1)
             # Delete button
             op_props = row.operator(
                 "mcblend.remove_uv_mask_stripe", icon='X',
                 text='')
-            op_props.mask_index = mask_index
-            op_props.stripe_index = stripe_index
+            set_operator_property(op_props, "mask_index", mask_index)
+            set_operator_property(op_props, "stripe_index", stripe_index)
 
     def draw_mask_properties(
-            self, mask, index: int, col: bpy.types.UILayout, *,
+            self, mask, index: int, col: UILayout, *,
             colors=False, interpolate=False,
             normalize=False, p1p2=False, stripes=False,
             relative_boundaries=False, expotent=False, strength=False,
@@ -221,15 +223,15 @@ class MCBLEND_PT_UVGroupPanel(bpy.types.Panel):
                 op_props = up_down_row.operator(
                     "mcblend.move_uv_mask", icon='TRIA_UP',
                     text='')
-                op_props.move_from = index
-                op_props.move_to = index - 1
+                set_operator_property(op_props, "move_from", index)
+                set_operator_property(op_props, "move_to", index - 1)
             # Move up
             if index + 1 < masks_len:
                 op_props = up_down_row.operator(
                     "mcblend.move_uv_mask", icon='TRIA_DOWN',
                     text='')
-                op_props.move_from = index
-                op_props.move_to = index + 1
+                set_operator_property(op_props, "move_from", index)
+                set_operator_property(op_props, "move_to", index + 1)
             # Hide button
             if mask.ui_hidden:
                 row.prop(
@@ -242,7 +244,7 @@ class MCBLEND_PT_UVGroupPanel(bpy.types.Panel):
             # Delete button
             op_props = row.operator(
                 "mcblend.remove_uv_mask", icon='X', text='')
-            op_props.target = index
+            set_operator_property(op_props, "target", index)
 
             # Drawing the mask itself unless collapsed
             if not mask.ui_collapsed:
@@ -368,7 +370,7 @@ class MCBLEND_PT_UVGroupPanel(bpy.types.Panel):
                         break
 
 # Event group panel
-class MCBLEND_UL_EventsList(bpy.types.UIList):
+class MCBLEND_UL_EventsList(UIList):
     '''GUI item used for drawing list of names of events.'''
     def draw_item(
             self, context, layout, data, item, icon, active_data,
@@ -394,7 +396,7 @@ class MCBLEND_UL_EventsList(bpy.types.UIList):
             # With rename functionality:
             layout.prop(item, "name", text="", emboss=False)
 
-class MCBLEND_PT_EventsPanel(bpy.types.Panel):
+class MCBLEND_PT_EventsPanel(Panel):
     '''Panel used for editing events.'''
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
@@ -402,7 +404,7 @@ class MCBLEND_PT_EventsPanel(bpy.types.Panel):
     bl_label = "Mcblend: Animation Events"
 
 
-    def draw_effect(self, effect, index: int, col: bpy.types.UILayout):
+    def draw_effect(self, effect, index: int, col: UILayout):
         '''Draw single effect in the event'''
 
         # If parent is collapsed don't draw anything
@@ -414,7 +416,7 @@ class MCBLEND_PT_EventsPanel(bpy.types.Panel):
         # Delete button
         op_props = row.operator(
             "mcblend.remove_effect", icon='X', text='')
-        op_props.effect_index = index
+        set_operator_property(op_props, "effect_index", index)
         if effect.effect_type == EffectTypes.PARTICLE_EFFECT.value:
             col.prop(effect, "effect", text="Effect")
             col.prop(effect, "locator", text="Locator")
@@ -456,7 +458,7 @@ class MCBLEND_PT_EventsPanel(bpy.types.Panel):
                     self.draw_effect(effect, i, col)
 
 # Custom object properties panel
-class MCBLEND_PT_ObjectPropertiesPanel(bpy.types.Panel):
+class MCBLEND_PT_ObjectPropertiesPanel(Panel):
     '''Panel used for editing custom model object properties.'''
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
@@ -490,7 +492,7 @@ class MCBLEND_PT_ObjectPropertiesPanel(bpy.types.Panel):
                 object_properties, "min_uv_size", text="Min UV bound")
 
 # Custom object properties panel
-class MCBLEND_PT_ModelPropertiesPanel(bpy.types.Panel):
+class MCBLEND_PT_ModelPropertiesPanel(Panel):
     '''Panel used for editing model properties.'''
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
@@ -538,7 +540,7 @@ class MCBLEND_PT_ModelPropertiesPanel(bpy.types.Panel):
         col.operator("mcblend.map_uv", text="Set minecraft UVs")
 
 # Armature render controllers properties
-class MCBLEND_PT_ArmatureRenderControllersPanel(bpy.types.Panel):
+class MCBLEND_PT_ArmatureRenderControllersPanel(Panel):
     '''Panel used for editing custom model object properties.'''
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
@@ -575,32 +577,32 @@ class MCBLEND_PT_ArmatureRenderControllersPanel(bpy.types.Panel):
                 op_props = up_down_row.operator(
                     "mcblend.move_fake_rc", icon='TRIA_UP',
                     text='')
-                op_props.rc_index = rc_index
-                op_props.move_to = rc_index-1
+                set_operator_property(op_props, "rc_index", rc_index)
+                set_operator_property(op_props, "move_to", rc_index-1)
             if rc_index+1 < len_rc:
                 op_props = up_down_row.operator(
                     "mcblend.move_fake_rc", icon='TRIA_DOWN',
                     text='')
-                op_props.rc_index = rc_index
-                op_props.move_to = rc_index+1
+                set_operator_property(op_props, "rc_index", rc_index)
+                set_operator_property(op_props, "move_to", rc_index+1)
             op_props = up_down_row.operator(
                 "mcblend.remove_fake_rc", icon='X',
                 text='')
-            op_props.rc_index = rc_index
+            set_operator_property(op_props, "rc_index", rc_index)
             row = box_col.row(align=True)
             row.prop(rc, "texture", text="Texture")
             op_props = row.operator(
                 "mcblend.fake_rc_select_texture", icon='TEXTURE',
                 text='')
 
-            op_props.rc_index = rc_index
+            set_operator_property(op_props, "rc_index", rc_index)
             box_col.separator()
             row = box_col.row()
             row.label(text="Materials:")
             op_props = row.operator(
                 "mcblend.add_fake_rc_material", icon='ADD',
                 text='')
-            op_props.rc_index = rc_index
+            set_operator_property(op_props, "rc_index", rc_index)
 
             len_rc_materials = len(rc.materials)
             for material_index, rc_material in enumerate(rc.materials):
@@ -610,31 +612,31 @@ class MCBLEND_PT_ArmatureRenderControllersPanel(bpy.types.Panel):
                 op_props = row.operator(
                     "mcblend.fake_rc_material_select_template",
                     icon='NODE_MATERIAL', text='')
-                op_props.rc_index = rc_index
-                op_props.material_index = material_index
+                set_operator_property(op_props, "rc_index", rc_index)
+                set_operator_property(op_props, "material_index", material_index)
                 row.separator()
                 if material_index-1 >= 0:
                     op_props = row.operator(
                         "mcblend.move_fake_rc_material", icon='TRIA_UP',
                         text='')
-                    op_props.rc_index = rc_index
-                    op_props.material_index = material_index
-                    op_props.move_to = material_index - 1
+                    set_operator_property(op_props, "rc_index", rc_index)
+                    set_operator_property(op_props, "material_index", material_index)
+                    set_operator_property(op_props, "move_to", material_index - 1)
                 if material_index+1 < len_rc_materials:
                     op_props = row.operator(
                         "mcblend.move_fake_rc_material", icon='TRIA_DOWN',
                         text='')
-                    op_props.rc_index = rc_index
-                    op_props.material_index = material_index
-                    op_props.move_to = material_index + 1
+                    set_operator_property(op_props, "rc_index", rc_index)
+                    set_operator_property(op_props, "material_index", material_index)
+                    set_operator_property(op_props, "move_to", material_index + 1)
                 op_props = row.operator(
                     "mcblend.remove_fake_rc_material", icon='X',
                     text='')
-                op_props.rc_index = rc_index
-                op_props.material_index = material_index
+                set_operator_property(op_props, "rc_index", rc_index)
+                set_operator_property(op_props, "material_index", material_index)
 
 # Animation properties panel
-class MCBLEND_PT_AnimationPropertiesPanel(bpy.types.Panel):
+class MCBLEND_PT_AnimationPropertiesPanel(Panel):
     '''
     Panel used launching the animation export operator and changing its
     settings.
@@ -693,7 +695,7 @@ class MCBLEND_PT_AnimationPropertiesPanel(bpy.types.Panel):
             col.prop(active_anim, "world_origin", text="World Origin Object")
 
 # "Other" operators panel
-class MCBLEND_PT_OperatorsPanel(bpy.types.Panel):
+class MCBLEND_PT_OperatorsPanel(Panel):
     '''
     Panel that gives the user access to various operators used by Mcblend.
     '''
@@ -735,7 +737,7 @@ class MCBLEND_PT_OperatorsPanel(bpy.types.Panel):
         )
 
 # Resource pack panel
-class MCBLEND_PT_ProjectPanel(bpy.types.Panel):
+class MCBLEND_PT_ProjectPanel(Panel):
     '''
     Panel that represents a connection of the blender project with
     a Minecraft project (resource- and behavior- pack)
@@ -824,7 +826,7 @@ class MCBLEND_PT_ProjectPanel(bpy.types.Panel):
                 )
 
 # Resource pack panel
-class MCBLEND_PT_BonePanel(bpy.types.Panel):
+class MCBLEND_PT_BonePanel(Panel):
     '''
     Panel that represents a connection of the blender project with
     a Minecraft project (resource- and behavior- pack)
@@ -841,7 +843,7 @@ class MCBLEND_PT_BonePanel(bpy.types.Panel):
             return False
         try:
             pose_bone = context.object.pose.bones[
-                context.object.data.bones.active.name]
+                get_data_bones(context.object).active.name]
         except:  # pylint: disable=bare-except
             return False
         return pose_bone is not None
@@ -849,7 +851,7 @@ class MCBLEND_PT_BonePanel(bpy.types.Panel):
     def draw(self, context):
         try:
             pose_bone = context.object.pose.bones[
-                context.object.data.bones.active.name]
+                get_data_bones(context.object).active.name]
         except:  # pylint: disable=bare-except
             return
         col = self.layout.column()
