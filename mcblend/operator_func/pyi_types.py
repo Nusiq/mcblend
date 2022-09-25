@@ -1,11 +1,12 @@
 '''
 Extra types used only in the PYI files.
 '''
-from typing import Any, Iterator, TypeVar, Generic, Sized, Optional
+from typing import Any, Iterator, Literal, TypeVar, Generic, Sized, Optional
 from bpy.types import (
     Object, Mesh, Image, Material, Bone, EditBone, MeshUVLoopLayer, PoseBone,
     MeshUVLoop, MeshVertex, MeshEdge, MeshPolygon, TimelineMarker, FCurve,
-    Keyframe, NlaTrack, NlaStrip, Node, NodeSocket, NodeLink)
+    Keyframe, NlaTrack, NlaStrip, Node, NodeSocket, NodeLink, NodeTree,
+    NodeSocketInterface)
 
 T = TypeVar("T")
 
@@ -56,12 +57,28 @@ class DataImages(Sized):
     def load(self, filepath: str) -> Image: ...
     def remove(self, image: Image) -> None: ...
 
+class DataNodeGroups(Sized):
+    '''
+    Fake class defined as a result of:
+    >>> bpy.data.node_groups
+    '''
+    def __getitem__(self, key: Any) -> NodeTree: ...
+    def __iter__(self) -> Iterator[NodeTree]: ...
+    def new(
+        self,
+        name: str,
+        type: Literal[
+            'CompositorNodeTree', 'TextureNodeTree', 'GeometryNodeTree',
+            'ShaderNodeTree'
+        ]
+    ) -> NodeTree: ...
+
 class ArmatureDataBones(Sized):
     '''
     Fake class defined as a result of:
     >>> armature.data.bones
     '''
-    active: Bone = ...
+    active: Bone
     def __getitem__(self, key: Any) -> Bone: ...
     def __iter__(self) -> Iterator[Bone]: ...
 
@@ -70,7 +87,7 @@ class ArmatureDataEditBones(Sized):
     Fake class defined as a result of:
     >>> armature.data.bones
     '''
-    active: EditBone = ...
+    active: EditBone
     def __getitem__(self, key: Any) -> EditBone: ...
     def __iter__(self) -> Iterator[EditBone]: ...
     def new(self, name: str) -> EditBone: ...
@@ -80,7 +97,7 @@ class ArmaturePoseBones(Sized):
     Fake class defined as a result of:
     >>> armature.pose.bones
     '''
-    active: PoseBone = ...
+    active: PoseBone
     def __getitem__(self, key: Any) -> PoseBone: ...
     def __iter__(self) -> Iterator[PoseBone]: ...
     def new(self, name: str) -> PoseBone: ...
@@ -99,7 +116,7 @@ class ObjectDataUvLayers(Sized):
     Fake class defined as a result of:
     >>> object.data.uv_layers
     '''
-    active: MeshUVLoopLayer = ...
+    active: MeshUVLoopLayer
     def __getitem__(self, key: MeshUVLoopLayer) -> MeshUVLoopLayer: ...
     def __iter__(self) -> Iterator[MeshUVLoopLayer]: ...
     def new(self, name: str="") -> MeshUVLoopLayer: ...
@@ -193,6 +210,15 @@ class NodeInputs(Sized):
     def __getitem__(self, key: Any) -> NodeSocket: ...
     def __iter__(self) -> Iterator[NodeSocket]: ...
 
+class NodeTreeInputs(Sized):
+    '''
+    Fake class defined as a result of:
+    >>> object.inputs
+    '''
+    def __getitem__(self, key: Any) -> NodeSocketInterface: ...
+    def __iter__(self) -> Iterator[NodeSocketInterface]: ...
+    def new(self, type: str, name: str) -> NodeSocketInterface: ...
+
 class NodeOutputs(Sized):
     '''
     Fake class defined as a result of:
@@ -200,6 +226,15 @@ class NodeOutputs(Sized):
     '''
     def __getitem__(self, key: Any) -> NodeSocket: ...
     def __iter__(self) -> Iterator[NodeSocket]: ...
+
+class NodeTreeOutputs(Sized):
+    '''
+    Fake class defined as a result of:
+    >>> object.outputs
+    '''
+    def __getitem__(self, key: Any) -> NodeSocketInterface: ...
+    def __iter__(self) -> Iterator[NodeSocketInterface]: ...
+    def new(self, type: str, name: str) -> NodeSocketInterface: ...
 
 class NodeTreeLinks(Sized):
     '''

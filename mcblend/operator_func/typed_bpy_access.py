@@ -53,43 +53,39 @@ def set_scene_mcblend_active_event(context, value):
 
 def get_scene_mcblend_uv_groups(context):
     '''
-    Returns the uv groups from context
-    
     >>> context.scene.mcblend_uv_groups
     '''
     return context.scene.mcblend_uv_groups
 
 def get_selected_objects(context):
     '''
-    Returns selected objects list from context
-
     >>> context.selected_objects
     '''
     return context.selected_objects
 
 def get_data_objects():
     '''
-    Returns the objects from data
-
     >>> bpy.data.objects
     '''
     return bpy.data.objects
 
 def get_data_meshes():
     '''
-    Returns the objects from data
-
     >>> bpy.data.meshes
     '''
     return bpy.data.meshes
 
 def get_data_images():
     '''
-    Returns the images from data
-
     >>> bpy.data.images
     '''
     return bpy.data.images
+
+def get_data_node_groups():
+    '''
+    >>> bpy.data.node_groups
+    '''
+    return bpy.data.node_groups
 
 def set_pixels(obj, pixels):
     '''
@@ -486,3 +482,15 @@ def get_links(obj):
     >>> obj.links
     '''
     return obj.links
+
+def set_operation(obj, operation):
+    '''
+    >>> obj.operation = operation
+    '''
+    obj.operation = operation
+
+def set_use_clamp(obj, use_clamp):
+    '''
+    >>> obj.use_clamp = use_clamp
+    '''
+    obj.use_clamp = use_clamp
