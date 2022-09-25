@@ -17,9 +17,11 @@ poly_meshes. *Empties* are used as Minecraft's *locators*.
 The objects and empties can be parented to different objects (but not to
 empties) as long as there is a bone on top of their hierarchy.
 
-If a bone has no parents and children aren't exported at all, this is useful
-because in blender you sometimes use such bones for inverse kinematics and they
-don't have much use in Minecraft.
+If a bone has no parents and children it's ignored during the export. This is
+useful because in Blender you sometimes may want to use such bones for inverse
+kinematics. Skipping these bones doesn't mean that you loose anything because
+the bones without child cubes, locators or poly meshes can't be viewed in
+the game anyway.
 
 !!! Note
 
@@ -27,8 +29,8 @@ don't have much use in Minecraft.
 
     The *[separate cubes operator](/mcblend/gui/3d_viewport_sidebar/#mesh-transformations-panel)* can
     help you with separating meshes that contain multiple cubes into multiple
-    objects with properly aligned rotations. This means that you can organize
-    your cubes in a single mesh and as long as its parts have proper shapes,
+    objects with properly aligned rotations. This means that you can create
+    your model in a single mesh and as long as its parts have proper shapes,
     it's possible to separate them to a format that can be used by Mcblend.
 
     If you don't want to be restricted to using only cuboids for your model you
@@ -87,7 +89,7 @@ replaced with `...`.
     ]
 }
 ```
-Minecraft models are made out of with bones. Every bone has a list of cubes
+Minecraft models are made out of bones. Every bone has a list of cubes
 and/or a poly_mesh. Every cube and polymesh has its own pivot and rotation.
 Mcblend needs to know these values in order to export the model. This means
 that you can't just pack everything into a single mesh because a mesh is just a
@@ -105,7 +107,7 @@ models were hard to understand and the feature was removed.
 
 The UV maps of the faces of the *cubes* must be rectangular and the must be
 aligned with the orientation of the texture image. They also must be properly
-rotated to matche the rotations allowed by Minecraft. A proper rotation is
+rotated to match the rotations allowed by Minecraft. A proper rotation is
 when:
 
 - Front, back, left and right faces have their top and bottom edges aligned

@@ -2,7 +2,8 @@
 Mcblend is a Blender addon for creating and animating Minecraft Bedrock Edition models.
 
 ## Features
-- Importing and exporting Minecraft Bedrock Edition polymesh and cube-based
+- Importing and exporting Minecraft Bedrock Edition polymesh and cube-based models
+  (directly and based on attachables/entities from resource packs).
 - Exporting keyframe animations and poses for entities and attachables.
 - Animations can be baked into Minecraft format even if they use features
   not supported by the game like inverse kinematics and constraints.
@@ -16,7 +17,7 @@ The page is open for suggestions and feature requests.
 
 ## Installation
 1. Download and install
-  [Blender 2.93](https://www.blender.org/download/lts/2-93/) (the current LTS version).
+  [Blender 3.3](https://www.blender.org/download/releases/3-3/) (the current LTS version).
 2. Download the "latest" or "pre-release" version (zip file) from the project
   page on GitHub: [https://github.com/Nusiq/mcblend/releases](https://github.com/Nusiq/mcblend/releases)
 

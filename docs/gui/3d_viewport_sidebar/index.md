@@ -57,12 +57,23 @@ By default you can open the sidebar by pressing `N` while you hover over the
   ![](/mcblend/img/physics.png)
 
 ## Resurce Pack panel
-The Resource Pack panel lets you connect a resource pack to a project. When
-you have a resource pack connected to your project, you can easily import an entity
-from a list and import all of its models (if it has multiple) and select
-the texture variant and materials. The example on the sidebar
-image above is more complicated than most of the models that you would 
-normally import, in most cases Mcblend will be able to automatically detect
-which model, material and texture should be used, but in some cases it's
-impossible to tell without analyzing the behavior of the entity once MoLang queries
-are used. In these situations additional user input is required.
+The Resource Pack panel lets you connect a resource pack to a project.
+After opening Blender it will only have one button - "Load Resource Pack". This
+button loads information about the entities and attachable items available for
+importing. After loading the pack, additional GUI items will apper:
+
+- The top dropdown list lets you select whether you want to improt an entity
+  or a model of an attachable item.
+- Below the dropdown list there is a text box that lets you select item or
+  entity to import.
+- At the bottom of the panel additional options will appear to let you select
+  textures, materials and models. They depend on the properties of the
+  render controllers of the thing you want to import.
+
+Multiple resource packs can be loaded at the same time. If they define the
+same model, resource pack or texture, the one that was loaded last will be
+used.
+
+The "Unload Resource Pack" button unloads the currently loaded resource pack.
+The data about the resource pack isn't saved in the `.blend` file, so you have
+to load it every time you open the project.
