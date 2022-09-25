@@ -1,5 +1,5 @@
 # Mcblend
-![CI](https://github.com/Nusiq/mcblend/workflows/CI/badge.svg)
+[![Tests](https://github.com/Nusiq/mcblend/actions/workflows/tests.yml/badge.svg)](https://github.com/Nusiq/mcblend/actions/workflows/tests.yml)
 
 Blender 2.93 addon for working with Minecraft models.
 
