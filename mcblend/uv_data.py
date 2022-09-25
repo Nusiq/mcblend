@@ -1,16 +1,16 @@
 '''
 Custom blender objects with additional properties of the UV.
 '''
-from typing import Dict, List
+from typing import Dict, List, cast
 
 import bpy
-from bpy.types import PropertyGroup
+from bpy.types import PropertyGroup, Context
 from bpy.props import (
     BoolProperty, CollectionProperty, EnumProperty, FloatProperty,
     FloatVectorProperty, IntProperty, IntVectorProperty,
     PointerProperty, StringProperty)
 
-from .operator_func.typed_bpy_access import get_data_objects
+from .operator_func.typed_bpy_access import get_data_objects, get_mcblend, get_scene_mcblend_uv_groups
 from .operator_func.texture_generator import (
     UvMaskTypes, list_mask_types_as_blender_enum,
     list_mix_mask_modes_as_blender_enum)
@@ -183,7 +183,7 @@ def get_unused_uv_group_name(base_name: str, i=1):
     the base name and adds number at the end of it to find unique name with
     pattern :code:`{base_name}.{number:04}`.
     '''
-    uv_groups = bpy.context.scene.mcblend_uv_groups
+    uv_groups = get_scene_mcblend_uv_groups(cast(Context, bpy.context))
     name = base_name  # f'{base_name}.{i:04}'
     while name in uv_groups.keys():
         name = f'{base_name}.{i:04}'
@@ -195,7 +195,7 @@ def _update_uv_group_name(uv_group, new_name: str, update_references: bool):
     if update_references:
         for obj in get_data_objects():
             if obj.type == "MESH":
-                obj_props = obj.mcblend
+                obj_props = get_mcblend(obj)
                 if obj_props.uv_group == uv_group.name:
                     obj_props.uv_group = new_name
     # Update the name of the UV group

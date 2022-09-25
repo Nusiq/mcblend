@@ -19,7 +19,7 @@ def get_context_object(context):
     '''
     return context.object
 
-def get_context_scene_mcblend_project(context):
+def get_scene_mcblend_project(context):
     '''
     Returns the project properties from context
     
@@ -27,7 +27,7 @@ def get_context_scene_mcblend_project(context):
     '''
     return context.scene.mcblend_project
 
-def get_context_scene_mcblend_events(context):
+def get_scene_mcblend_events(context):
     '''
     Returns the events properties from context
     
@@ -35,7 +35,7 @@ def get_context_scene_mcblend_events(context):
     '''
     return context.scene.mcblend_events
 
-def get_context_scene_mcblend_active_event(context):
+def get_scene_mcblend_active_event(context):
     '''
     Returns the active event id from context
     
@@ -43,7 +43,7 @@ def get_context_scene_mcblend_active_event(context):
     '''
     return context.scene.mcblend_active_event
 
-def set_context_scene_mcblend_active_event(context, value):
+def set_scene_mcblend_active_event(context, value):
     '''
     Sets the active event id in context
 
@@ -51,7 +51,7 @@ def set_context_scene_mcblend_active_event(context, value):
     '''
     context.scene.mcblend_active_event = value
 
-def get_context_scene_mcblend_uv_groups(context):
+def get_scene_mcblend_uv_groups(context):
     '''
     Returns the uv groups from context
     
@@ -173,11 +173,23 @@ def get_pose_bones(obj):
     '''
     return obj.pose.bones
 
+def get_matrix(obj):
+    '''
+    >>> obj.matrix
+    '''
+    return obj.matrix
+
 def set_matrix(obj, matrix):
     '''
     >>> obj.matrix = matrix
     '''
     obj.matrix = matrix
+
+def set_matrix_local(obj, matrix):
+    '''
+    >>> obj.matrix_local = matrix
+    '''
+    obj.matrix_local = matrix
 
 def set_constraint_property(constraint, name, value):
     '''
@@ -279,6 +291,13 @@ def get_data_vertices(obj):
     '''
     return obj.data.vertices
 
+
+def get_data_edges(obj):
+    '''
+    >>> obj.data.edges
+    '''
+    return obj.data.edges
+
 def get_data_polygons(obj):
     '''
     >>> obj.data.polygons
@@ -314,6 +333,14 @@ def matmul(obj1, obj2):
     >>> obj1 @ obj2
     '''
     return obj1 @ obj2
+
+def matmul_chain(obj, *objn):
+    '''
+    >>> obj @ obj1 @ obj2...
+    '''
+    for i in objn:
+        obj = obj @ i
+    return obj
 
 def get_timeline_markers(obj):
     '''
@@ -376,3 +403,30 @@ def decompose(obj):
     >>> obj.decompose()
     '''
     return obj.decompose()
+
+def getitem(obj, index):
+    '''
+    >>> obj[index]
+    '''
+    return obj[index]
+
+def get_co(obj):
+    '''
+    >>> obj.co
+    '''
+    return obj.co
+
+def set_co(obj, co):
+    '''
+    >>> obj.co = co
+    '''
+    obj.co = co
+
+def to_euler(obj, order, euler_compact=None):
+    '''
+    >>> obj.to_euler(order, euler_compact)
+    '''
+    if euler_compact == None:
+        return obj.to_euler(order)
+    else:
+        return obj.to_euler(order, euler_compact)

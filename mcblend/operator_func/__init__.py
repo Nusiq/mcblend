@@ -18,8 +18,8 @@ import numpy as np
 
 from .typed_bpy_access import (
     get_data_bones, get_objects,
-    get_context_object, get_context_scene_mcblend_project,
-    get_context_scene_mcblend_events, get_selected_objects,
+    get_context_object, get_scene_mcblend_project,
+    get_scene_mcblend_events, get_selected_objects,
     get_data_images, get_data_objects, get_children,
     get_constraints, get_matrix_world, get_mcblend,
     new_colection,
@@ -112,7 +112,7 @@ def export_animation(
         fps=context.scene.render.fps,
         effect_events={
             event.name: event.get_effects_dict()
-            for event in get_context_scene_mcblend_events(context)
+            for event in get_scene_mcblend_events(context)
         }
     )
     animation.load_poses(object_properties, context)
@@ -389,7 +389,7 @@ def load_rp_to_mcblned(
     :param context: the context of running the operator.
     :param path: path to the resource pack.
     '''
-    mcblend_project = get_context_scene_mcblend_project(context)
+    mcblend_project = get_scene_mcblend_project(context)
     mcblend_project = cast(MCBLEND_ProjectProperties, mcblend_project)
     # Cleared cached data for GUI it will be reloaded later
     # Clear cached entity data
@@ -440,7 +440,7 @@ def load_rp_to_mcblned(
 
 def unload_rps(context: Context):
     # Clear the selection in GUI
-    mcblend_project = get_context_scene_mcblend_project(context)
+    mcblend_project = get_scene_mcblend_project(context)
     mcblend_project = cast(MCBLEND_ProjectProperties, mcblend_project)
     mcblend_project.entity_render_controllers.clear()
     mcblend_project.entities.clear()

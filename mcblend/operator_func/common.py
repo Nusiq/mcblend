@@ -14,13 +14,14 @@ from collections import deque
 import numpy as np
 
 import bpy
-from bpy.types import MeshUVLoopLayer, Object, MeshPolygon, PoseBone
+from bpy.types import MeshUVLoopLayer, Object, MeshPolygon, PoseBone, Context
 
 from mathutils import Vector, Matrix, Euler
 
 from .typed_bpy_access import (
-    decompose, get_co, get_data_bones, get_data_polygons, get_data_vertices, get_matrix_local, get_matrix_world, matmul, set_co,
-    subtract, cross, neg)
+    add, decompose, get_children, get_co, get_data, get_data_edges, get_matrix, get_pose_bones, get_scene_mcblend_uv_groups, get_data_bones, get_data_polygons, get_data_vertices,
+    get_matrix_local, get_matrix_world, get_mcblend, getitem, matmul, matmul_chain, set_co, set_matrix_local, set_matrix_world,
+    subtract, cross, neg, to_euler)
 
 from .texture_generator import Mask, ColorMask, get_masks_from_side
 from .exception import ExporterException
@@ -114,49 +115,50 @@ class McblendObject:
     @property
     def inflate(self) -> float:
         '''Inflate value of this object'''
-        return self.thisobj.mcblend.inflate
+        return get_mcblend(self.thisobj).inflate
 
     @inflate.setter
     def inflate(self, inflate: float):
-        self.thisobj.mcblend.inflate = inflate
+        get_mcblend(self.thisobj).inflate = inflate
 
     @property
     def min_uv_size(self) -> np.ndarray:
         '''The lower UV-size limit of this object.'''
         return np.array(
-            self.thisobj.mcblend.min_uv_size)
+            get_mcblend(self.thisobj).min_uv_size)
 
     @min_uv_size.setter
     def min_uv_size(self, min_uv_size: np.ndarray):
-        self.thisobj.mcblend.min_uv_size = min_uv_size
+        get_mcblend(self.thisobj).min_uv_size = cast(
+            tuple[int, int, int],min_uv_size)
 
     @property
     def mesh_type(self) -> MeshType:
         '''Mesh type of this object'''
-        return MeshType(self.thisobj.mcblend.mesh_type)
+        return MeshType(get_mcblend(self.thisobj).mesh_type)
 
     @mesh_type.setter
     def mesh_type(self, mesh_type: MeshType):
-        self.thisobj.mcblend.mesh_type = (
+        get_mcblend(self.thisobj).mesh_type = (
             mesh_type.value)
 
     @property
     def mirror(self) -> bool:
         '''Whether the objects UV is mirrored.'''
-        return self.thisobj.mcblend.mirror
+        return get_mcblend(self.thisobj).mirror
 
     @mirror.setter
     def mirror(self, mirror: bool):
-        self.thisobj.mcblend.mirror = mirror
+        get_mcblend(self.thisobj).mirror = mirror
 
     @property
     def uv_group(self) -> str:
         '''The name of the UV-group of this object.'''
-        return self.thisobj.mcblend.uv_group
+        return get_mcblend(self.thisobj).uv_group
 
     @uv_group.setter
     def uv_group(self, uv_group: str):
-        self.thisobj.mcblend.uv_group = uv_group
+        get_mcblend(self.thisobj).uv_group = uv_group
 
     @property
     def obj_data(self) -> Any:
@@ -168,13 +170,13 @@ class McblendObject:
     @property
     def this_pose_bone(self) -> PoseBone:
         '''The pose bone of this object (doesn't work for non-bone objects)'''
-        return self.thisobj.pose.bones[self.thisobj_id.bone_name]
+        return get_pose_bones(self.thisobj)[self.thisobj_id.bone_name]
 
     @property
     def obj_name(self) -> str:
         '''The name of this object used for exporting to Minecraft model.'''
         if self.thisobj.type == 'ARMATURE':
-            return self.thisobj.pose.bones[
+            return get_pose_bones(self.thisobj)[
                 self.thisobj_id.bone_name
             ].name
         return self.thisobj.name
@@ -185,7 +187,7 @@ class McblendObject:
         The type of the blender object wrapped inside this
         object (ARMATURE, MESH or EMPTY).
         '''
-        return self.thisobj.type
+        return cast(str, self.thisobj.type)
 
     @property
     def obj_bound_box(self) -> Any:
@@ -200,9 +202,12 @@ class McblendObject:
         '''
         this_obj_matrix_world = get_matrix_world(self.thisobj).copy()
         if self.thisobj.type == 'ARMATURE':
-            return this_obj_matrix_world @ self.thisobj.pose.bones[
-                self.thisobj_id.bone_name
-            ].matrix.copy()
+            return matmul(
+                this_obj_matrix_world,
+                get_matrix(
+                    get_pose_bones(self.thisobj)[self.thisobj_id.bone_name]
+                ).copy()
+            )
         return this_obj_matrix_world
 
     @property
@@ -242,7 +247,7 @@ class McblendObject:
         def _get_mcpivot(objprop: McblendObject) -> Vector:
             if objprop.parent is not None:
                 result = local_crds(objprop.parent, objprop)
-                result += _get_mcpivot(objprop.parent)
+                result = add(result, _get_mcpivot(objprop.parent))
             else:
                 result = objprop.obj_matrix_world.to_translation()
             return result
@@ -276,7 +281,7 @@ class McblendObject:
         if normalize:
             p_matrix.normalize()
             c_matrix.normalize()
-        return p_matrix.inverted() @ c_matrix
+        return matmul(p_matrix.inverted(), c_matrix)
 
     def get_mcrotation(
             self, other: Optional[McblendObject] = None
@@ -298,7 +303,7 @@ class McblendObject:
             '''
             child_q = child_matrix.normalized().to_quaternion()
             parent_q = parent_matrix.inverted().normalized().to_quaternion()
-            return (parent_q @ child_q).to_euler('XZY')
+            return to_euler(matmul(parent_q, child_q), 'XZY')
 
         if other is not None:
             result_euler = local_rotation(
@@ -310,7 +315,7 @@ class McblendObject:
                 self.group.get_world_origin_matrix()
             )
         else:
-            result_euler = self.obj_matrix_world.to_euler('XZY')
+            result_euler = to_euler(self.obj_matrix_world, 'XZY')
         result: np.ndarray = np.array(result_euler)[[0, 2, 1]]
         result = result * np.array([1, -1, 1])
         result = result * 180/math.pi  # math.degrees() for array
@@ -331,7 +336,9 @@ class McblendObject:
         '''
         if self.uv_group == '':
             return [ColorMask((0, 1, 0))]
-        uv_group = bpy.context.scene.mcblend_uv_groups[self.uv_group]
+        uv_group = get_scene_mcblend_uv_groups(
+            cast(Context, bpy.context)
+        )[self.uv_group]
         return get_masks_from_side(uv_group.side1)
 
     @property
@@ -342,7 +349,9 @@ class McblendObject:
         '''
         if self.uv_group == '':
             return [ColorMask((1, 0, 1))]
-        uv_group = bpy.context.scene.mcblend_uv_groups[self.uv_group]
+        uv_group = get_scene_mcblend_uv_groups(
+            cast(Context, bpy.context)
+        )[self.uv_group]
         return get_masks_from_side(uv_group.side2)
 
     @property
@@ -353,7 +362,9 @@ class McblendObject:
         '''
         if self.uv_group == '':
             return [ColorMask((1, 0, 0))]
-        uv_group = bpy.context.scene.mcblend_uv_groups[self.uv_group]
+        uv_group = get_scene_mcblend_uv_groups(
+            cast(Context, bpy.context)
+        )[self.uv_group]
         return get_masks_from_side(uv_group.side3)
 
     @property
@@ -364,7 +375,9 @@ class McblendObject:
         '''
         if self.uv_group == '':
             return [ColorMask((0, 1, 1))]
-        uv_group = bpy.context.scene.mcblend_uv_groups[self.uv_group]
+        uv_group = get_scene_mcblend_uv_groups(
+            cast(Context, bpy.context)
+        )[self.uv_group]
         return get_masks_from_side(uv_group.side4)
 
     @property
@@ -375,7 +388,9 @@ class McblendObject:
         '''
         if self.uv_group == '':
             return [ColorMask((0, 0, 1))]
-        uv_group = bpy.context.scene.mcblend_uv_groups[self.uv_group]
+        uv_group = get_scene_mcblend_uv_groups(
+            cast(Context, bpy.context)
+        )[self.uv_group]
         return get_masks_from_side(uv_group.side5)
 
     @property
@@ -386,7 +401,9 @@ class McblendObject:
         '''
         if self.uv_group == '':
             return [ColorMask((1, 1, 0))]
-        uv_group = bpy.context.scene.mcblend_uv_groups[self.uv_group]
+        uv_group = get_scene_mcblend_uv_groups(
+            cast(Context, bpy.context)
+        )[self.uv_group]
         masks = get_masks_from_side(uv_group.side6)
         return masks
 
@@ -408,7 +425,7 @@ class McblendObject:
         # value: the pointer to identifier of a group of that vertex
         groups = [c_int(-1) for _ in range(len(get_data_vertices(obj)))]
 
-        for edge in obj.data.edges:
+        for edge in get_data_edges(obj):
             a, b = edge.vertices
             aptr, bptr = groups[a], groups[b]
             if aptr.value != -1:
@@ -468,7 +485,7 @@ class CubePolygonsSolver:
 
     def __init__(
             self, p_options: List[List[str]],
-            polygons: MeshPolygon):
+            polygons: Iterable[MeshPolygon]):
         self.p_options = p_options
         self.polygons = polygons
         self.solved = False
@@ -477,7 +494,7 @@ class CubePolygonsSolver:
     @staticmethod
     def _get_vertices_order(
         name: str, mirror: bool,
-        bound_box_vertices: List[str]
+        bound_box_vertices: List[str | None]
     ) -> Tuple[int, int, int, int]:
         '''Gets the order of vertices for given cube polygon'''
         mc_mapping_uv_order = CubePolygonsSolver.MC_MAPPING_UV_ORDERS[
@@ -498,7 +515,7 @@ class CubePolygonsSolver:
                 "Trying to access solution before runing solve function")
         cube_polygons: Dict[str, CubePolygon] = {}
         for polygon in self.polygons:
-            complete_face: List[str] = []
+            complete_face: List[str | None] = []
             for vertex_index in polygon.vertices:
                 complete_face.append(self.solution[vertex_index])
             for j, face_pattern in enumerate(CubePolygonsSolver.FACE_PATTERNS):
@@ -580,7 +597,7 @@ class CubePolygons(NamedTuple):
             or not.
         '''
         # 0. Check if mesh has 12 edges
-        if len(cube.data.edges) != 12:
+        if len(get_data_edges(cube)) != 12:
             raise ExporterException(
                 f"Object {cube.name.split('.')[0]} is not a cube. Number of edges != 12."
             )
@@ -612,22 +629,21 @@ class CubePolygons(NamedTuple):
 
         p_options: List[List[str]] =  []
         for vertex_id in range(8):
-            vertex_crds = np.array(cube.data.vertices[vertex_id].co)
+            vertex_crds = np.array(get_data_vertices(cube)[vertex_id].co)
             # Find the closest point of bounding box (key from bb_crds)
             shortest_distance: Optional[float] = None
             for k, v in bb_crds.items():
                 p_options.append([])
                 curr_distance = np.linalg.norm(v-vertex_crds)
                 if shortest_distance is None:
-                    shortest_distance = curr_distance
+                    shortest_distance = cast(float, curr_distance)
                     p_options[vertex_id] = [k]
                 elif np.allclose(shortest_distance, curr_distance):
                     p_options[vertex_id].append(k)
                 elif curr_distance < shortest_distance:
-                    shortest_distance = curr_distance
+                    shortest_distance = cast(float, curr_distance)
                     p_options[vertex_id] = [k]
-
-        solver = CubePolygonsSolver(p_options, list(cube.data.polygons))
+        solver = CubePolygonsSolver(p_options, list(get_data_polygons(cube)))
         if not solver.solve():
             raise ExporterException(
                 f'Object "{cube.name}" is not a cube.')
@@ -673,7 +689,7 @@ class CubePolygon(NamedTuple):
         defined by self.order (left bottom, right bottom, right top, left top)
         '''
         ordered_loop_indices = np.array(self.side.loop_indices)[[self.order]]
-        crds = np.array([uv_layer.data[i].uv for i in ordered_loop_indices])
+        crds = np.array([get_data(uv_layer)[i].uv for i in ordered_loop_indices])
         return crds
 
     @staticmethod
@@ -791,7 +807,7 @@ class McblendObjectGroup:
                 thisobj_id=obj_id, thisobj=armature,
                 parentobj_id=parent_bone_id, children_ids=[],
                 mctype=MCObjType.BONE, group=self)
-        for obj in armature.children:
+        for obj in get_children(armature):
             if obj.parent_type != 'BONE':
                 continue  # TODO - maybe a warning here?
             parentobj_id = ObjectId(obj.parent.name, obj.parent_bone)
@@ -803,7 +819,7 @@ class McblendObjectGroup:
                 self.data[parentobj_id].children_ids.append(obj_id)
                 # Further offspring of the "child" (share same parent in mc
                 # model)
-                offspring: Deque[Object] = deque(obj.children)
+                offspring: Deque[Object] = deque(get_children(obj))
                 while offspring:
                     child = offspring.pop()
                     child_id: ObjectId = ObjectId(child.name, "")
@@ -815,7 +831,7 @@ class McblendObjectGroup:
                             parentobj_id=parentobj_id, children_ids=[],
                             mctype=MCObjType.CUBE, group=self)
                         self.data[parentobj_id].children_ids.append(child_id)
-                        offspring.extend(child.children)
+                        offspring.extend(get_children(child))
                     elif child.type == 'EMPTY':
                         self.data[child_id] = McblendObject(
                             thisobj_id=child_id, thisobj=child,
@@ -857,17 +873,15 @@ def apply_obj_transform_keep_origin(obj: Object):
     rotation and scale but keeps location the same.
     '''
     # Decompose object transformations
-    loc, rot, scl = obj.matrix_local.decompose()
+    loc, rot, scl = decompose(get_matrix_local(obj))
     loc_mat = Matrix.Translation(loc)
     rot_mat = rot.to_matrix().to_4x4()
-    scl_mat =  (
-        Matrix.Scale(scl[0],4,(1,0,0)) @
-        Matrix.Scale(scl[1],4,(0,1,0)) @
-        Matrix.Scale(scl[2],4,(0,0,1)))
-    obj.matrix_local = loc_mat
-
+    scl_mat =  matmul_chain(
+        Matrix.Scale(getitem(scl, 0), 4, Vector([1,0,0])),
+        Matrix.Scale(getitem(scl, 1), 4, Vector([0,1,0])),
+        Matrix.Scale(getitem(scl, 2), 4, Vector([0,0,1])))
     for vertex in get_data_vertices(obj):
-        vertex.co =  rot_mat @ scl_mat @ vertex.co
+        set_co(vertex, matmul(matmul(rot_mat, scl_mat), get_co(vertex)))
 
 def fix_cube_rotation(obj: Object):
     '''
@@ -919,12 +933,13 @@ def fix_cube_rotation(obj: Object):
     loc, rot, scl = decompose(get_matrix_local(obj))
     loc_mat = Matrix.Translation(loc)
     rot_mat = rot.to_matrix().to_4x4()
-    scl_mat =  (
-        Matrix.Scale(scl[0],4,(1,0,0)) @
-        Matrix.Scale(scl[1],4,(0,1,0)) @
-        Matrix.Scale(scl[2],4,(0,0,1)))
+    scl_mat =  matmul_chain(  # A @ B @ C
+        Matrix.Scale(getitem(scl, 0),4, Vector([1,0,0])),
+        Matrix.Scale(getitem(scl, 1),4, Vector([0,1,0])),
+        Matrix.Scale(getitem(scl, 2),4, Vector([0,0,1])))
 
-    obj.matrix_local = loc_mat @ counter_rotation @ rot_mat @ scl_mat
+    set_matrix_local(obj, matmul_chain(
+        loc_mat, counter_rotation, rot_mat, scl_mat))
 
 def get_vect_json(arr: Iterable) -> List[float]:
     '''
