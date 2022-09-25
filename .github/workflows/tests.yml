@@ -43,7 +43,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo snap install blender --channel=3.3lts/stable --classic
-        pip install mypy pytest numpy
+        pip install mypy pytest numpy fake-bpy-module-3.1
     - name: Build and install the addon
       run: |
         cd $GITHUB_WORKSPACE
