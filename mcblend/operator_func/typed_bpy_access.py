@@ -11,6 +11,42 @@ The functions from this module are annotated in typed_bpy_access.pyi
 '''
 import bpy
 
+def add(obj1, obj2):
+    '''
+    >>> obj1 + obj2
+    '''
+    return obj1 + obj2
+
+def cross(a, b):
+    '''
+    >>> a.cross(b)
+    '''
+    return a.cross(b)
+
+def decompose(obj):
+    '''
+    >>> obj.decompose()
+    '''
+    return obj.decompose()
+
+def get_children(obj):
+    '''
+    >>> obj.children
+    '''
+    return obj.children
+
+def get_co(obj):
+    '''
+    >>> obj.co
+    '''
+    return obj.co
+
+def get_constraints(object):
+    '''
+    >>> object.constraints
+    '''
+    return object.constraints
+
 def get_context_object(context):
     '''
     Returns the object from the context
@@ -19,21 +55,197 @@ def get_context_object(context):
     '''
     return context.object
 
-def get_scene_mcblend_project(context):
+def get_data(obj):
     '''
-    Returns the project properties from context
-    
-    >>> context.scene.mcblend_project
+    >>> obj.data
     '''
-    return context.scene.mcblend_project
+    return obj.data
 
-def get_scene_mcblend_events(context):
+def get_data_bones(obj):
     '''
-    Returns the events properties from context
-    
-    >>> context.scene.mcblend_events
+    >>> obj.data.bones
     '''
-    return context.scene.mcblend_events
+    return obj.data.bones
+
+def get_data_edges(obj):
+    '''
+    >>> obj.data.edges
+    '''
+    return obj.data.edges
+
+def get_data_edit_bones(obj):
+    '''
+    >>> obj.data.edit_bones
+    '''
+    return obj.data.edit_bones
+
+def get_data_images():
+    '''
+    >>> bpy.data.images
+    '''
+    return bpy.data.images
+
+def get_data_materials(obj):
+    '''
+    >>> obj.data.materials
+    '''
+    return obj.data.materials
+
+def get_data_meshes():
+    '''
+    >>> bpy.data.meshes
+    '''
+    return bpy.data.meshes
+
+def get_data_node_groups():
+    '''
+    >>> bpy.data.node_groups
+    '''
+    return bpy.data.node_groups
+
+def get_data_objects():
+    '''
+    >>> bpy.data.objects
+    '''
+    return bpy.data.objects
+
+def get_data_polygons(obj):
+    '''
+    >>> obj.data.polygons
+    '''
+    return obj.data.polygons
+
+def get_data_uv_layers(obj):
+    '''
+    >>> obj.data.uv_layers
+    '''
+    return obj.data.uv_layers
+
+def get_data_vertices(obj):
+    '''
+    >>> obj.data.vertices
+    '''
+    return obj.data.vertices
+
+def get_fcurves(obj):
+    '''
+    >>> obj.fcurves
+    '''
+    return obj.fcurves
+
+def get_head(obj):
+    '''
+    >>> obj.head
+    '''
+    return obj.head
+
+def get_inputs(obj):
+    '''
+    >>> obj.inputs
+    '''
+    return obj.inputs
+
+def get_keyframe_points(obj):
+    '''
+    >>> obj.keyframe_points
+    '''
+    return obj.keyframe_points
+
+def get_links(obj):
+    '''
+    >>> obj.links
+    '''
+    return obj.links
+
+def get_location(obj):
+    '''
+    >>> obj.location
+    '''
+    return obj.location
+
+def get_loop_indices(obj):
+    '''
+    >>> obj.loop_indices
+    '''
+    return obj.loop_indices
+
+def get_material_slots(obj):
+    '''
+    >>> obj.material_slots
+    '''
+    return obj.material_slots
+
+def get_matrix(obj):
+    '''
+    >>> obj.matrix
+    '''
+    return obj.matrix
+
+def get_matrix_local(obj):
+    '''
+    >>> obj.matrix_local
+    '''
+    return obj.matrix_local
+
+def get_matrix_parent_inverse(obj):
+    '''
+    >>> obj.matrix_parent_inverse
+    '''
+    return obj.matrix_parent_inverse
+
+def get_matrix_world(obj):
+    '''
+    >>> obj.matrix_world
+    '''
+    return obj.matrix_world
+
+def get_mcblend(obj):
+    '''
+    >>> obj.mcblend
+    '''
+    return obj.mcblend
+
+def get_nla_tracks(obj):
+    '''
+    >>> obj.nla_tracks
+    '''
+    return obj.nla_tracks
+
+def get_nodes(obj):
+    '''
+    >>> obj.nodes
+    '''
+    return obj.nodes
+
+def get_objects(obj):
+    '''
+    >>> obj.objects
+    '''
+    return obj.objects
+
+def get_outputs(obj):
+    '''
+    >>> obj.outputs
+    '''
+    return obj.outputs
+
+def get_parent(obj):
+    '''
+    >>> obj.parent
+    '''
+    return obj.parent
+
+def get_pose_bones(obj):
+    '''
+    >>> obj.pose.bones
+    '''
+    return obj.pose.bones
+
+def get_rotation_euler(obj):
+    '''
+    >>> obj.rotation_euler
+    '''
+    return obj.rotation_euler
 
 def get_scene_mcblend_active_event(context):
     '''
@@ -43,13 +255,21 @@ def get_scene_mcblend_active_event(context):
     '''
     return context.scene.mcblend_active_event
 
-def set_scene_mcblend_active_event(context, value):
+def get_scene_mcblend_events(context):
     '''
-    Sets the active event id in context
+    Returns the events properties from context
+    
+    >>> context.scene.mcblend_events
+    '''
+    return context.scene.mcblend_events
 
-    >>> context.scene.mcblend_active_event = value
+def get_scene_mcblend_project(context):
     '''
-    context.scene.mcblend_active_event = value
+    Returns the project properties from context
+    
+    >>> context.scene.mcblend_project
+    '''
+    return context.scene.mcblend_project
 
 def get_scene_mcblend_uv_groups(context):
     '''
@@ -63,49 +283,55 @@ def get_selected_objects(context):
     '''
     return context.selected_objects
 
-def get_data_objects():
+def get_strips(obj):
     '''
-    >>> bpy.data.objects
+    >>> obj.strips
     '''
-    return bpy.data.objects
+    return obj.strips
 
-def get_data_meshes():
+def get_tail(obj):
     '''
-    >>> bpy.data.meshes
+    >>> obj.tail
     '''
-    return bpy.data.meshes
+    return obj.tail
 
-def get_data_images():
+def get_timeline_markers(obj):
     '''
-    >>> bpy.data.images
+    >>> obj.timeline_markers
     '''
-    return bpy.data.images
+    return obj.timeline_markers
 
-def get_data_node_groups():
+def get_uv_layers(obj):
     '''
-    >>> bpy.data.node_groups
+    >>> obj.uv_layers
     '''
-    return bpy.data.node_groups
+    return obj.uv_layers
 
-def set_pixels(obj, pixels):
+def getitem(obj, index):
     '''
-    >>> obj.pixels = pixels
+    >>> obj[index]
     '''
-    obj.pixels = pixels
+    return obj[index]
 
-def get_mcblend(obj):
+def matmul(obj1, obj2):
     '''
-    >>> obj.mcblend
+    >>> obj1 @ obj2
     '''
-    return obj.mcblend
+    return obj1 @ obj2
 
-def set_operator_property(operator, name, value):
+def matmul_chain(obj, *objn):
     '''
-    Sets the property of the operator
+    >>> obj @ obj1 @ obj2...
+    '''
+    for i in objn:
+        obj = obj @ i
+    return obj
 
-    >>> operator.<name> = value
+def neg(a):
     '''
-    operator.__setattr__(name, value)
+    >>> -a
+    '''
+    return -a
 
 def new_collection(name):
     '''
@@ -123,65 +349,43 @@ def new_material(name: str):
     '''
     return bpy.data.materials.new(name)
 
-def get_objects(obj):
+def set_co(obj, co):
     '''
-    >>> obj.objects
+    >>> obj.co = co
     '''
-    return obj.objects
+    obj.co = co
 
-def get_material_slots(obj):
+def set_constraint_property(constraint, name, value):
     '''
-    >>> obj.material_slots
-    '''
-    return obj.material_slots
+    Sets the property of the constraint
 
-def get_data_materials(obj):
+    >>> constraint.<name> = value
     '''
-    >>> obj.data.materials
-    '''
-    return obj.data.materials
+    constraint.__setattr__(name, value)
 
-def get_data_uv_layers(obj):
+def set_default_value(obj, value):
     '''
-    >>> obj.data.uv_layers
+    >>> obj.default_value = value
     '''
-    return obj.data.uv_layers
+    obj.default_value = value
 
-def get_uv_layers(obj):
+def set_image(obj, image):
     '''
-    >>> obj.uv_layers
+    >>> obj.image = image
     '''
-    return obj.uv_layers
+    obj.image = image
 
-def get_data(obj):
+def set_interpolation(obj, interpolation):
     '''
-    >>> obj.data
+    >>> obj.interpolation = interpolation
     '''
-    return obj.data
+    obj.interpolation = interpolation
 
-def get_data_bones(obj):
+def set_location(obj, value):
     '''
-    >>> obj.data.bones
+    >>> obj.location = value
     '''
-    return obj.data.bones
-
-def get_data_edit_bones(obj):
-    '''
-    >>> obj.data.edit_bones
-    '''
-    return obj.data.edit_bones
-
-def get_pose_bones(obj):
-    '''
-    >>> obj.pose.bones
-    '''
-    return obj.pose.bones
-
-def get_matrix(obj):
-    '''
-    >>> obj.matrix
-    '''
-    return obj.matrix
+    obj.location = value
 
 def set_matrix(obj, matrix):
     '''
@@ -195,37 +399,49 @@ def set_matrix_local(obj, matrix):
     '''
     obj.matrix_local = matrix
 
-def set_constraint_property(constraint, name, value):
+def set_matrix_parent_inverse(obj, matrix):
     '''
-    Sets the property of the constraint
+    >>> obj.matrix_parent_inverse = matrix
+    '''
+    obj.matrix_parent_inverse = matrix
 
-    >>> constraint.<name> = value
+def set_matrix_world(obj, matrix):
     '''
-    constraint.__setattr__(name, value)
+    >>> obj.matrix_world = matrix
+    '''
+    obj.matrix_world = matrix
 
-def get_constraints(object):
+def set_node_tree(obj, node_tree):
     '''
-    >>> object.constraints
+    >>> obj.node_tree = node_tree
     '''
-    return object.constraints
+    obj.node_tree = node_tree
 
-def get_children(obj):
+def set_operation(obj, operation):
     '''
-    >>> obj.children
+    >>> obj.operation = operation
     '''
-    return obj.children
+    obj.operation = operation
 
-def get_parent(obj):
+def set_operator_property(operator, name, value):
     '''
-    >>> obj.parent
+    Sets the property of the operator
+
+    >>> operator.<name> = value
     '''
-    return obj.parent
+    operator.__setattr__(name, value)
 
 def set_parent(obj, value):
     '''
     >>> obj.parent = value
     '''
     obj.parent = value
+
+def set_pixels(obj, pixels):
+    '''
+    >>> obj.pixels = pixels
+    '''
+    obj.pixels = pixels
 
 def set_pose_bone_constraint_property(constraint, name, value):
     '''
@@ -235,196 +451,25 @@ def set_pose_bone_constraint_property(constraint, name, value):
     '''
     constraint.__setattr__(name, value)
 
-def set_matrix_world(obj, matrix):
+def set_scene_mcblend_active_event(context, value):
     '''
-    >>> obj.matrix_world = matrix
-    '''
-    obj.matrix_world = matrix
+    Sets the active event id in context
 
-def get_matrix_world(obj):
+    >>> context.scene.mcblend_active_event = value
     '''
-    >>> obj.matrix_world
-    '''
-    return obj.matrix_world
+    context.scene.mcblend_active_event = value
 
-def get_matrix_local(obj):
+def set_use_clamp(obj, use_clamp):
     '''
-    >>> obj.matrix_local
+    >>> obj.use_clamp = use_clamp
     '''
-    return obj.matrix_local
-
-def set_matrix_parent_inverse(obj, matrix):
-    '''
-    >>> obj.matrix_parent_inverse = matrix
-    '''
-    obj.matrix_parent_inverse = matrix
-
-def get_matrix_parent_inverse(obj):
-    '''
-    >>> obj.matrix_parent_inverse
-    '''
-    return obj.matrix_parent_inverse
-
-def get_loop_indices(obj):
-    '''
-    >>> obj.loop_indices
-    '''
-    return obj.loop_indices
-
-def get_rotation_euler(obj):
-    '''
-    >>> obj.rotation_euler
-    '''
-    return obj.rotation_euler
-
-def get_location(obj):
-    '''
-    >>> obj.location
-    '''
-    return obj.location
-
-def set_location(obj, value):
-    '''
-    >>> obj.location = value
-    '''
-    obj.location = value
-
-def get_data_vertices(obj):
-    '''
-    >>> obj.data.vertices
-    '''
-    return obj.data.vertices
-
-
-def get_data_edges(obj):
-    '''
-    >>> obj.data.edges
-    '''
-    return obj.data.edges
-
-def get_data_polygons(obj):
-    '''
-    >>> obj.data.polygons
-    '''
-    return obj.data.polygons
-
-def get_head(obj):
-    '''
-    >>> obj.head
-    '''
-    return obj.head
-
-def get_tail(obj):
-    '''
-    >>> obj.tail
-    '''
-    return obj.tail
-
-def add(obj1, obj2):
-    '''
-    >>> obj1 + obj2
-    '''
-    return obj1 + obj2
+    obj.use_clamp = use_clamp
 
 def subtract(obj1, obj2):
     '''
     >>> obj1 - obj2
     '''
     return obj1 - obj2
-
-def matmul(obj1, obj2):
-    '''
-    >>> obj1 @ obj2
-    '''
-    return obj1 @ obj2
-
-def matmul_chain(obj, *objn):
-    '''
-    >>> obj @ obj1 @ obj2...
-    '''
-    for i in objn:
-        obj = obj @ i
-    return obj
-
-def get_timeline_markers(obj):
-    '''
-    >>> obj.timeline_markers
-    '''
-    return obj.timeline_markers
-
-def get_fcurves(obj):
-    '''
-    >>> obj.fcurves
-    '''
-    return obj.fcurves
-
-def get_keyframe_points(obj):
-    '''
-    >>> obj.keyframe_points
-    '''
-    return obj.keyframe_points
-
-def get_nla_tracks(obj):
-    '''
-    >>> obj.nla_tracks
-    '''
-    return obj.nla_tracks
-
-
-def get_strips(obj):
-    '''
-    >>> obj.strips
-    '''
-    return obj.strips
-
-def cross(a, b):
-    '''
-    >>> a.cross(b)
-    '''
-    return a.cross(b)
-
-def neg(a):
-    '''
-    >>> -a
-    '''
-    return -a
-
-def get_co(obj):
-    '''
-    >>> obj.co
-    '''
-    return obj.co
-
-
-def set_co(obj, co):
-    '''
-    >>> obj.co = co
-    '''
-    obj.co = co
-
-def decompose(obj):
-    '''
-    >>> obj.decompose()
-    '''
-    return obj.decompose()
-
-def getitem(obj, index):
-    '''
-    >>> obj[index]
-    '''
-    return obj[index]
-
-def get_co(obj):
-    '''
-    >>> obj.co
-    '''
-    return obj.co
-
-def set_co(obj, co):
-    '''
-    >>> obj.co = co
-    '''
-    obj.co = co
 
 def to_euler(obj, order, euler_compact=None):
     '''
@@ -434,63 +479,3 @@ def to_euler(obj, order, euler_compact=None):
         return obj.to_euler(order)
     else:
         return obj.to_euler(order, euler_compact)
-
-def get_nodes(obj):
-    '''
-    >>> obj.nodes
-    '''
-    return obj.nodes
-
-def get_inputs(obj):
-    '''
-    >>> obj.inputs
-    '''
-    return obj.inputs
-
-def get_outputs(obj):
-    '''
-    >>> obj.outputs
-    '''
-    return obj.outputs
-
-def set_default_value(obj, value):
-    '''
-    >>> obj.default_value = value
-    '''
-    obj.default_value = value
-
-def set_node_tree(obj, node_tree):
-    '''
-    >>> obj.node_tree = node_tree
-    '''
-    obj.node_tree = node_tree
-
-def set_interpolation(obj, interpolation):
-    '''
-    >>> obj.interpolation = interpolation
-    '''
-    obj.interpolation = interpolation
-
-def set_image(obj, image):
-    '''
-    >>> obj.image = image
-    '''
-    obj.image = image
-
-def get_links(obj):
-    '''
-    >>> obj.links
-    '''
-    return obj.links
-
-def set_operation(obj, operation):
-    '''
-    >>> obj.operation = operation
-    '''
-    obj.operation = operation
-
-def set_use_clamp(obj, use_clamp):
-    '''
-    >>> obj.use_clamp = use_clamp
-    '''
-    obj.use_clamp = use_clamp
