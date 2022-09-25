@@ -111,13 +111,21 @@ def set_operator_property(operator, name, value):
     '''
     operator.__setattr__(name, value)
 
-def new_colection(name):
+def new_collection(name):
     '''
     Creates new collection with given name
 
     >>> bpy.data.collections.new(name)
     '''
     return bpy.data.collections.new(name)
+
+def new_material(name: str):
+    '''
+    Creates new material with given name
+
+    >>> bpy.data.materials.new(name)
+    '''
+    return bpy.data.materials.new(name)
 
 def get_objects(obj):
     '''
@@ -430,3 +438,51 @@ def to_euler(obj, order, euler_compact=None):
         return obj.to_euler(order)
     else:
         return obj.to_euler(order, euler_compact)
+
+def get_nodes(obj):
+    '''
+    >>> obj.nodes
+    '''
+    return obj.nodes
+
+def get_inputs(obj):
+    '''
+    >>> obj.inputs
+    '''
+    return obj.inputs
+
+def get_outputs(obj):
+    '''
+    >>> obj.outputs
+    '''
+    return obj.outputs
+
+def set_default_value(obj, value):
+    '''
+    >>> obj.default_value = value
+    '''
+    obj.default_value = value
+
+def set_node_tree(obj, node_tree):
+    '''
+    >>> obj.node_tree = node_tree
+    '''
+    obj.node_tree = node_tree
+
+def set_interpolation(obj, interpolation):
+    '''
+    >>> obj.interpolation = interpolation
+    '''
+    obj.interpolation = interpolation
+
+def set_image(obj, image):
+    '''
+    >>> obj.image = image
+    '''
+    obj.image = image
+
+def get_links(obj):
+    '''
+    >>> obj.links
+    '''
+    return obj.links

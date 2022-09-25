@@ -7,6 +7,10 @@ from collections import deque
 import bpy
 from bpy.types import Image, Material, Node, NodeTree
 
+from .typed_bpy_access import (
+    get_inputs, get_links, get_nodes, get_outputs, new_material, set_default_value,
+    set_image, set_interpolation, set_node_tree)
+
 PADDING = 300
 
 def _create_node_group_defaults(name: str) -> Tuple[NodeTree, Node, Node]:
@@ -466,17 +470,16 @@ def create_bone_material(
         material name used by render controllers that display the bone.
     :returns: Material for Blender object that represent Minecraft bone.
     '''
-
-    material: Material = bpy.data.materials.new(material_name)
+    material: Material = new_material(material_name)
     material.use_nodes = True
     material.blend_method = 'OPAQUE'
 
     node_tree = material.node_tree
-    output_node = node_tree.nodes['Material Output']
-    bsdf_node = node_tree.nodes["Principled BSDF"]
-    bsdf_node.inputs['Specular'].default_value = 0
-    bsdf_node.inputs['Sheen Tint'].default_value = 0
-    bsdf_node.inputs['Roughness'].default_value = 1
+    output_node = get_nodes(node_tree)['Material Output']
+    bsdf_node = get_nodes(node_tree)["Principled BSDF"]
+    set_default_value(get_inputs(bsdf_node)['Specular'], 0)
+    set_default_value(get_inputs(bsdf_node)['Sheen Tint'], 0)
+    set_default_value(get_inputs(bsdf_node)['Roughness'], 1)
 
     node_groups: Deque[Node] = deque()
     # Test for opaque materials, if you don't find eny enter second loop
@@ -492,15 +495,19 @@ def create_bone_material(
             continue
         # Reach this code only with OPAQUE_MATERIALS (executed onece)
         node_group_data = MATERIALS_MAP[true_material_name](material, i == 0)
-        node_group: Node = node_tree.nodes.new('ShaderNodeGroup')
-        node_group.node_tree = node_group_data
-        node_group.location = (-3*PADDING, -i*PADDING)
-        image_node = node_tree.nodes.new('ShaderNodeTexImage')
-        image_node.interpolation = 'Closest'
-        image_node.image = img
-        image_node.location = (-4*PADDING, -i*PADDING)
-        node_tree.links.new(node_group.inputs[0], image_node.outputs[0])
-        node_tree.links.new(node_group.inputs[1], image_node.outputs[1])
+        node_group: Node = get_nodes(node_tree).new('ShaderNodeGroup')
+        set_node_tree(node_group, node_group_data)
+        node_group.location = [-3*PADDING, -i*PADDING]
+        image_node = get_nodes(node_tree).new('ShaderNodeTexImage')
+        set_interpolation(image_node, 'Closest')
+        set_image(image_node, img)
+        image_node.location = [-4*PADDING, -i*PADDING]
+        get_links(node_tree).new(
+            get_inputs(node_group)[0],
+            get_outputs(image_node)[0])
+        get_links(node_tree).new(
+            get_inputs(node_group)[1],
+            get_outputs(image_node)[1])
         node_groups.append(node_group)
         break  # found opaque material
     else:  # No opaque materials has been found
@@ -513,40 +520,61 @@ def create_bone_material(
             except KeyError:
                 true_material_name = 'entity_alphatest'  # default
             node_group_data = MATERIALS_MAP[true_material_name](material, i == 0)
-            node_group = node_tree.nodes.new('ShaderNodeGroup')
-            node_group.node_tree = node_group_data
-            node_group.location = (-3*PADDING, -i*PADDING)
-            image_node = node_tree.nodes.new('ShaderNodeTexImage')
-            image_node.interpolation = 'Closest'
-            image_node.image = img
-            image_node.location = (-4*PADDING, -i*PADDING)
-            node_tree.links.new(node_group.inputs[0], image_node.outputs[0])
-            node_tree.links.new(node_group.inputs[1], image_node.outputs[1])
+            node_group = get_nodes(node_tree).new('ShaderNodeGroup')
+            set_node_tree(node_group, node_group_data)
+            node_group.location = [-3*PADDING, -i*PADDING]
+            image_node = get_nodes(node_tree).new('ShaderNodeTexImage')
+            set_interpolation(image_node, 'Closest')
+            set_image(image_node, img)
+            image_node.location = [-4*PADDING, -i*PADDING]
+            get_links(node_tree).new(
+                get_inputs(node_group)[0],
+                get_outputs(image_node)[0])
+            get_links(node_tree).new(
+                get_inputs(node_group)[1],
+                get_outputs(image_node)[1])
             node_groups.append(node_group)
 
     # Join node groups using mix node groups
     i = 0
     while True:
         if len(node_groups) > 1:
-            connection = node_tree.nodes.new('ShaderNodeGroup')
-            connection.node_tree = create_material_mix_node_group()
-            connection.location = ((i-2)*PADDING, -i*PADDING)
+            connection = get_nodes(node_tree).new('ShaderNodeGroup')
+            set_node_tree(connection, create_material_mix_node_group())
+            connection.location = [(i-2)*PADDING, -i*PADDING]
             bottom = node_groups.popleft()
             top = node_groups.popleft()
             node_groups.appendleft(connection)
-
-            node_tree.links.new(connection.inputs['Color1'], bottom.outputs['Color'])
-            node_tree.links.new(connection.inputs['Alpha1'], bottom.outputs['Alpha'])
-            node_tree.links.new(connection.inputs['Emission1'], bottom.outputs['Emission'])
-            node_tree.links.new(connection.inputs['Color2'], top.outputs['Color'])
-            node_tree.links.new(connection.inputs['Alpha2'], top.outputs['Alpha'])
-            node_tree.links.new(connection.inputs['Emission2'], top.outputs['Emission'])
+            get_links(node_tree).new(
+                get_inputs(connection)['Color1'],
+                get_outputs(bottom)['Color'])
+            get_links(node_tree).new(
+                get_inputs(connection)['Alpha1'],
+                get_outputs(bottom)['Alpha'])
+            get_links(node_tree).new(
+                get_inputs(connection)['Emission1'],
+                get_outputs(bottom)['Emission'])
+            get_links(node_tree).new(
+                get_inputs(connection)['Color2'],
+                get_outputs(top)['Color'])
+            get_links(node_tree).new(
+                get_inputs(connection)['Alpha2'],
+                get_outputs(top)['Alpha'])
+            get_links(node_tree).new(
+                get_inputs(connection)['Emission2'],
+                get_outputs(top)['Emission'])
             i += 1
         elif len(node_groups) == 1:
             final_node = node_groups[0]
-            node_tree.links.new(bsdf_node.inputs['Base Color'], final_node.outputs['Color'])
-            node_tree.links.new(bsdf_node.inputs['Alpha'], final_node.outputs['Alpha'])
-            node_tree.links.new(bsdf_node.inputs['Emission'], final_node.outputs['Emission'])
+            get_links(node_tree).new(
+                get_inputs(bsdf_node)['Base Color'],
+                get_outputs(final_node)['Color'])
+            get_links(node_tree).new(
+                get_inputs(bsdf_node)['Alpha'],
+                get_outputs(final_node)['Alpha'])
+            get_links(node_tree).new(
+                get_inputs(bsdf_node)['Emission'],
+                get_outputs(final_node)['Emission'])
             break
         else:  # shouldn't happen if bone uses any materials
             break

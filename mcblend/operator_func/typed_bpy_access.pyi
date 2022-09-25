@@ -4,7 +4,7 @@ from bpy.types import (
     CollectionChildren, ViewLayer, LayerObjects, MaterialSlot, Constraint,
     ObjectConstraints, PoseBoneConstraints, Image, EditBone,
     MeshUVLoopLayer, MeshPolygon, PoseBone, Mesh, Scene, Action, FCurve,
-    AnimData, NlaTrack, MeshVertex)
+    AnimData, NlaTrack, MeshVertex, Material, NodeTree, Node, NodeSocket)
 from mathutils import Matrix, Euler, Vector, Quaternion
 
 
@@ -14,7 +14,8 @@ from .pyi_types import (
     MeshUVLoopLayerData, ObjectDataVertices, ObjectDataEdges,
     ArmaturePoseBones, SceneTimelineMarkers, ActionFCurves,
     FCurveKeyframePoints, AnimationDataNlaTracks, NlaTrackNlaStrips,
-    ObjectDataPolygons)
+    ObjectDataPolygons, NodeTreeNodes, NodeInputs, NodeOutputs,
+    NodeTreeLinks)
 
 from ..object_data import (
     MCBLEND_EventProperties, MCBLEND_ObjectProperties, MCBLEND_BoneProperties)
@@ -57,7 +58,9 @@ def set_operator_property(
     operator: OperatorProperties, name: str,
     value: bool | int | float | str | list | dict | Object) -> None: ...
 
-def new_colection(name: str) -> Collection: ...
+def new_collection(name: str) -> Collection: ...
+
+def new_material(name: str) -> Material: ...
 
 @overload
 def get_objects(obj: Collection) -> CollectionObjects: ...
@@ -197,3 +200,19 @@ def to_euler(obj: Matrix, order: str, euler_compact: None | Euler=None): ...
 
 @overload
 def to_euler(obj: Quaternion, order: str, euler_compact: None | Euler=None): ...
+
+def get_nodes(obj: NodeTree) -> NodeTreeNodes: ...
+
+def get_inputs(obj: Node) -> NodeInputs: ...
+
+def get_outputs(obj: Node) -> NodeOutputs: ...
+
+def set_default_value(obj: NodeSocket, value: int) -> None: ...
+
+def set_node_tree(obj: Node, node_tree: NodeTree) -> None: ...
+
+def set_interpolation(obj: Node, interpolation: str) -> None: ...
+
+def set_image(obj: Node, image: Image | None) -> None: ...
+
+def get_links(obj: NodeTree) -> NodeTreeLinks: ...

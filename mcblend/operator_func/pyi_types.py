@@ -5,7 +5,7 @@ from typing import Any, Iterator, TypeVar, Generic, Sized, Optional
 from bpy.types import (
     Object, Mesh, Image, Material, Bone, EditBone, MeshUVLoopLayer, PoseBone,
     MeshUVLoop, MeshVertex, MeshEdge, MeshPolygon, TimelineMarker, FCurve,
-    Keyframe, NlaTrack, NlaStrip)
+    Keyframe, NlaTrack, NlaStrip, Node, NodeSocket, NodeLink)
 
 T = TypeVar("T")
 
@@ -175,3 +175,37 @@ class NlaTrackNlaStrips(Sized):
     '''
     def __getitem__(self, key: Any) -> NlaStrip: ...
     def __iter__(self) -> Iterator[NlaStrip]: ...
+
+class NodeTreeNodes(Sized):
+    '''
+    Fake class defined as a result of:
+    >>> object.nodes
+    '''
+    def __getitem__(self, key: Any) -> Node: ...
+    def __iter__(self) -> Iterator[Node]: ...
+    def new(self, type: str) -> Node: ...
+
+class NodeInputs(Sized):
+    '''
+    Fake class defined as a result of:
+    >>> object.inputs
+    '''
+    def __getitem__(self, key: Any) -> NodeSocket: ...
+    def __iter__(self) -> Iterator[NodeSocket]: ...
+
+class NodeOutputs(Sized):
+    '''
+    Fake class defined as a result of:
+    >>> object.outputs
+    '''
+    def __getitem__(self, key: Any) -> NodeSocket: ...
+    def __iter__(self) -> Iterator[NodeSocket]: ...
+
+class NodeTreeLinks(Sized):
+    '''
+    Fake class defined as a result of:
+    >>> object.links
+    '''
+    def __getitem__(self, key: Any) -> NodeLink: ...
+    def __iter__(self) -> Iterator[NodeLink]: ...
+    def new(self, a: NodeSocket, b: NodeSocket) -> NodeLink: ...

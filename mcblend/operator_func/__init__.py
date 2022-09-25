@@ -22,7 +22,7 @@ from .typed_bpy_access import (
     get_scene_mcblend_events, get_selected_objects,
     get_data_images, get_data_objects, get_children,
     get_constraints, get_matrix_world, get_mcblend,
-    new_colection,
+    new_collection,
     get_material_slots, set_constraint_property, set_pixels,
     set_matrix_parent_inverse, set_matrix_world,
     set_parent, set_pose_bone_constraint_property,
@@ -695,18 +695,18 @@ def prepare_physics_simulation(context: Context) -> Dict:
         bpy.ops.rigidbody.world_add()
         rigidbody_world = context.scene.rigidbody_world
     if rigidbody_world.collection is None:
-        collection = new_colection("RigidBodyWorld")
+        collection = new_collection("RigidBodyWorld")
         rigidbody_world.collection = collection
     if rigidbody_world.constraints is None:
-        collection = new_colection("RigidBodyConstraints")
+        collection = new_collection("RigidBodyConstraints")
         rigidbody_world.constraints = collection
 
     # Create new collections for the scene
     physics_objects_groups: Dict[McblendObject, _PhysicsObjectsGroup] = {}
-    main_collection = new_colection("Mcblend: Physics")
-    rb_collection = new_colection("Rigid Body")
-    rbc_collection = new_colection("Rigid Body Constraints")
-    bp_collection = new_colection("Bone Parents")
+    main_collection = new_collection("Mcblend: Physics")
+    rb_collection = new_collection("Rigid Body")
+    rbc_collection = new_collection("Rigid Body Constraints")
+    bp_collection = new_collection("Bone Parents")
     get_children(context.scene.collection).link(main_collection)
     get_children(main_collection).link(rb_collection)
     get_children(main_collection).link(rbc_collection)
