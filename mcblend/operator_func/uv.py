@@ -76,7 +76,7 @@ class UvBox:
     '''Rectangular space on the texture.'''
     def __init__(
             self, size: Vector2di,
-            uv: Vector2di = None
+            uv: Vector2di | None = None
         ):
         if uv is None:
             uv = (0, 0)
@@ -218,7 +218,7 @@ class UvMcCubeFace(UvBox):
     def __init__(
             self, cube: UvMcCube, cube_polygon: CubePolygon,
             size: Vector2di, masks: Sequence[Mask],
-            uv: Vector2di=None):
+            uv: Vector2di | None = None):
         super().__init__(size, uv=uv)
         self.cube = cube
         self.cube_polygon = cube_polygon

@@ -617,7 +617,7 @@ class CubePolygons(NamedTuple):
 
         # Blender crds (bounding box):
         # 0. ---; 1. --+; 2. -++; 3. -+-; 4. +--; 5. +-+; 6. +++; 7. ++-
-        mmm, mmp, mpp, mpm, pmm, pmp, ppp, ppm = tuple(cube.bound_box)
+        mmm, mmp, mpp, mpm, pmm, pmp, ppp, ppm = tuple(cube.bound_box)  # type: ignore
         # MC:      0+0 top; -00 right; 00- front;
         # Blender: 00+ top; -00 right; 0-0 front
         bb_crds = {

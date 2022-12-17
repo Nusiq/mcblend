@@ -102,7 +102,8 @@ def _get_keyframes(context: Context) -> List[int]:
             if fcurve.keyframe_points is None:
                 continue
             for keyframe_point in get_keyframe_points(fcurve):
-                result.add(round(keyframe_point.co[0]))
+                frame_index: float = keyframe_point.co[0]  # type: ignore
+                result.add(round(frame_index))
         return result
 
     keyframes: Set[int] = set()
