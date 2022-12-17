@@ -178,7 +178,7 @@ class PoseBone(NamedTuple):
 
 class Pose:
     '''A pose in a frame of animation.'''
-    def __init__(self):
+    def __init__(self) -> None:
         self.pose_bones: Dict[str, PoseBone] = {}
         '''dict of bones in a pose keyed by the name of the bones'''
 

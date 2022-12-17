@@ -1270,38 +1270,6 @@ class ImportPolyMesh:
         self.uvs: List[Vector2d] = data['uvs']
         self.polys: List[List[Vector3di]] = data['polys']
 
-    def unpack_data(self):
-        '''
-        Unpacks the data about polymesh to a format more useful in blender.
-        The data is not converted to minecraft format.
-        '''
-        # positions -> vertices
-        # polys -> [loops]
-        #   vertex ID
-        #   loop normal ID
-        #   loop uv ID
-        # normals -> normals (coordinates)
-        # uvs -> uvs (coordinates)
-
-        # vertex IDs to create polygons
-        blender_polygons: List[List[int]] = []
-        # List of vectors with normals
-        blender_normals: List[Vector3d] = []
-        # List of vectors with UVs
-        blender_uvs: List[Vector2d] = []
-
-        # TODO - this function or earlier data processing should make sure
-        # the indices doesn't go out of bounds
-        for poly in self.polys:
-            curr_polygon: List[int] = []
-            for vertex_id, normal_id, uv_id in poly:
-                curr_polygon.append(vertex_id)
-                blender_normals.append(self.normals[normal_id])
-                blender_uvs.append(self.uvs[uv_id])
-            blender_polygons.append(curr_polygon)
-        return blender_polygons, self.positions, blender_normals, blender_uvs
-
-
 class ImportBone:
     '''
     Represents Minecraft bone during import operation.

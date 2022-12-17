@@ -336,7 +336,7 @@ class CubeExport:
 
 class PolyMesh:
     '''Object that represents a poly_mesh of a bone.'''
-    def __init__(self):
+    def __init__(self) -> None:
         self.positions: List[List[float]] = []
         self.normals: List[List[float]] = []
         self.uvs: List[List[int]] = []
@@ -347,7 +347,7 @@ class PolyMesh:
     def extend_mesh_data(
             self, positions: List[List[float]], normals: List[List[float]],
             polys: List[List[Vector3di]],
-            uvs: List[List[int]], mcblend_obj: McblendObject):
+            uvs: List[List[int]], mcblend_obj: McblendObject) -> None:
         '''
         Extends the poly_mesh data with new vertices, normals, polys and uvs
         from another mesh.
@@ -370,7 +370,7 @@ class PolyMesh:
                 ])
             self.polys.append(curr_poly)
 
-    def json(self):
+    def json(self) -> Dict:
         '''Return part of the model JSON with poly_mesh object.'''
         poly_mesh = {
             'normalized_uvs': self.normalized_uvs,
@@ -386,7 +386,7 @@ class UvExportFactory:
     Object used for creating the UvExport objects. Decides which subtype of the
     UvExport object should be used.
     '''
-    def __init__(self, texture_size: Vector2di):
+    def __init__(self, texture_size: Vector2di) -> None:
         self.blend_to_mc_converter = CoordinatesConverter(
             np.array([[0, 1], [1, 0]]),
             np.array([[0, texture_size[0]], [0, texture_size[1]]])

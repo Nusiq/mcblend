@@ -255,6 +255,23 @@ def get_scene_mcblend_active_event(context):
     '''
     return context.scene.mcblend_active_event
 
+def get_scene_mcblend_active_uv_group(context):
+    '''
+    Returns the active uv group id from context
+    
+    >>> context.scene.mcblend_active_uv_group
+    '''
+    return context.scene.mcblend_active_uv_group
+
+
+def get_scene_mcblend_active_uv_groups_side(context):
+    '''
+    Returns the active uv group side from context
+    
+    >>> context.scene.mcblend_active_uv_group_side
+    '''
+    return context.scene.mcblend_active_uv_group_side
+
 def get_scene_mcblend_events(context):
     '''
     Returns the events properties from context

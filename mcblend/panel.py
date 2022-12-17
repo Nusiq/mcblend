@@ -7,7 +7,7 @@ from typing import List, Optional, cast
 from dataclasses import dataclass
 
 import bpy
-from bpy.types import UILayout, UIList, Panel
+from bpy.types import UILayout, UIList, Panel, Context
 
 from .resource_pack_data import MCBLEND_ProjectProperties
 
@@ -16,7 +16,8 @@ from .operator_func.db_handler import get_db_handler
 from .operator_func.common import MeshType
 from .operator_func.texture_generator import UvMaskTypes
 from .operator_func.typed_bpy_access import (
-    get_data_bones, set_operator_property)
+    get_data_bones, set_operator_property, get_scene_mcblend_active_uv_group,
+    get_scene_mcblend_uv_groups, get_scene_mcblend_active_uv_groups_side)
 
 # GUI
 # UV-groups names list
@@ -297,7 +298,7 @@ class MCBLEND_PT_UVGroupPanel(Panel):
                 ui_stack.append(_UIStackItem(
                     None, mask.children+1))
 
-    def draw(self, context):
+    def draw(self, context: Context) -> None:
         '''Draws whole UV-group panel.'''
         col = self.layout.column(align=True)
 
@@ -313,13 +314,15 @@ class MCBLEND_PT_UVGroupPanel(Panel):
             "mcblend.import_uv_group",
             text="Import UV group", icon='IMPORT'
         )
-        active_uv_group_id = bpy.context.scene.mcblend_active_uv_group
-        uv_groups = bpy.context.scene.mcblend_uv_groups
+
+        active_uv_group_id = get_scene_mcblend_active_uv_group(bpy.context)
+        uv_groups = get_scene_mcblend_uv_groups(bpy.context)
         col.template_list(
             listtype_name="MCBLEND_UL_UVGroupList",
-            list_id="", dataptr=context.scene,
+            list_id="",
+            dataptr=context.scene,  # type: ignore
             propname="mcblend_uv_groups",
-            active_dataptr=context.scene,
+            active_dataptr=context.scene,  # type: ignore
             active_propname="mcblend_active_uv_group")
         if active_uv_group_id < len(uv_groups):
             active_uv_group = uv_groups[active_uv_group_id]
@@ -336,7 +339,8 @@ class MCBLEND_PT_UVGroupPanel(Panel):
             row = col.row()
             row.label(text='Side:')
             row.prop(
-                context.scene, "mcblend_active_uv_groups_side",
+                context.scene,  # type: ignore
+                "mcblend_active_uv_groups_side",
                 text="")
             col.separator()
             col.operator(
@@ -354,7 +358,7 @@ class MCBLEND_PT_UVGroupPanel(Panel):
                 active_uv_group.side5, active_uv_group.side6
             ]
             masks = sides[
-                int(context.scene.mcblend_active_uv_groups_side)]
+                int(get_scene_mcblend_active_uv_groups_side(bpy.context))]
             # Stack of UI items to draw in
             ui_stack: List[_UIStackItem] = [
                 _UIStackItem(col, 0)]

@@ -5,7 +5,7 @@ This module contains all of the operators.
 import json
 from pathlib import Path
 from json.decoder import JSONDecodeError
-from typing import Any, List, Optional, Dict, Any
+from typing import Any, List, Optional, Dict, Any, Set
 
 import bpy
 from bpy.types import Operator, Context
@@ -128,7 +128,7 @@ class MCBLEND_OT_ExportAnimation(
     )
 
     @classmethod
-    def poll(cls, context: Context):
+    def poll(cls, context: Context) -> bool:
         if context.mode != 'OBJECT':
             return False
         if get_context_object(context).type != 'ARMATURE':
@@ -143,19 +143,20 @@ class MCBLEND_OT_ExportAnimation(
             return False
         return True
 
-    def execute(self, context):
+    def execute(self, context: Context):
         # Read and validate old animation file
         old_dict: Optional[Dict] = None
+        filepath: str = self.filepath  # type: ignore
         try:
-            with open(self.filepath, 'r') as f:
+            with open(filepath, 'r') as f:
                 old_dict = json.load(f, cls=JSONCDecoder)
         except (json.JSONDecodeError, OSError):
             pass
         animation_dict = export_animation(context, old_dict)
         # Save file and finish
-        with open(self.filepath, 'w') as f:
+        with open(filepath, 'w') as f:
             json.dump(animation_dict, f, cls=CompactEncoder)
-        self.report({'INFO'}, f'Animation saved in {self.filepath}.')
+        self.report({'INFO'}, f'Animation saved in {filepath}.')
         return {'FINISHED'}
 
 def menu_func_mcblend_export_animation(self, context):
@@ -1379,11 +1380,12 @@ class MCBLEND_OT_ImportUvGroup(Operator, ImportHelper):
             loading_warning = self._load_mask_data(mask_data, side)
         return loading_warning
 
-    def execute(self, context):
+    def execute(self, context) -> Set[str]:
         name: str = get_unused_uv_group_name('uv_group')
         # Save file and finish
         try:
-            with open(self.filepath, 'r') as f:
+            filepath: str = self.filepath  # type: ignore
+            with open(filepath, 'r') as f:
                 data = json.load(f, cls=JSONCDecoder)
             version = data['version']
             if version != 1:
@@ -1536,8 +1538,9 @@ class MCBLEND_OT_LoadRp(Operator, ImportHelper):
         maxlen=1000,
     )
 
-    def execute(self, context):
-        rp_path: Path = Path(self.filepath)
+    def execute(self, context) -> Set[str]:
+        filepath: str = self.filepath  # type: ignore
+        rp_path: Path = Path(filepath)
         load_rp_to_mcblned(context, rp_path)
         return {'FINISHED'}
 
