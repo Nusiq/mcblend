@@ -201,6 +201,11 @@ class McblendObject:
         wrapped inside this object.
         '''
         this_obj_matrix_world = get_matrix_world(self.thisobj).copy()
+        if self.group.world_origin is not None:
+            this_obj_matrix_world = matmul(
+                get_matrix_world(self.group.world_origin).inverted(),
+                this_obj_matrix_world,
+            )
         if self.thisobj.type == 'ARMATURE':
             return matmul(
                 this_obj_matrix_world,
@@ -270,8 +275,6 @@ class McblendObject:
         '''
         if other is not None:
             p_matrix = other.obj_matrix_world
-        elif self.group.world_origin is not None:
-            p_matrix = self.group.get_world_origin_matrix()
         else:
             p_matrix = (
                 # pylint: disable=no-value-for-parameter
@@ -308,11 +311,6 @@ class McblendObject:
         if other is not None:
             result_euler = local_rotation(
                 self.obj_matrix_world, other.obj_matrix_world
-            )
-        elif self.group.world_origin is not None:
-            result_euler = local_rotation(
-                self.obj_matrix_world,
-                self.group.get_world_origin_matrix()
             )
         else:
             result_euler = to_euler(self.obj_matrix_world, 'XZY')

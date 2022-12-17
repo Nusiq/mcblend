@@ -378,6 +378,14 @@ class MCBLEND_ObjectProperties(PropertyGroup):
             "it's greater than the actual X, then the UV-mapper will act as "
             "if the X were equal to this value.")
     )
+    use_world_origin: BoolProperty(  # type: ignore
+        name="Use world origin",
+        description=(
+            "Whether the model should treat the world origin as it's own "
+            "origin during export. By default, this is enabled and the "
+            "origin of the world is used for exporting model and animations."),
+        default=True,
+    )
 
 class MCBLEND_BoneProperties(PropertyGroup):
     '''

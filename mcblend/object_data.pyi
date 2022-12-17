@@ -84,6 +84,7 @@ class MCBLEND_ObjectProperties:
     inflate: float
     mesh_type: str  # enum
     min_uv_size: tuple[int, int, int]
+    use_world_origin: bool
 
 class MCBLEND_BoneProperties:
     binding: str

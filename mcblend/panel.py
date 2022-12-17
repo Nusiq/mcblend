@@ -513,6 +513,9 @@ class MCBLEND_PT_ModelPropertiesPanel(Panel):
         # col.prop(context.scene.mcblend, "path", text="")
         object_properties = context.object.mcblend
         col.prop(
+            object_properties, "use_world_origin",
+            text="Use world origin for export")
+        col.prop(
             object_properties, "model_name", text="Name")
         col.row().  prop(
             object_properties, "visible_bounds_offset",

@@ -63,7 +63,10 @@ def export_model(
     result = ModelExport.json_outer()
     armature = get_context_object(context)  # an armature
 
-    mcblend_obj_group = McblendObjectGroup(armature, None)
+    origin: Optional[Object] = None
+    if not get_mcblend(armature).use_world_origin:
+        origin = armature
+    mcblend_obj_group = McblendObjectGroup(armature, origin)
     model_properties = get_mcblend(armature)
 
     model = ModelExport(
@@ -89,17 +92,20 @@ def export_animation(
     :param old_dict: optional - JSON dict with animation to write into.
     :returns: JSON dict of Minecraft animations.
     '''
-    anim_data = get_mcblend(get_context_object(context)).animations[
-        get_mcblend(get_context_object(context)).active_animation]
+    armature = get_context_object(context)  # an armature
+    anim_data = get_mcblend(armature).animations[
+        get_mcblend(armature).active_animation]
 
     # TODO - write this code nicer, passing world_origin as a string isn't
     # a perfect solution
     world_origin = None
     if anim_data.world_origin != "":
         world_origin = get_data_objects()[anim_data.world_origin]
+    if world_origin is None and not get_mcblend(armature).use_world_origin:
+        world_origin = armature
 
     # Check and create object properties
-    object_properties = McblendObjectGroup(get_context_object(context), world_origin)
+    object_properties = McblendObjectGroup(armature, world_origin)
 
 
     animation = AnimationExport(
@@ -137,7 +143,10 @@ def set_uvs(context: Context):
     generate_texture = model_properties.generate_texture
     resolution = model_properties.texture_template_resolution
 
-    mcblend_obj_group = McblendObjectGroup(armature, None)
+    origin = None
+    if not get_mcblend(armature).use_world_origin:
+        origin = armature
+    mcblend_obj_group = McblendObjectGroup(armature, origin)
     mapper = UvMapper(width, height, mcblend_obj_group)
     mapper.plan_uv(allow_expanding)
 
@@ -200,7 +209,11 @@ def fix_uvs(context: Context) -> Vector2di:
 
     :returns: The number of fixed cubes and the number of fixed faces.
     '''
-    object_properties = McblendObjectGroup(get_context_object(context), None)
+    armature = get_context_object(context)  # an armature
+    origin = None
+    if not get_mcblend(armature).use_world_origin:
+        origin = armature
+    object_properties = McblendObjectGroup(armature, origin)
     total_fixed_uv_faces = 0
     total_fixed_cubes = 0
 
@@ -607,8 +620,10 @@ def apply_materials(context: Context):
     blender_materials: Dict[
         Tuple[Tuple[Optional[str], str], ...], Material] = {}
     armature = get_context_object(context)
-
-    mcblend_obj_group = McblendObjectGroup(armature, None)
+    origin = None
+    if not get_mcblend(armature).use_world_origin:
+        origin = armature
+    mcblend_obj_group = McblendObjectGroup(armature, origin)
     armature_properties = get_mcblend(armature)
 
     model = ModelExport(
@@ -687,7 +702,10 @@ def prepare_physics_simulation(context: Context) -> Dict:
     if armature.type != 'ARMATURE':
         raise ValueError("Object is not an armature")
 
-    mcblend_obj_group = McblendObjectGroup(armature, None)
+    origin = None
+    if not get_mcblend(armature).use_world_origin:
+        origin = armature
+    mcblend_obj_group = McblendObjectGroup(armature, origin)
 
     # If there is no rigid body world add it to the scene
     rigidbody_world = context.scene.rigidbody_world
