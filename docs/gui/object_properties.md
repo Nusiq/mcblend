@@ -3,20 +3,20 @@
 ## Object Properties (mesh)
 This is the panel visible when opening the Object Properties of a mesh.
 
-![](/mcblend/img/object_properties_mesh.png)
+![](/img/object_properties_mesh.png)
 
 **Mesh type (dropdown list)** - *Cube* or *Poly mesh*. Decides if the object
 should be exported as a cube or polymesh. Objects with non-cuboid shapes must
 be polymesh type or you won't be able to export them.
 
-!!! note
+```{note}
+Polymesh models are still an experimental Minecraft feature and they could
+be removed from Minecraft. Experimental features are not allowed on
+the Marketplace, so keep that in mind if you're creating content for
+the Marketplace.
+```
 
-    Polymesh models are still an experimental Minecraft feature and they could
-    be removed from Minecraft. Experimental features are not allowed on
-    the Marketplace, so keep that in mind if you're creating content for
-    the Marketplace.
-
-**UV Group (textfield)** - displays the [UV-group](/mcblend/uv_groups) name of the
+**UV Group (textfield)** - displays the [UV-group](/uv_groups) name of the
 selected object.
 
 **Mirror** - the mirror property is used only during the
@@ -25,12 +25,12 @@ Minecraft's mirror property of a cube.
 
 **Inflate** - stores the Minecraft's inflate property value of the cube.
 
-!!! note
-
-    Editing the Inflate value through this panel does not change the dimensions
-    of the object, but it does change the inflate value in the exported object.
-    If you want to inflate/deflate the object, you should use the
-    inflate operator from the sidebar.
+```{note}
+Editing the Inflate value through this panel does not change the dimensions
+of the object, but it does change the inflate value in the exported object.
+If you want to inflate/deflate the object, you should use the
+inflate operator from the sidebar.
+```
 
 **Min UV bound** - this property is used during UV-mapping. It defines the
 minimal space on the texture used for a cube. If a cube has width, height
@@ -54,7 +54,7 @@ This panel has some of the basic properties of the Minecraft model
 like the width and height of visible bounds (they have the same names as in the
 Minecraft model) and some properties used for texture generation.
 
-![](/mcblend/img/object_properties_armature_model_properties.png)
+![](/img/object_properties_armature_model_properties.png)
 
 - **Allow texture expanding** - allows changing the texture width and height during
 UV-mapping.
@@ -70,23 +70,22 @@ by texture resolution.
 To perform the UV-mapping, adjust the values of the fields and press the
 "Set Minecraft UVs" button.
 
-!!! note
+```{note}
+After the UV-mapping, you can still go to the UV editor and move everything
+to your liking. This operator tries to arrange the UVs of the selected
+objects on the texture space using the basic non-per-face Minecraft
+UV-mapping. If you move the UV in such a way that it cannot be mapped
+in standard Minecraft UV-mapping way, then Mcblend will detect that
+and it'll use per-face UV-mapping.
 
-    After the UV-mapping, you can still go to the UV editor and move everything
-    to your liking. This operator tries to arrange the UVs of the selected
-    objects on the texture space using the basic non-per-face Minecraft
-    UV-mapping. If you move the UV in such a way that it cannot be mapped
-    in standard Minecraft UV-mapping way, then Mcblend will detect that
-    and it'll use per-face UV-mapping.
-
-    Don't move individual vertices of the faces on the UV unless you know what
-    you're doing. The faces on the UV must remain rectangles, or the UV of the
-    exported model may have unexpected shapes.
-
+Don't move individual vertices of the faces on the UV unless you know what
+you're doing. The faces on the UV must remain rectangles, or the UV of the
+exported model may have unexpected shapes.
+```
 
 ### Mcblend: Render Controllers
 
-![](/mcblend/img/object_properties_armature_render_controllers.png)
+![](/img/object_properties_armature_render_controllers.png)
 
 This panel lets you quickly create materials. The materials generated using
 this panel are very similar to the materials that you can find in Minecraft.
@@ -101,7 +100,7 @@ automatically create the materials for preview in Blender.
 
 ### Mcblend: Animations
 
-![](/mcblend/img/object_properties_armature_animations.png)
+![](/img/object_properties_armature_animations.png)
 
 The animations panel lets you quickly switch between animations. The animations
 in Mcblend are NLA tracks of the armature with some additional data.
@@ -141,12 +140,12 @@ active NLA tracks.
   the animation of an entity and the attachable. The origin of the attachable
   moves with the movements from the entities animation. You can learn more
   about this kind of animations in
-  [Attachables & First person animations](/mcblend/attachables_and_1st_person_animations/)
+  [Attachables & First person animations](/attachables_and_1st_person_animations/)
   tutorial.
 
 ## Object properties (bone of armature)
 
-![](/mcblend/img/object_properties_armature_bone_properties.png)
+![](/img/object_properties_armature_bone_properties.png)
 
 When you open Object properties while having a bone selected in pose mode,
 there is 1 more additional panel - *Mcblend: Bone Properties*. It has only
@@ -157,6 +156,6 @@ two fields:
   property. It's useful for creating models of the attachables. Id doesn't
   affect the model in Blender in any way. You can learn more about creating
   attachables in
-  [Attachables & First person animations](/mcblend/attachables_and_1st_person_animations/)
+  [Attachables & First person animations](/attachables_and_1st_person_animations/)
   tutorial.
 

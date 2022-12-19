@@ -12,7 +12,7 @@ animation file.
 
 You can find the framerate setting in `Output Properties -> Frame Rate`.
 
-![](../img/framerate_setting.png)
+![](/img/framerate_setting.png)
 
 ## World unit scale
 By default, 1 meter in Blender is equal to one block in Minecraft. One
@@ -22,4 +22,4 @@ go to `Scene properties -> Unit scale` to scale the units used in Blender.
 Changing the value of this property to 16 will set one length unit in Blender
 equal to one length unit of a model.
 
-![](../img/unit_scale_setting.png)
+![](/img/unit_scale_setting.png)

@@ -23,21 +23,21 @@ kinematics. Skipping these bones doesn't mean that you loose anything because
 the bones without child cubes, locators or poly meshes can't be viewed in
 the game anyway.
 
-!!! Note
+```{note}
+Mcblend provides tools that make following these rules easier.
 
-    Mcblend provides tools that make following these rules easier.
+The *[separate cubes operator](gui/3d_viewport_sidebar.md#mesh-transformations-panel)* can
+help you with separating meshes that contain multiple cubes into multiple
+objects with properly aligned rotations. This means that you can create
+your model in a single mesh and as long as its parts have proper shapes,
+it's possible to separate them to a format that can be used by Mcblend.
 
-    The *[separate cubes operator](/mcblend/gui/3d_viewport_sidebar/#mesh-transformations-panel)* can
-    help you with separating meshes that contain multiple cubes into multiple
-    objects with properly aligned rotations. This means that you can create
-    your model in a single mesh and as long as its parts have proper shapes,
-    it's possible to separate them to a format that can be used by Mcblend.
-
-    If you don't want to be restricted to using only cuboids for your model you
-    can also mark some objects as
-    [poly_mesh](/mcblend/gui/object_properties/#object-properties-mesh).
-    Be aware that the poly_mesh models are still an experimental feature in
-    Minecraft and they could be removed from the game in the future.
+If you don't want to be restricted to using only cuboids for your model you
+can also mark some objects as
+[poly_mesh](gui/object_properties.md#object-properties-mesh).
+Be aware that the poly_mesh models are still an experimental feature in
+Minecraft and they could be removed from the game in the future.
+```
 
 <details>
 <summary><b>[CLICK] Detailed explanation</b></summary>
@@ -115,16 +115,16 @@ when:
 - Top and bottom face have their front and back edges aligned horizontally and
     left and right edges aligned vertically.
 
-!!! Note
-
-    The alignment rules are defined in the local space of the cubes which makes
-    it hard to understand when you look at the model with rotated cubes but
-    Mcblend can help you with that. If you're getting warnings in your export
-    like:
-    `Cube based on Blender object "Cube": "north" face has invalid UV-mapping. Skipped.`
-    you can use the [Fix model UV-mapping](/mcblend/gui/3d_viewport_sidebar/#uv-mapping-panel)
-    operator. It will rearrange the UVs of selected objects so that they match
-    the Minecraft rules.
+```{note}
+The alignment rules are defined in the local space of the cubes which makes
+it hard to understand when you look at the model with rotated cubes but
+Mcblend can help you with that. If you're getting warnings in your export
+like:
+`Cube based on Blender object "Cube": "north" face has invalid UV-mapping. Skipped.`
+you can use the [Fix model UV-mapping](gui/3d_viewport_sidebar.md#uv-mapping-panel)
+operator. It will rearrange the UVs of selected objects so that they match
+the Minecraft rules.
+```
 
 <details>
 <summary><b>[CLICK] Detailed explanation</b></summary>
@@ -171,11 +171,10 @@ There must be no more than 180° of rotation between two key frames,
 or the exported animation will look different in Minecraft than in the Blender
 preview.
 
-!!! note
-
-    A quick fix to this problem is adding additional key frames for wide angle
-    rotations.
-
+```{note}
+A quick fix to this problem is adding additional key frames for wide angle
+rotations.
+```
 
 <details>
 <summary><b>[CLICK] Detailed explanation</b></summary>

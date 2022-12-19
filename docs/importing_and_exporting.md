@@ -11,12 +11,12 @@
 3. Find the model file in the file explorer and press "Import model" to finalize
   the importing.
 
-![](../img/import_model_file_explorer.png)
+![](/img/import_model_file_explorer.png)
 
-!!! Note
-
-    Alternatively you can use the [resource pack panel](/mcblend/gui/3d_viewport_sidebar/#resurce-pack-panel)
-    to import models from Minecraft resource packs.
+```{note}
+Alternatively you can use the [resource pack panel](gui/3d_viewport_sidebar.md#resurce-pack-panel)
+to import models from Minecraft resource packs.
+```
 
 ## Exporting models
 
@@ -26,7 +26,7 @@ the `geometry.` prefix to the name so you don't have to do that.
 
 1. Select the armature which represents your model.
 2. In the Object Properties of the armature you'll be able to change some settings
-  related to exporting. ![](../img/export_model_panel.png)
+  related to exporting. ![](/img/export_model_panel.png)
 3. When you finish adjusting the model settings, go to
   `File -> Export -> Export Bedrock Model`
 4. Choose the output path in the file explorer window.
@@ -34,24 +34,23 @@ the `geometry.` prefix to the name so you don't have to do that.
 
 ## Exporting animations
 
-!!! note
+```{note}
+Mcblend exports animations using key frames. Molang is not supported.
 
-    Mcblend exports animations using key frames. Molang is not supported.
-    
-    Blender lets you implement various dependencies between animated objects
-    with constraints and rigging. This means that animating one object can
-    affect the movement of another object even though the second object doesn't have
-    any key frames. That is why the key frames in Blender animations aren't
-    directly translated to key frames in Minecraft animations. Mcblend collects
-    the time stamps of every keyframe of every bone of the armature and goes
-    through that list looking for movements. Every movement of every bone
-    between two frames is saved to the exported file.
+Blender lets you implement various dependencies between animated objects
+with constraints and rigging. This means that animating one object can
+affect the movement of another object even though the second object doesn't have
+any key frames. That is why the key frames in Blender animations aren't
+directly translated to key frames in Minecraft animations. Mcblend collects
+the time stamps of every keyframe of every bone of the armature and goes
+through that list looking for movements. Every movement of every bone
+between two frames is saved to the exported file.
 
-    The keyframes from Non-Linear Animations (NLA) are also supported can also
-    be used by Mcblend to detect the movements.
+The keyframes from Non-Linear Animations (NLA) are also supported can also
+be used by Mcblend to detect the movements.
+```
 
-
-![](../img/export_animation_panel.png)
+![](/img/export_animation_panel.png)
 
 1. Enter Object Mode and select the armature with your model
 2. In Object Properties find the `Mcblend: Animation` panel. Press "New animation"
@@ -76,10 +75,11 @@ the `geometry.` prefix to the name so you don't have to do that.
       blank, then the animation won't use that property.
 4. Open `File -> Export -> Export Bedrock Animation`.
 
-!!! note
 
-    Mcblend uses frame 0 to detect the rest pose of the model. Every movement
-    in the animation is relative to the rest pose. If you're exporting the
-    model and the animation, make sure that the animation doesn't
-    change the pose of the model on frame 0 or you may get some unexpected
-    results.
+```{note}
+Mcblend uses frame 0 to detect the rest pose of the model. Every movement
+in the animation is relative to the rest pose. If you're exporting the
+model and the animation, make sure that the animation doesn't
+change the pose of the model on frame 0 or you may get some unexpected
+results.
+```

@@ -11,3 +11,4 @@ tests/config.py
 .tox/**
 local_files/**
 **.blend1
+docs/_build

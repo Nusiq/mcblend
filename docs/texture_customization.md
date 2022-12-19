@@ -1,28 +1,28 @@
 # Texture generator customization
 
-![](/mcblend/img/customized_uv_groups.png)
+![](/img/customized_uv_groups.png)
 
 You can customize the appearance of a UV-group by applying masks to its faces
-in new custom panel in [Scene Properties](/mcblend/gui/scene_properties/).
+in new custom panel in [Scene Properties](/gui/scene_properties/).
 
 Masks are filters that are applied to the texture when it is generated.
 Each UV-group has 6 faces. You can switch between faces to edit with the
 "Side:" dropdown menu. The image below shows how the names of the
 sides (side1-6) are correlated to their placement on the texture.
 
-![](/mcblend/img/faces.png)
+![](/img/faces.png)
 
 New masks are added with the "Add mask" dropdown menu. There are 8 different types
 of masks.
 
 
-!!! note
-
-    All masks have an eye icon in the upper right corner that can be used to
-    temporarily disable / enable the mask.
+```{note}
+All masks have an eye icon in the upper right corner that can be used to
+temporarily disable / enable the mask.
+```
 
 ## Color Palette Mask
-![](/mcblend/img/color_palette_mask.png)
+![](/img/color_palette_mask.png)
 
 This mask takes the grayscale image as an input and maps its brightness values
 to a color image with a palette defined as a list of colors.
@@ -35,20 +35,19 @@ Properties:
 - Normalize - Normalizes the input values so that the entire palette is
     used.
 
-!!! note
+```{note}
+If the input image is not grayscale then it gets converted to grayscale
+before applying the mask.
+```
 
-    If the input image is not grayscale then it gets converted to grayscale
-    before applying the mask.
-
-!!! note
-
-    The color palette mask is the only mask which can't be used inside the Mix
-    Mask. If you put this mask into mix mask it will have no effect.
-
+```{note}
+The color palette mask is the only mask which can't be used inside the Mix
+Mask. If you put this mask into mix mask it will have no effect.
+```
 
 
 ## Gradient Mask
-![](/mcblend/img/gradient_mask.png)
+![](/img/gradient_mask.png)
 
 The Gradient mask creates a grayscale gradient with stripes of varying darkness
 and width. The direction in which the stripes are drawn is defined with two
@@ -70,7 +69,7 @@ Properties:
 - Exponent - The filter image is raised to the power of this value before it
     is multiplied by the image.
 ## Ellipse Mask
-![](/mcblend/img/ellipse_mask.png)
+![](/img/ellipse_mask.png)
 
 The Ellipse mask creates a grayscale image of an ellipse drawn between Point A and
 Point B. The grayscale image is then multiplied by the input image.
@@ -93,7 +92,7 @@ Properties:
 
 
 ## Rectangle Mask
-![](/mcblend/img/rectangle_mask.png)
+![](/img/rectangle_mask.png)
 
 The Rectangle mask creates a grayscale image of a rectangle between Point A and
 Point B. The grayscale image is then multiplied by the input image.
@@ -117,7 +116,7 @@ Properties:
 
 
 ## Stripes Mask
-![](/mcblend/img/stripes_mask.png)
+![](/img/stripes_mask.png)
 
 The Stripes mask creates a grayscale image with repeating stripes of certain
 width and brightness. The grayscale image is then multiplied by the input
@@ -134,7 +133,7 @@ Properties:
 
 
 ## Random Mask
-![](/mcblend/img/random_mask.png)
+![](/img/random_mask.png)
 
 The Random mask creates a grayscale image with randomly bright pixels. The
 grayscale image is then multiplied by the input image.
@@ -148,7 +147,7 @@ grayscale image is then multiplied by the input image.
 
 
 ## Color Mask
-![](/mcblend/img/color_mask.png)
+![](/img/color_mask.png)
 
 The Color mask multiplies the input mask by a color.
 
@@ -156,7 +155,7 @@ The Color mask multiplies the input mask by a color.
 
 
 ## Mix Mask
-![](/mcblend/img/mix_mask.png)
+![](/img/mix_mask.png)
 
 The Mix mask lets you mix multiple masks in different ways than just default
 multiplication. 
@@ -172,7 +171,7 @@ Properties:
     options: min, max, mean and median.
 - Number of children - Number of mixed masks.
 
-!!! note
-
-    Mix mask ignores the color palette masks, since the color palette masks do
-    not create a filter image (they just alter the image from the input).
+```{note}
+Mix mask ignores the color palette masks, since the color palette masks do
+not create a filter image (they just alter the image from the input).
+```

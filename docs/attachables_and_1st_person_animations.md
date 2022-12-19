@@ -10,7 +10,7 @@ an attachable item in Minecraft Bedrock Edition and how to create an
 
 This tutorial assumes that you know how to create empty behavior and resource-
 pack so creating manifest files is not explained here. If you don't know how
-to do it I recommend tutorials from [Bedrock Wiki](https://wiki.bedrock.dev/guide/project-setup.html) or
+to do it I recommend tutorials from [Bedrock Wiki](https://wiki.bedrock.dev/guide/project-setup) or
 [Official Minecraft Documentation](https://docs.microsoft.com/en-us/minecraft/creator/documents/gettingstarted):
 
 In the tutorial `BP` refers to the root folder of behavior-pack and `RP` refers
@@ -31,11 +31,11 @@ attachable.
 
 RP/textures/items/nunchaku.png
 
-![](../img/attachables_1st_person/nunchaku_item.png)
+![](/img/attachables_1st_person/nunchaku_item.png)
 
 RP/textures/entity/nunchaku.png
 
-![](../img/attachables_1st_person/nunchaku.png)
+![](/img/attachables_1st_person/nunchaku.png)
 
 <details>
 <summary> [CLICK TO REVEAL] BP/items/nunchaku.bp_item.json</summary>
@@ -285,18 +285,18 @@ At this stage you while holding the custom item the model of the item should
 be visible in 3rd person view, but its not connected to any of the bones
 of the player model.
 
-![](../img/attachables_1st_person/attachable0.jpg)
+![](/img/attachables_1st_person/attachable0.jpg)
 
 ## Connecting the item model to player's hand
 
 Download the template project for player animations: [https://github.com/Nusiq/Mcblend-Demo-World/blob/master/BLENDER/template-project.blend](https://github.com/Nusiq/Mcblend-Demo-World/blob/master/BLENDER/template-project.blend)
 
-[Import the model](../importing_and_exporting) of the attachable and optionally
+[Import the model](/importing_and_exporting) of the attachable and optionally
 import the texture. In order to import texture you need to open it in Blender
 first (just like you open any other image), and than you can select the
 armature of the attachable, go to `Object properties-> Mcblend: Render Controllers`.
 
-![](../img/attachables_1st_person/object_properties_render_controllers.jpg)
+![](/img/attachables_1st_person/object_properties_render_controllers.jpg)
 
 In this panel you can set up the render controller of the model and apply it by
 pressing "Apply Materials" button.
@@ -307,7 +307,7 @@ the root bone of your custom item. Go to
 put the name of the bone that you want to connect your item to - `'rightitem'`
 (use only lowercase letters).
 
-![](../img/attachables_1st_person/binding.jpg)
+![](/img/attachables_1st_person/binding.jpg)
 
 Connect the armature of the attachable item to the empty from the template
 project using "Child Of" constraint and press the "Clear Inverse" button on
@@ -315,22 +315,22 @@ the constraint. This action will move the item to the position where Minecraft
 will render the attachable in the game (Minecraft adds [0m, -1.5m, 0m] offset to the
 attachable items in relation to the bone they're connected to) 
 
-![](../img/attachables_1st_person/attachable_constraint_connection.jpg)
+![](/img/attachables_1st_person/attachable_constraint_connection.jpg)
 
 In pose mode adjust the position of the item. When you're happy with your
 result, use the "Apply Pose as Rest Pose" operator which you can find in the
 F3 menu.
 
-![](../img/attachables_1st_person/apply_pose_as_rest_pose.jpg)
+![](/img/attachables_1st_person/apply_pose_as_rest_pose.jpg)
 
-Disable the child-of property of the item armature and [export it](../importing_and_exporting/#exporting-models) to overwrite
+Disable the child-of property of the item armature and [export it](importing_and_exporting.md#exporting-models) to overwrite
 the old model.
 
-![](../img/attachables_1st_person/disable_child_of_property.jpg)
+![](/img/attachables_1st_person/disable_child_of_property.jpg)
 
 At this point the model should be properly attached to the player's hand.
 
-![](../img/attachables_1st_person/attachable1.jpg)
+![](/img/attachables_1st_person/attachable1.jpg)
 
 ## Idle animations
 
@@ -344,7 +344,7 @@ To create player idle animation select the player armature, go to
 `Object properties -> Mcblend: Animations`, create new animation and copy
 the configuration from the image below.
 
-![](../img/attachables_1st_person/player_idle_pose_animation_configuration.jpg)
+![](/img/attachables_1st_person/player_idle_pose_animation_configuration.jpg)
 
 Create new action for the armature using action editor in the dope sheet.
 Every animation in Mcblend must have an additional keyframe at the frame 0
@@ -360,7 +360,7 @@ The image below shows a dope sheet with an action for player idle animation,
 with two keyframes. In the 3D viewport the scene is observed through the 1st
 person camera.
 
-![](../img/attachables_1st_person/editing_player_rest_pose.jpg)
+![](/img/attachables_1st_person/editing_player_rest_pose.jpg)
 
 When the action is ready, push it down to the NLA editor with the "Push Down"
 button. Then switch to the object mode, select the armature of the player
@@ -678,14 +678,14 @@ at this stage.
 At this stage you should be able to see your first person player idle animation
 while holding the item.
 
-![](../img/attachables_1st_person/attachable2.jpg)
+![](/img/attachables_1st_person/attachable2.jpg)
 
 The steps to create the aniamtion for the attachable are very similar. Select
 the armature of the attachable, create a new animation (using the configuration
 below), create new action with the pose for the item and export it just like
 you did with the animation for the player.
 
-![](../img/attachables_1st_person/item_idle_pose_configuration.jpg)
+![](/img/attachables_1st_person/item_idle_pose_configuration.jpg)
 
 The "World origin object" property, is an information for the animation
 exporter which tells it where is the origin point (0, 0, 0) used to calculate
@@ -792,7 +792,7 @@ client_entity definition.
 After this configuration, the animation of the attachable should be visible in
 the game:
 
-![](../img/attachables_1st_person/attachable3.jpg)
+![](/img/attachables_1st_person/attachable3.jpg)
 
 ## Attack animations
 
@@ -805,11 +805,11 @@ item.
 
 Player attack animation configuration:
 
-![](../img/attachables_1st_person/player_attack_animation_configuration.jpg)
+![](/img/attachables_1st_person/player_attack_animation_configuration.jpg)
 
 Item attack animation configuration:
 
-![](../img/attachables_1st_person/item_attack_animation_configuration.jpg)
+![](/img/attachables_1st_person/item_attack_animation_configuration.jpg)
 
 Both animations start at frame 1 and end at frane 25. With default Blender
 animation framerate this means that they take one second (24 frames) to finish.

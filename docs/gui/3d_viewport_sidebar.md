@@ -4,7 +4,7 @@ buttons with commonly used functions and one for resource pack integration.
 By default you can open the sidebar by pressing `N` while you hover over the
 3D viewport.
 
-![](/mcblend/img/side_panel.png)
+![](/img/side_panel.png)
 
 ## Operators
 ### UV-mapping panel
@@ -16,7 +16,7 @@ By default you can open the sidebar by pressing `N` while you hover over the
   export it. The operator fixes all of the cuboids of the model and can be used
   only when the active object is an armature.
 - **Set the UV group** - adds the selected objects to one of the existing
-  [UV-groups](/mcblend/uv_groups). This operator can be used when at least one
+  [UV-groups](/uv_groups). This operator can be used when at least one
   mesh is selected and at least one UV group has been created in your project.
 - **Clear UV group** - the reverse of "Set the UV group". It removes the UV group
   from the selected objects.
@@ -25,7 +25,7 @@ By default you can open the sidebar by pressing `N` while you hover over the
 - **Inflate** - Inflates the selected object using Minecraft's inflate property.
   Running this operator opens a panel in the bottom left corner of the 3D
   viewport. You can use this panel to adjust the "inflate" value.
-  ![](/mcblend/img/inflate_redo_panel.png)
+  ![](/img/inflate_redo_panel.png)
 - **Separate and align cubes** - Detects cubes grouped in a
   single mesh and splits them into separate objects. Unlike the vanilla
   Blender operator (*Mesh -> Separate*), the *Separate and align cubes* operator
@@ -39,11 +39,11 @@ By default you can open the sidebar by pressing `N` while you hover over the
   Images below show the difference between applying *Separate cubes* and
   *Mesh -> Separate* operators:
   *Before separating cubes*
-  ![](/mcblend/img/separate_cubes_before.png)
+  ![](/img/separate_cubes_before.png)
   *Objects separated with Mcblend*
-  ![](/mcblend/img/separate_cubes_after.png)
+  ![](/img/separate_cubes_after.png)
   *Objects separated using default Blender operator*
-  ![](/mcblend/img/separate_cubes_using_mesh_separate.png)
+  ![](/img/separate_cubes_using_mesh_separate.png)
 
 - **Prepare physics simulation** - Automatically creates objects,
   which can be used for physics simulation. The simulation starts one frame after
@@ -54,7 +54,7 @@ By default you can open the sidebar by pressing `N` while you hover over the
   connect parts of the simulated objects together) and Bone Parents (a group
   of objects which follow the rigid body and make the original model follow
   the simulation).
-  ![](/mcblend/img/physics.png)
+  ![](/img/physics.png)
 
 ## Resurce Pack panel
 The Resource Pack panel lets you connect a resource pack to a project.
