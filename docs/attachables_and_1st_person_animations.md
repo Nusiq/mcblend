@@ -39,6 +39,7 @@ RP/textures/entity/nunchaku.png
 
 <details>
 <summary> [CLICK TO REVEAL] BP/items/nunchaku.bp_item.json</summary>
+
 ```json
 {
 	"format_version": "1.10",
@@ -57,10 +58,12 @@ RP/textures/entity/nunchaku.png
 	}
 }
 ```
+
 </details>
 
 <details>
 <summary> [CLICK TO REVEAL] RP/items/nunchaku.rp_item.json</summary>
+
 ```json
 {
 	"format_version": "1.10.0",
@@ -74,10 +77,12 @@ RP/textures/entity/nunchaku.png
 	}
 }
 ```
+
 </details>
 
 <details>
 <summary> [CLICK TO REVEAL] RP/textures/item_texture.json</summary>
+
 ```json
 {
 	"resource_pack_name": "vanilla",
@@ -89,9 +94,11 @@ RP/textures/entity/nunchaku.png
 	}
 }
 ```
+
 </details>
 <details>
 <summary> [CLICK TO REVEAL] RP/attachables/nunchaku.attachable.json</summary>
+
 ```json
 {
 	"format_version": "1.10.0",
@@ -114,10 +121,12 @@ RP/textures/entity/nunchaku.png
 	}
 }
 ```
+
 </details>
 
 <details>
 <summary> [CLICK TO REVEAL] RP/models/entity/nunchaku.geo.json</summary>
+
 ```json
 {
 	"format_version": "1.16.0",
@@ -278,6 +287,7 @@ RP/textures/entity/nunchaku.png
 	]
 }
 ```
+
 </details>
 
 
@@ -377,6 +387,7 @@ during this tutorial. They're prepared for the resource which aren't ready
 at this stage.
 <details>
 <summary> [CLICK TO REVEAL] RP/entity/player.entity.json</summary>
+
 ```json
 {
 	"format_version": "1.10.0",
@@ -494,10 +505,12 @@ at this stage.
 	}
 }
 ```
+
 </details>
 
 <details>
 <summary> [CLICK TO REVEAL] RP/animation_controllers/player.rp_ac.json</summary>
+
 ```json
 {
 	"format_version" : "1.10.0",
@@ -673,6 +686,7 @@ at this stage.
 	}
 }
 ```
+
 </details>
 
 At this stage you should be able to see your first person player idle animation
@@ -709,6 +723,7 @@ client_entity definition.
 
 <details>
 <summary> [CLICK TO REVEAL] RP/attachables/nunchaku.attachable.json</summary>
+
 ```json
 {
 	"format_version": "1.10.0",
@@ -752,10 +767,12 @@ client_entity definition.
 	}
 }
 ```
+
 </details>
 
 <details>
 <summary> [CLICK TO REVEAL] RP/animation_controllers/nunchaku.rp_ac.json</summary>
+
 ```json
 {
 	"format_version": "1.10.0",
@@ -786,6 +803,7 @@ client_entity definition.
 	}
 }
 ```
+
 </details>
 
 
