@@ -6,7 +6,7 @@ Blender 3.3 addon for working with Minecraft models.
 ### User guides
 User guides and installation instructions can be found on the project site:
 
-https://nusiq.github.io/mcblend/
+https://mcblend.readthedocs.io
 
 ### Discord
 You can contact me about the project on the #mcblend channel on  [Bedrock OSS](https://discord.gg/trD68msd) discord.
