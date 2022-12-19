@@ -45,7 +45,7 @@ Minecraft and they could be removed from the game in the future.
 Modeling limitations are the outcome of the format of Minecraft's model files.
 The code below shows the JSON file of a Minecraft model with some of its parts
 replaced with `...`.
-```json
+```
 {
     "format_version": "1.16.0",
     "minecraft:geometry": [
@@ -143,9 +143,8 @@ The default UV-mapping:
 "uv": [0.0, 64.0],
 ```
 
-</br>
-
 The per-face UV mapping
+
 ```
 "uv": {
     "north": {"uv": [48.0, 32.0], "uv_size": [32.0, -32.0]},
@@ -157,16 +156,12 @@ The per-face UV mapping
 },
 ```
 
-</br>
-
 The default UV-mapping isn't very flexible. The size and position of the faces
 are based on the size of the cube. The vector passed to the "uv" property
 defines the offset. With Mcblend you don't have to worry about the type of
 UV-mapping you use. If the faces are arranged in a way that allow saving the
 UV in default format Mcblend will do it (because it's more compact). Otherwise
 the UV is saved using the second format.
-
-<br/><br/>
 
 Unfortunately the per-face UV mapping is also limited. It can't rotate the UV
 by 90 degrees. It uses two vectors to define the mapping of the face - the
@@ -193,28 +188,20 @@ rotations.
 This issue is caused by the way Mcblend computes Minecraft's rotations
 internally.
 
-<br/><br/>
-
 Blender supports multiple rotation modes and uses different rotation types for
 different kinds of objects. For example, bone rotations in armatures use
 quaternions, but meshes use Euler angles. Additionally, user can choose
 different rotation modes for each object. Minecraft uses Euler angles, but the
 axes are set differently.
 
-<br/><br/>
-
 Mcblend can export models and animations regardless of the rotation modes used,
 but internally everything is converted to quaternions / translation matrices.
 The design decision for the internal use of quaternions was motivated by the
 fact that quaternions help avoid some calculation errors.
 
-<br/><br/>
-
 Unfortunately, the quaternion number system has only one unique representation
 for each rotation orientation, so you cannot distinguish the full rotation from
 no rotation at all (360° == 0°).
-
-<br/><br/>
 
 Therefore, you cannot use angles greater than 180° between two key frames
 because Mcblend will always try to export the smallest rotation possible to
