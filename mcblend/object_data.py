@@ -390,7 +390,7 @@ class MCBLEND_ObjectProperties(PropertyGroup):
             ),
         ),
         name='Model origin',
-        default=ModelOriginType.WORLD.value)
+        default=ModelOriginType.ARMATURE.value)
 
 class MCBLEND_BoneProperties(PropertyGroup):
     '''
