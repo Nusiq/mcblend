@@ -10,6 +10,7 @@ from typing import (
     Callable)
 from dataclasses import dataclass, field
 from collections import defaultdict
+from .common import ModelOriginType
 
 import bpy
 from mathutils import Matrix
@@ -64,7 +65,9 @@ def export_model(
     armature = get_context_object(context)  # an armature
 
     origin: Optional[Object] = None
-    if not get_mcblend(armature).use_world_origin:
+    use_armature_origin: bool = get_mcblend(
+        armature).model_origin == ModelOriginType.ARMATURE.value
+    if use_armature_origin:
         origin = armature
     mcblend_obj_group = McblendObjectGroup(armature, origin)
     model_properties = get_mcblend(armature)
@@ -101,7 +104,9 @@ def export_animation(
     world_origin = None
     if anim_data.world_origin != "":
         world_origin = get_data_objects()[anim_data.world_origin]
-    if world_origin is None and not get_mcblend(armature).use_world_origin:
+    use_armature_origin: bool = get_mcblend(
+        armature).model_origin == ModelOriginType.ARMATURE.value
+    if world_origin is None and use_armature_origin:
         world_origin = armature
 
     # Check and create object properties
@@ -144,7 +149,9 @@ def set_uvs(context: Context):
     resolution = model_properties.texture_template_resolution
 
     origin = None
-    if not get_mcblend(armature).use_world_origin:
+    use_armature_origin: bool = get_mcblend(
+        armature).model_origin == ModelOriginType.ARMATURE.value
+    if use_armature_origin:
         origin = armature
     mcblend_obj_group = McblendObjectGroup(armature, origin)
     mapper = UvMapper(width, height, mcblend_obj_group)
@@ -211,7 +218,9 @@ def fix_uvs(context: Context) -> Vector2di:
     '''
     armature = get_context_object(context)  # an armature
     origin = None
-    if not get_mcblend(armature).use_world_origin:
+    use_armature_origin: bool = get_mcblend(
+        armature).model_origin == ModelOriginType.ARMATURE.value
+    if use_armature_origin:
         origin = armature
     object_properties = McblendObjectGroup(armature, origin)
     total_fixed_uv_faces = 0
@@ -621,7 +630,9 @@ def apply_materials(context: Context):
         Tuple[Tuple[Optional[str], str], ...], Material] = {}
     armature = get_context_object(context)
     origin = None
-    if not get_mcblend(armature).use_world_origin:
+    use_armature_origin: bool = get_mcblend(
+        armature).model_origin == ModelOriginType.ARMATURE.value
+    if use_armature_origin:
         origin = armature
     mcblend_obj_group = McblendObjectGroup(armature, origin)
     armature_properties = get_mcblend(armature)
@@ -703,7 +714,9 @@ def prepare_physics_simulation(context: Context) -> Dict:
         raise ValueError("Object is not an armature")
 
     origin = None
-    if not get_mcblend(armature).use_world_origin:
+    use_armature_origin: bool = get_mcblend(
+        armature).model_origin == ModelOriginType.ARMATURE.value
+    if use_armature_origin:
         origin = armature
     mcblend_obj_group = McblendObjectGroup(armature, origin)
 

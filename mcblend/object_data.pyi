@@ -4,6 +4,7 @@ from enum import Enum
 from bpy.types import Context
 from .operator_func.pyi_types import CollectionProperty
 from .common_data import MCBLEND_JustName
+from .operator_func.common import ModelOriginType
 
 # Animation properties
 class EffectTypes(Enum):
@@ -84,7 +85,7 @@ class MCBLEND_ObjectProperties:
     inflate: float
     mesh_type: str  # enum
     min_uv_size: tuple[int, int, int]
-    use_world_origin: bool
+    model_origin: str
 
 class MCBLEND_BoneProperties:
     binding: str

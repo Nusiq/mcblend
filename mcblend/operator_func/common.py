@@ -29,6 +29,11 @@ from .exception import ExporterException
 MINECRAFT_SCALE_FACTOR = 16
 '''The scale convertion from blender to minecraft (16 units == 1 meter).'''
 
+class ModelOriginType(Enum):
+    '''Defines what should be used as the origin of the model.'''
+    WORLD = 'world'
+    ARMATURE = 'armature'
+
 class AnimationLoopType(Enum):
     '''The types of the loop property from Minecraft animations'''
     TRUE = 'true'

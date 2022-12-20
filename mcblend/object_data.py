@@ -10,9 +10,9 @@ from bpy.props import (
     FloatProperty, IntVectorProperty, FloatVectorProperty,
     BoolProperty, CollectionProperty, EnumProperty, IntProperty,
     StringProperty)
-    
 
-from .operator_func.common import MeshType, AnimationLoopType
+
+from .operator_func.common import MeshType, AnimationLoopType, ModelOriginType
 from .common_data import MCBLEND_JustName
 
 # Animation properties
@@ -201,15 +201,15 @@ class MCBLEND_AnimationProperties(PropertyGroup):
     )
     loop: EnumProperty(  # type: ignore
         items=(
-            (
+            (  # type: ignore
                 AnimationLoopType.TRUE.value, AnimationLoopType.TRUE.value,
                 'The animation is looped'
             ),
-            (
+            (  # type: ignore
                 AnimationLoopType.FALSE.value, AnimationLoopType.FALSE.value,
                 'The animation has no effect on entity after it finished'
             ),
-            (
+            (  # type: ignore
                 AnimationLoopType.HOLD_ON_LAST_FRAME.value,
                 AnimationLoopType.HOLD_ON_LAST_FRAME.value,
                 'After the end of animation the entity stays in the pose from '
@@ -378,14 +378,19 @@ class MCBLEND_ObjectProperties(PropertyGroup):
             "it's greater than the actual X, then the UV-mapper will act as "
             "if the X were equal to this value.")
     )
-    use_world_origin: BoolProperty(  # type: ignore
-        name="Use world origin",
-        description=(
-            "Whether the model should treat the world origin as it's own "
-            "origin during export. By default, this is enabled and the "
-            "origin of the world is used for exporting model and animations."),
-        default=True,
-    )
+    model_origin: EnumProperty(  # type: ignore
+        items=(
+            (  # type: ignore
+                ModelOriginType.WORLD.value, ModelOriginType.WORLD.value,
+                'Use the world origin as the model origin'
+            ),
+            (  # type: ignore
+                ModelOriginType.ARMATURE.value, ModelOriginType.ARMATURE.value,
+                'Use the armature origin as the model origin'
+            ),
+        ),
+        name='Model origin',
+        default=ModelOriginType.WORLD.value)
 
 class MCBLEND_BoneProperties(PropertyGroup):
     '''
