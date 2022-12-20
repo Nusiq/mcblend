@@ -44,7 +44,14 @@ def make_comparison_files(scene: str) -> tp.Tuple[tp.Dict, str]:
 # PYTEST FUNCTIONS
 SCENES = [
     # 'armature_transformation_test',  # TODO - investigate unexpected results
-    'ArmatureAnimation'
+
+    'ArmatureAnimation',
+
+    # Exactly the same as 'ArmatureAnimation' but with different name, the
+    # ArmatureAnimation_ArmatureOrigin scene uses transformed armature and
+    # ARMATURE origin mode (so result should be the same).
+    'ArmatureAnimation_ArmatureOrigin'
+
     # 'BattleMech'
 ]
 

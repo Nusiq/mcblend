@@ -45,7 +45,13 @@ def make_comparison_files(scene: str) -> tp.Tuple[tp.Dict, tp.Dict]:
 
 # PYTEST FUNCTIONS
 SCENES = [
-    'issue62'
+    'issue62',
+
+    # This model was exported using 'ArmatureAnimation' scene, but the
+    # 'ArmatureAnimation_ArmatureOrigin' scene uses the same model but with
+    # armature transormations. The origin mode is set to ARMATURE, so the
+    # transformations should be irrelevant.
+    'ArmatureAnimation_ArmatureOrigin'
 ]
 
 
