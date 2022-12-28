@@ -597,11 +597,18 @@ class MCBLEND_PT_ArmatureRenderControllersPanel(Panel):
             set_operator_property(op_props, "rc_index", rc_index)
             row = box_col.row(align=True)
             row.prop(rc, "texture", text="Texture")
+            # Operator for selecting textures
             op_props = row.operator(
                 "mcblend.fake_rc_select_texture", icon='TEXTURE',
                 text='')
-
             set_operator_property(op_props, "rc_index", rc_index)
+
+            # Operator for opening textures from filesystem
+            op_props = row.operator(
+                "mcblend.fake_rc_open_texture", icon='FILE_FOLDER',
+                text='')
+            set_operator_property(op_props, "rc_index", rc_index)
+
             box_col.separator()
             row = box_col.row()
             row.label(text="Materials:")

@@ -1741,6 +1741,40 @@ class MCBLEND_OT_FakeRcSelectTexture(Operator):
             texture = self.image
         return {'FINISHED'}
 
+
+class MCBLEND_OT_FakeRcOpenTexture(Operator, ImportHelper):
+    '''Opens a texture from a file for render controller of a model.'''
+    bl_idname = "mcblend.fake_rc_open_texture"
+    bl_label = "Open the texture"
+    bl_options = {'UNDO', 'INTERNAL'}
+
+    filename_ext = ".png"
+    filter_glob: StringProperty(  # type: ignore
+        default="*.png;*.jpg;*.jpeg;*.bmp;*.tga",
+        options={'HIDDEN'},
+    )
+
+    rc_index: IntProperty(options={'HIDDEN'})  # type: ignore
+
+    def list_images(self, context):
+        '''Lists images for dropdown list'''
+        # pylint: disable=unused-argument
+        items = [
+            (x.name, x.name, x.name)
+            for x in get_data_images()]
+        return items
+
+    @classmethod
+    def poll(cls, context: Context):
+        return get_context_object(context).type == 'ARMATURE'
+
+    def execute(self, context):
+        img = bpy.data.images.load(
+            self.filepath, check_existing=True)
+        context.object.mcblend.render_controllers[self.rc_index].\
+            texture = img.name
+        return {'FINISHED'}
+
 # Armature render controllers materials
 class MCBLEND_OT_AddFakeRcMaterial(Operator):
     '''
