@@ -449,7 +449,7 @@ class MCBLEND_PT_EventsPanel(Panel):
         if 0 <= active_event_id < len(events):
             row.operator(
                 "mcblend.remove_event",
-                text="Delete this UV group", icon='X')
+                text="Delete this event", icon='X')
             event = events[active_event_id]
             effects = event.effects
             col.operator_menu_enum(
