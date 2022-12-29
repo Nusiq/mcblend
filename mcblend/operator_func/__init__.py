@@ -102,16 +102,13 @@ def export_animation(
     # TODO - write this code nicer, passing world_origin as a string isn't
     # a perfect solution
     world_origin = None
-    if anim_data.world_origin != "":
-        world_origin = get_data_objects()[anim_data.world_origin]
     use_armature_origin: bool = get_mcblend(
         armature).model_origin == ModelOriginType.ARMATURE.value
-    if world_origin is None and use_armature_origin:
+    if use_armature_origin:
         world_origin = armature
 
     # Check and create object properties
     object_properties = McblendObjectGroup(armature, world_origin)
-
 
     animation = AnimationExport(
         name=anim_data.name,

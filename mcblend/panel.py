@@ -702,9 +702,6 @@ class MCBLEND_PT_AnimationPropertiesPanel(Panel):
                     text="Anim Time Update")
                 col.prop(bpy.context.scene, "frame_start", text="Frame start")
                 col.prop(bpy.context.scene, "frame_end", text="Frame end")
-            # TODO - replace this field with something nicer. Passing an object
-            # as a string isn't a good solution
-            col.prop(active_anim, "world_origin", text="World Origin Object")
 
 # "Other" operators panel
 class MCBLEND_PT_OperatorsPanel(Panel):

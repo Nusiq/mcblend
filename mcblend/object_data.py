@@ -170,11 +170,6 @@ class MCBLEND_AnimationProperties(PropertyGroup):
         description="Name of the animation.", default="animation",
         maxlen=1024
     )
-    world_origin: StringProperty(  # type: ignore
-        name="World Origin Object",
-        description="Name of the object to be used as the world origin for the animation.",
-        default="", maxlen=1024
-    )
     single_frame: BoolProperty(  # type: ignore
         name="Single frame",
         description="Exports current pose as single frame animation",
