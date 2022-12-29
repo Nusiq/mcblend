@@ -542,7 +542,7 @@ class MCBLEND_PT_ModelPropertiesPanel(Panel):
             col.prop(
                 object_properties, "texture_template_resolution",
                 text="Template resolution")
-        col.operator("mcblend.map_uv", text="Set minecraft UVs")
+        col.operator("mcblend.map_uv", text="Automatic UV Mapping")
 
 # Armature render controllers properties
 class MCBLEND_PT_ArmatureRenderControllersPanel(Panel):
