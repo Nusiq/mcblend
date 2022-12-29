@@ -340,8 +340,7 @@ class MCBLEND_PT_UVGroupPanel(Panel):
             row.label(text='Side:')
             row.prop(
                 context.scene,  # type: ignore
-                "mcblend_active_uv_groups_side",
-                text="")
+                "mcblend_active_uv_groups_side", expand=True)
             col.separator()
             col.operator(
                 'mcblend.copy_uv_group_side',

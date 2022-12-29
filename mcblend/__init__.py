@@ -237,7 +237,9 @@ def register():
     bpy.types.Scene.mcblend_uv_groups = CollectionProperty(
         type=MCBLEND_UvGroupProperties)
 
-    sides = [(str(i), f'side{i+1}', f'side{i+1}') for i in range(6)]
+    side_names = ["Left", "Front", "Right", "Back", "Top", "Bottom"]
+    sides = [(str(i), side_name, f'side{i+1}')
+             for i, side_name in enumerate(side_names)]
     bpy.types.Scene.mcblend_active_uv_groups_side = EnumProperty(
         items=sides, name="Face")
 
