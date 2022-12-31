@@ -720,7 +720,7 @@ class MCBLEND_PT_OperatorsPanel(Panel):
         box.label(text="UV-mapping")
         box.operator(
             "mcblend.fix_uv",
-            text="Fix model UV-mapping"
+            text="Fix invalid UV mapping"
         )
         box.operator(
             "mcblend.uv_group",
