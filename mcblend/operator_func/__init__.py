@@ -798,7 +798,7 @@ def prepare_physics_simulation(context: Context) -> Dict:
             get_objects(bp_collection).link(empty)
             empty.empty_display_type = 'CONE'
             empty.empty_display_size = 0.1
-            set_matrix_world(empty, get_matrix_world(bone.obj_matrix_world))
+            set_matrix_world(empty, bone.obj_matrix_world)
             physics_objects_groups[bone].object_parent_empty = empty
             # Add "Copy Transforms" constraint to the bone
             get_objects(context.view_layer).active = armature
@@ -834,7 +834,7 @@ def prepare_physics_simulation(context: Context) -> Dict:
         empty.empty_display_type = 'PLAIN_AXES'
         empty.empty_display_size = 0.1
         set_matrix_world(
-            empty, get_matrix_world(bone.obj_matrix_world))
+            empty, bone.obj_matrix_world)
         physics_objects_groups[bone].rigid_body_constraint = empty
 
     # Add constraints to rigid body constraints empty
