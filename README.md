@@ -1,26 +1,21 @@
 # Mcblend
 [![Tests](https://github.com/Nusiq/mcblend/actions/workflows/tests.yml/badge.svg)](https://github.com/Nusiq/mcblend/actions/workflows/tests.yml)
 
-Blender 3.3 addon for working with Minecraft models.
+Mcblend is a Blender 3.3 plugin that allows creators to design and animate Minecraft Bedrock Edition models using Blender's powerful 3D modeling and animation tools.
 
-### User guides
+## 🔧 Features
+- Exporting and importing models for Minecraft Bedrock Edition.
+- Exporting animations for Minecraft Bedrock Edition.
+- Generating UV maps and template textures.
+- Access to Blender features such as physics simulation and rigging for animating Minecraft models.
+
+### 📚 User guides
 User guides and installation instructions can be found on the project site:
 
 https://mcblend.readthedocs.io
 
-### Discord
-You can contact me about the project on the #mcblend channel on  [Bedrock OSS](https://discord.gg/trD68msd) discord.
+### 💬 Contact
+Feel free to reach out to me on the #mcblend channel of the [Bedrock OSS](https://discord.gg/trD68msd) Discord with any questions or comments about the project.
 
-## Features
-- Exporting models for Minecraft bedrock edition. Custom Minecraft model
-  properties like `mirror`, `inflate` or `locator` are supported.
-- Exporting animations for Minecraft bedrock edition. Support for Minecraft
-  property `anim_time_update`.
-- Importing models from Minecraft bedrock edition.
-- Generating the UV maps and the template textures.
-- Easy way to create animations that would be really tedious to do thanks to
-  physics simulation and rigging.
-## Planned features
-- Planned features can be found in the
-["Issues"](https://github.com/Nusiq/mcblend/issues)
-tab of this project on Github.
+## 💡 Planned features
+Some of the planned features for the Mcblend project can be found in the ["Issues"](https://github.com/Nusiq/mcblend/issues) tab of this repository.

@@ -1,161 +1,76 @@
-# GUI - object properties
+# Object properties
+
+![](/img/gui/object_properties_bone.png)
+![](/img/gui/object_properties_cube.png)
 
 ## Object Properties (mesh)
-This is the panel visible when opening the Object Properties of a mesh.
 
-![](/img/object_properties_mesh.png)
+This is the panel visible when opening the `Object Properties` when the active object is a mesh.
 
-**Mesh type (dropdown list)** - *Cube* or *Poly mesh*. Decides if the object
-should be exported as a cube or polymesh. Objects with non-cuboid shapes must
-be polymesh type or you won't be able to export them.
+### Mcblend: Object properties
 
-```{note}
-Polymesh models are still an experimental Minecraft feature and they could
-be removed from Minecraft. Experimental features are not allowed on
-the Marketplace, so keep that in mind if you're creating content for
-the Marketplace.
-```
+![](/img/gui/object_properties_mesh.png)
 
-**UV Group (textfield)** - displays the [UV-group](/uv_groups) name of the
-selected object.
-
-**Mirror** - the mirror property is used only during the
-UV-mapping. It affects the mapping of the object's faces in the same way as
-Minecraft's mirror property of a cube.
-
-**Inflate** - stores the Minecraft's inflate property value of the cube.
-
-```{note}
-Editing the Inflate value through this panel does not change the dimensions
-of the object, but it does change the inflate value in the exported object.
-If you want to inflate/deflate the object, you should use the
-inflate operator from the sidebar.
-```
-
-**Min UV bound** - this property is used during UV-mapping. It defines the
-minimal space on the texture used for a cube. If a cube has width, height
-or depth lower than one unit of length, this property can be used to make sure
-that every face will get some space on the texture. Normally in this case a
-the size of the cube would be rounded down to 0 during UV-mapping and some of
-the cube's faces wouldn't get any space on the texture. 
+- `Mesh type` - a dropdown list that lets you select between `Cube` or `Poly mesh`. Decides if the object should be exported as a cube or polymesh.
+- `UV Group` (textfield) - displays the UV group name of the selected object.
+- `Mirror` - the mirror property is used only during the UV-mapping. It affects the mapping of the object's faces in the same way as Minecraft's mirror property of a cube.
+- `Inflate` - stores the Minecraft's inflate property value of the cube.
+- `Min UV bound` - this property is used during automatic UV mapping. It defines the minimal space on the texture used for a cube. If a cube has width, height or depth lower than one unit of length, this property can be used to make sure that every face will get some space on the texture.
 
 ## Object properties (armature)
-When you open Object properties while having an armature selected, there are
-3 new panels visible:
-
-- Mcblend: Model Properties
-- Mcblend: Render Controllers
-- Mcblend: Animations
-
-
+This is the panel visible when opening the `Object Properties` when the active object is an armature.
 
 ### Mcblend: Model properties
-This panel has some of the basic properties of the Minecraft model
-like the width and height of visible bounds (they have the same names as in the
-Minecraft model) and some properties used for texture generation.
 
-![](/img/object_properties_armature_model_properties.png)
+![](/img/gui/object_properties_armature_model_properties.png)
 
-- **Allow texture expanding** - allows changing the texture width and height during
-UV-mapping.
-- **Generate Texture** - generates a template texture during UV-mapping
-(UV-mapping without this option selected will change the UV of the model but
-won't generate any texture file).
-- **Template resolution** defines the size of the texture. The real resolution of
-the generated texture image is equal to texture width and height multiplied
-by texture resolution.
-- **Set minecraft UVs** - generates the UV map and texture of the model
-  based on the setting from the properties above.
+This panel has some of the basic properties of the Minecraft model like the width and height of visible bounds (they have the same names as in the Minecraft model) and some properties used for texture generation.
 
-To perform the UV-mapping, adjust the values of the fields and press the
-"Set Minecraft UVs" button.
-
-```{note}
-After the UV-mapping, you can still go to the UV editor and move everything
-to your liking. This operator tries to arrange the UVs of the selected
-objects on the texture space using the basic non-per-face Minecraft
-UV-mapping. If you move the UV in such a way that it cannot be mapped
-in standard Minecraft UV-mapping way, then Mcblend will detect that
-and it'll use per-face UV-mapping.
-
-Don't move individual vertices of the faces on the UV unless you know what
-you're doing. The faces on the UV must remain rectangles, or the UV of the
-exported model may have unexpected shapes.
-```
+- `Model origin` - allows you to select whether the transformations of the bones and cubes in the exported model should be relative to the armature of the model or to the world origin.
+- `Name` - the name of the model (excluding the `geometry.` prefix).
+- `Visible bounds width` - the width of the visible bounds of the model.
+- `Visible bounds height` - the height of the visible bounds of the model.
+- `Visible bounds offset` - the offset of the visible bounds of the model.
+- `Texture width` - the width of the texture used for the model.
+- `Texture height` - the height of the texture used for the model.
+- `Allow texture expanding` - allows changing the texture width and height during automatic UV-mapping.
+- `Generate Texture` - a checkbox that decides whether the texture should be generated during automatic UV-mapping or not.
+- `Template resolution` defines the size of the texture. The real resolution of the generated texture image is equal to texture width and height multiplied by texture resolution.
+- `Automatic UV mapping` - a button that triggers the automatic UV mapping.
 
 ### Mcblend: Render Controllers
 
-![](/img/object_properties_armature_render_controllers.png)
+![](/img/gui/object_properties_armature_render_controllers.png)
 
-This panel lets you quickly create materials. The materials generated using
-this panel are very similar to the materials that you can find in Minecraft.
-You can add multiple render controllers to the model. Every render controller
-can have only one texture. The multitexture materials aren't currently
-supported. Render controller can have multiple (Minecraft) materials. They
-can be assigned using name patterns in a same way as you assign them in
-Minecraft.
+The Materials panel allows you to quickly create materials that are similar to those found in Minecraft. To do this, you can add multiple render controllers to your model. Each render controller can only have one texture, as multitexture materials are currently not supported. However, a render controller can have multiple Minecraft materials, which can be assigned using name patterns in the same way as you would in Minecraft.
 
-After setting the render controller you can use the *Apply materials* button to
-automatically create the materials for preview in Blender.
+Once you've set up your render controller, you can use the `Apply materials` button to automatically create the materials for preview in Blender. This will help you get a better sense of how your model will look in Minecraft.
 
 ### Mcblend: Animations
 
-![](/img/object_properties_armature_animations.png)
+![](/img/gui/object_properties_armature_animations.png)
 
-The animations panel lets you quickly switch between animations. The animations
-in Mcblend are NLA tracks of the armature with some additional data.
-Switching the animation in the *Mcblend: Animations* menu also switches
-active NLA tracks.
+The `Mcblend: Animations panel` allows you to easily switch between animations in your project. These animations are represented as NLA tracks on the armature, with additional data attached to them. Selecting a different animation in the panel will also switch the active NLA track.
 
-- **New animation** - Creates a new animation. You can't use this operator while
-  editing an action of the armature. If you want to create a new action you
-  need to stash the other action first.
-- **Remove animation** - Removes the currently active animation.
-- **Select animation (dropdown list)** - Lets you select the animation to edit.
-- **Name** - Sets the name of the animation.
-- **Skip rest poses** - this checkbox enables animation export optimization.
-  If enabled, the keyframes that don't affect the armature (because they are
-  the rest poses) are skipped in the exported file. In most cases it's
-  recommended to enable this option.
-- **Export as pose** - if enabled, the exported animation will contain only
-  one looped frame.
-- **Override previous animation** - directly translates to the
-  override_previous_animation property of Minecraft animation. It doesn't
-  affect how the animation is rendered in Blender.
-- **Loop** - directly translates to the loop property of Minecraft animation
-  file. There are three options "true", "false" and "hold_on_last_frame".
-- **Anim Time Update** - directly translates to the anim_time_update property
-  of Minecraft animation file. You should either leave it empty
-  (if you don't want to have "anim_time_update" in your animation) or put a
-  MoLang expression in it. It doesn't affect the animation in Mcblend because
-  Mcblend doesn't support Molang.
-- **Frame start** - The first frame of the animation. Doesn't affect the
-  Minecraft animation. It just tells Mcblend where tha animation starst.
-- **Frame end** - The last frame of the animation. Doesn't affect the
-  Minecraft animation. It just tells Mcblend where tha animation ends.
-- **World Origin** - by default the transformations of the animation are
-  relative to the global origin of the 3D space. You can use this field to
-  make them relative to an object. You can put there a name of an object. It's
-  useful for animating Minecraft's attachables, when you need to synchronize
-  the animation of an entity and the attachable. The origin of the attachable
-  moves with the movements from the entities animation. You can learn more
-  about this kind of animations in
-  [Attachables & First person animations](/attachables_and_1st_person_animations/)
-  tutorial.
+- The `New animation` button creates a new animation. You can't use this operator while editing an action of the armature. If you want to create a new action, you need to stash the other action first.
+- The `Remove animation` button removes the currently active animation.
+- The `Select animation` dropdown list lets you select the animation to edit.
+- The `Name` field sets the name of the animation.
+- The `Skip rest poses` checkbox enables animation export optimization. If enabled, the keyframes that don't affect the armature (because they are the rest poses) are skipped in the exported file. In most cases, it's recommended to enable this option.
+- The `Export as pose` checkbox, if enabled, causes the exported animation to contain only one looped frame.
+- The `Override previous animation` field directly translates to the override_previous_animation property of the Minecraft animation. It doesn't affect how the animation is rendered in Blender.
+- The `Loop` field directly translates to the loop property of the Minecraft animation file. There are three options: `true`, `false`, and `hold_on_last_frame`.
+- The `Anim Time Update` field directly translates to the anim_time_update property of the Minecraft animation file. You should either leave it empty (if you don't want to have anim_time_update in your animation) or put a Molang expression in it. It doesn't affect the animation in Mcblend because Mcblend doesn't support Molang.
+- The `Frame start` field indicates the first frame of the animation. It tells Mcblend where the animation starts.
+- The `Frame end` field indicates the last frame of the animation. It tells Mcblend where the animation ends.
 
 ## Object properties (bone of armature)
 
-![](/img/object_properties_armature_bone_properties.png)
+### Mcblend: Bone properties
 
-When you open Object properties while having a bone selected in pose mode,
-there is 1 more additional panel - *Mcblend: Bone Properties*. It has only
-two fields:
-- **Bone name** - the name of the bone. It's just a convinient way of viewing
-  which bone is selected. You can use it to rename the bone.
-- **Binding** - this property directly translates to Minecraft's binding
-  property. It's useful for creating models of the attachables. Id doesn't
-  affect the model in Blender in any way. You can learn more about creating
-  attachables in
-  [Attachables & First person animations](/attachables_and_1st_person_animations/)
-  tutorial.
+![](/img/gui/object_properties_armature_bone_properties.png)
 
+This is the panel visible when opening the `Object Properties` when the active object is a bone in a `Pose Mode`.
+
+- `Bone name` - This displays the name of the currently selected bone. You can also use it to rename the bone.
+- `Binding` - This property corresponds to Minecraft's binding property. It is useful for creating models of attachables, but does not affect the model in Blender.

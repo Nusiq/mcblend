@@ -1,17 +1,16 @@
 # GUI - menu items
 
-Mcblend adds new items to the blenders file ipmort and file export menu:
+![](/img/gui/menu_items.png)
 
-- _Export Bedrock Model_ in file->export 
-- _Export Bedrock Animation_ in file->export
-- _Import Bedrock Model_ in file->imort
+## File > Import menu
 
-You can read more about importing and exporting models [here](/importing_and_exporting/)
+![](/img/gui/menu_import.png)
 
-**Import menu:**
+- The `Import Bedrock Model` menu item imports a Bedrock model from a file.
 
-![](/img/menu_import.png)
+## File > Export menu
 
-**Export menu:**
+![](/img/gui/menu_export.png)
 
-![](/img/menu_export.png)
+- The `Export Bedrock Model` menu item exports the selected model to a file.
+- The `Export Bedrock Animation` menu item exports the selected animation to a file.

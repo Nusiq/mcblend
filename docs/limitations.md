@@ -1,50 +1,29 @@
 # Limitations
 
-Minecraft models and animations have a strict set of limitations. Blender is
-is not designed for Minecraft. As a result, there are a few rules that
-you have to follow when working with Mcblend.
+Minecraft models and animations have certain constraints that must be followed. Blender was not designed specifically for Minecraft, so there are a few limitations to be aware of when using Mcblend. This section outlines these limitations and provide guidelines for working within them.
+
 
 ## Modeling
-Every *cube* and *poly_mesh* must be a separate object. The model must have
-exactly 1 armature. Cubes and poly_meshes are parented to the bones of the
-armature using
-[bone parenting](https://docs.blender.org/manual/en/2.93/scene_layout/object/editing/parent.html#bone-parent).
+In order to use Mcblend, you must adhere to the following modeling constraints:
 
-The bones of the armature represent the bones of the
-Minecraft model and the objects parented to them represent cubes or
-poly_meshes. *Empties* are used as Minecraft's *locators*.
-
-The objects and empties can be parented to different objects (but not to
-empties) as long as there is a bone on top of their hierarchy.
-
-If a bone has no parents and children it's ignored during the export. This is
-useful because in Blender you sometimes may want to use such bones for inverse
-kinematics. Skipping these bones doesn't mean that you loose anything because
-the bones without child cubes, locators or poly meshes can't be viewed in
-the game anyway.
+- Each cube and polymesh must be a separate object.
+- The model must have exactly one armature.
+- Cubes and polymeshes must be parented to the bones of the armature using ["bone parenting."](https://docs.blender.org/manual/en/2.93/scene_layout/object/editing/parent.html#bone-parent).
+- Bones in the armature represent the bones of the Minecraft model, and the objects parented to them represent cubes or polymeshes.
+- Empties can be used as Minecraft's "locators."
+- Objects and empties can be parented to other objects (but not to empties) as long as there is a bone at the top of their hierarchy.
+- If a bone has no parents or children, it will be ignored during export. This is useful because in Blender, you may sometimes want to use such bones for inverse kinematics.
 
 ```{note}
-Mcblend provides tools that make following these rules easier.
+Mcblend provides tools to make it easier to follow these rules. The ["separate cubes operator"](gui/3d_viewport_sidebar.md#mesh-transformations-panel) can help you separate meshes that contain multiple cubes into multiple objects with properly aligned rotations. This means you can create your model in a single mesh and, as long as its parts have proper shapes, you can separate them into a format that can be used by Mcblend.
 
-The *[separate cubes operator](gui/3d_viewport_sidebar.md#mesh-transformations-panel)* can
-help you with separating meshes that contain multiple cubes into multiple
-objects with properly aligned rotations. This means that you can create
-your model in a single mesh and as long as its parts have proper shapes,
-it's possible to separate them to a format that can be used by Mcblend.
-
-If you don't want to be restricted to using only cuboids for your model you
-can also mark some objects as
-[poly_mesh](gui/object_properties.md#object-properties-mesh).
-Be aware that the poly_mesh models are still an experimental feature in
-Minecraft and they could be removed from the game in the future.
+You can also mark certain objects as ["polymeshes,"](gui/object_properties.md#object-properties-mesh) which allows you to use shapes other than cuboids for your model. However, be aware that polymeshes are an experimental feature in Minecraft and may be removed from the game in the future.
 ```
 
 <details>
 <summary><b>[CLICK] Detailed explanation</b></summary>
 
-Modeling limitations are the outcome of the format of Minecraft's model files.
-The code below shows the JSON file of a Minecraft model with some of its parts
-replaced with `...`.
+Modeling limitations are the result of the format of Minecraft's model files. As shown in the code snippet below, a Minecraft model is made up of bones, with each bone containing a list of cubes and/or a single polymesh. Each cube and polymesh has its own pivot and rotation, and Mcblend needs this information in order to export the model correctly. This means that it is not possible to pack everything into a single mesh, as a mesh is simply a collection of vertices without a concept of rotation of its separate parts. Instead, you must create separate meshes for each cube and polymesh.
 ```
 {
     "format_version": "1.16.0",
@@ -90,53 +69,34 @@ replaced with `...`.
     ]
 }
 ```
-Minecraft models are made out of bones. Every bone has a list of cubes
-and/or a poly_mesh. Every cube and polymesh has its own pivot and rotation.
-Mcblend needs to know these values in order to export the model. This means
-that you can't just pack everything into a single mesh because a mesh is just a
-collection of vertices without concept of rotation. Hence, you need to create
-separate meshes for each cube and poly_mesh.
 
-<br/><br/>
-
-The rule of using a single armature per Minecraft model just makes working with
-multiple models easier. Older versions of Mcblend used to allow using
-hierarchies where some of the bones were represented by empties but such
-models were hard to understand and the feature was removed.
+The rule of using a single armature per Minecraft model helps to make the mapping between the model in Blender and the model in Minecraft more intuitive and easier to understand. It also simplifies the process of working with multiple models. In earlier versions of Mcblend, it was possible to use hierarchies where some bones were represented by empties, but this made the models confusing and difficult to interpret, so the feature was removed. By enforcing the use of a single armature, it becomes clearer how the various parts of the model in Blender correspond to their counterparts in Minecraft.
 
 </details>
 <br/>
 
 ## UV mapping
 
-The UV maps of the faces of the *cubes* must be rectangular and the must be
-aligned with the orientation of the texture image. They also must be properly
-rotated to match the rotations allowed by Minecraft. A proper rotation is
-when:
+In Minecraft, the UV maps of the faces of cubes must be rectangular and aligned with the orientation of the texture image. They also must be properly rotated to match the rotations allowed by Minecraft. A proper rotation is when:
 
-- Front, back, left and right faces have their top and bottom edges aligned
-    horizontally (remaining edges are vertical).
-- Top and bottom face have their front and back edges aligned horizontally and
-    left and right edges aligned vertically.
+- The front, back, left, and right faces have their top and bottom edges aligned horizontally, with the remaining edges being vertical.
+- The top and bottom faces have their front and back edges aligned horizontally, and their left and right edges aligned vertically.
 
 ```{note}
-The alignment rules are defined in the local space of the cubes which makes
-it hard to understand when you look at the model with rotated cubes but
-Mcblend can help you with that. If you're getting warnings in your export
-like:
+It can be difficult to understand these alignment rules when looking at a model with rotated cubes. However, Mcblend provides the [Fix model UV-mapping](gui/3d_viewport_sidebar.md#uv-mapping-panel) operator to rearrange the UVs of selected objects to match the Minecraft rules. If you see warnings in your export such as:
 `Cube based on Blender object "Cube": "north" face has invalid UV-mapping. Skipped.`
-you can use the [Fix model UV-mapping](gui/3d_viewport_sidebar.md#uv-mapping-panel)
-operator. It will rearrange the UVs of selected objects so that they match
-the Minecraft rules.
-```
+you can use this operator to fix the UV mapping.
 
+```
 <details>
+
 <summary><b>[CLICK] Detailed explanation</b></summary>
 
-There are two types of the UV-mapping in Minecraft per-face UV mapping and
-the default UV mapping. The snippets of code below show how they look:
+There are two types of UV mapping in Minecraft: per-face UV mapping and default UV mapping. The default UV mapping is not very flexible, as the size and position of the faces are based on the size of the cube. The vector passed to the "uv" property defines the offset. With Mcblend, you don't have to worry about the type of UV mapping you use. If the faces are arranged in a way that allows saving the UV in default format, Mcblend will do so (because it is more compact). Otherwise, the UV is saved using the per-face mapping format.
 
-</br></br>
+Unfortunately, the per-face UV mapping is also limited. It cannot rotate the UV by 90 degrees. It uses two vectors to define the mapping of the face: the "uv" (offset) and the "uv_size". This format allows for flipping the rectangle, but not rotating it.
+
+Examples of both types of UV-mapping in code are shown below:
 
 The default UV-mapping:
 ```
@@ -156,56 +116,29 @@ The per-face UV mapping
 },
 ```
 
-The default UV-mapping isn't very flexible. The size and position of the faces
-are based on the size of the cube. The vector passed to the "uv" property
-defines the offset. With Mcblend you don't have to worry about the type of
-UV-mapping you use. If the faces are arranged in a way that allow saving the
-UV in default format Mcblend will do it (because it's more compact). Otherwise
-the UV is saved using the second format.
-
-Unfortunately the per-face UV mapping is also limited. It can't rotate the UV
-by 90 degrees. It uses two vectors to define the mapping of the face - the
-"uv" (offset) and the "uv_size". This format lets you flip the rectangle but
-not rotate it.
-
 </details>
-<br/>
+
 
 ## Animating
 
-There must be no more than 180° of rotation between two key frames,
-or the exported animation will look different in Minecraft than in the Blender
-preview.
+There is a limitation on the amount of rotation that can occur between two keyframes in an animation created with Mcblend. The maximum amount of rotation allowed is 180°. If the rotation between two keyframes exceeds this amount, the exported animation will not match the preview in Blender.
 
 ```{note}
-A quick fix to this problem is adding additional key frames for wide angle
-rotations.
+A quick fix for this issue is to add additional keyframes for wide angle rotations.
 ```
+
+
 
 <details>
 <summary><b>[CLICK] Detailed explanation</b></summary>
 
-This issue is caused by the way Mcblend computes Minecraft's rotations
-internally.
+This limitation is a result of the way Mcblend calculates rotations internally.
 
-Blender supports multiple rotation modes and uses different rotation types for
-different kinds of objects. For example, bone rotations in armatures use
-quaternions, but meshes use Euler angles. Additionally, user can choose
-different rotation modes for each object. Minecraft uses Euler angles, but the
-axes are set differently.
+Blender supports multiple rotation modes and uses different types of rotations for different kinds of objects. For example, bone rotations in armatures use quaternions, while meshes use Euler angles. Additionally, users can choose different rotation modes for each object. Minecraft uses Euler angles, but the axes are set differently.
 
-Mcblend can export models and animations regardless of the rotation modes used,
-but internally everything is converted to quaternions / translation matrices.
-The design decision for the internal use of quaternions was motivated by the
-fact that quaternions help avoid some calculation errors.
+Mcblend can export models and animations regardless of the rotation modes used, but internally everything is converted to quaternions or translation matrices. The decision to use quaternions internally was made because they help avoid certain calculation errors.
 
-Unfortunately, the quaternion number system has only one unique representation
-for each rotation orientation, so you cannot distinguish the full rotation from
-no rotation at all (360° == 0°).
-
-Therefore, you cannot use angles greater than 180° between two key frames
-because Mcblend will always try to export the smallest rotation possible to
-the animation.
+However, the quaternion number system has only one unique representation for each rotation orientation, so it is not possible to distinguish a full rotation (360°) from no rotation (0°). This means that angles greater than 180° between two keyframes cannot be used, as Mcblend will always try to export the smallest possible rotation to the animation.
 
 </details>
 <br/>
