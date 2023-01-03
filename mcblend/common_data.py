@@ -11,7 +11,6 @@ class MCBLEND_JustName(PropertyGroup):
     '''Custom property group which has only the "name" property'''
     name: StringProperty(  # type: ignore
         name="",
-        description="The identifier of the object",
         default="", maxlen=1024)
 
 class MCBLEND_DbEntry(PropertyGroup):

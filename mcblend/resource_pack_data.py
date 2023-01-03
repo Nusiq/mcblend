@@ -286,22 +286,20 @@ class MCBLEND_ProjectProperties(PropertyGroup):
             (
                 "ENTITY",
                 "Import from entity",
-                "Imports models for entity selected from resource pack"
+                "Import models of an entity selected from resource pack"
             ),
             (
                 "ATTACHABLE",
                 "Import from attachable",
-                "Imports models for attachable selected from resource pack"
+                "Import models of an attachable selected from resource pack"
             )
         ],
         name="Importer type",
-        description=(
-            "Selects the type of the importer to use for importing models"
-            "from the resource pack")
+        description="The type of the model importer"
     )
     selected_entity: StringProperty(   # type: ignore
         default="",
-        description="Name that identifies one of the loaded entities",
+        description="Name that identifies the entity to be loaded",
         update=update_selected_entity)
     entities: CollectionProperty(  # type: ignore
         type=MCBLEND_DbEntry,
@@ -312,7 +310,7 @@ class MCBLEND_ProjectProperties(PropertyGroup):
 
     selected_attachable: StringProperty(   # type: ignore
         default="",
-        description="Name that identifies one of the loaded attachables",
+        description="Name that identifies the attachable to be loaded",
         update=update_selected_attachable)
     attachables: CollectionProperty(  # type: ignore
         type=MCBLEND_DbEntry,

@@ -113,9 +113,14 @@ from .panel import (
 bl_info = {
     "name": "Mcblend",
     "author": "Artur",
-    "description": "Minecraft Bedrock Edition addon for creating entity models and animations.",
-    "blender": (2, 80, 0),
+    "description": (
+        "An addon that allows to design and animate Minecraft "
+        "Bedrock Edition models"),
+    "blender": (3, 3, 0),
+
+    # Remember to update the version in the "docs/conf.py"
     "version": (10, 0, 0),  # COMPATIBILITY BREAKING CHANGE, NEW FEATURE, BUGFIX
+
     "location": "",
     "warning": "",
     "category": "Object"
@@ -237,9 +242,14 @@ def register():
     bpy.types.Scene.mcblend_uv_groups = CollectionProperty(
         type=MCBLEND_UvGroupProperties)
 
-    side_names = ["Left", "Front", "Right", "Back", "Top", "Bottom"]
-    sides = [(str(i), side_name, f'side{i+1}')
-             for i, side_name in enumerate(side_names)]
+    sides = [
+        ("0", "Left", "The left side of the cube"),
+        ("1", "Front", "The front side of the cube"),
+        ("2", "Right", "The right side of the cube"),
+        ("3", "Back", "The back side of the cube"),
+        ("4", "Top", "The top side of the cube"),
+        ("5", "Bottom", "The bottom side of the cube")
+    ]
     bpy.types.Scene.mcblend_active_uv_groups_side = EnumProperty(
         items=sides, name="Face")
 

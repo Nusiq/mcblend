@@ -44,8 +44,7 @@ class MCBLEND_OT_ExportModel(
     bl_label = "Export Bedrock Model"
     bl_options = {'REGISTER'}
     bl_description = (
-        "Exports selected objects from scene to Minecraft Bedrock edition"
-        " model.")
+        "Export selected armature as a Minecraft Bedrock Edition model")
 
     filename_ext = '.json'
 
@@ -116,8 +115,8 @@ class MCBLEND_OT_ExportAnimation(
     bl_label = "Export Bedrock Animation"
     bl_options = {'REGISTER'}
     bl_description = (
-        "Exports Bedrock edition entity animation for selected armature.")
-
+        "Export the currently active animation of the selected armature as "
+        "a Minecraft Bedrock Edition animation")
 
     filename_ext = '.json'
 
@@ -172,10 +171,10 @@ class MCBLEND_OT_MapUv(Operator):
     '''
     # pylint: disable=unused-argument, no-member
     bl_idname = "mcblend.map_uv"
-    bl_label = "Map uv for bedrock model."
+    bl_label = "Automatic UV mapping"
     bl_options = {'REGISTER', 'UNDO', 'INTERNAL'}
     bl_description = (
-        "Set UV mapping for minecraft objects."
+        "UV map child cubes of the currently selected armature"
     )
 
 
@@ -220,10 +219,10 @@ class MCBLEND_OT_FixUv(Operator):
     '''
     # pylint: disable=unused-argument, no-member
     bl_idname = "mcblend.fix_uv"
-    bl_label = "Fix UV mapping"
+    bl_label = "Fix invalid UV mapping"
     bl_options = {'REGISTER', 'UNDO'}
     bl_description = (
-        "Fix UV mapping of cubes connected to selected armature"
+        "Fix invalid UV mapping of the child cubes of the selected armature"
     )
 
     @classmethod
@@ -256,13 +255,9 @@ class MCBLEND_OT_UvGroup(Operator):
     '''Operator used for adding selected objects to an UV group'''
     # pylint: disable=unused-argument, no-member
     bl_idname = "mcblend.uv_group"
-    bl_label = "Set uv_group for object."
+    bl_label = "Set the UV group"
     bl_options = {'UNDO'}
-    bl_description = (
-        "Set uv_group for bedrock model. Objects that have the same width, "
-        "depth and height and are in the same uv_group are mapped to the "
-        "same spot on the texture"
-    )
+    bl_description = "Set the UV groups of the selected objects"
 
     def _list_uv_groups(self, context):
         items = [
@@ -305,9 +300,9 @@ class MCBLEND_OT_ClearUvGroup(Operator):
     '''Operator used for removing selected objects from their UV groups'''
     # pylint: disable=unused-argument, no-member
     bl_idname = "mcblend.clear_uv_group"
-    bl_label = "Clear UV group from objects."
+    bl_label = "Clear UV group"
     bl_options = {'UNDO'}
-    bl_description = 'Clears the UV group from an object.'
+    bl_description = 'Clear the UV group from the selected objects'
 
     @classmethod
     def poll(cls, context: Context):
@@ -342,10 +337,9 @@ class MCBLEND_OT_SetInflate(Operator):
     bl_label = "Set inflate"
     bl_options = {'REGISTER', 'UNDO'}
     bl_description = (
-        "Set the inflate vale for selected objects and change their "
-        "dimensions to fit the inflate values."
+        "Set the \"inflate\" property of the selected objects and adjust "
+        "their sizes accordingly"
     )
-
 
     inflate_value: FloatProperty(default=0)  # type: ignore
     mode: EnumProperty(  # type: ignore
@@ -390,11 +384,11 @@ class MCBLEND_OT_SeparateMeshCubes(Operator):
     '''
     # pylint: disable=unused-argument, R0201, no-member
     bl_idname = "mcblend.separate_mesh_cubes"
-    bl_label = "Separate cubes"
+    bl_label = "Separate and align cubes"
     bl_options = {'UNDO'}
     bl_description = (
-        "Separate cubes from selected objects and rotate bound boxes to "
-        "minimize their size."
+        "Separate the parts of the selected objects and rotate their bound "
+        "boxes to minimize their sizes"
     )
 
     @classmethod
@@ -421,7 +415,7 @@ class MCBLEND_OT_ImportModel(Operator, ImportHelper):
     bl_idname = "mcblend.import_model"
     bl_label = "Import Bedrock Model"
     bl_options = {'REGISTER', 'UNDO'}
-    bl_description = "Import Minecraft Bedrock edition model from json file."
+    bl_description = "Import Minecraft Bedrock edition model from a JSON file"
     # ImportHelper mixin class uses this
     filename_ext = ".json"
     filter_glob: StringProperty(  # type: ignore
@@ -512,7 +506,8 @@ class MCBLEND_OT_ListAnimations(Operator):
     Operator used for listing the animations for GUI.
     '''
     bl_idname = "mcblend.list_animations"
-    bl_label = "List animations and save them to Enum to display them in GUI"
+    bl_label = "Select animation"
+    bl_description = "Select the active animation for editing"
     bl_options = {'INTERNAL'}
 
     def _list_animations(self, context):
@@ -564,7 +559,8 @@ class MCBLEND_OT_ListAnimations(Operator):
 class MCBLEND_OT_AddAnimation(Operator):
     '''Operator used creating animation settings templates.'''
     bl_idname = "mcblend.add_animation"
-    bl_label = '''Adds new animation to the list.'''
+    bl_label = "New animation"
+    bl_description = "Create new Minecraft animation"
     bl_options = {'UNDO', 'INTERNAL'}
 
     @classmethod
@@ -613,7 +609,8 @@ class MCBLEND_OT_RemoveAnimation(Operator):
     Operator used for loading saved animation templates to the context.
     '''
     bl_idname = "mcblend.remove_animation"
-    bl_label = "Remove current animation from the list."
+    bl_label = "Remove this animation"
+    bl_description = "Remove the currently active Minecraft animation"
     bl_options = {'UNDO', 'INTERNAL'}
 
     @classmethod
@@ -665,7 +662,8 @@ class MCBLEND_OT_ListUvGroups(Operator):
     Operator that used for listing the UV groups for GUI.
     '''
     bl_idname = "mcblend.list_uv_groups"
-    bl_label = "List UV groups and save them to Enum to display them in GUI"
+    bl_label = "Select UV group"
+    bl_description = "Select the active UV group for editing"
     bl_options = {'INTERNAL'}
 
     def _list_uv_groups(self, context):
@@ -694,7 +692,8 @@ class MCBLEND_OT_ListUvGroups(Operator):
 class MCBLEND_OT_AddUvGroup(Operator):
     '''Operator used for creating new UV groups.'''
     bl_idname = "mcblend.add_uv_group"
-    bl_label = '''Adds new uv_group to the list.'''
+    bl_label = "New UV group"
+    bl_description = "Create new UV group"
     bl_options = {'UNDO', 'INTERNAL'}
 
     def execute(self, context):
@@ -725,7 +724,8 @@ class MCBLEND_OT_AddUvGroup(Operator):
 class MCBLEND_OT_RemoveUvGroup(Operator):
     '''Operator useful for removing UV groups.'''
     bl_idname = "mcblend.remove_uv_group"
-    bl_label = "Remove current uv_group from the list."
+    bl_label = "Delete this UV group"
+    bl_description = "Delete the currently active UV group"
     bl_options = {'UNDO', 'INTERNAL'}
 
     @classmethod
@@ -753,7 +753,9 @@ class MCBLEND_OT_RemoveUvGroup(Operator):
 class MCBLEND_OT_CopyUvGroupSide(Operator):
     '''Operator used for copying sides of UV groups.'''
     bl_idname = "mcblend.copy_uv_group_side"
-    bl_label = 'Copy active UV group side other to UV group'
+    bl_label = "Copy current UV face"
+    bl_description = (
+        "Copy the currently active UV face to another UV group face")
     bl_options = {'UNDO', 'INTERNAL'}
 
     def _list_uv_groups(self, context):
@@ -880,7 +882,8 @@ def get_active_masks(context):
 class MCBLEND_OT_AddUvMask(Operator):
     '''Operator used for adding UV masks to UV groups.'''
     bl_idname = "mcblend.add_uv_mask"
-    bl_label = '''Adds new mask to active uv group at active face.'''
+    bl_label = "Add mask"
+    bl_description = "Add a new mask to the currently active UV group"
     bl_options = {'UNDO', 'INTERNAL'}
 
     mask_type: EnumProperty(  # type: ignore
@@ -904,7 +907,8 @@ class MCBLEND_OT_AddUvMask(Operator):
 class MCBLEND_OT_RemoveUvMask(Operator):
     '''Operator used for removing UV masks from UV groups.'''
     bl_idname = "mcblend.remove_uv_mask"
-    bl_label = '''Removes mask from active face of active uv group.'''
+    bl_label = "Remove this mask"
+    bl_description = "Remove this mask from the UV group"
     bl_options = {'UNDO', 'INTERNAL'}
 
     target: IntProperty()  # type: ignore
@@ -923,9 +927,8 @@ class MCBLEND_OT_RemoveUvMask(Operator):
 class MCBLEND_OT_MoveUvMask(Operator):
     '''Operator used for changing the order of UV masks in UV groups.'''
     bl_idname = "mcblend.move_uv_mask"
-    bl_label = (
-        'Moves mask in active face of active uv group to different place on '
-        'the list.')
+    bl_label = "Move this UV mask"
+    bl_description = "Change the order of masks in the UV group"
     bl_options = {'UNDO', 'INTERNAL'}
 
     move_from: IntProperty()  # type: ignore
@@ -946,7 +949,8 @@ class MCBLEND_OT_MoveUvMask(Operator):
 class MCBLEND_OT_AddUvMaskColor(Operator):
     '''Operator used for adding colors to UV masks.'''
     bl_idname = "mcblend.add_uv_mask_color"
-    bl_label = '''Adds new color to a mask.'''
+    bl_label = "Add color"
+    bl_description = "Add a new color to the UV mask"
     bl_options = {'UNDO', 'INTERNAL'}
 
     mask_index: IntProperty()  # type: ignore
@@ -966,7 +970,8 @@ class MCBLEND_OT_AddUvMaskColor(Operator):
 class MCBLEND_OT_RemoveUvMaskColor(Operator):
     '''Operator used for removing colors from UV masks.'''
     bl_idname = "mcblend.remove_uv_mask_color"
-    bl_label = 'Removes color from colors of active face of active uv group.'
+    bl_label = "Remove color"
+    bl_description = "Remove the color from the UV mask"
     bl_options = {'UNDO', 'INTERNAL'}
 
     mask_index: IntProperty()  # type: ignore
@@ -988,9 +993,8 @@ class MCBLEND_OT_RemoveUvMaskColor(Operator):
 class MCBLEND_OT_MoveUvMaskColor(Operator):
     '''Operator used for changing the order of the colors in UV masks.'''
     bl_idname = "mcblend.move_uv_mask_color"
-    bl_label = (
-        'Moves color in active mask of active face  of active uv group to'
-        'different place on the list.')
+    bl_label = "Move this color"
+    bl_description = "Change the order of colors in the UV mask"
     bl_options = {'UNDO', 'INTERNAL'}
 
     mask_index: IntProperty()  # type: ignore
@@ -1013,7 +1017,8 @@ class MCBLEND_OT_MoveUvMaskColor(Operator):
 class MCBLEND_OT_AddUvMaskStripe(Operator):
     '''Operator used for adding stripes to UV masks.'''
     bl_idname = "mcblend.add_uv_mask_stripe"
-    bl_label = '''Adds new color to a mask.'''
+    bl_label = "Add strip"
+    bl_description = "Add a new strip to the UV mask"
     bl_options = {'UNDO', 'INTERNAL'}
 
     mask_index: IntProperty()  # type: ignore
@@ -1033,7 +1038,8 @@ class MCBLEND_OT_AddUvMaskStripe(Operator):
 class MCBLEND_OT_RemoveUvMaskStripe(Operator):
     '''Operator used for removing UV masks from UV groups.'''
     bl_idname = "mcblend.remove_uv_mask_stripe"
-    bl_label = 'Removes color from colors of active face of active uv group.'
+    bl_label = "Remove strip"
+    bl_description = "Remove the strip from the UV mask"
     bl_options = {'UNDO', 'INTERNAL'}
 
     mask_index: IntProperty()  # type: ignore
@@ -1055,9 +1061,8 @@ class MCBLEND_OT_RemoveUvMaskStripe(Operator):
 class MCBLEND_OT_MoveUvMaskStripe(Operator):
     '''Operator used for changing the order of the stripes in UV groups.'''
     bl_idname = "mcblend.move_uv_mask_stripe"
-    bl_label = (
-        'Moves color in active mask of active face  of active uv group to'
-        'different place on the list.')
+    bl_label = "Move this strip"
+    bl_description = "Change the order of strips in the UV mask"
     bl_options = {'UNDO', 'INTERNAL'}
 
     mask_index: IntProperty()  # type: ignore
@@ -1083,8 +1088,8 @@ class MCBLEND_OT_ExportUvGroup(
     # pylint: disable=unused-argument, no-member
     bl_idname = "mcblend.export_uv_group"
     bl_label = "Export UV group"
+    bl_description = "Exports the currently active UV group"
     bl_options = {'REGISTER', 'INTERNAL'}
-    bl_description = "Exports active UV group"
 
     filename_ext = '.json'
 
@@ -1113,8 +1118,8 @@ class MCBLEND_OT_ImportUvGroup(Operator, ImportHelper):
     # pylint: disable=unused-argument, no-member, too-many-boolean-expressions
     bl_idname = "mcblend.import_uv_group"
     bl_label = "Import UV group"
+    bl_description = "Import an UV group from JSON file"
     bl_options = {'REGISTER', 'INTERNAL'}
-    bl_description = "Import UV group from JSON file."
     # ImportHelper mixin class uses this
     filename_ext = ".json"
     filter_glob: StringProperty(  # type: ignore
@@ -1435,7 +1440,8 @@ class MCBLEND_OT_ImportUvGroup(Operator, ImportHelper):
 class MCBLEND_OT_AddEvent(Operator):
     '''Operator used for adding events to scene.'''
     bl_idname = "mcblend.add_event"
-    bl_label = '''Adds new event to scene.'''
+    bl_label = "New event"
+    bl_description = "Create a new event"
     bl_options = {'UNDO', 'INTERNAL'}
 
     def execute(self, context):
@@ -1446,7 +1452,8 @@ class MCBLEND_OT_AddEvent(Operator):
 class MCBLEND_OT_RemoveEvent(Operator):
     '''Operator used for removing events.'''
     bl_idname = "mcblend.remove_event"
-    bl_label = '''Removes event from scene.'''
+    bl_label = "Remove event"
+    bl_description = "Delete the currently active event"
     bl_options = {'UNDO', 'INTERNAL'}
 
     @classmethod
@@ -1471,7 +1478,8 @@ class MCBLEND_OT_RemoveEvent(Operator):
 class MCBLEND_OT_AddEffect(Operator):
     '''Operator used for adding effects to events.'''
     bl_idname = "mcblend.add_effect"
-    bl_label = '''Adds new effect to active event.'''
+    bl_label = "Add effect"
+    bl_description = "Add a new effect to the currently active event"
     bl_options = {'UNDO', 'INTERNAL'}
 
     effect_type: EnumProperty(  # type: ignore
@@ -1498,7 +1506,8 @@ class MCBLEND_OT_AddEffect(Operator):
 class MCBLEND_OT_RemoveEffect(Operator):
     '''Operator used for removeing effects effects from events.'''
     bl_idname = "mcblend.remove_effect"
-    bl_label = '''Remove effect from active event.'''
+    bl_label = "Remove effect"
+    bl_description = "Remove the effect from the currently active event"
     bl_options = {'UNDO', 'INTERNAL'}
 
     effect_index: IntProperty()  # type: ignore
@@ -1529,8 +1538,8 @@ class MCBLEND_OT_LoadRp(Operator, ImportHelper):
     # pylint: disable=unused-argument, no-member
     bl_idname = "mcblend.load_rp"
     bl_label = "Load Resource Pack"
+    bl_description = "Loads a resource pack to the project"
     bl_options = {'REGISTER'}
-    bl_description = "Loads the resource pack to the database for importer."
 
     filter_glob: StringProperty(  # type: ignore
         default="",
@@ -1548,8 +1557,8 @@ class MCBLEND_OT_UnloadRps(Operator):
     '''Unloads all resource packs from the database'''
     bl_idname = "mcblend.unload_rps"
     bl_label = "Unload Resource Packs"
+    bl_description = "Unloads all resource packs from the project"
     bl_options = {'REGISTER'}
-    bl_description = "Unloads all resource packs from the database."
 
 
     def invoke(self, context, event):
@@ -1564,8 +1573,8 @@ class MCBLEND_OT_LoadDatabase(Operator, ImportHelper):
     # pylit: disable=unused-argument, no-member
     bl_idname = "mcblend.load_database"
     bl_label = "Load database"
+    bl_description = "Loads the SQLite database with a resource pack data"
     bl_options = {'REGISTER'}
-    bl_description = "Loads SQLite database with resource pack data."
 
     filter_glob: StringProperty(  # type: ignore
         default="*.db",
@@ -1582,8 +1591,8 @@ class MCBLEND_OT_SaveDatabase(Operator, ExportHelper):
     # pylint: disable=unused-argument, no-member
     bl_idname = "mcblend.save_database"
     bl_label = "Save database"
+    bl_description = "Saves the SQLite database with resource packs data"
     bl_options = {'REGISTER'}
-    bl_description = "Saves SQLite database with resource packs data."
 
     filename_ext = ".db"
 
@@ -1595,9 +1604,9 @@ class MCBLEND_OT_ImportRpEntity(Operator):
     '''Imports entity form Minecraft project into blender'''
     # pylint: disable=unused-argument, no-member
     bl_idname = "mcblend.import_rp_entity"
-    bl_label = "Import entity from pack"
+    bl_label = "Import entity from resource pack"
+    bl_description = "Import an entity from the resource pack"
     bl_options = {'UNDO', 'INTERNAL'}
-    bl_description = "Import entity by it's name from the resource pack."
 
     @classmethod
     def poll(cls, context: Context):
@@ -1628,9 +1637,9 @@ class MCBLEND_OT_ImportAttachable(Operator):
     '''Imports attachable form Minecraft project into blender'''
     # pylint: disable=unused-argument, no-member
     bl_idname = "mcblend.import_attachable"
-    bl_label = "Import attachable from pack"
+    bl_label = "Import attachable from resource pack"
+    bl_description = "Import an attachable from the resource pack"
     bl_options = {'UNDO', 'INTERNAL'}
-    bl_description = "Import attachable by it's name from the resource pack."
 
     @classmethod
     def poll(cls, context: Context):
@@ -1661,7 +1670,8 @@ class MCBLEND_OT_ImportAttachable(Operator):
 class MCBLEND_OT_AddFakeRc(Operator):
     '''Adds new render controller to active model (armature).'''
     bl_idname = "mcblend.add_fake_rc"
-    bl_label = 'Adds new render controller'
+    bl_label = "New render controller"
+    bl_description = "Create a new render controller for the entity"
     bl_options = {'UNDO', 'INTERNAL'}
 
     @classmethod
@@ -1679,7 +1689,8 @@ class MCBLEND_OT_AddFakeRc(Operator):
 class MCBLEND_OT_RemoveFakeRc(Operator):
     '''Removes render controller from active model (armature).'''
     bl_idname = "mcblend.remove_fake_rc"
-    bl_label = 'Removes render controller'
+    bl_label = "Remove render controller"
+    bl_description = "Remove this render controller from the entity"
     bl_options = {'UNDO', 'INTERNAL'}
 
     rc_index: IntProperty()  # type: ignore
@@ -1696,7 +1707,9 @@ class MCBLEND_OT_RemoveFakeRc(Operator):
 class MCBLEND_OT_MoveFakeRc(Operator):
     '''Moves render controller in active to a different spot on the list.'''
     bl_idname = "mcblend.move_fake_rc"
-    bl_label = 'Moves render controller'
+    bl_label = "Move render controller"
+    bl_description = "Change the order of render controllers in this entity"
+    
     bl_options = {'UNDO', 'INTERNAL'}
 
     rc_index: IntProperty()  # type: ignore
@@ -1714,7 +1727,9 @@ class MCBLEND_OT_MoveFakeRc(Operator):
 class MCBLEND_OT_FakeRcSelectTexture(Operator):
     '''Selects the name of the texture for render controller of a model.'''
     bl_idname = "mcblend.fake_rc_select_texture"
-    bl_label = "Selects the texture name"
+    bl_label = "Select texture by name"
+    bl_description = (
+        "Select the texture used by the entity using the name of the texture")
     bl_options = {'UNDO', 'INTERNAL'}
 
     rc_index: IntProperty(options={'HIDDEN'})  # type: ignore
@@ -1745,7 +1760,9 @@ class MCBLEND_OT_FakeRcSelectTexture(Operator):
 class MCBLEND_OT_FakeRcOpenTexture(Operator, ImportHelper):
     '''Opens a texture from a file for render controller of a model.'''
     bl_idname = "mcblend.fake_rc_open_texture"
-    bl_label = "Open the texture"
+    bl_label = "Open texture"
+    bl_description = (
+        "Load a texture from a file and assign it to the render controller")
     bl_options = {'UNDO', 'INTERNAL'}
 
     filename_ext = ".png"
@@ -1781,7 +1798,8 @@ class MCBLEND_OT_AddFakeRcMaterial(Operator):
     Adds new material to active render controller of active model (armature)
     '''
     bl_idname = "mcblend.add_fake_rc_material"
-    bl_label = 'Adds new material'
+    bl_label = "Add material"
+    bl_description = "Add new material to this render controller"
     bl_options = {'UNDO', 'INTERNAL'}
 
     rc_index: IntProperty()  # type: ignore
@@ -1803,7 +1821,8 @@ class MCBLEND_OT_RemoveFakeRcMaterial(Operator):
     Removes material from active render controller of active model (armature).
     '''
     bl_idname = "mcblend.remove_fake_rc_material"
-    bl_label = 'Removes material'
+    bl_label = "Remove material"
+    bl_description = "Remove this material from this render controller"
     bl_options = {'UNDO', 'INTERNAL'}
 
     rc_index: IntProperty()  # type: ignore
@@ -1824,7 +1843,9 @@ class MCBLEND_OT_MoveFakeRcMaterial(Operator):
     different spot on the list.
     '''
     bl_idname = "mcblend.move_fake_rc_material"
-    bl_label = 'Moves material'
+    bl_label = "Move material"
+    bl_description = (
+        "Change the order of the materials in the render controller")
     bl_options = {'UNDO', 'INTERNAL'}
 
     rc_index: IntProperty()  # type: ignore
@@ -1843,7 +1864,8 @@ class MCBLEND_OT_MoveFakeRcMaterial(Operator):
 class MCBLEND_OT_FakeRcSMaterailSelectTemplate(Operator):
     '''Selects the material type.'''
     bl_idname = "mcblend.fake_rc_material_select_template"
-    bl_label = 'Selects the material type'
+    bl_label = "Select material"
+    bl_description = "Select the material"
     bl_options = {'UNDO', 'INTERNAL'}
 
     material: bpy.props.EnumProperty(  # type: ignore
@@ -1868,7 +1890,9 @@ class MCBLEND_OT_FakeRcSMaterailSelectTemplate(Operator):
 class MCBLEND_OT_FakeRcApplyMaterials(Operator):
     '''Applies the materials to the model'''
     bl_idname = "mcblend.fake_rc_apply_materials"
-    bl_label = 'Applies the materials to the model'
+    bl_label = "Apply materials"
+    bl_description = (
+        "Apply the render controllers to create materials for the model")
     bl_options = {'UNDO', 'INTERNAL'}
 
     @classmethod
@@ -1887,7 +1911,7 @@ class MCBLEND_OT_PreparePhysicsSimulation(Operator):
     bl_label = "Prepare physics simulation"
     bl_options = {'REGISTER'}
     bl_description = (
-        "Operator used for adding objects used for rigid body simulation.")
+        "Create objects used for the rigid body simulation")
 
     @classmethod
     def poll(cls, context: Context):
