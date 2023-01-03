@@ -128,7 +128,7 @@ class McblendObject:
 
     @property
     def min_uv_size(self) -> np.ndarray:
-        '''The lower UV-size limit of this object.'''
+        '''The lower UV size limit of this object.'''
         return np.array(
             get_mcblend(self.thisobj).min_uv_size)
 
@@ -158,7 +158,7 @@ class McblendObject:
 
     @property
     def uv_group(self) -> str:
-        '''The name of the UV-group of this object.'''
+        '''The name of the UV group of this object.'''
         return get_mcblend(self.thisobj).uv_group
 
     @uv_group.setter

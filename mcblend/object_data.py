@@ -370,7 +370,7 @@ class MCBLEND_ObjectProperties(PropertyGroup):
         name="Min UV size", default=(0, 0, 0), min=0,
         description=(
             "The lower UV boundary of the length of X dimension of a cube. If "
-            "it's greater than the actual X, then the UV-mapper will act as "
+            "it's greater than the actual X, then the UV mapper will act as "
             "if the X were equal to this value.")
     )
     model_origin: EnumProperty(  # type: ignore

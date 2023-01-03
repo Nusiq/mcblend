@@ -211,7 +211,7 @@ class BoneExport:
                 if cubeprop.obj_data.uv_layers.active is None:
                     raise ExporterException(
                         f'{cubeprop.thisobj.name} - exporting polymesh '
-                        'objects without UV-layer is not supported.')
+                        'objects without UV layer is not supported.')
                 uv_data = cubeprop.obj_data.uv_layers.active.data  # uv
 
                 inv_bone_matrix = cubeprop.get_local_matrix(thisobj)
@@ -454,7 +454,7 @@ class UvExportFactory:
             uv_layer: MeshUVLoopLayer, cube_size: np.ndarray
         ) -> Tuple[Any, bool]:
         '''
-        Attempts to return UV and mirror for standard UV-mapping. Raises
+        Attempts to return UV and mirror for standard UV mapping. Raises
         ExporterException exception if this kind of mapping is impossible for
         given input.
         '''
@@ -564,7 +564,7 @@ class UvExportFactory:
                 CubePolygon.validate_rectangle_uv(crds))
             if not is_valid:
                 raise ExporterException(
-                    f'"{side_name}" face has invalid UV-mapping.')
+                    f'"{side_name}" face has invalid UV mapping.')
 
             left_top = self.blend_to_mc_converter.convert(crds[3])
             right_bottom = self.blend_to_mc_converter.convert(crds[1])

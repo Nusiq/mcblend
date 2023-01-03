@@ -15,9 +15,9 @@ from .operator_func.texture_generator import (
     UvMaskTypes, list_mask_types_as_blender_enum,
     list_mix_mask_modes_as_blender_enum)
 
-# UV-mask
+# UV mask
 class MCBLEND_StripeProperties(PropertyGroup):
-    '''Properties of a UV-mask stripe.'''
+    '''Properties of a UV mask stripe.'''
     width: IntProperty(  # type: ignore
         name='Width', default=1)
     width_relative: FloatProperty(  # type: ignore
@@ -37,7 +37,7 @@ class MCBLEND_StripeProperties(PropertyGroup):
         return result
 
 class MCBLEND_ColorProperties(PropertyGroup):
-    '''Properties of a UV-mask color.'''
+    '''Properties of a UV mask color.'''
     color: FloatVectorProperty(  # type: ignore
         name='Color',  subtype='COLOR',
         min=0, max=1, step=1000, default=(1.0, 1.0, 1.0))
@@ -50,7 +50,7 @@ class MCBLEND_ColorProperties(PropertyGroup):
         return [round(i, 8) for i in self.color]
 
 class MCBLEND_UvMaskProperties(PropertyGroup):
-    '''Properties of UV-mask.'''
+    '''Properties of UV mask.'''
     ui_hidden: BoolProperty(  # type: ignore
         name='Hide', default=False)
     ui_collapsed: BoolProperty(  # type: ignore
@@ -176,10 +176,10 @@ class MCBLEND_UvMaskProperties(PropertyGroup):
             result['color'] = self.color.json()
         return result
 
-# UV-group
+# UV group
 def get_unused_uv_group_name(base_name: str, i=1):
     '''
-    Gets the name of UV-group which is not used by any other UV-group. Uses
+    Gets the name of UV group which is not used by any other UV group. Uses
     the base name and adds number at the end of it to find unique name with
     pattern :code:`{base_name}.{number:04}`.
     '''
@@ -208,10 +208,10 @@ def _set_uv_group_name(self, value):
     if value == '':
         return
 
-    # Objects use '' as the UV-group name when they have no uv-group.
-    # The '' is also the default value of the UV-group (but it's instantly
+    # Objects use '' as the UV group name when they have no UV group.
+    # The '' is also the default value of the UV group (but it's instantly
     # changed to something else on creation). This prevents assigning all
-    # of the object without an UV group to newly added UV-group.
+    # of the object without an UV group to newly added UV group.
     update_references = 'name' in self
 
     # If name already in use rename the other uv group
@@ -240,7 +240,7 @@ def _get_uv_group_name(self):
     return self['name']
 
 class MCBLEND_UvGroupProperties(PropertyGroup):
-    '''Properties of UV-group.'''
+    '''Properties of UV group.'''
     name: StringProperty(  # type: ignore
         name="Name",
         description='The name of the UV group.',

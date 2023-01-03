@@ -27,7 +27,7 @@ Automatic UV mapping <texturing_and_uv_mapping/automatic_uv_mapping>
 UV groups <texturing_and_uv_mapping/uv_groups>
 Customizing textures using UV groups <texturing_and_uv_mapping/customizing_textures_using_uv_groups>
 Materials and render controllers <texturing_and_uv_mapping/materials_and_render_controllers>
-Fix invalid UV-mapping<texturing_and_uv_mapping/fixing_invalid_uv_mapping>
+Fix invalid UV mapping<texturing_and_uv_mapping/fixing_invalid_uv_mapping>
 ```
 
 ```{toctree}
@@ -67,7 +67,7 @@ Mcblend is a Blender plugin designed for Minecraft creators. It enables users to
 ## Features
 - Exporting and importing models for Minecraft Bedrock Edition, including support for polymesh and cube-based models of attachables and entities.
 - Exporting keyframe animations and poses for entities and attachables, and baking animations into Minecraft format, including support for using inverse kinematics and constraints to create complex movements.
-- Generating UV-maps and textures for Minecraft models.
+- Generating UV maps and textures for Minecraft models.
 - Access to Blender features such as physics simulation and rigging for animating Minecraft models, and a function for automatic rigid body setup for a model.
 
 ## Planned features

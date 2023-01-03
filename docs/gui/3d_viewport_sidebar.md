@@ -7,8 +7,8 @@ The 3D viewport sidebar includes a new `Mcblend` section, which has two panels. 
 ![](/img/gui/sidebar_only.png)
 
 ## Operators
-### UV-mapping panel
-- `Fix invalid UV-mapping` - operator used to fix invalid UV-mapping of the model's cuboids. All faces of the cuboids in the Minecraft model must be rectangular and have a certain rotation. This operator ensures that these conditions are true.
+### UV mapping panel
+- `Fix invalid UV mapping` - operator used to fix invalid UV mapping of the model's cuboids. All faces of the cuboids in the Minecraft model must be rectangular and have a certain rotation. This operator ensures that these conditions are true.
 - `Set the UV group` - adds the selected objects to one of the existing UV groups.
 - `Clear UV group` - It removes selected objects from UV groups.
 

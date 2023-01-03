@@ -1,7 +1,7 @@
 '''
-Import UV-group from source_path and export it to target_path.
+Import UV group from source_path and export it to target_path.
 
-This script is used for testing the import and export UV-group operators.
+This script is used for testing the import and export UV group operators.
 '''
 import sys
 import bpy

@@ -1,6 +1,6 @@
 '''
-This is a testing script for UV-mapping and exporting models. Applies the
-UV-mapping to models from the list, than exports them from blend file and
+This is a testing script for UV mapping and exporting models. Applies the
+UV mapping to models from the list, than exports them from blend file and
 compares them with the expected result.
 '''
 import os

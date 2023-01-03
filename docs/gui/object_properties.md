@@ -14,7 +14,7 @@ This is the panel visible when opening the `Object Properties` when the active o
 
 - `Mesh type` - a dropdown list that lets you select between `Cube` or `Poly mesh`. Decides if the object should be exported as a cube or polymesh.
 - `UV Group` (textfield) - displays the UV group name of the selected object.
-- `Mirror` - the mirror property is used only during the UV-mapping. It affects the mapping of the object's faces in the same way as Minecraft's mirror property of a cube.
+- `Mirror` - the mirror property is used only during the UV mapping. It affects the mapping of the object's faces in the same way as Minecraft's mirror property of a cube.
 - `Inflate` - stores the Minecraft's inflate property value of the cube.
 - `Min UV bound` - this property is used during automatic UV mapping. It defines the minimal space on the texture used for a cube. If a cube has width, height or depth lower than one unit of length, this property can be used to make sure that every face will get some space on the texture.
 
@@ -34,8 +34,8 @@ This panel has some of the basic properties of the Minecraft model like the widt
 - `Visible bounds offset` - the offset of the visible bounds of the model.
 - `Texture width` - the width of the texture used for the model.
 - `Texture height` - the height of the texture used for the model.
-- `Allow texture expanding` - allows changing the texture width and height during automatic UV-mapping.
-- `Generate Texture` - a checkbox that decides whether the texture should be generated during automatic UV-mapping or not.
+- `Allow texture expanding` - allows changing the texture width and height during automatic UV mapping.
+- `Generate Texture` - a checkbox that decides whether the texture should be generated during automatic UV mapping or not.
 - `Template resolution` defines the size of the texture. The real resolution of the generated texture image is equal to texture width and height multiplied by texture resolution.
 - `Automatic UV mapping` - a button that triggers the automatic UV mapping.
 

@@ -20,9 +20,9 @@ from .operator_func.typed_bpy_access import (
     get_scene_mcblend_uv_groups, get_scene_mcblend_active_uv_groups_side)
 
 # GUI
-# UV-groups names list
+# UV groups names list
 class MCBLEND_UL_UVGroupList(UIList):
-    '''GUI item used for drawing list of names of UV-groups.'''
+    '''GUI item used for drawing list of names of UV groups.'''
     def draw_item(
             self, context, layout, data, item, icon, active_data,
             active_propname):
@@ -48,25 +48,25 @@ class MCBLEND_UL_UVGroupList(UIList):
             # With rename functionality:
             layout.prop(item, "name", text="", emboss=False)
 
-# UV-group panel
+# UV group panel
 @dataclass
 class _UIStackItem():
     '''
     Object used in MCBLEND_PT_UVGroupPanel for saving the
-    information about nested UV-groups in stack data structure.
+    information about nested UV groups in stack data structure.
     '''
     ui: Optional[UILayout]  # None if parent is collapsed
     depth: int
 
 class MCBLEND_PT_UVGroupPanel(Panel):
-    '''Panel used for editing UV-groups.'''
+    '''Panel used for editing UV groups.'''
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = 'scene'
-    bl_label = "Mcblend: UV-groups"
+    bl_label = "Mcblend: UV groups"
 
     def draw_colors(self, mask, mask_index: int, col: UILayout):
-        '''Draws colors of UV-mask.'''
+        '''Draws colors of UV mask.'''
         box = col.box()
         row = box.row()
         row.label(text='Colors')
@@ -102,7 +102,7 @@ class MCBLEND_PT_UVGroupPanel(Panel):
             set_operator_property(op_props, "color_index", color_index)
 
     def draw_stripes(self, mask, mask_index: int, col: UILayout):
-        '''Draws stripes of UV-mask.'''
+        '''Draws stripes of UV mask.'''
         box = col.box()
         row = box.row()
         row.label(text='Stripes')
@@ -152,7 +152,7 @@ class MCBLEND_PT_UVGroupPanel(Panel):
             relative_boundaries=False, expotent=False, strength=False,
             hard_edge=False, horizontal=False, seed=False,color=False,
             children=False, mode=False):
-        '''Draws properties of UV-mask.'''
+        '''Draws properties of UV mask.'''
         if colors:
             self.draw_colors(mask, index, col)  # colors
         if interpolate:
@@ -197,7 +197,7 @@ class MCBLEND_PT_UVGroupPanel(Panel):
             self, mask, index: int, masks_len: int,
             ui_stack: List[_UIStackItem]):
         '''
-        Draws whole UV-mask gui with additional GUI items for navigation
+        Draws whole UV mask gui with additional GUI items for navigation
         between masks like buttons for moving and removing masks.
         '''
         col = None
@@ -299,7 +299,7 @@ class MCBLEND_PT_UVGroupPanel(Panel):
                     None, mask.children+1))
 
     def draw(self, context: Context) -> None:
-        '''Draws whole UV-group panel.'''
+        '''Draws whole UV group panel.'''
         col = self.layout.column(align=True)
 
 
@@ -717,7 +717,7 @@ class MCBLEND_PT_OperatorsPanel(Panel):
     def draw(self, context):
         col = self.layout.column()
         box = col.box().column()
-        box.label(text="UV-mapping")
+        box.label(text="UV mapping")
         box.operator(
             "mcblend.fix_uv",
             text="Fix invalid UV mapping"

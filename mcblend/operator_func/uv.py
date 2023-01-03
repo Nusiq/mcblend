@@ -64,7 +64,7 @@ class UvCorner(Enum):
 class Suggestion(NamedTuple):
     '''
     A class used by UvBoxes to suggest free spaces on the texture during
-    UV-mapping.
+    UV mapping.
 
     :prop position: Position that other UvBox should touch with its coroner.
     :prop corner: Which corner should touch the position.
@@ -112,7 +112,7 @@ class UvBox:
         Returns list of positions touching this UvBox for other UvBox without
         overlapping.
 
-        :returns: list of suggestions for other UV-box to try while looking
+        :returns: list of suggestions for other UV box to try while looking
             for empty space on the texture.
         '''
         size = (self.size[0]-1, self.size[1]-1)
@@ -192,7 +192,7 @@ class McblendObjUvBox(UvBox):
     to set it's UV.
     '''
     def new_uv_layer(self):
-        '''Adds new UV-layer to contained McblendObject.'''
+        '''Adds new UV layer to contained McblendObject.'''
         raise NotImplementedError()
 
     def set_blender_uv(self, converter: CoordinatesConverter):
@@ -271,7 +271,7 @@ class UvMcCubeFace(UvBox):
         u2 = u2 * resolution
         v2 = v2 * resolution
         # In most cases u1 and v1 are the smaller coordinates but in case of
-        # the bottom face in standard UV-mapping the bottom face is flipped
+        # the bottom face in standard UV mapping the bottom face is flipped
         # on the top to bottom axis (v axis?) so the second coordinate is
         # smaller - sorting them makes sure that the array slice works as
         # intended
@@ -367,7 +367,7 @@ class UvMcCube(McblendObjUvBox):
         Returns list of positions next to this UV box that can be used
         by other UV box to set the UV that doesn't overlap this object.
 
-        :returns: list of suggestions for other UV-box to try while looking for
+        :returns: list of suggestions for other UV box to try while looking for
             empty space on the texture.
         '''
         # 0. (top left) 1. (top right) 2. (right top) 3. (right bottom)
@@ -458,7 +458,7 @@ class UvGroup(McblendObjUvBox):
 
     @property  # type: ignore
     def is_mapped(self) -> bool:  # type: ignore
-        '''Returns whether the object has assigned UV-mapping.'''
+        '''Returns whether the object has assigned UV mapping.'''
         return self._objects[0].is_mapped
 
     @is_mapped.setter
@@ -500,7 +500,7 @@ class UvGroup(McblendObjUvBox):
 
 class UvMapper:
     '''
-    A class that helps with UV-mapping.
+    A class that helps with UV mapping.
     '''
     def __init__(self, width: int, height: int, object_properties: McblendObjectGroup):
         self.width: int = width

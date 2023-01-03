@@ -1,18 +1,18 @@
 # UV groups
 
-UV groups in Mcblend are used to group cubes together and apply the same texture to them. They can be managed in the `Scene Properties` panel under `Mcblend: UV-groups.` UV groups affect how [automatic UV mapping](/texturing_and_uv_mapping/automatic_uv_mapping) works. If two cubes have the same size and belong to the same UV group, they will be mapped to the same texture space.
+UV groups in Mcblend are used to group cubes together and apply the same texture to them. They can be managed in the `Scene Properties` panel under `Mcblend: UV groups.` UV groups affect how [automatic UV mapping](/texturing_and_uv_mapping/automatic_uv_mapping) works. If two cubes have the same size and belong to the same UV group, they will be mapped to the same texture space.
 
 ## Creating UV groups
 
-To create a new UV group, press the `New UV group` button in the `Mcblend: UV-groups` panel. By default, this will generate a texture similar to the default texture, but slightly darker, allowing you to easily identify which cubes are assigned to a particular UV group when generating textures. You can rename UV groups by double clicking on them in the list within the `Mcblend: UV-groups` panel.
+To create a new UV group, press the `New UV group` button in the `Mcblend: UV groups` panel. By default, this will generate a texture similar to the default texture, but slightly darker, allowing you to easily identify which cubes are assigned to a particular UV group when generating textures. You can rename UV groups by double clicking on them in the list within the `Mcblend: UV groups` panel.
 
 ![](/img/texturing_and_uv_mapping/creating_and_deleting_uv_groups.png)
 
-UV groups can be deleted using the `Delete UV group` button in the `Mcblend: UV-groups` panel.
+UV groups can be deleted using the `Delete UV group` button in the `Mcblend: UV groups` panel.
 
 ## Importing and exporting UV groups
 
-UV groups can be imported and exported as a JSON file, including the texture generation settings for the group. Use the `Import UV group` and `Export UV group` buttons in the `Mcblend: UV-groups` panel to do so.
+UV groups can be imported and exported as a JSON file, including the texture generation settings for the group. Use the `Import UV group` and `Export UV group` buttons in the `Mcblend: UV groups` panel to do so.
 
 ![](/img/texturing_and_uv_mapping/importing_and_exporting_uv_groups.png)
 

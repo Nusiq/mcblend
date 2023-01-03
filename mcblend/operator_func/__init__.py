@@ -205,7 +205,7 @@ def set_uvs(context: Context):
 
 def fix_uvs(context: Context) -> Vector2di:
     '''
-    Fixes the UV-mapping of selected objects.
+    Fixes the UV mapping of selected objects.
 
     Raises ExporterException when one of the is not a cuboid.
 

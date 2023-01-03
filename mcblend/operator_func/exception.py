@@ -4,7 +4,7 @@ Custom mcblend exceptions.
 from __future__ import annotations
 
 class NotEnoughTextureSpace(Exception):
-    '''Raise when there is no enough UV space for uv-mapping.'''
+    '''Raise when there is no enough UV space for UV mapping.'''
 
 class InvalidDictPathException(LookupError):
     '''
@@ -17,8 +17,8 @@ class ExporterException(Exception):
     is unable to convert the Blender object into Minecraft format.
 
     Examples:
-    - the UV-mapping of exported model is not valid (impossible to map with
-        Minecraft UV-mapping system).
+    - the UV mapping of exported model is not valid (impossible to map with
+        Minecraft UV mapping system).
     - trying to export model part as a cube insteaad of polymesh, when the
         model is not a cube.
     '''

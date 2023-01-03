@@ -686,13 +686,13 @@ class ModelLoader:
             self, size: Vector3d, mirror: bool,
             uv: Vector2d = (0.0, 0.0)) -> Dict:
         '''
-        Creates default UV dictionary (in per-face UV-mapping format) based on
+        Creates default UV dictionary (in per-face UV mapping format) based on
         some other properties of a cube.
 
         :param size: The size of the cube.
         :param mirror: The mirror property of the cube.
         :param uv: Optional - the UV property of the cube (if the cube uses the
-            standard Minecraft UV-mapping format).
+            standard Minecraft UV mapping format).
         '''
         # pylint: disable=no-self-use
         width, height, depth = (int(i) for i in size)

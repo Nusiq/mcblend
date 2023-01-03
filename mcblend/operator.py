@@ -167,7 +167,7 @@ def menu_func_mcblend_export_animation(self, context):
 # UV mapper
 class MCBLEND_OT_MapUv(Operator):
     '''
-    Operator used for creating UV-mapping and optionally the tamplate texture
+    Operator used for creating UV mapping and optionally the tamplate texture
     for Minecraft model.
     '''
     # pylint: disable=unused-argument, no-member
@@ -175,7 +175,7 @@ class MCBLEND_OT_MapUv(Operator):
     bl_label = "Map uv for bedrock model."
     bl_options = {'REGISTER', 'UNDO', 'INTERNAL'}
     bl_description = (
-        "Set UV-mapping for minecraft objects."
+        "Set UV mapping for minecraft objects."
     )
 
 
@@ -204,7 +204,7 @@ class MCBLEND_OT_MapUv(Operator):
         except NotEnoughTextureSpace:
             self.report(
                 {'ERROR'},
-                "Not enough texture space to create UV-mapping.")
+                "Not enough texture space to create UV mapping.")
             return {'FINISHED'}
         finally:
             context.scene.frame_set(original_frame)
@@ -214,16 +214,16 @@ class MCBLEND_OT_MapUv(Operator):
 
 class MCBLEND_OT_FixUv(Operator):
     '''
-    Fixes the UV-mapping of the cubes connected to selected armature.
-    After this operator the faces of the cubes on the UV-map are rectangular
+    Fixes the UV mapping of the cubes connected to selected armature.
+    After this operator the faces of the cubes on the UV map are rectangular
     and properly rotated.
     '''
     # pylint: disable=unused-argument, no-member
     bl_idname = "mcblend.fix_uv"
-    bl_label = "Fix UV-mapping"
+    bl_label = "Fix UV mapping"
     bl_options = {'REGISTER', 'UNDO'}
     bl_description = (
-        "Fix UV-mapping of cubes connected to selected armature"
+        "Fix UV mapping of cubes connected to selected armature"
     )
 
     @classmethod
@@ -246,14 +246,14 @@ class MCBLEND_OT_FixUv(Operator):
 
         self.report(
             {'INFO'},
-            'Successfully fixed the UV-mapping of selected '
+            'Successfully fixed the UV mapping of selected '
             f'objects - {fixed_faces} faces of {fixed_cubes} cubes.'
         )
         return {'FINISHED'}
 
 # UV grouping
 class MCBLEND_OT_UvGroup(Operator):
-    '''Operator used for adding selected objects to an UV-group'''
+    '''Operator used for adding selected objects to an UV group'''
     # pylint: disable=unused-argument, no-member
     bl_idname = "mcblend.uv_group"
     bl_label = "Set uv_group for object."
@@ -302,7 +302,7 @@ class MCBLEND_OT_UvGroup(Operator):
         return {'FINISHED'}
 
 class MCBLEND_OT_ClearUvGroup(Operator):
-    '''Operator used for removing selected objects from their UV-groups'''
+    '''Operator used for removing selected objects from their UV groups'''
     # pylint: disable=unused-argument, no-member
     bl_idname = "mcblend.clear_uv_group"
     bl_label = "Clear UV group from objects."
@@ -662,7 +662,7 @@ class MCBLEND_OT_RemoveAnimation(Operator):
 # UV group (GUI)
 class MCBLEND_OT_ListUvGroups(Operator):
     '''
-    Operator that used for listing the UV-groups for GUI.
+    Operator that used for listing the UV groups for GUI.
     '''
     bl_idname = "mcblend.list_uv_groups"
     bl_label = "List UV groups and save them to Enum to display them in GUI"
@@ -692,7 +692,7 @@ class MCBLEND_OT_ListUvGroups(Operator):
         return {'FINISHED'}
 
 class MCBLEND_OT_AddUvGroup(Operator):
-    '''Operator used for creating new UV-groups.'''
+    '''Operator used for creating new UV groups.'''
     bl_idname = "mcblend.add_uv_group"
     bl_label = '''Adds new uv_group to the list.'''
     bl_options = {'UNDO', 'INTERNAL'}
@@ -723,7 +723,7 @@ class MCBLEND_OT_AddUvGroup(Operator):
         return {'FINISHED'}
 
 class MCBLEND_OT_RemoveUvGroup(Operator):
-    '''Operator useful for removing UV-groups.'''
+    '''Operator useful for removing UV groups.'''
     bl_idname = "mcblend.remove_uv_group"
     bl_label = "Remove current uv_group from the list."
     bl_options = {'UNDO', 'INTERNAL'}
@@ -751,7 +751,7 @@ class MCBLEND_OT_RemoveUvGroup(Operator):
         return {'FINISHED'}
 
 class MCBLEND_OT_CopyUvGroupSide(Operator):
-    '''Operator used for copying sides of UV-groups.'''
+    '''Operator used for copying sides of UV groups.'''
     bl_idname = "mcblend.copy_uv_group_side"
     bl_label = 'Copy active UV group side other to UV group'
     bl_options = {'UNDO', 'INTERNAL'}
@@ -878,7 +878,7 @@ def get_active_masks(context):
     return masks
 
 class MCBLEND_OT_AddUvMask(Operator):
-    '''Operator used for adding UV-masks to UV groups.'''
+    '''Operator used for adding UV masks to UV groups.'''
     bl_idname = "mcblend.add_uv_mask"
     bl_label = '''Adds new mask to active uv group at active face.'''
     bl_options = {'UNDO', 'INTERNAL'}
@@ -902,7 +902,7 @@ class MCBLEND_OT_AddUvMask(Operator):
         return {'FINISHED'}
 
 class MCBLEND_OT_RemoveUvMask(Operator):
-    '''Operator used for removing UV-masks from UV-groups.'''
+    '''Operator used for removing UV masks from UV groups.'''
     bl_idname = "mcblend.remove_uv_mask"
     bl_label = '''Removes mask from active face of active uv group.'''
     bl_options = {'UNDO', 'INTERNAL'}
@@ -921,7 +921,7 @@ class MCBLEND_OT_RemoveUvMask(Operator):
         return {'FINISHED'}
 
 class MCBLEND_OT_MoveUvMask(Operator):
-    '''Operator used for changing the order of UV-masks in UV groups.'''
+    '''Operator used for changing the order of UV masks in UV groups.'''
     bl_idname = "mcblend.move_uv_mask"
     bl_label = (
         'Moves mask in active face of active uv group to different place on '
@@ -944,7 +944,7 @@ class MCBLEND_OT_MoveUvMask(Operator):
 
 # UV Mask side colors (GUI)
 class MCBLEND_OT_AddUvMaskColor(Operator):
-    '''Operator used for adding colors to UV-masks.'''
+    '''Operator used for adding colors to UV masks.'''
     bl_idname = "mcblend.add_uv_mask_color"
     bl_label = '''Adds new color to a mask.'''
     bl_options = {'UNDO', 'INTERNAL'}
@@ -964,7 +964,7 @@ class MCBLEND_OT_AddUvMaskColor(Operator):
         return {'FINISHED'}
 
 class MCBLEND_OT_RemoveUvMaskColor(Operator):
-    '''Operator used for removing colors from UV-masks.'''
+    '''Operator used for removing colors from UV masks.'''
     bl_idname = "mcblend.remove_uv_mask_color"
     bl_label = 'Removes color from colors of active face of active uv group.'
     bl_options = {'UNDO', 'INTERNAL'}
@@ -986,7 +986,7 @@ class MCBLEND_OT_RemoveUvMaskColor(Operator):
         return {'FINISHED'}
 
 class MCBLEND_OT_MoveUvMaskColor(Operator):
-    '''Operator used for changing the order of the colors in UV-masks.'''
+    '''Operator used for changing the order of the colors in UV masks.'''
     bl_idname = "mcblend.move_uv_mask_color"
     bl_label = (
         'Moves color in active mask of active face  of active uv group to'
@@ -1011,7 +1011,7 @@ class MCBLEND_OT_MoveUvMaskColor(Operator):
 
 # UV Mask side stripes (GUI)
 class MCBLEND_OT_AddUvMaskStripe(Operator):
-    '''Operator used for adding stripes to UV-masks.'''
+    '''Operator used for adding stripes to UV masks.'''
     bl_idname = "mcblend.add_uv_mask_stripe"
     bl_label = '''Adds new color to a mask.'''
     bl_options = {'UNDO', 'INTERNAL'}
@@ -1031,7 +1031,7 @@ class MCBLEND_OT_AddUvMaskStripe(Operator):
         return {'FINISHED'}
 
 class MCBLEND_OT_RemoveUvMaskStripe(Operator):
-    '''Operator used for removing UV-masks from UV-groups.'''
+    '''Operator used for removing UV masks from UV groups.'''
     bl_idname = "mcblend.remove_uv_mask_stripe"
     bl_label = 'Removes color from colors of active face of active uv group.'
     bl_options = {'UNDO', 'INTERNAL'}
@@ -1053,7 +1053,7 @@ class MCBLEND_OT_RemoveUvMaskStripe(Operator):
         return {'FINISHED'}
 
 class MCBLEND_OT_MoveUvMaskStripe(Operator):
-    '''Operator used for changing the order of the stripes in UV-groups.'''
+    '''Operator used for changing the order of the stripes in UV groups.'''
     bl_idname = "mcblend.move_uv_mask_stripe"
     bl_label = (
         'Moves color in active mask of active face  of active uv group to'
@@ -1079,12 +1079,12 @@ class MCBLEND_OT_MoveUvMaskStripe(Operator):
 # UV Mask exporter
 class MCBLEND_OT_ExportUvGroup(
         Operator, ExportHelper):
-    '''Operator used for exporting active UV-group from Blender.'''
+    '''Operator used for exporting active UV group from Blender.'''
     # pylint: disable=unused-argument, no-member
     bl_idname = "mcblend.export_uv_group"
-    bl_label = "Export UV-group"
+    bl_label = "Export UV group"
     bl_options = {'REGISTER', 'INTERNAL'}
-    bl_description = "Exports active UV-group"
+    bl_description = "Exports active UV group"
 
     filename_ext = '.json'
 
@@ -1104,7 +1104,7 @@ class MCBLEND_OT_ExportUvGroup(
 
         with open(self.filepath, 'w') as f:
             json.dump(uv_group.json(), f, cls=CompactEncoder)
-        self.report({'INFO'}, f'UV-group saved in {self.filepath}.')
+        self.report({'INFO'}, f'UV group saved in {self.filepath}.')
         return {'FINISHED'}
 
 # UV Mask exporter
@@ -1112,9 +1112,9 @@ class MCBLEND_OT_ImportUvGroup(Operator, ImportHelper):
     '''Operator used for importing Minecraft models to Blender.'''
     # pylint: disable=unused-argument, no-member, too-many-boolean-expressions
     bl_idname = "mcblend.import_uv_group"
-    bl_label = "Import UV-group"
+    bl_label = "Import UV group"
     bl_options = {'REGISTER', 'INTERNAL'}
-    bl_description = "Import UV-group from JSON file."
+    bl_description = "Import UV group from JSON file."
     # ImportHelper mixin class uses this
     filename_ext = ".json"
     filter_glob: StringProperty(  # type: ignore
@@ -1389,13 +1389,13 @@ class MCBLEND_OT_ImportUvGroup(Operator, ImportHelper):
                 data = json.load(f, cls=JSONCDecoder)
             version = data['version']
             if version != 1:
-                self.report({'ERROR'}, "Unknown UV-group version.")
+                self.report({'ERROR'}, "Unknown UV group version.")
                 return {'CANCELLED'}
         except (KeyError, TypeError, JSONDecodeError):
-            self.report({'ERROR'}, "Unable to to read the UV-group data.")
+            self.report({'ERROR'}, "Unable to to read the UV group data.")
             return {'CANCELLED'}
 
-        # Create new UV-group
+        # Create new UV group
         len_groups = len(context.scene.mcblend_uv_groups)
         # Add new uv_group and set its properties
         uv_group_new = context.scene.mcblend_uv_groups.add()

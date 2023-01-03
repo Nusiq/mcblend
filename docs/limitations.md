@@ -83,8 +83,8 @@ In Minecraft, the UV maps of the faces of cubes must be rectangular and aligned 
 - The top and bottom faces have their front and back edges aligned horizontally, and their left and right edges aligned vertically.
 
 ```{note}
-It can be difficult to understand these alignment rules when looking at a model with rotated cubes. However, Mcblend provides the [Fix invalid UV-mapping](/texturing_and_uv_mapping/fixing_invalid_uv_mapping) operator to rearrange the UVs of selected objects to match the Minecraft rules. If you see warnings in your export such as:
-`Cube based on Blender object "Cube": "north" face has invalid UV-mapping. Skipped.`
+It can be difficult to understand these alignment rules when looking at a model with rotated cubes. However, Mcblend provides the [Fix invalid UV mapping](/texturing_and_uv_mapping/fixing_invalid_uv_mapping) operator to rearrange the UVs of selected objects to match the Minecraft rules. If you see warnings in your export such as:
+`Cube based on Blender object "Cube": "north" face has invalid UV mapping. Skipped.`
 you can use this operator to fix the UV mapping.
 
 ```
@@ -96,9 +96,9 @@ There are two types of UV mapping in Minecraft: per-face UV mapping and default 
 
 Unfortunately, the per-face UV mapping is also limited. It cannot rotate the UV by 90 degrees. It uses two vectors to define the mapping of the face: the "uv" (offset) and the "uv_size". This format allows for flipping the rectangle, but not rotating it.
 
-Examples of both types of UV-mapping in code are shown below:
+Examples of both types of UV mapping in code are shown below:
 
-The default UV-mapping:
+The default UV mapping:
 ```
 "uv": [0.0, 64.0],
 ```

@@ -35,7 +35,7 @@ When you're done with adding bones to the armature, you can exit Edit Mode and s
 
 Repeat this process until all the cubes in your model are parented to the armature.
 
-## UV-mapping and texturing
+## UV mapping and texturing
 
 Generate the texture for your model by selecting the armature in Object Mode and pressing the `Set minecraft UVs` button in the `Object Properties` panel in the `Mcblend: Model Properties` tab. This will adjust the UV maps of the cubes connected to the armature, and create a texture called `template`.
 

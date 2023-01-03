@@ -1,7 +1,7 @@
 '''
-This is a testing script for UV-group importer and exporter.
+This is a testing script for UV group importer and exporter.
 
-It imports UV-group, exports it and compares if the result is the same as
+It imports UV group, exports it and compares if the result is the same as
 the original.
 '''
 # pylint: disable=missing-docstring
@@ -19,13 +19,13 @@ OUTPUT = "./.tmp/test_uv_group"
 def make_comparison_files(
         source: str, tmp: str) -> tp.Tuple[tp.Dict, tp.Dict, str]:
     '''
-    Loads UV-group from JSON to Blender using
+    Loads UV group from JSON to Blender using
     mcblend_import_uv_group. Exports this model to tmp
     (to a file with the same name as source file).
 
     Returns two dictionaries:
-    - the original UV-group
-    - the exported UV-group
+    - the original UV group
+    - the exported UV group
     '''
     source = os.path.abspath(source)
     tmp = os.path.abspath(tmp)
