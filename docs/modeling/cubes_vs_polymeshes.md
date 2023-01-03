@@ -10,7 +10,7 @@ If you try to export a non-cuboid shape as a cube, Mcblend will print a warning 
 
 ## Cubes
 
-Cubes are simply cubes and cuboids, and are the default format for Minecraft models. In Mcblend, you can use the built-in automatic UV-mapping feature for cubes, but it will ignore polymeshes (however, Blender has many other features for UV-mapping regular meshes).
+Cubes are simply cubes and cuboids, and are the default format for Minecraft models. In Mcblend, you can use the built-in [automatic UV-mapping](/texturing_and_uv_mapping/automatic_uv_mapping) feature for cubes, but it will ignore polymeshes (however, Blender has many other features for UV-mapping regular meshes).
 
 Cubes have additional settings available in their configuration. These settings are: `Mirror`, `Inflate`, and `Min UV bound`. They are explained in detail in different sections of the documentation, where they are more relevant. They all affect the process of automatic UV-mapping. The `Mirror` and `Inflate` properties are also directly related to cube-based format, so when you export a model, they will be exported as well.
 

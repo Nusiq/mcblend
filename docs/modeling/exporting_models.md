@@ -1,4 +1,4 @@
-# Exporting a Model
+# Exporting models
 
 This section explains how to export Minecraft models and mentions some additional settings that can be configured before exporting.
 
@@ -13,7 +13,7 @@ The other settings in the `Mcblend: Model Properties` tab are directly exported 
 - `Visible bounds width` - This value is directly moved to the `visible_bounds_width` property of the model.
 - `Visible bounds height` - This value is directly moved to the `visible_bounds_height` property of the model.
 
-Exporting the model is the same process as explained in the "Creating a Model from Scratch" documen. Simply go to `File > Export > Export Bedrock Model` and select the export path.
+Exporting the model is the same process as explained in the ["Creating models from scratch"](/modeling/creating_models_from_scratch) documen. Simply go to `File > Export > Export Bedrock Model` and select the export path.
 
 
 ![](/img/modeling/exporting_model_settings.png)

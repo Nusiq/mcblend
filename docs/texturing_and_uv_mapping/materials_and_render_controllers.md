@@ -1,6 +1,6 @@
 # Materials and Render Controllers
 
-In Mcblend, render controllers control which bones of a model use which materials and textures. You can configure the render controllers of the model by selecting an armature and opening the `Mcblend: Render Controllers` panel in the `Object properties`. These render controllers are used during the process of automatic UV mapping, and changes to them can be seen by running the `Automatic UV Mapping` operator.
+In Mcblend, render controllers control which bones of a model use which materials and textures. You can configure the render controllers of the model by selecting an armature and opening the `Mcblend: Render Controllers` panel in the `Object properties`. These render controllers are used during the process of [automatic UV mapping](/texturing_and_uv_mapping/automatic_uv_mapping), and changes to them can be seen by running the `Automatic UV Mapping` operator.
 
 ![](/img/texturing_and_uv_mapping/render_controllers_settings.png)
 

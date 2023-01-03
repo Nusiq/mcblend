@@ -7,6 +7,7 @@
 
 This is the panel visible when opening the `Object Properties` when the active object is a mesh.
 
+(mcblend-object-properties)=
 ### Mcblend: Object properties
 
 ![](/img/gui/object_properties_mesh.png)

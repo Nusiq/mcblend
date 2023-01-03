@@ -10,10 +10,10 @@ Limitations <limitations>
 :hidden:
 :caption: Modeling
 
-Creating a model from scratch <modeling/creating_models_from_scratch>
-Importing a model from a file <modeling/importing_models_from_files>
-Importing a model from a resource pack <modeling/importing_models_from_rp>
-Exporting a model <modeling/exporting_models>
+Creating models from scratch <modeling/creating_models_from_scratch>
+Importing models from a file <modeling/importing_models_from_files>
+Importing models from a resource pack <modeling/importing_models_from_rp>
+Exporting models <modeling/exporting_models>
 Cubes vs Polymeshes <modeling/cubes_vs_polymeshes>
 The inflate property <modeling/inflate_property>
 Fixing invalid cubes <modeling/fixing_invalid_cubes>

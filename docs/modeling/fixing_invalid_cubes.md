@@ -4,7 +4,7 @@ Invalid cubes are objects in a model that don't meet the requirements for being 
 
 ## Changing the Cube Type to a Polymesh
 
-One solution to the problem of invalid cubes is to change the object's cube type to a polymesh. Polymeshes don't have the limitations of cubes, so you can have any number of cubes and any shape in a single object. However, it's worth noting that polymeshes are an experimental feature in Minecraft and may not be supported by all modeling tools for the game. Additionally, using polymeshes is generally not recommended as Minecraft doesn't guarantee to support them and they can be removed at any point. You can read more about polymeshes and cubes in the *Cubes vs Polymeshes* section of the documentation.
+One solution to the problem of invalid cubes is to change the object's cube type to a polymesh. Polymeshes don't have the limitations of cubes, so you can have any number of cubes and any shape in a single object. However, it's worth noting that polymeshes are an experimental feature in Minecraft and may not be supported by all modeling tools for the game. Additionally, using polymeshes is generally not recommended as Minecraft doesn't guarantee to support them and they can be removed at any point. You can read more about polymeshes and cubes in the [Cubes vs polymeshes](/modeling/cubes_vs_polymeshes) section of the documentation.
 
 ## Using the Separate and Align Cubes Operator
 

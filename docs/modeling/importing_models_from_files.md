@@ -1,9 +1,9 @@
-# Importing a model from a file
+# Importing models from a file
 
 In this page, you will learn how to import a Minecraft model into Mcblend from a file. This is useful if you want to modify an existing model or if you have a custom model created outside of Mcblend.
 
 ```{note}
-It is recommended to import models from resource packs whenever possible, as it will automatically set up the texture and render controllers for you using the information from the resource pack. You can learn how to import models from resource packs in the next page.
+It is recommended to [import models from resource](/modeling/importing_models_from_rp) packs whenever possible, as it will automatically set up the texture and render controllers for you using the information from the resource pack. You can learn how to import models from resource packs in the next page.
 ```
 
 ## Importing the model

@@ -8,4 +8,4 @@ Before exporting the animation, you can configure some additional settings in th
 
 The `Override previous animation`, `Loop`, and `Anim Time update` settings are properties of Minecraft animations and are directly exported to the file. They have no effect on Mcblend. The `Frame start` and `Frame end` settings determine the range of frames that will be exported to the animation.
 
-Exporting the animation is similar to exporting a model, as explained in the "Creating animations from scratch" documentation page. Simply go to `File > Export > Export Bedrock Animation` and select the export path.
+Exporting the animation is similar to exporting a model, as explained in the ["Creating animations from scratch"](/animations/creating_animations_from_scratch) documentation page. Simply go to `File > Export > Export Bedrock Animation` and select the export path.

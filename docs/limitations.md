@@ -17,7 +17,7 @@ In order to use Mcblend, you must adhere to the following modeling constraints:
 ```{note}
 Mcblend provides tools to make it easier to follow these rules. The ["separate cubes operator"](gui/3d_viewport_sidebar.md#mesh-transformations-panel) can help you separate meshes that contain multiple cubes into multiple objects with properly aligned rotations. This means you can create your model in a single mesh and, as long as its parts have proper shapes, you can separate them into a format that can be used by Mcblend.
 
-You can also mark certain objects as ["polymeshes,"](gui/object_properties.md#object-properties-mesh) which allows you to use shapes other than cuboids for your model. However, be aware that polymeshes are an experimental feature in Minecraft and may be removed from the game in the future.
+You can also mark certain objects as ["polymeshes,"](/modeling/cubes_vs_polymeshes) which allows you to use shapes other than cuboids for your model. However, be aware that polymeshes are an experimental feature in Minecraft and may be removed from the game in the future.
 ```
 
 <details>
@@ -83,7 +83,7 @@ In Minecraft, the UV maps of the faces of cubes must be rectangular and aligned 
 - The top and bottom faces have their front and back edges aligned horizontally, and their left and right edges aligned vertically.
 
 ```{note}
-It can be difficult to understand these alignment rules when looking at a model with rotated cubes. However, Mcblend provides the [Fix model UV-mapping](gui/3d_viewport_sidebar.md#uv-mapping-panel) operator to rearrange the UVs of selected objects to match the Minecraft rules. If you see warnings in your export such as:
+It can be difficult to understand these alignment rules when looking at a model with rotated cubes. However, Mcblend provides the [Fix invalid UV-mapping](/texturing_and_uv_mapping/fixing_invalid_uv_mapping) operator to rearrange the UVs of selected objects to match the Minecraft rules. If you see warnings in your export such as:
 `Cube based on Blender object "Cube": "north" face has invalid UV-mapping. Skipped.`
 you can use this operator to fix the UV mapping.
 

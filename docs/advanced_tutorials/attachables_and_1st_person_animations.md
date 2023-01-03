@@ -307,7 +307,7 @@ of the player model.
 
 Download the template project for player animations: [https://github.com/Nusiq/Mcblend-Demo-World/blob/master/BLENDER/template-project.blend](https://github.com/Nusiq/Mcblend-Demo-World/blob/master/BLENDER/template-project.blend)
 
-[Import the model](/importing_and_exporting) of the attachable and optionally
+[Import the model](/modeling/importing_models_from_files) of the attachable and optionally
 import the texture. In order to import texture you need to open it in Blender
 first (just like you open any other image), and than you can select the
 armature of the attachable, go to `Object properties-> Mcblend: Render Controllers`.
@@ -339,7 +339,7 @@ F3 menu.
 
 ![](/img/attachables_1st_person/apply_pose_as_rest_pose.jpg)
 
-Disable the child-of property of the item armature and [export it](importing_and_exporting.md#exporting-models) to overwrite
+Disable the child-of property of the item armature and [export it](/modeling/exporting_models) to overwrite
 the old model.
 
 ![](/img/attachables_1st_person/disable_child_of_property.jpg)

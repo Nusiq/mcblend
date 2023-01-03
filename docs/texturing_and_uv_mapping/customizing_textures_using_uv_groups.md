@@ -1,12 +1,12 @@
 # Customizing textures using UV groups
 
-UV groups can be used to customize the appearance of textures in your model. The textures are created using collections of UV masks, with total of six collections available, one for each side of the cube - left, front, right, back, top, and bottom. You can switch between these sides using the `Side` radio button and configure the appearance of each side using a collection of UV masks. The changes to the UV groups configuration are applied during the automatic UV mapping process, which generates a new texture for your model. Keep in mind that you will need to generate a new texture every time you make changes to the UV group configuration in order to see the updates in your model.
+UV groups can be used to customize the appearance of textures in your model. The textures are created using collections of UV masks, with total of six collections available, one for each side of the cube - left, front, right, back, top, and bottom. You can switch between these sides using the `Side` radio button and configure the appearance of each side using a collection of UV masks. The changes to the UV groups configuration are applied during the [automatic UV mapping](/texturing_and_uv_mapping/automatic_uv_mapping) process, which generates a new texture for your model. Keep in mind that you will need to generate a new texture every time you make changes to the UV group configuration in order to see the updates in your model.
 
 ![](/img/texturing_and_uv_mapping/uv_group_sides.png)
 
 ## Gold block texture using UV groups (example)
 
-This example demonstrates how to create a texture similar to the vanilla Minecraft gold block using UV groups. Note that this example does not cover every type of UV group available, but it should provide you with a general understanding of how to use them. If you would like to learn more about all the available UV groups, you can find their complete description in the GUI reference section of the documentation.
+This example demonstrates how to create a texture similar to the vanilla Minecraft gold block using UV groups. Note that this example does not cover every type of UV group available, but it should provide you with a general understanding of how to use them. If you would like to learn more about all the available UV groups, you can find their [complete description in the GUI reference section of the documentation](/gui/uv_group_masks).
 
 This tutorial assumes that you already have a basic model created with Mcblend, a default UV group created, and a cube assigned to it. The tutorial begins with a model that has a single cube assigned to a default UV group.
 

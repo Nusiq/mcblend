@@ -5,7 +5,7 @@
 
 The Scene properties tab has two new panels:
 
-## Mcblend: UV-groups
+## Mcblend: groups
 
 ![](/img/gui/scene_properties_uv_groups.png)
 

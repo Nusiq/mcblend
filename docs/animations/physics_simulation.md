@@ -1,6 +1,6 @@
 # Physics simulation
 
-This tutorial explains how to use Blender tools to easily set up physics simulations using rigid bodies. It is assumed that the reader knows how to import models from resource packs and export and manage animations. These actions are explained in different parts of the documentation.
+This tutorial explains how to use Blender tools to easily set up physics simulations using rigid bodies. It is assumed that the reader knows how to [import models from resource packs](/modeling/importing_models_from_rp) and export and manage animations. These actions are explained in different parts of the documentation.
 
 The default Minecraft resource pack can be downloaded from Mojang's Bedrock Samples: [https://github.com/Mojang/bedrock-samples/releases/latest.](https://github.com/Mojang/bedrock-samples/releases/latest.)
 
@@ -62,7 +62,7 @@ We can simply add the `Scale` keyframes to the root bone. It doesn't matter that
 
 ![](/img/animations/physics_simulation_ravager_scale_keyframes.png)
 
-8. Export the animation using the knowledge from previous tutorials.
+8. [Export the animation](/animations/exporting_animations) using the knowledge from previous tutorials.
 
 ![](/img/animations/physics_simulation_export_animation.png)
 

@@ -1,6 +1,6 @@
 # UV group masks
 
-UV gorup masks can be added in the `Mcblend: UV groups` menu to configure the process generating textures during automatic UV mapping.
+UV gorup masks can be added in the `Mcblend: UV groups` menu to configure the process generating textures during [automatic UV mapping](/texturing_and_uv_mapping/automatic_uv_mapping).
 
 All masks have an eye icon in the upper right corner that can be used to temporarily disable/enable the mask.
 

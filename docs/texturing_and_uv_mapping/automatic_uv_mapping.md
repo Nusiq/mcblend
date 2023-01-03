@@ -2,11 +2,11 @@
 
 In Minecraft, most models use a single, low resolution texture. This is because the models usually consist of cuboids, which allows for simple textures as the UV coordinates can be aligned to the pixel grid. Mcblend has a feature which helps with UV mapping and texturing based on this workflow - the automatic UV mapping. It arranges the UV coordinates of the cube faces and creates a template texture for you to draw on. Automatic UV mapping is highly customizable, however, you don't have to use it - you can move the UV coordinates manually or generate and edit them after that.
 
-Using automatic UV mapping, you can adjust a number of properties for each cube, including the minimum space it should take up on the texture, the grouping of cubes (some can be mapped to the same space on the texture, resulting in the same texture for those cubes), the mirroring of the texture for each cube (using Minecraft's mirror property), and the way each face of the cube is textured on the template texture (using UV groups to allow for advanced configurations). Some of the more advanced features are explained in different pages. This page explains the basics, which should be sufficient for most users.
+Using automatic UV mapping, you can adjust a number of properties for each cube, including the {ref}`minimum space<mcblend-object-properties>` it should take up on the texture, [the grouping of cubes](/texturing_and_uv_mapping/uv_groups) (some can be mapped to the same space on the texture, resulting in the same texture for those cubes), the mirroring of the texture for each cube (using Minecraft's mirror property), and the way each face of the cube is textured on the [template texture](/texturing_and_uv_mapping/customizing_textures_using_uv_groups) (using UV groups to allow for advanced configurations). Some of the more advanced features are explained in different pages. This page explains the basics, which should be sufficient for most users.
 
 ## UV mapping polymeshes
 
-In Mcblend, there is no special support for texturing polymeshes, so if you are using polymeshes you should use regular Blender features for texturing. If your model is partially cube-based and partially polymesh-based, you can use automatic UV mapping for the cube-based parts and regular Blender features for the polymesh-based parts.
+In Mcblend, there is no special support for texturing [polymeshes](/modeling/cubes_vs_polymeshes), so if you are using polymeshes you should use regular Blender features for texturing. If your model is partially cube-based and partially polymesh-based, you can use automatic UV mapping for the cube-based parts and regular Blender features for the polymesh-based parts.
 
 ## How to use automatic UV mapping (and texture generation)
 

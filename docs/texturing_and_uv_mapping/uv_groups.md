@@ -1,6 +1,6 @@
 # UV groups
 
-UV groups in Mcblend are used to group cubes together and apply the same texture to them. They can be managed in the `Scene Properties` panel under `Mcblend: UV-groups.` UV groups affect how automatic UV mapping works. If two cubes have the same size and belong to the same UV group, they will be mapped to the same texture space.
+UV groups in Mcblend are used to group cubes together and apply the same texture to them. They can be managed in the `Scene Properties` panel under `Mcblend: UV-groups.` UV groups affect how [automatic UV mapping](/texturing_and_uv_mapping/automatic_uv_mapping) works. If two cubes have the same size and belong to the same UV group, they will be mapped to the same texture space.
 
 ## Creating UV groups
 
