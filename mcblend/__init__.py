@@ -113,14 +113,9 @@ from .panel import (
 bl_info = {
     "name": "Mcblend",
     "author": "Artur",
-    "description": (
-        "An addon that allows to design and animate Minecraft "
-        "Bedrock Edition models"),
+    "description": "An addon that allows to design and animate Minecraft Bedrock Edition models",
     "blender": (3, 3, 0),
-
-    # Remember to update the version in the "docs/conf.py"
-    "version": (10, 0, 0),  # COMPATIBILITY BREAKING CHANGE, NEW FEATURE, BUGFIX
-
+    "version": (10, 0, 1),  # Remember to update the version in the "docs/conf.py"
     "location": "",
     "warning": "",
     "category": "Object"
