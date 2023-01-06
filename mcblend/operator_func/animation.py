@@ -88,7 +88,7 @@ def _pick_closest_rotation(
 def _get_keyframes(context: Context) -> List[Decimal]:
     '''
     Lists keyframe numbers of the animation from keyframes of NLA tracks and
-    actions of selected objects.
+    actions of the active object.
 
     :param context: the context of running the operator.
     :returns: the list of the keyframes for the animation.
@@ -109,53 +109,53 @@ def _get_keyframes(context: Context) -> List[Decimal]:
         return result
 
     keyframes: Set[Decimal] = set()
-    for obj in get_selected_objects(context):
-        if obj.animation_data is None:
+    obj = context.active_object
+    if obj.animation_data is None:
+        return []
+    if obj.animation_data.action is not None:
+        for kf in get_action_keyframes(obj.animation_data.action):
+            keyframes.add(round(kf, ANIMATION_TIMESTAMP_PRECISION))
+    if obj.animation_data.nla_tracks is None:
+        return sorted(keyframes)
+    for nla_track in get_nla_tracks(obj.animation_data):
+        if nla_track.mute:
             continue
-        if obj.animation_data.action is not None:
-            for kf in get_action_keyframes(obj.animation_data.action):
-                keyframes.add(round(kf, ANIMATION_TIMESTAMP_PRECISION))
-        if obj.animation_data.nla_tracks is None:
-            continue
-        for nla_track in get_nla_tracks(obj.animation_data):
-            if nla_track.mute:
+        for strip in get_strips(nla_track):
+            if strip.type != 'CLIP':
                 continue
-            for strip in get_strips(nla_track):
-                if strip.type != 'CLIP':
+            strip_action_keyframes = get_action_keyframes(strip.action)
+            # Scale/strip the action data with the strip
+            # transformations
+            offset =  Decimal(strip.frame_start)
+            limit_down =  Decimal(strip.action_frame_start)
+            limit_up =  Decimal(strip.action_frame_end)
+            scale =  Decimal(strip.scale)
+            cycle_length = limit_up - limit_down
+            scaled_cycle_length = cycle_length * scale
+            repeat =  strip.repeat
+            transformed_keyframes: Set[Decimal] = set()
+            for keyframe in sorted(strip_action_keyframes):
+                if keyframe < limit_down or keyframe > limit_up:
                     continue
-                strip_action_keyframes = get_action_keyframes(strip.action)
-                # Scale/strip the action data with the strip
-                # transformations
-                offset =  Decimal(strip.frame_start)
-                limit_down =  Decimal(strip.action_frame_start)
-                limit_up =  Decimal(strip.action_frame_end)
-                scale =  Decimal(strip.scale)
-                cycle_length = limit_up - limit_down
-                scaled_cycle_length = cycle_length * scale
-                repeat =  strip.repeat
-                transformed_keyframes: Set[Decimal] = set()
-                for keyframe in sorted(strip_action_keyframes):
-                    if keyframe < limit_down or keyframe > limit_up:
-                        continue
-                    transformed_keyframe_base = keyframe * scale
-                    for i in range(math.ceil(repeat)):
-                        transformed_keyframe = (
-                            (i * scaled_cycle_length) +
-                            transformed_keyframe_base
+                transformed_keyframe_base = keyframe * scale
+                for i in range(math.ceil(repeat)):
+                    transformed_keyframe = (
+                        (i * scaled_cycle_length) +
+                        transformed_keyframe_base
+                    )
+                    if transformed_keyframe/scaled_cycle_length > repeat:
+                        # Can happen when we've got for example 4th
+                        # repeat but we only need 3.5
+                        break
+                    transformed_keyframe += offset
+                    transformed_keyframes.add(
+                        min(
+                            transformed_keyframe,
+                            Decimal(strip.frame_end)  # type: ignore
                         )
-                        if transformed_keyframe/scaled_cycle_length > repeat:
-                            # Can happen when we've got for example 4th
-                            # repeat but we only need 3.5
-                            break
-                        transformed_keyframe += offset
-                        transformed_keyframes.add(
-                            min(
-                                transformed_keyframe,
-                                Decimal(strip.frame_end)  # type: ignore
-                            )
-                        )
-                for kf in transformed_keyframes:
-                    keyframes.add(round(kf, ANIMATION_TIMESTAMP_PRECISION))
+                    )
+            for kf in transformed_keyframes:
+                keyframes.add(round(kf, ANIMATION_TIMESTAMP_PRECISION))
     return sorted(keyframes)  # Sorted list of ints
 
 class PoseBone(NamedTuple):
