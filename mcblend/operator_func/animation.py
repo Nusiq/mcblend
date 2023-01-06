@@ -10,6 +10,7 @@ from itertools import tee, islice
 
 import bpy
 from bpy.types import Action, Context
+from decimal import Decimal
 
 import numpy as np
 
@@ -18,7 +19,8 @@ from .typed_bpy_access import (
     get_strips, get_timeline_markers)
 from .json_tools import get_vect_json
 from .common import (
-    AnimationLoopType, MINECRAFT_SCALE_FACTOR, MCObjType, McblendObjectGroup
+    AnimationLoopType, MINECRAFT_SCALE_FACTOR, MCObjType, McblendObjectGroup,
+    ANIMATION_TIMESTAMP_PRECISION,
 )
 
 
@@ -83,7 +85,7 @@ def _pick_closest_rotation(
         return choice2
     return choice1
 
-def _get_keyframes(context: Context) -> List[int]:
+def _get_keyframes(context: Context) -> List[Decimal]:
     '''
     Lists keyframe numbers of the animation from keyframes of NLA tracks and
     actions of selected objects.
@@ -93,25 +95,26 @@ def _get_keyframes(context: Context) -> List[int]:
     '''
     # pylint: disable=too-many-nested-blocks
 
-    def get_action_keyframes(action: Action) -> Set[int]:
+    def get_action_keyframes(action: Action) -> Set[Decimal]:
         '''Gets set of keyframes from an action.'''
         if action.fcurves is None:
             return set()
-        result: Set[int] = set()
+        result: Set[Decimal] = set()
         for fcurve in get_fcurves(action):
             if fcurve.keyframe_points is None:
                 continue
             for keyframe_point in get_keyframe_points(fcurve):
-                frame_index: float = keyframe_point.co[0]  # type: ignore
-                result.add(round(frame_index))
+                frame_co: float = keyframe_point.co[0]  # type: ignore
+                result.add(Decimal(frame_co))
         return result
 
-    keyframes: Set[int] = set()
+    keyframes: Set[Decimal] = set()
     for obj in get_selected_objects(context):
         if obj.animation_data is None:
             continue
         if obj.animation_data.action is not None:
-            keyframes.update(get_action_keyframes(obj.animation_data.action))
+            for kf in get_action_keyframes(obj.animation_data.action):
+                keyframes.add(round(kf, ANIMATION_TIMESTAMP_PRECISION))
         if obj.animation_data.nla_tracks is None:
             continue
         for nla_track in get_nla_tracks(obj.animation_data):
@@ -123,14 +126,14 @@ def _get_keyframes(context: Context) -> List[int]:
                 strip_action_keyframes = get_action_keyframes(strip.action)
                 # Scale/strip the action data with the strip
                 # transformations
-                offset =  strip.frame_start
-                limit_down =  strip.action_frame_start
-                limit_up =  strip.action_frame_end
-                scale =  strip.scale
+                offset =  Decimal(strip.frame_start)
+                limit_down =  Decimal(strip.action_frame_start)
+                limit_up =  Decimal(strip.action_frame_end)
+                scale =  Decimal(strip.scale)
                 cycle_length = limit_up - limit_down
                 scaled_cycle_length = cycle_length * scale
                 repeat =  strip.repeat
-                transformed_keyframes: Set[int] = set()
+                transformed_keyframes: Set[Decimal] = set()
                 for keyframe in sorted(strip_action_keyframes):
                     if keyframe < limit_down or keyframe > limit_up:
                         continue
@@ -147,11 +150,12 @@ def _get_keyframes(context: Context) -> List[int]:
                         transformed_keyframe += offset
                         transformed_keyframes.add(
                             min(
-                                round(transformed_keyframe),
-                                strip.frame_end  # type: ignore
+                                transformed_keyframe,
+                                Decimal(strip.frame_end)  # type: ignore
                             )
                         )
-                keyframes.update(transformed_keyframes)
+                for kf in transformed_keyframes:
+                    keyframes.add(round(kf, ANIMATION_TIMESTAMP_PRECISION))
     return sorted(keyframes)  # Sorted list of ints
 
 class PoseBone(NamedTuple):
@@ -240,7 +244,7 @@ class AnimationExport:
     effect_events: Dict[str, Tuple[List[Dict], List[Dict]]]
     original_pose: Pose = field(default_factory=Pose)
     single_frame: bool = field(default_factory=bool)  # bool() = False
-    poses: Dict[int, Pose] = field(default_factory=dict)
+    poses: Dict[Decimal, Pose] = field(default_factory=dict)
     sound_effects: Dict[int, List[Dict]] = field(default_factory=dict)
     particle_effects: Dict[int, List[Dict]] = field(default_factory=dict)
 
@@ -265,7 +269,7 @@ class AnimationExport:
                 pose.load_poses(object_properties)
 
                 # The frame value in the dictionary key doesn't really matter
-                self.poses[original_frame] = pose
+                self.poses[Decimal(original_frame)] = pose
             else:
                 for keyframe in _get_keyframes(context):
                     if (
@@ -273,7 +277,15 @@ class AnimationExport:
                         keyframe > context.scene.frame_end
                     ):
                         continue  # skip frames out of range
-                    context.scene.frame_set(keyframe)
+
+                    # Converting to float before divmod() operation is because
+                    # divmod() behaves differently for Decimal and float for
+                    # negative numbers:
+                    # divmod(Decimal(-4.5), 1) -> (Decimal(-4), Decimal(-0.5))
+                    # divmod(-4.5, 1) -> (5, -0.5)
+                    float_keyframe = float(keyframe)
+                    frame, subframe = divmod(float_keyframe, 1)
+                    context.scene.frame_set(int(frame), subframe=subframe)
                     curr_pose = Pose()
                     curr_pose.load_poses(object_properties)
                     self.poses[keyframe] = curr_pose
@@ -310,7 +322,7 @@ class AnimationExport:
         except (TypeError, LookupError):
             pass
 
-        bones: Dict = {}
+        bones: Dict[str, Dict] = {}
         for bone_name in self.original_pose.pose_bones:
             bone = self._json_bone(bone_name, skip_rest_poses)
             if bone != {}:  # Nothing to export
@@ -333,7 +345,8 @@ class AnimationExport:
             if len(self.particle_effects) > 0:
                 particle_effects = {}
                 for key_frame, value in self.particle_effects.items():
-                    timestamp = str(round((key_frame-1) / self.fps, 4))
+                    timestamp = str(
+                        round((key_frame-1) / self.fps, 4).normalize())
                     particle_effects[timestamp] = value
                 result["animations"][f"animation.{self.name}"][
                     'particle_effects'] = particle_effects
@@ -341,7 +354,8 @@ class AnimationExport:
             if len(self.sound_effects) > 0:
                 sound_effects = {}
                 for key_frame, value in self.sound_effects.items():
-                    timestamp = str(round((key_frame-1) / self.fps, 4))
+                    timestamp = str(
+                        round((key_frame-1) / self.fps, 4).normalize())
                     sound_effects[timestamp] = value
                 result["animations"][f"animation.{self.name}"][
                     'sound_effects'] = sound_effects
@@ -400,7 +414,8 @@ class AnimationExport:
                     pose_bone.rotation, prev_pose_bone.rotation,
                     original_pose_bone.rotation)
             )
-            timestamp = str(round((key_frame-1) / self.fps, 4))
+            timestamp = str(
+                round((key_frame-1) / self.fps, 4).normalize())
             poses.append({
                 't': timestamp,
                 'loc': get_vect_json(pose_bone.location),
