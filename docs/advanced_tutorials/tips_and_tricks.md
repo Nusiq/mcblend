@@ -23,3 +23,9 @@ Changing the value of this property to 16 will set one length unit in Blender
 equal to one length unit of a model.
 
 ![](/img/advanced_tutorials/unit_scale_setting.png)
+
+## The Mcblend Blender template
+
+You can download a template project for blender and add it to your `File > New` menu for starting new projects. The description of what the template contains and how to add it to Blender can be found on the template repository: [https://github.com/Nusiq/mcblend-project-template/releases/tag/mcblend-10.1](https://github.com/Nusiq/mcblend-project-template/releases/tag/mcblend-10.1)
+
+![](/img/advanced_tutorials/template_project_menu.png)
