@@ -55,10 +55,12 @@ Menu items <gui/menu_items>
 
 ```{toctree}
 :hidden:
-:caption: Advanced tutorials
+:caption: Tips and tricks
 
-Tips and Tricks <advanced_tutorials/tips_and_tricks>
-Attachables & First person animations <advanced_tutorials/attachables_and_1st_person_animations>
+Mcblend Blender Template <tips_and_tricks/mcblend_blender_template>
+Enabling subframes <tips_and_tricks/enabling_subframes>
+Matching framerate <tips_and_tricks/matching_framerate>
+World unit scale <tips_and_tricks/world_unit_scale>
 ```
 
 # Overview
