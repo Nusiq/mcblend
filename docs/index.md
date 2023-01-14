@@ -17,6 +17,7 @@ Exporting models <modeling/exporting_models>
 Cubes vs Polymeshes <modeling/cubes_vs_polymeshes>
 The inflate property <modeling/inflate_property>
 Fixing invalid cubes <modeling/fixing_invalid_cubes>
+Attachable item models <modeling/attachable_item_models>
 ```
 
 ```{toctree}
