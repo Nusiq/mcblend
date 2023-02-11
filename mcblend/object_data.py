@@ -287,7 +287,7 @@ class MCBLEND_ObjectProperties(PropertyGroup):
         maxlen=1024
     )
     texture_template_resolution: IntProperty(  # type: ignore
-        name="Template texture resolution",
+        name="Template resolution",
         description=(
             "The number of pixels per single unit of length of the texture "
             "size"
@@ -297,7 +297,7 @@ class MCBLEND_ObjectProperties(PropertyGroup):
         soft_max=5,
     )
     allow_expanding: BoolProperty(  # type: ignore
-        name="Allow Texture Expanding",
+        name="Allow texture expanding",
         description=(
             "Whether the Automatic UV mapping is allowed to expand the "
             "texture size"),
@@ -373,7 +373,7 @@ class MCBLEND_ObjectProperties(PropertyGroup):
         items=list_mesh_types_as_blender_enum, # type: ignore
         name='Mesh type')
     min_uv_size: IntVectorProperty(  # type: ignore
-        name="Min UV size", default=(0, 0, 0), min=0,
+        name="Min UV bound", default=(0, 0, 0), min=0,
         description=(
             "The minimum size of the UV map for this cube for its "
             "width, height and depth")

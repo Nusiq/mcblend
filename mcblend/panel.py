@@ -305,15 +305,9 @@ class MCBLEND_PT_UVGroupPanel(Panel):
 
         # Add group
         row = col.row()
-        row.operator(
-            "mcblend.add_uv_group", text="New UV group",
-            icon='ADD'
-        )
+        row.operator("mcblend.add_uv_group", icon='ADD')
         row_import_export = col.row()
-        row_import_export.operator(
-            "mcblend.import_uv_group",
-            text="Import UV group", icon='IMPORT'
-        )
+        row_import_export.operator("mcblend.import_uv_group", icon='IMPORT')
 
         active_uv_group_id = get_scene_mcblend_active_uv_group(bpy.context)
         uv_groups = get_scene_mcblend_uv_groups(bpy.context)
@@ -328,13 +322,9 @@ class MCBLEND_PT_UVGroupPanel(Panel):
             active_uv_group = uv_groups[active_uv_group_id]
 
             # Delete group
-            row.operator(
-                "mcblend.remove_uv_group",
-                text="Delete this UV group", icon='X')
+            row.operator("mcblend.remove_uv_group", icon='X')
             row_import_export.operator(
-                "mcblend.export_uv_group",
-                text="Export UV group", icon='EXPORT'
-            )
+                "mcblend.export_uv_group", icon='EXPORT')
             # Select side
             row = col.row()
             row.label(text='Side:')
@@ -342,14 +332,12 @@ class MCBLEND_PT_UVGroupPanel(Panel):
                 context.scene,  # type: ignore
                 "mcblend_active_uv_groups_side", expand=True)
             col.separator()
-            col.operator(
-                'mcblend.copy_uv_group_side',
-                text='Copy current UV face', icon='DUPLICATE')
+            col.operator('mcblend.copy_uv_group_side', icon='DUPLICATE')
 
             # Add mask
             col.operator_menu_enum(
                 "mcblend.add_uv_mask", "mask_type",
-                text="Add mask", icon="ADD")
+                icon="ADD")
             # Draw selected side
             sides = [
                 active_uv_group.side1, active_uv_group.side2,
@@ -421,12 +409,12 @@ class MCBLEND_PT_EventsPanel(Panel):
             "mcblend.remove_effect", icon='X', text='')
         set_operator_property(op_props, "effect_index", index)
         if effect.effect_type == EffectTypes.PARTICLE_EFFECT.value:
-            col.prop(effect, "effect", text="Effect")
-            col.prop(effect, "locator", text="Locator")
-            col.prop(effect, "pre_effect_script", text="Pre effect script")
-            col.prop(effect, "bind_to_actor", text="Bind to actor")
+            col.prop(effect, "effect")
+            col.prop(effect, "locator")
+            col.prop(effect, "pre_effect_script")
+            col.prop(effect, "bind_to_actor")
         elif effect.effect_type == EffectTypes.SOUND_EFFECT.value:
-            col.prop(effect, "effect", text="Effect")
+            col.prop(effect, "effect")
 
     def draw(self, context):
         '''Draws whole event group panel.'''
@@ -442,19 +430,14 @@ class MCBLEND_PT_EventsPanel(Panel):
             active_dataptr=bpy.context.scene,
             active_propname="mcblend_active_event")
 
-        row.operator(
-            "mcblend.add_event", text="New event",
-            icon='ADD')
+        row.operator("mcblend.add_event", icon='ADD')
 
         if 0 <= active_event_id < len(events):
-            row.operator(
-                "mcblend.remove_event",
-                text="Delete this event", icon='X')
+            row.operator("mcblend.remove_event", icon='X')
             event = events[active_event_id]
             effects = event.effects
             col.operator_menu_enum(
-                "mcblend.add_effect", "effect_type",
-                text="Add effect", icon="ADD")
+                "mcblend.add_effect", "effect_type", icon="ADD")
             if len(effects) > 0:
                 for i, effect in enumerate(effects):
                     col.separator(factor=0.5)
@@ -489,10 +472,9 @@ class MCBLEND_PT_ObjectPropertiesPanel(Panel):
                     text=f'UV Group: {object_properties.uv_group}')
             else:
                 col.label(text="This object doesn't have a UV group")
-            col.prop(object_properties, "mirror", text="Mirror")
-            col.prop(object_properties, "inflate", text="Inflate")
-            col.row().prop(
-                object_properties, "min_uv_size", text="Min UV bound")
+            col.prop(object_properties, "mirror")
+            col.prop(object_properties, "inflate")
+            col.row().prop(object_properties, "min_uv_size")
 
 # Custom object properties panel
 class MCBLEND_PT_ModelPropertiesPanel(Panel):
@@ -511,38 +493,22 @@ class MCBLEND_PT_ModelPropertiesPanel(Panel):
         col = self.layout.column(align=True)
         # col.prop(context.scene.mcblend, "path", text="")
         object_properties = context.object.mcblend
-        col.prop(
-            object_properties, "model_origin")
-        col.prop(
-            object_properties, "model_name", text="Name")
-        col.row().  prop(
-            object_properties, "visible_bounds_offset",
-            text="Visible bounds offset")
-        col.prop(
-            object_properties, "visible_bounds_width",
-            text="Visible bounds width")
-        col.prop(
-            object_properties, "visible_bounds_height",
-            text="Visible bounds height")
+        col.prop(object_properties, "model_origin")
+        col.prop(object_properties, "model_name")
+        col.row().prop(object_properties, "visible_bounds_offset")
+        col.prop(object_properties, "visible_bounds_width")
+        col.prop(object_properties, "visible_bounds_height")
         col.separator()
-        col.prop(
-            object_properties, "texture_width", text="Texture width")
-        col.prop(
-            object_properties, "texture_height", text="Texture height")
+        col.prop(object_properties, "texture_width")
+        col.prop(object_properties, "texture_height")
         col = col.box().column()
         col.label(text="Texture Generation")
         row = col.row()
-        row.prop(
-            object_properties, "allow_expanding",
-            text="Allow texture expanding")
-        row.prop(
-            object_properties, "generate_texture",
-            text="Generate Texture")
+        row.prop(object_properties, "allow_expanding")
+        row.prop(object_properties, "generate_texture")
         if object_properties.generate_texture:
-            col.prop(
-                object_properties, "texture_template_resolution",
-                text="Template resolution")
-        col.operator("mcblend.map_uv", text="Automatic UV Mapping")
+            col.prop(object_properties, "texture_template_resolution")
+        col.operator("mcblend.map_uv")
 
 # Armature render controllers properties
 class MCBLEND_PT_ArmatureRenderControllersPanel(Panel):
@@ -566,13 +532,9 @@ class MCBLEND_PT_ArmatureRenderControllersPanel(Panel):
         row = col.row()
         object_properties = context.object.mcblend
         len_rc = len(object_properties.render_controllers)
-        op_props = row.operator(
-            "mcblend.add_fake_rc", icon='ADD',
-            text='Add Render Controller')
+        op_props = row.operator("mcblend.add_fake_rc", icon='ADD')
         if len_rc > 0:
-            row.operator(
-                "mcblend.fake_rc_apply_materials", icon='FILE_REFRESH',
-                text='Apply Materials')
+            row.operator("mcblend.fake_rc_apply_materials", icon='FILE_REFRESH')
         col.separator()
         for rc_index, rc in enumerate(object_properties.render_controllers):
             box = col.box()
@@ -677,14 +639,9 @@ class MCBLEND_PT_AnimationPropertiesPanel(Panel):
         active_anim_id = bpy.context.object.mcblend.active_animation
         anims = bpy.context.object.mcblend.animations
         if active_anim_id < len(anims):
-            row.operator(
-                "mcblend.remove_animation",
-                text="Remove this animation"
-            )
+            row.operator("mcblend.remove_animation")
             col.operator_menu_enum(
-                "mcblend.list_animations", "animations_enum",
-                text="Select animation"
-            )
+                "mcblend.list_animations", "animations_enum")
 
             active_anim = anims[active_anim_id]
             col.prop(active_anim, "name", text="Name")
@@ -718,32 +675,14 @@ class MCBLEND_PT_OperatorsPanel(Panel):
         col = self.layout.column()
         box = col.box().column()
         box.label(text="UV mapping")
-        box.operator(
-            "mcblend.fix_uv",
-            text="Fix invalid UV mapping"
-        )
-        box.operator(
-            "mcblend.uv_group",
-            text="Set the UV group"
-        )
-        box.operator(
-            "mcblend.clear_uv_group",
-            text="Clear UV group"
-        )
+        box.operator("mcblend.fix_uv")
+        box.operator("mcblend.uv_group")
+        box.operator("mcblend.clear_uv_group")
         box = col.box().column()
         box.label(text="Mesh Transformations")
-        box.operator(
-            "mcblend.set_inflate",
-            text="Inflate"
-        )
-        box.operator(
-            "mcblend.separate_mesh_cubes",
-            text="Separate and align cubes"
-        )
-        box.operator(
-            "mcblend.prepare_physics_simulation",
-            text="Prepare physics simulation"
-        )
+        box.operator("mcblend.set_inflate")
+        box.operator("mcblend.separate_mesh_cubes")
+        box.operator("mcblend.prepare_physics_simulation")
 
 # Resource pack panel
 class MCBLEND_PT_ProjectPanel(Panel):
@@ -866,5 +805,5 @@ class MCBLEND_PT_BonePanel(Panel):
         col = self.layout.column()
         # row = col.row()
         # row.label(text="", icon="BONE_DATA")
-        col.prop(pose_bone, "name", text="Bone Name", icon="BONE_DATA")
+        col.prop(pose_bone, "name", text="Bone name", icon="BONE_DATA")
         col.prop(pose_bone.mcblend, "binding")

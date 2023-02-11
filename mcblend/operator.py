@@ -334,7 +334,7 @@ class MCBLEND_OT_SetInflate(Operator):
     '''
     # pylint: disable=unused-argument, no-member
     bl_idname = "mcblend.set_inflate"
-    bl_label = "Set inflate"
+    bl_label = "Inflate"
     bl_options = {'REGISTER', 'UNDO'}
     bl_description = (
         "Set the \"inflate\" property of the selected objects and adjust "
@@ -693,7 +693,7 @@ class MCBLEND_OT_AddUvGroup(Operator):
     '''Operator used for creating new UV groups.'''
     bl_idname = "mcblend.add_uv_group"
     bl_label = "New UV group"
-    bl_description = "Create new UV group"
+    bl_description = "New UV group"
     bl_options = {'UNDO', 'INTERNAL'}
 
     def execute(self, context):
@@ -1452,7 +1452,7 @@ class MCBLEND_OT_AddEvent(Operator):
 class MCBLEND_OT_RemoveEvent(Operator):
     '''Operator used for removing events.'''
     bl_idname = "mcblend.remove_event"
-    bl_label = "Remove event"
+    bl_label = "Delete this event"
     bl_description = "Delete the currently active event"
     bl_options = {'UNDO', 'INTERNAL'}
 
@@ -1604,7 +1604,7 @@ class MCBLEND_OT_ImportRpEntity(Operator):
     '''Imports entity form Minecraft project into blender'''
     # pylint: disable=unused-argument, no-member
     bl_idname = "mcblend.import_rp_entity"
-    bl_label = "Import entity from resource pack"
+    bl_label = "Import entity from project"
     bl_description = "Import an entity from the resource pack"
     bl_options = {'UNDO', 'INTERNAL'}
 
@@ -1637,7 +1637,7 @@ class MCBLEND_OT_ImportAttachable(Operator):
     '''Imports attachable form Minecraft project into blender'''
     # pylint: disable=unused-argument, no-member
     bl_idname = "mcblend.import_attachable"
-    bl_label = "Import attachable from resource pack"
+    bl_label = "Import attachable from project"
     bl_description = "Import an attachable from the resource pack"
     bl_options = {'UNDO', 'INTERNAL'}
 
@@ -1670,7 +1670,7 @@ class MCBLEND_OT_ImportAttachable(Operator):
 class MCBLEND_OT_AddFakeRc(Operator):
     '''Adds new render controller to active model (armature).'''
     bl_idname = "mcblend.add_fake_rc"
-    bl_label = "New render controller"
+    bl_label = "Add render controller"
     bl_description = "Create a new render controller for the entity"
     bl_options = {'UNDO', 'INTERNAL'}
 
@@ -1865,7 +1865,7 @@ class MCBLEND_OT_FakeRcSMaterailSelectTemplate(Operator):
     '''Selects the material type.'''
     bl_idname = "mcblend.fake_rc_material_select_template"
     bl_label = "Select material"
-    bl_description = "Select the material"
+    bl_description = "Select the material used by this render controller"
     bl_options = {'UNDO', 'INTERNAL'}
 
     material: bpy.props.EnumProperty(  # type: ignore
