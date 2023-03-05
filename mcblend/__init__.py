@@ -63,6 +63,7 @@ from .operator import (
     MCBLEND_OT_FakeRcSMaterailSelectTemplate,
     MCBLEND_OT_FakeRcApplyMaterials,
     MCBLEND_OT_PreparePhysicsSimulation,
+    MCBLEND_OT_MergeModels,
 )
 
 from .common_data import (
@@ -212,6 +213,7 @@ classes = (
     MCBLEND_OT_FakeRcSMaterailSelectTemplate,
     MCBLEND_OT_FakeRcApplyMaterials,
     MCBLEND_OT_PreparePhysicsSimulation,
+    MCBLEND_OT_MergeModels,
 )
 
 def register():

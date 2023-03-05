@@ -502,15 +502,16 @@ class UvMapper:
     '''
     A class that helps with UV mapping.
     '''
-    def __init__(self, width: int, height: int, object_properties: McblendObjectGroup):
+    def __init__(self, width: int, height: int):
         self.width: int = width
         self.height: int = height
         self.uv_boxes: List[McblendObjUvBox] = []
-        self._load_uv_boxes(object_properties)
 
-    def _load_uv_boxes(self, object_properties: McblendObjectGroup):
+    def append_for_uv_mapping(self, object_properties: McblendObjectGroup):
         '''
-        Populates the uv_boxes dictionary.
+        Appends all of the cubes of the McblendObjectGroup to the uv_boxes list
+        for new UV mapping. After this the cubes can be mapped to the UV space
+        using the plan_uv function.
 
         # Properties:
         :prop object_properties: The properties of all of the Minecraft cubes

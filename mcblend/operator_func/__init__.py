@@ -151,7 +151,8 @@ def set_uvs(context: Context):
     if use_armature_origin:
         origin = armature
     mcblend_obj_group = McblendObjectGroup(armature, origin)
-    mapper = UvMapper(width, height, mcblend_obj_group)
+    mapper = UvMapper(width, height)
+    mapper.append_for_uv_mapping(mcblend_obj_group)
     mapper.plan_uv(allow_expanding)
 
     # Replace old mappings
@@ -855,3 +856,10 @@ def prepare_physics_simulation(context: Context) -> Dict:
         rbc.rigid_body_constraint.object2 = parent_rb
 
     return result
+
+def merge_models(context: Context) -> None:
+    '''
+    Merges models of all of the selected armatures and creates a common
+    render controller and texture for them.
+    '''
+    raise NotImplementedError()
