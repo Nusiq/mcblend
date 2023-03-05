@@ -578,16 +578,15 @@ class UvMapper:
 
         suggestions: List[Suggestion] = [Suggestion((0, 0), UvCorner.TOP_LEFT)]
 
-        authors: List[UvBox] = []  # authors of the suggestions
-        mapped_boxes = []
-        unmapped_boxes = []
+        mapped_boxes: List[McblendObjUvBox] = []
+        unmapped_boxes: List[McblendObjUvBox] = []
         for box in self.uv_boxes:
             if box.is_mapped:
                 mapped_boxes.append(box)
             else:
                 unmapped_boxes.append(box)
 
-        def _is_out_of_bounds(uv, size=(0, 0)):
+        def _is_out_of_bounds(uv: Vector2di, size: Vector2di=(0, 0)):
             return (
                 uv[0] < 0 or uv[1] < 0 or uv[0] + size[0] > self.width or
                 (not allow_expanding and uv[1] + size[1] > self.height)
@@ -595,7 +594,7 @@ class UvMapper:
 
         # pylint: disable=too-many-nested-blocks
         for box in unmapped_boxes:
-            suggestion_i = -1
+            suggestion_i: int = -1
             while len(suggestions) > suggestion_i + 1:
                 suggestion_i += 1
                 # Apply suggestion
@@ -606,12 +605,6 @@ class UvMapper:
                     # Test if suggestion doesn't collide
                     for other_box in mapped_boxes:
                         if box.collides(other_box):  # Bad suggestion. Find more
-                            if other_box not in authors:
-                                authors.append(other_box)
-                                suggestions.extend(filterfalse(
-                                    lambda x: _is_out_of_bounds(x.position),
-                                    other_box.suggest_positions()
-                                ))
                             break
                     else:  # didn't found collisions. Good suggestion, break the loop
                         box.is_mapped = True
