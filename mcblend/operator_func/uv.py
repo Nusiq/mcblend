@@ -19,8 +19,6 @@ from .common import (
 from .extra_types import Vector2di
 
 
-
-
 class CoordinatesConverter:
     '''
     An object which allows conversion of coordinates defined by space_a to
@@ -33,6 +31,7 @@ class CoordinatesConverter:
     :param space_a: The space to convert from.
     :param space_b: The space to convert to.
     '''
+
     def __init__(self, space_a: np.ndarray, space_b: np.ndarray):
         self.space_a = np.copy(space_a.T)
         self.space_b = np.copy(space_b.T)
@@ -50,11 +49,13 @@ class CoordinatesConverter:
         x = np.array(x).T
         return (((x-self.space_a[0])/self.scale_a)*self.scale_b)+self.space_b[0]
 
-# (U, V) - 0, 0 = top left
+
+
 class UvCorner(Enum):
     '''
     Used by the Suggestion object to point at corner of a UvBox.
     '''
+    # (U, V) - 0, 0 = top left
     TOP_RIGHT = 'TOP_RIGHT'
     TOP_LEFT = 'TOP_LEFT'
     BOTTOM_RIGHT = 'BOTTOM_RIGHT'
@@ -72,12 +73,11 @@ class Suggestion(NamedTuple):
     position: Vector2di
     corner: UvCorner
 
+
 class UvBox:
     '''Rectangular space on the texture.'''
-    def __init__(
-            self, size: Vector2di,
-            uv: Vector2di | None = None
-        ):
+
+    def __init__(self, size: Vector2di, uv: Vector2di | None = None):
         if uv is None:
             uv = (0, 0)
             self.is_mapped = False
@@ -161,12 +161,10 @@ class UvBox:
         elif suggestion.corner == UvCorner.BOTTOM_RIGHT:
             self.uv = (
                 suggestion.position[0] - size[0],
-                suggestion.position[1] -size[1]
+                suggestion.position[1] - size[1]
             )
 
-    def paint_texture(
-            self, arr: np.ndarray, resolution: int = 1
-        ):
+    def paint_texture(self, arr: np.ndarray, resolution: int = 1):
         '''
         Paints the UvBox on the texture represented by the numpy array.
 
@@ -186,11 +184,13 @@ class UvBox:
         texture_part = arr[min1:max1, min2:max2]
         texture_part[...] = 1  # Set RGBA white
 
+
 class McblendObjUvBox(UvBox):
     '''
     An UvBox that holds reference to an McblendObject and provides a method
     to set it's UV.
     '''
+
     def new_uv_layer(self):
         '''Adds new UV layer to contained McblendObject.'''
         raise NotImplementedError()
@@ -211,10 +211,12 @@ class McblendObjUvBox(UvBox):
         '''
         raise NotImplementedError()
 
+
 class UvMcCubeFace(UvBox):
     '''
     A single face in the UvBox.
     '''
+
     def __init__(
             self, cube: UvMcCube, cube_polygon: CubePolygon,
             size: Vector2di, masks: Sequence[Mask],
@@ -253,9 +255,7 @@ class UvMcCubeFace(UvBox):
             (self.uv[0] + self.size[0], self.uv[1]))
         uv_data[left_up].uv = converter.convert(self.uv)
 
-    def paint_texture(
-            self, arr: np.ndarray, resolution: int = 1
-        ):
+    def paint_texture(self, arr: np.ndarray, resolution: int = 1):
         '''
         Paints the UvBox on the texture.
 
@@ -288,11 +288,13 @@ class UvMcCubeFace(UvBox):
         for mask in self.masks:
             mask.apply(texture_part)
 
+
 class UvMcCube(McblendObjUvBox):
     '''
     Class that Combiens Six UvMcCubeFaces grouped together to represent space
     on the texture needed for UV mapping of single cube in Minecraft model.
     '''
+
     def __init__(
             self, width: int, depth: int, height: int,
             thisobj: McblendObject):
@@ -358,8 +360,7 @@ class UvMcCube(McblendObjUvBox):
     def collides(self, other: UvBox):
         for i in [
                 self.side1, self.side2, self.side3, self.side4, self.side5,
-                self.side6
-            ]:
+                self.side6]:
             if i.collides(other):
                 return True
         return False
@@ -376,20 +377,20 @@ class UvMcCube(McblendObjUvBox):
         # 4. (bottom right) 5. (bottom left) 6. (left bottom) 7. (left top)
         result = []
         result.extend([
-            s for i, s  in enumerate(self.side1.suggest_positions())
-            if i in  [0, 5, 6]
+            s for i, s in enumerate(self.side1.suggest_positions())
+            if i in [0, 5, 6]
         ])
         result.extend([
-            s for i, s  in enumerate(self.side5.suggest_positions())
-            if i in  [0, 6, 7]
+            s for i, s in enumerate(self.side5.suggest_positions())
+            if i in [0, 6, 7]
         ])
         result.extend([
-            s for i, s  in enumerate(self.side6.suggest_positions())
-            if i in  [1, 2, 3]
+            s for i, s in enumerate(self.side6.suggest_positions())
+            if i in [1, 2, 3]
         ])
         result.extend([
-            s for i, s  in enumerate(self.side4.suggest_positions())
-            if i in  [1, 3, 4]
+            s for i, s in enumerate(self.side4.suggest_positions())
+            if i in [1, 3, 4]
         ])
         return result
 
@@ -407,9 +408,7 @@ class UvMcCube(McblendObjUvBox):
                 self.thisobj.obj_data.uv_layers[0]
             )
 
-    def paint_texture(
-            self, arr: np.ndarray, resolution: int = 1
-        ):
+    def paint_texture(self, arr: np.ndarray, resolution: int = 1):
         self.side1.paint_texture(arr, resolution)
         self.side2.paint_texture(arr, resolution)
         self.side3.paint_texture(arr, resolution)
@@ -420,6 +419,7 @@ class UvMcCube(McblendObjUvBox):
     def new_uv_layer(self):
         self.thisobj.obj_data.uv_layers.new()
 
+
 class UvGroup(McblendObjUvBox):
     '''
     A collection of McblendObjUvBoxes that have the same UV mapping.
@@ -427,6 +427,7 @@ class UvGroup(McblendObjUvBox):
     Internally all of the properties are read from the first box on the list.
     The set_blender_uv function applies changes to all of the objects.
     '''
+
     def __init__(self, main_object: McblendObjUvBox):
         # pylint: disable=super-init-not-called
         self._objects: List[McblendObjUvBox] = [main_object]
@@ -471,14 +472,10 @@ class UvGroup(McblendObjUvBox):
     def collides(self, other: UvBox) -> bool:
         return self._objects[0].collides(other)
 
-    def suggest_positions(
-            self
-        ) -> List[Suggestion]:
+    def suggest_positions(self) -> List[Suggestion]:
         return self._objects[0].suggest_positions()
 
-    def apply_suggestion(
-            self, suggestion: Suggestion
-        ):
+    def apply_suggestion(self, suggestion: Suggestion):
         for obj in self._objects:
             obj.apply_suggestion(suggestion)
 
@@ -493,17 +490,19 @@ class UvGroup(McblendObjUvBox):
     def paint_texture(self, arr: np.ndarray, resolution: int = 1):
         # They mapped to one place (paint only one)
         # for obj in self._objects:
-        if len(self._objects) > 0 :
+        if len(self._objects) > 0:
             self._objects[0].paint_texture(arr, resolution)
 
     def new_uv_layer(self):
         for obj in self._objects:
             obj.new_uv_layer()
 
+
 class UvMapper:
     '''
     A class that helps with UV mapping.
     '''
+
     def __init__(self, width: int, height: int):
         self.width: int = width
         self.height: int = height
