@@ -4,9 +4,11 @@ Functions related to creating UV map.
 from __future__ import annotations
 
 from typing import (
-    Dict, Tuple, List, Collection, NamedTuple, Sequence)
-from enum import Enum
-from itertools import filterfalse
+    Dict, Tuple, List, Collection, NamedTuple, Sequence, Iterator)
+from enum import Enum, auto
+from functools import total_ordering
+import bisect
+
 import numpy as np
 
 from .typed_bpy_access import get_loop_indices
@@ -50,18 +52,23 @@ class CoordinatesConverter:
         return (((x-self.space_a[0])/self.scale_a)*self.scale_b)+self.space_b[0]
 
 
+# (U, V) - 0, 0 = top left
+
 
 class UvCorner(Enum):
     '''
-    Used by the Suggestion object to point at corner of a UvBox.
+    Used by the Suggestion object to point at corner of a UvBox. In the UV
+    mapping function it means that the specific corner of the yet unmapped
+    UvBox should touch the suggested position with its specific corner.
     '''
-    # (U, V) - 0, 0 = top left
-    TOP_RIGHT = 'TOP_RIGHT'
-    TOP_LEFT = 'TOP_LEFT'
-    BOTTOM_RIGHT = 'BOTTOM_RIGHT'
-    BOTTOM_LEFT = 'BOTTOM_LEFT'
+    # The order of the corners in the enum is important, because it is used
+    # to define the priority of choosing the corners during the UV mapping
+    BOTTOM_RIGHT = auto()
+    BOTTOM_LEFT = auto()
+    TOP_RIGHT = auto()
+    TOP_LEFT = auto()
 
-
+@total_ordering
 class Suggestion(NamedTuple):
     '''
     A class used by UvBoxes to suggest free spaces on the texture during
@@ -72,6 +79,29 @@ class Suggestion(NamedTuple):
     '''
     position: Vector2di
     corner: UvCorner
+
+    def __eq__(self, other: object) -> bool:
+        return self.position == other.position and self.corner == other.corner
+
+    def __lt__(self, other):
+        '''
+        Returns True if this suggestion is smaller than other suggestion.
+
+        The first criteria is the distance from the top left corner, the 
+        second criteria is the priority of the corner (see UvCorner enum).
+
+        The distance is calculated as the length of the bigger coordinate
+        of the vector. This way the suggestions are sorted in such a way
+        that promotes fitting the UV map into as small square shape as
+        possible. Using regular euclidean distance would give very similar
+        results.
+        '''
+        self_distance = max(self.position)
+        other_distance = max(other.position)
+        if self_distance == other_distance:
+            return self.corner.value < other.corner.value
+        return self_distance < other_distance
+
 
 
 class UvBox:
@@ -96,16 +126,38 @@ class UvBox:
         :returns: True if there is a collision.
         '''
         # min max
-        self_x = (self.uv[0], self.uv[0] + self.size[0])
-        self_y = (self.uv[1], self.uv[1] + self.size[1])
-        other_x = (other.uv[0], other.uv[0] + other.size[0])
-        other_y = (other.uv[1], other.uv[1] + other.size[1])
-        return (
-            self_x[0] < other_x[1] and
-            other_x[0] < self_x[1] and
-            self_y[0] < other_y[1] and
-            other_y[0] < self_y[1]
-        )
+        def _true_bounds(pos: int, size: int) -> Tuple[int, int]:
+            '''
+            Gets the bounds of an UV coordinate (a pair of numbers with)
+            min and max values. The input is also a pair of numbers, but
+            it represents the coordinate and than a size. The size can be
+            negative which means that the min value is smaller than the 'pos'.
+            '''
+            if size < 0:
+                return (pos + size, pos)
+            return (pos, pos + size)
+
+        self_x = _true_bounds(self.uv[0], self.size[0])
+        self_y = _true_bounds(self.uv[1], self.size[1])
+        for collider in other.yield_colliders():
+            collider_x = _true_bounds(collider.uv[0], collider.size[0])
+            collider_y = _true_bounds(collider.uv[1], collider.size[1])
+            collides = (
+                self_x[0] < collider_x[1] and
+                collider_x[0] < self_x[1] and
+                self_y[0] < collider_y[1] and
+                collider_y[0] < self_y[1]
+            )
+            if collides:
+                return True
+        return False
+
+    def yield_colliders(self) -> Iterator[UvBox]:
+        '''
+        Yield all UvBoxes that belong to this UvBox. This is used for
+        collections of UvBoxes. In this case it just yields itself.
+        '''
+        yield self
 
     def suggest_positions(self) -> List[Suggestion]:
         '''
@@ -365,6 +417,12 @@ class UvMcCube(McblendObjUvBox):
                 return True
         return False
 
+    def yield_colliders(self) -> Iterator[UvBox]:
+        for i in [
+                self.side1, self.side2, self.side3, self.side4, self.side5,
+                self.side6]:
+            yield from i.yield_colliders()
+
     def suggest_positions(self) -> List[Suggestion]:
         '''
         Returns list of positions next to this UV box that can be used
@@ -472,6 +530,9 @@ class UvGroup(McblendObjUvBox):
     def collides(self, other: UvBox) -> bool:
         return self._objects[0].collides(other)
 
+    def yield_colliders(self) -> Iterator[UvBox]:
+        yield from self._objects[0].yield_colliders()
+
     def suggest_positions(self) -> List[Suggestion]:
         return self._objects[0].suggest_positions()
 
@@ -571,7 +632,8 @@ class UvMapper:
         :param allow_expanding: Whether the texture space can be expanded to
             fit all of the objects in it.
         '''
-        self.uv_boxes.sort(key=lambda box: box.size[0], reverse=True)
+        self.uv_boxes.sort(
+            key=lambda box: (box.size[0], box.size[1]), reverse=True)
 
         if allow_expanding and len(self.uv_boxes) > 0:
             self.width = max([self.width, self.uv_boxes[0].size[0]])
@@ -594,27 +656,28 @@ class UvMapper:
 
         # pylint: disable=too-many-nested-blocks
         for box in unmapped_boxes:
-            suggestion_i: int = -1
-            while len(suggestions) > suggestion_i + 1:
-                suggestion_i += 1
+            for suggestion_i in range(len(suggestions)):
                 # Apply suggestion
                 box.apply_suggestion(suggestions[suggestion_i])
 
                 # Test if box in texture space
-                if not _is_out_of_bounds(box.uv, box.size):
-                    # Test if suggestion doesn't collide
-                    for other_box in mapped_boxes:
-                        if box.collides(other_box):  # Bad suggestion. Find more
-                            break
-                    else:  # didn't found collisions. Good suggestion, break the loop
-                        box.is_mapped = True
-                        mapped_boxes.append(box)
-                        suggestions.extend(filterfalse(
-                            lambda x: _is_out_of_bounds(x.position),
-                            box.suggest_positions()
-                        ))
-                        del suggestions[suggestion_i]
+                if _is_out_of_bounds(box.uv, box.size):
+                    continue
+                # Test if suggestion doesn't collide
+                for other_box in mapped_boxes:
+                    if box.collides(other_box):  # Bad suggestion. Find more
                         break
+                else:  # didn't found collisions. Good suggestion, break the loop
+                    # This modifies the suggestion list but it's ok because
+                    # we are breaking the loop
+                    box.is_mapped = True
+                    mapped_boxes.append(box)
+                    del suggestions[suggestion_i]
+                    for s in box.suggest_positions():
+                        if _is_out_of_bounds(s.position):
+                            continue
+                        bisect.insort(suggestions, s)
+                    break
             else:  # No good suggestion found for current box.
                 box.uv = (0, 0)
                 raise NotEnoughTextureSpace()
