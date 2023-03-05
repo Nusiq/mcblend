@@ -335,6 +335,8 @@ class UvMcCube(McblendObjUvBox):
         self.side6 = UvMcCubeFace(
             self, cube_polygons.down, (width, -depth),
             thisobj.side6_uv_masks, uv=(depth + width, depth))
+
+        self._uv: Vector2di = (0, 0)
         super().__init__(size, None)
 
     @property  # type: ignore
