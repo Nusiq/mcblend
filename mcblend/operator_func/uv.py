@@ -81,9 +81,12 @@ class Suggestion(NamedTuple):
     corner: UvCorner
 
     def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Suggestion):
+            raise NotImplementedError(
+                "Suggestions can only be compared to other suggestions.")
         return self.position == other.position and self.corner == other.corner
 
-    def __lt__(self, other):
+    def __lt__(self, other: object):
         '''
         Returns True if this suggestion is smaller than other suggestion.
 
@@ -96,6 +99,9 @@ class Suggestion(NamedTuple):
         possible. Using regular euclidean distance would give very similar
         results.
         '''
+        if not isinstance(other, Suggestion):
+            raise NotImplementedError(
+                "Suggestions can only be compared to other suggestions.")
         self_distance = max(self.position)
         other_distance = max(other.position)
         if self_distance == other_distance:
