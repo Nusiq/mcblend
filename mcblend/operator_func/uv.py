@@ -10,8 +10,9 @@ from functools import total_ordering
 import bisect
 
 import numpy as np
+import bpy
 
-from .typed_bpy_access import get_loop_indices
+from .typed_bpy_access import get_loop_indices, get_data_uv_layers
 from .texture_generator import Mask
 from .exception import NotEnoughTextureSpace
 from .json_tools import get_vect_json
@@ -565,6 +566,73 @@ class UvGroup(McblendObjUvBox):
             obj.new_uv_layer()
 
 
+class UvModelMerger(McblendObjUvBox):
+    '''
+    An object based on McblendObjUvBox used for merging multiple models. It
+    takes the data of a single model and its texture, and can be used with the
+    UvMapper to merge multiple models into one.
+
+    During the merging process the UV of entire model needs to be moved so it
+    won't overlap with another model, but the relations between the UVs of
+    the individual images need to be kept.
+    '''
+
+    def __init__(
+            self, model: McblendObjectGroup, base_image: bpy.types.Image ):
+        self.model = model
+        self.base_image = base_image
+        super().__init__(self.base_image_size)
+
+    @property
+    def base_image_size(self) -> Vector2di:
+        return tuple(self.base_image.size)
+
+    def get_reverse_converter(self) -> CoordinatesConverter:
+        '''
+        Gets a converter that converts from Blender coordinates [0, 1] to
+        Minecraft coordinates assuming the image size is self.base_image_size.
+        '''
+        return CoordinatesConverter(
+            np.array([[0, 1], [0, 1]]),
+            np.array([
+                [0, self.base_image_size[0]],
+                [self.base_image_size[1], 0]])
+        )
+
+    def new_uv_layer(self):
+        # for obj in self.model.values():
+        #     if obj.obj_type != 'MESH':
+        #         continue
+        #     get_data_uv_layers(obj.thisobj).new()
+        raise RuntimeError(
+            'This type of object only moves the UVs, it should never create a '
+            'new UV layer')
+
+    def clear_uv_layers(self):
+        raise RuntimeError(
+            'This type of object only moves the UVs, it should never clear the '
+            'UV layers')
+
+    def set_blender_uv(self, converter: CoordinatesConverter):
+        reverse_converter = self.get_reverse_converter()
+        offset = np.array(self.uv)
+        for obj in self.model.values():
+            if obj.obj_type != 'MESH':
+                continue
+            active_uv_layer = get_data_uv_layers(obj.thisobj).active
+            if active_uv_layer is None:
+                continue  # Unmapped objects remain unmapped
+            for i in range(len(active_uv_layer.data)):
+                # The UV values on the old texture (as if the image was
+                # self.base_image_size)
+                uv = reverse_converter.convert(active_uv_layer.data[i].uv)
+                # Shift the UV values by the newly assigned UV
+                uv = uv + offset
+                # Convert the UV values to the new texture and apply
+                active_uv_layer.data[i].uv = converter.convert(uv)
+
+
+
 class UvMapper:
     '''
     A class that helps with UV mapping.
@@ -687,3 +755,6 @@ class UvMapper:
             else:  # No good suggestion found for current box.
                 box.uv = (0, 0)
                 raise NotEnoughTextureSpace()
+            if allow_expanding:
+                self.width = max(self.width, box.uv[0] + box.size[0])
+                self.height = max(self.height, box.uv[1] + box.size[1])
