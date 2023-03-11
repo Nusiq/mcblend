@@ -12,7 +12,8 @@ import bisect
 import numpy as np
 import bpy
 
-from .typed_bpy_access import get_loop_indices, get_data_uv_layers
+from .typed_bpy_access import (
+    get_loop_indices, get_data_uv_layers, get_uv, set_uv)
 from .texture_generator import Mask
 from .exception import NotEnoughTextureSpace
 from .json_tools import get_vect_json
@@ -585,7 +586,7 @@ class UvModelMerger(McblendObjUvBox):
 
     @property
     def base_image_size(self) -> Vector2di:
-        return tuple(self.base_image.size)
+        return tuple(self.base_image.size)  # type: ignore
 
     def get_reverse_converter(self) -> CoordinatesConverter:
         '''
@@ -622,14 +623,14 @@ class UvModelMerger(McblendObjUvBox):
             active_uv_layer = get_data_uv_layers(obj.thisobj).active
             if active_uv_layer is None:
                 continue  # Unmapped objects remain unmapped
-            for i in range(len(active_uv_layer.data)):
+            for i in range(len(active_uv_layer.data)):  # type: ignore
                 # The UV values on the old texture (as if the image was
                 # self.base_image_size)
-                uv = reverse_converter.convert(active_uv_layer.data[i].uv)
+                uv = reverse_converter.convert(get_uv(active_uv_layer.data[i]))
                 # Shift the UV values by the newly assigned UV
                 uv = uv + offset
                 # Convert the UV values to the new texture and apply
-                active_uv_layer.data[i].uv = converter.convert(uv)
+                set_uv(active_uv_layer.data[i], converter.convert(uv))
 
 
 

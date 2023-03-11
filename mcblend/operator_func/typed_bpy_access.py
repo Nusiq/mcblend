@@ -235,6 +235,12 @@ def get_parent(obj):
     '''
     return obj.parent
 
+def get_pixels(obj):
+    '''
+    >>> obj.pixels[:]
+    '''
+    return obj.pixels[:]
+
 def get_pose_bones(obj):
     '''
     >>> obj.pose.bones
@@ -318,11 +324,24 @@ def get_timeline_markers(obj):
     '''
     return obj.timeline_markers
 
+def get_uv(obj):
+    '''
+    >>> obj.uv
+    '''
+    return obj.uv
+
 def get_uv_layers(obj):
     '''
     >>> obj.uv_layers
     '''
     return obj.uv_layers
+
+
+def get_view_layer_objects_active(context):
+    '''
+    >>> context.view_layer.objects.active
+    '''
+    return context.view_layer.objects.active
 
 def getitem(obj, index):
     '''
@@ -481,6 +500,20 @@ def set_use_clamp(obj, use_clamp):
     >>> obj.use_clamp = use_clamp
     '''
     obj.use_clamp = use_clamp
+
+def set_uv(obj, uv):
+    '''
+    >>> obj.uv = uv
+    '''
+    obj.uv = uv
+
+def set_view_layer_objects_active(context, value):
+    '''
+    Sets the active object in context
+
+    >>> context.view_layer.objects.active = value
+    '''
+    context.view_layer.objects.active = value
 
 def subtract(obj1, obj2):
     '''

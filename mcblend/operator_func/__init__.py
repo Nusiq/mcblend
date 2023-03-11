@@ -27,7 +27,8 @@ from .typed_bpy_access import (
     get_material_slots, set_constraint_property, set_pixels,
     set_matrix_parent_inverse, set_matrix_world,
     set_parent, set_pose_bone_constraint_property,
-    get_data_materials)
+    get_data_materials, get_pixels, set_view_layer_objects_active,
+    get_view_layer_objects_active)
 
 from .sqlite_bedrock_packs.better_json import load_jsonc
 
@@ -900,7 +901,7 @@ def merge_models(context: Context) -> None:
     # DIM0:up axis DIM1:right axis DIM2:rgba axis
     arr = np.zeros([image.size[1], image.size[0], 4])
     for merger in uv_mergers:
-        pixels = np.array(merger.base_image.pixels[:])
+        pixels = np.array(get_pixels(merger.base_image))
         merger.base_image_size
         pixels = pixels.reshape([
             merger.base_image_size[1], merger.base_image_size[0], 4
@@ -923,16 +924,16 @@ def merge_models(context: Context) -> None:
         merger.set_blender_uv(converter)
 
     # MERGE THE ARMATURES
-    context.view_layer.objects.active = armatures[0]
+    set_view_layer_objects_active(context, armatures[0])
     for i, obj in enumerate(armatures):
         # Update bone names
-        for bone in obj.data.bones:
-            bone.name = f'{i}_{bone.name}'
+        for bone in get_data_bones(obj):
+            bone.name = f'{bone.name}_{i}'
         # Select the object for merging
         obj.select_set(True)
     bpy.ops.object.join()
     # CREATE A NEW RENDER CONTROLLER FOR THE MODEL
-    active_obj = context.view_layer.objects.active
+    active_obj = get_view_layer_objects_active(context)
     rcs = get_mcblend(active_obj).render_controllers
     rcs.clear()
     rc = rcs.add()
