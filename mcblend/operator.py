@@ -1938,13 +1938,13 @@ class MCBLEND_OT_MergeModels(Operator):
     bl_options = {'REGISTER', 'UNDO'}
     bl_description = (
         "Merge models of all selected armatures and create new textures for "
-        "them."
+        "them"
     )
 
     def draw(self, context):
         layout = self.layout
         layout.label(
-            text="You're about to merge multiple using their main textures.")
+            text="You're about to merge multiple using their main textures")
         row = layout.row()
         # layout.operator("mcblend.fix_uv")
         selected_objects = get_selected_objects(context)

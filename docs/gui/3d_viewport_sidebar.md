@@ -8,14 +8,18 @@ The 3D viewport sidebar includes a new `Mcblend` section, which has two panels. 
 
 ## Operators
 ### UV mapping panel
-- `Fix invalid UV mapping` - operator used to fix invalid UV mapping of the model's cuboids. All faces of the cuboids in the Minecraft model must be rectangular and have a certain rotation. This operator ensures that these conditions are true.
-- `Set the UV group` - adds the selected objects to one of the existing UV groups.
+- `Fix invalid UV mapping` - Operator used to fix invalid UV mapping of the model's cuboids. All faces of the cuboids in the Minecraft model must be rectangular and have a certain rotation. This operator ensures that these conditions are true.
+- `Set the UV group` - Adds the selected objects to one of the existing UV groups.
 - `Clear UV group` - It removes selected objects from UV groups.
 
 ### Mesh Transformations panel
+
 - `Inflate` - Inflates the selected object using Minecraft's inflate property. Running this operator opens a panel in the bottom left corner of the 3D viewport. You can use this panel to adjust the `inflate` value.
 - `Separate and align cubes` - Detects cubes grouped in a single mesh and splits them into separate objects. Unlike the vanilla Blender operator (`Mesh -> Separate`), the `Separate and align cubes` operator from Mcblend is designed for working with cuboids and can detect their rotations.
+
+## Automation panel
 - `Prepare physics simulation` - Automatically creates objects, which can be used for physics simulation.
+- `Merge models` - Merges simple models, creates a common texture file for them and moves their UV coordinates to the correct position on the new texture.
 
 ## Resurce Pack panel
 The Resource Pack panel in Mcblend allows you to connect a resource pack to your project. Once you open Blender, you will see a single button called `Load Resource Pack`. This button loads information about the entities and attachable items that are available for import.
