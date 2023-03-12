@@ -8,7 +8,7 @@ from json.decoder import JSONDecodeError
 from typing import Any, List, Optional, Dict, Any, Set
 
 import bpy
-from bpy.types import Operator, Context
+from bpy.types import Operator, Context, Object
 from bpy.props import (
     StringProperty, FloatProperty, EnumProperty, BoolProperty, IntProperty)
 from bpy_extras.io_utils import ExportHelper, ImportHelper
@@ -27,7 +27,8 @@ from .operator_func.material import MATERIALS_MAP
 from .operator_func import (
     export_model, export_animation, fix_uvs, separate_mesh_cubes, set_uvs,
     import_model, inflate_objects, load_rp_to_mcblned, unload_rps,
-    import_model_form_project, apply_materials, prepare_physics_simulation)
+    import_model_form_project, apply_materials, prepare_physics_simulation,
+    merge_models)
 from .operator_func.rp_importer import get_pks_for_model_improt
 from .operator_func.sqlite_bedrock_packs.better_json import (
     CompactEncoder, JSONCDecoder)
@@ -200,7 +201,8 @@ class MCBLEND_OT_MapUv(Operator):
             #             f"Object: {obj.name}; Frame: 0.")
             #         return {'FINISHED'}
             set_uvs(context)
-        except NotEnoughTextureSpace:
+        except NotEnoughTextureSpace as e:
+            raise e
             self.report(
                 {'ERROR'},
                 "Not enough texture space to create UV mapping.")
@@ -1903,7 +1905,7 @@ class MCBLEND_OT_FakeRcApplyMaterials(Operator):
         apply_materials(context)
         return {'FINISHED'}
 
-# Physics
+# Automation
 class MCBLEND_OT_PreparePhysicsSimulation(Operator):
     '''Operator used for adding objects used for rigid body simulation.'''
     # pylint: disable=unused-argument, no-member
@@ -1923,4 +1925,55 @@ class MCBLEND_OT_PreparePhysicsSimulation(Operator):
 
     def execute(self, context):
         prepare_physics_simulation(context)
+        return {'FINISHED'}
+
+class MCBLEND_OT_MergeModels(Operator):
+    '''
+    Merges all selected models. A model can be selected by selecting its
+    armature. The merge models operation also creates new combined textures
+    so that they can be easily imported into Minecraft.
+    '''
+    # pylint: disable=unused-argument, no-member
+    bl_idname = "mcblend.merge_models"
+    bl_label = "Merge models"
+    bl_options = {'REGISTER', 'UNDO'}
+    bl_description = (
+        "Merge models of all selected armatures and create new textures for "
+        "them"
+    )
+
+    def draw(self, context):
+        layout = self.layout
+        layout.label(
+            text="You're about to merge multiple using their main textures")
+        row = layout.row()
+        # layout.operator("mcblend.fix_uv")
+        selected_objects = get_selected_objects(context)
+        for obj in selected_objects:
+            if obj.type != 'ARMATURE':
+                continue
+            obj_mcblend = get_mcblend(obj)
+            if len(obj_mcblend.render_controllers) == 0:
+                continue
+            rc = obj_mcblend.render_controllers[0]
+            row = layout.row()
+            row.label(text=f'geometry.{obj_mcblend.model_name}')
+            row.label(text=rc.texture)
+
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self)
+
+    @classmethod
+    def poll(cls, context: Context):
+        if context.mode != 'OBJECT':
+            return False
+        selected_objects = get_selected_objects(context)
+        for obj in selected_objects:
+            if obj.type == 'ARMATURE':
+                return True
+        return False
+
+    def execute(self, context):
+        merge_models(context)
         return {'FINISHED'}

@@ -1,3 +1,4 @@
+(exporting-models)=
 # Exporting models
 
 This section explains how to export Minecraft models and mentions some additional settings that can be configured before exporting.

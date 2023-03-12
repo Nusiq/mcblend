@@ -27,7 +27,8 @@ from .typed_bpy_access import (
     get_material_slots, set_constraint_property, set_pixels,
     set_matrix_parent_inverse, set_matrix_world,
     set_parent, set_pose_bone_constraint_property,
-    get_data_materials)
+    get_data_materials, get_pixels, set_view_layer_objects_active,
+    get_view_layer_objects_active)
 
 from .sqlite_bedrock_packs.better_json import load_jsonc
 
@@ -40,7 +41,7 @@ from .extra_types import Vector2di
 from .importer import ImportGeometry, ModelLoader
 from .material import create_bone_material
 from .model import ModelExport
-from .uv import CoordinatesConverter, UvMapper
+from .uv import CoordinatesConverter, UvMapper, UvModelMerger
 from .db_handler import get_db_handler
 from .rp_importer import PksForModelImport
 
@@ -151,7 +152,8 @@ def set_uvs(context: Context):
     if use_armature_origin:
         origin = armature
     mcblend_obj_group = McblendObjectGroup(armature, origin)
-    mapper = UvMapper(width, height, mcblend_obj_group)
+    mapper = UvMapper(width, height)
+    mapper.append_for_uv_mapping(mcblend_obj_group)
     mapper.plan_uv(allow_expanding)
 
     # Replace old mappings
@@ -855,3 +857,89 @@ def prepare_physics_simulation(context: Context) -> Dict:
         rbc.rigid_body_constraint.object2 = parent_rb
 
     return result
+
+def merge_models(context: Context) -> None:
+    '''
+    Merges models of all of the selected armatures and creates a common
+    render controller and texture for them.
+    '''
+
+    # GET OBJECTS TO MERGE
+    uv_mergers: list[UvModelMerger] = []
+    armatures: list[Object] = []
+    for obj in get_selected_objects(context):
+        # Deselect every object (for later)
+        obj.select_set(False)
+        # Exclude unwanted objects
+        if obj.type != 'ARMATURE':
+            continue
+        obj_mcblend = get_mcblend(obj)
+        if len(obj_mcblend.render_controllers) == 0:
+            continue
+        base_image = bpy.data.images[obj_mcblend.render_controllers[0].texture]
+
+        # Create a merger object
+        use_armature_origin: bool = (
+            obj_mcblend.model_origin == ModelOriginType.ARMATURE.value)
+        entity = McblendObjectGroup(obj, obj if use_armature_origin else None)
+        merger = UvModelMerger(entity, base_image)
+
+        # Append the merger object
+        uv_mergers.append(merger)
+        armatures.append(obj)
+
+    # PLAN UVS - rearrange the UVs of the objectss
+    mapper = UvMapper(0, 0)
+    mapper.uv_boxes.extend(uv_mergers)
+    mapper.plan_uv(True)
+
+    # CREATE A NEW TEXTURE
+    image = get_data_images().new(
+        "merged", mapper.width, mapper.height, alpha=True)
+
+    # This array represents new texture
+    # DIM0:up axis DIM1:right axis DIM2:rgba axis
+    arr = np.zeros([image.size[1], image.size[0], 4])
+    for merger in uv_mergers:
+        pixels = np.array(get_pixels(merger.base_image))
+        merger.base_image_size
+        pixels = pixels.reshape([
+            merger.base_image_size[1], merger.base_image_size[0], 4
+        ])
+        # Paste the image into the texture
+        min_x = merger.uv[0]
+        max_x = min_x+merger.base_image_size[0]
+        # Y is flipped on the array
+        min_y = mapper.height-merger.uv[1]-merger.base_image_size[1]
+        max_y = mapper.height-merger.uv[1]
+        arr[min_y:max_y, min_x:max_x] = pixels
+    set_pixels(image, arr.ravel())  # Apply texture pixels values
+
+    # APPLY THE UVs
+    converter = CoordinatesConverter(
+        np.array([[0, mapper.width], [0, mapper.height]]),
+        np.array([[0, 1], [1, 0]])
+    )
+    for i, merger in enumerate(uv_mergers):
+        merger.set_blender_uv(converter)
+
+    # MERGE THE ARMATURES
+    set_view_layer_objects_active(context, armatures[0])
+    for i, obj in enumerate(armatures):
+        # Update bone names
+        for bone in get_data_bones(obj):
+            bone.name = f'{bone.name}_{i}'
+        # Select the object for merging
+        obj.select_set(True)
+    bpy.ops.object.join()
+    # CREATE A NEW RENDER CONTROLLER FOR THE MODEL
+    active_obj = get_view_layer_objects_active(context)
+    rcs = get_mcblend(active_obj).render_controllers
+    rcs.clear()
+    rc = rcs.add()
+    rc.texture = image.name
+    material = rc.materials.add()
+    material.pattern = '*'
+    material.material = 'entity_alphatest'
+    # APPLY THE RENDER CONTROLLER
+    apply_materials(context)

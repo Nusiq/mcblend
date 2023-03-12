@@ -63,6 +63,7 @@ from .operator import (
     MCBLEND_OT_FakeRcSMaterailSelectTemplate,
     MCBLEND_OT_FakeRcApplyMaterials,
     MCBLEND_OT_PreparePhysicsSimulation,
+    MCBLEND_OT_MergeModels,
 )
 
 from .common_data import (
@@ -115,7 +116,7 @@ bl_info = {
     "author": "Artur",
     "description": "An addon that allows to design and animate Minecraft Bedrock Edition models",
     "blender": (3, 3, 0),
-    "version": (10, 1, 0),  # Remember to update the version in the "docs/conf.py"
+    "version": (10, 2, 0),  # Remember to update the version in the "docs/conf.py"
     "location": "",
     "warning": "",
     "category": "Object"
@@ -212,6 +213,7 @@ classes = (
     MCBLEND_OT_FakeRcSMaterailSelectTemplate,
     MCBLEND_OT_FakeRcApplyMaterials,
     MCBLEND_OT_PreparePhysicsSimulation,
+    MCBLEND_OT_MergeModels,
 )
 
 def register():

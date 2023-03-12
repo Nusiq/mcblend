@@ -674,15 +674,21 @@ class MCBLEND_PT_OperatorsPanel(Panel):
     def draw(self, context):
         col = self.layout.column()
         box = col.box().column()
+        # UV mapping
         box.label(text="UV mapping")
         box.operator("mcblend.fix_uv")
         box.operator("mcblend.uv_group")
         box.operator("mcblend.clear_uv_group")
         box = col.box().column()
+        # Mesh transformations
         box.label(text="Mesh Transformations")
         box.operator("mcblend.set_inflate")
         box.operator("mcblend.separate_mesh_cubes")
+        # Automation
+        box = col.box().column()
+        box.label(text="Automation")
         box.operator("mcblend.prepare_physics_simulation")
+        box.operator("mcblend.merge_models")
 
 # Resource pack panel
 class MCBLEND_PT_ProjectPanel(Panel):
