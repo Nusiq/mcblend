@@ -1,3 +1,4 @@
+(world-unit-scale)=
 # World unit scale
 By default, 1 meter in Blender is equal to one block in Minecraft. One
 Minecraft meter is 16 units of length of the model. You might want to

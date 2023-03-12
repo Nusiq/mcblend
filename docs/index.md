@@ -18,6 +18,7 @@ Cubes vs Polymeshes <modeling/cubes_vs_polymeshes>
 The inflate property <modeling/inflate_property>
 Fixing invalid cubes <modeling/fixing_invalid_cubes>
 Attachable item models <modeling/attachable_item_models>
+Merging models <modeling/merging_models>
 ```
 
 ```{toctree}
@@ -62,7 +63,9 @@ Mcblend Blender Template <tips_and_tricks/mcblend_blender_template>
 Enabling subframes <tips_and_tricks/enabling_subframes>
 Matching framerate <tips_and_tricks/matching_framerate>
 World unit scale <tips_and_tricks/world_unit_scale>
+Using Mcblend to decorate the levels in the game <tips_and_tricks/using_mcblend_to_decorate_the_levels_in_the_game>
 ```
+
 
 # Overview
 Mcblend is a Blender plugin designed for Minecraft creators. It enables users to create and modify Minecraft Bedrock Edition models within the Blender interface. With Mcblend, creators can use Blender's tools to design and texture new models for Minecraft, or bring existing models into Blender for further editing. Mcblend is a useful tool for anyone looking to use Blender's powerful 3D modeling and animation tools to enhance their Minecraft creations.

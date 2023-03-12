@@ -201,7 +201,8 @@ class MCBLEND_OT_MapUv(Operator):
             #             f"Object: {obj.name}; Frame: 0.")
             #         return {'FINISHED'}
             set_uvs(context)
-        except NotEnoughTextureSpace:
+        except NotEnoughTextureSpace as e:
+            raise e
             self.report(
                 {'ERROR'},
                 "Not enough texture space to create UV mapping.")
@@ -1956,7 +1957,7 @@ class MCBLEND_OT_MergeModels(Operator):
                 continue
             rc = obj_mcblend.render_controllers[0]
             row = layout.row()
-            row.label(text=obj_mcblend.model_name)
+            row.label(text=f'geometry.{obj_mcblend.model_name}')
             row.label(text=rc.texture)
 
 
