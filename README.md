@@ -15,7 +15,7 @@ User guides and installation instructions can be found on the project site:
 https://mcblend.readthedocs.io
 
 ### 💬 Contact
-Feel free to reach out to me on the #mcblend channel of the [Bedrock OSS](https://discord.gg/xBfHrMC2) Discord with any questions or comments about the project.
+Feel free to reach out to me on the #mcblend channel of the [Bedrock OSS](https://discord.gg/pj76EwwYRW) Discord with any questions or comments about the project.
 
 ## 💡 Planned features
 Some of the planned features for the Mcblend project can be found in the ["Issues"](https://github.com/Nusiq/mcblend/issues) tab of this repository.
