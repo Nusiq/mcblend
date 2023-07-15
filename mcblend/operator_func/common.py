@@ -696,7 +696,8 @@ class CubePolygon(NamedTuple):
         from the uv_layer. The order of the coordinates in the array is
         defined by self.order (left bottom, right bottom, right top, left top)
         '''
-        ordered_loop_indices = np.array(self.side.loop_indices)[[self.order]]
+        # The indexing must be a tuple to work with numpy, see issue  #111
+        ordered_loop_indices = np.array(self.side.loop_indices)[(self.order,)]
         crds = np.array([get_data(uv_layer)[i].uv for i in ordered_loop_indices])
         return crds
 
