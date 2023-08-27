@@ -30,7 +30,7 @@ from .typed_bpy_access import (
     get_data_materials, get_pixels, set_view_layer_objects_active,
     get_view_layer_objects_active)
 
-from .sqlite_bedrock_packs.better_json import load_jsonc
+from .sqlite_bedrock_packs.better_json_tools import load_jsonc
 
 from .animation import AnimationExport
 from .common import (

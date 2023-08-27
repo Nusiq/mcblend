@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from pathlib import Path
-from .sqlite_bedrock_packs import load_rp, create_db, open_db
+from .sqlite_bedrock_packs import Database
+# load_rp
 from typing import Optional
 
 # Don't use lru_cache(maxsize=1) sometimes there are more than 1 lists of the
@@ -15,13 +16,13 @@ def get_db_handler() -> DbHandler:
 
 class DbHandler:
     def __init__(self):
-        self.db = create_db()
+        self.db = Database.create()
         self.is_loaded = False
 
     def load_db_from_file(self, path: Path):
         '''Loads existing database from a file.'''
         self.db.close()
-        self.db = open_db(path)  # type: ignore
+        self.db = Database.open(path)  # type: ignore
         self.is_loaded = True
 
     def _clear_cache(self):
@@ -48,7 +49,7 @@ class DbHandler:
     def delete_db(self):
         '''Delete all data from the database.'''
         self._clear_cache()
-        self.db.execute('DELETE FROM ResourcePack;')
+        self.db.connection.execute('DELETE FROM ResourcePack;')
         self.is_loaded = False
 
     def load_resource_pack(self, path: Path):
@@ -57,17 +58,15 @@ class DbHandler:
         # otherwise load_rp() function would fail if the RP with that path is
         # already loaded.
         self._clear_cache()
-        self.db.execute(
+        self.db.connection.execute(
             'DELETE FROM ResourcePack WHERE path = ?;', (path.as_posix(),))
-        load_rp(
-            self.db, path,
-            include=(
+        self.db.load_rp(
+            path, include=(
                 "client_entities",
                 "attachables",
                 "geometries",
                 "render_controllers",
-                "textures",
-            )
+                "textures")
         )
         self.is_loaded = True
 
@@ -110,7 +109,7 @@ class DbHandler:
         return [
             (str(identifier), str(name), str(description))
             for identifier, name, description in
-            self.db.execute(query, (rc_pk, entity_pk, bone_name_pattern))
+            self.db.connection.execute(query, (rc_pk, entity_pk, bone_name_pattern))
         ]
 
     @cache
@@ -152,7 +151,7 @@ class DbHandler:
         return [
             (str(identifier), str(name), str(description))
             for identifier, name, description in
-            self.db.execute(query, (rc_pk, attachable_pk, bone_name_pattern))
+            self.db.connection.execute(query, (rc_pk, attachable_pk, bone_name_pattern))
         ]
 
     @cache
@@ -182,7 +181,7 @@ class DbHandler:
         return [
             (str(identifier), str(name), str(description))
             for identifier, name, description in
-            self.db.execute(query, (entity_pk,))
+            self.db.connection.execute(query, (entity_pk,))
         ]
 
     @cache
@@ -212,7 +211,7 @@ class DbHandler:
         return [
             (str(identifier), str(name), str(description))
             for identifier, name, description in
-            self.db.execute(query, (attachable_pk,))
+            self.db.connection.execute(query, (attachable_pk,))
         ]
 
     @cache
@@ -271,7 +270,7 @@ class DbHandler:
         return [
             (str(geometry_pk), str(short_name), str(identifier))
             for geometry_pk, short_name, identifier in
-            self.db.execute(query, (rc_pk, entity_pk))
+            self.db.connection.execute(query, (rc_pk, entity_pk))
         ]
 
     @cache
@@ -330,7 +329,7 @@ class DbHandler:
         return [
             (str(geometry_pk), str(short_name), str(identifier))
             for geometry_pk, short_name, identifier in
-            self.db.execute(query, (rc_pk, attachable_pk))
+            self.db.connection.execute(query, (rc_pk, attachable_pk))
         ]
 
     @cache
@@ -372,7 +371,7 @@ class DbHandler:
         return [
             (str(geometry_pk), str(short_name), str(identifier))
             for geometry_pk, short_name, identifier in
-            self.db.execute(query, (entity_pk,))
+            self.db.connection.execute(query, (entity_pk,))
         ]
 
     @cache
@@ -414,7 +413,7 @@ class DbHandler:
         return [
             (str(geometry_pk), str(short_name), str(identifier))
             for geometry_pk, short_name, identifier in
-            self.db.execute(query, (attachable_pk,))
+            self.db.connection.execute(query, (attachable_pk,))
         ]
 
     @cache
@@ -468,7 +467,7 @@ class DbHandler:
         '''
         result = []
         not_found_counter = 0
-        for texture_pk, short_name, path in self.db.execute(
+        for texture_pk, short_name, path in self.db.connection.execute(
                 query, (rc_pk, entity_pk)):
             if texture_pk is None:
                 texture_pk = f'not_found_{not_found_counter}'
@@ -532,7 +531,7 @@ class DbHandler:
         '''
         result = []
         not_found_counter = 0
-        for texture_pk, short_name, path in self.db.execute(
+        for texture_pk, short_name, path in self.db.connection.execute(
                 query, (rc_pk, attachable_pk)):
                 
             if texture_pk is None:
@@ -592,7 +591,7 @@ class DbHandler:
                 path.as_posix()
             )
             for texture_pk, short_name, path in
-            self.db.execute(query, (entity_pk,))
+            self.db.connection.execute(query, (entity_pk,))
         ]
 
     @cache
@@ -640,7 +639,7 @@ class DbHandler:
                 path.as_posix()
             )
             for texture_pk, short_name, path in
-            self.db.execute(query, (attachable_pk,))
+            self.db.connection.execute(query, (attachable_pk,))
         ]
 
     @cache
@@ -686,7 +685,7 @@ class DbHandler:
         return [
             (rc_pk, identifier)
             for rc_pk, identifier in
-            self.db.execute(query, (entity_pk,))
+            self.db.connection.execute(query, (entity_pk,))
         ]
 
     @cache
@@ -732,7 +731,7 @@ class DbHandler:
         return [
             (rc_pk, identifier)
             for rc_pk, identifier in
-            self.db.execute(query, (attachable_pk,))
+            self.db.connection.execute(query, (attachable_pk,))
         ]
 
     @cache
@@ -749,7 +748,7 @@ class DbHandler:
         return [
             bone_name_pattern
             for bone_name_pattern, in
-            self.db.execute(query, (render_controller_pk,))
+            self.db.connection.execute(query, (render_controller_pk,))
         ]
 
     @cache
@@ -788,7 +787,7 @@ class DbHandler:
         return [
             (entity_pk, identifier)
             for entity_pk, identifier in
-            self.db.execute(query)
+            self.db.connection.execute(query)
         ]
 
     @cache
@@ -827,7 +826,7 @@ class DbHandler:
         return [
             (entity_pk, identifier)
             for entity_pk, identifier in
-            self.db.execute(query)
+            self.db.connection.execute(query)
         ]
 
     def get_texture_file_path(self, texture_file_pk: int) -> Path:
@@ -839,7 +838,7 @@ class DbHandler:
         FROM TextureFile
         WHERE TextureFile_pk == ?;
         '''
-        return self.db.execute(query, (texture_file_pk,)).fetchone()[0]
+        return self.db.connection.execute(query, (texture_file_pk,)).fetchone()[0]
 
     def get_geometry(self, geometry_pk: int) -> tuple[Path, str]:
         '''
@@ -859,7 +858,7 @@ class DbHandler:
             Geometry_pk == ?;
         '''
         return tuple(  # type: ignore
-            self.db.execute(query, (geometry_pk,)
+            self.db.connection.execute(query, (geometry_pk,)
         ).fetchone())
 
     def get_entity_material_pattern_and_material(
@@ -883,7 +882,7 @@ class DbHandler:
             ClientEntityMaterialField.ClientEntity_fk = ?
             AND RenderControllerMaterialsField_pk = ?;
         '''
-        return tuple(self.db.execute(  # type: ignore
+        return tuple(self.db.connection.execute(  # type: ignore
             query,
             (entity_pk, rc_material_field_pk)).fetchone()
         )
@@ -909,7 +908,7 @@ class DbHandler:
             AttachableMaterialField.Attachable_fk = ?
             AND RenderControllerMaterialsField_pk = ?;
         '''
-        return tuple(self.db.execute(  # type: ignore
+        return tuple(self.db.connection.execute(  # type: ignore
             query,
             (attachable_pk, rc_material_field_pk)).fetchone()
         )
@@ -927,4 +926,4 @@ class DbHandler:
         WHERE
             ClientEntityMaterialField_pk = ?;
         '''
-        return self.db.execute(query, (material_field_pk,)).fetchone()[0]
+        return self.db.connection.execute(query, (material_field_pk,)).fetchone()[0]

@@ -30,7 +30,7 @@ from .operator_func import (
     import_model_form_project, apply_materials, prepare_physics_simulation,
     merge_models)
 from .operator_func.rp_importer import get_pks_for_model_improt
-from .operator_func.sqlite_bedrock_packs.better_json import (
+from .operator_func.sqlite_bedrock_packs.better_json_tools import (
     CompactEncoder, JSONCDecoder)
 from .operator_func.exception import NotEnoughTextureSpace, ImporterException
 from .operator_func.texture_generator import (
