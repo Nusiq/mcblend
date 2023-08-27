@@ -241,7 +241,7 @@ def update_selected_entity(self, context) -> None:
     db_handler = get_db_handler()
     for rc_pk, rc_identifier in db_handler.list_entity_render_controllers(pk):
         rc = self.entity_render_controllers.add()
-        rc.primary_key = -1 if rc_pk is None else rc_pk 
+        rc.primary_key = -1 if rc_pk is None else rc_pk
         rc.identifier = rc_identifier
         rc.active_entity_pk = pk
         for pattern in db_handler.list_bone_name_patterns(rc_pk):
@@ -265,7 +265,7 @@ def update_selected_attachable(self, context) -> None:
     db_handler = get_db_handler()
     for rc_pk, rc_identifier in db_handler.list_attachable_render_controllers(pk):
         rc = self.attachable_render_controllers.add()
-        rc.primary_key = -1 if rc_pk is None else rc_pk 
+        rc.primary_key = -1 if rc_pk is None else rc_pk
         rc.identifier = rc_identifier
         rc.active_attachable_pk = pk
         for pattern in db_handler.list_bone_name_patterns(rc_pk):

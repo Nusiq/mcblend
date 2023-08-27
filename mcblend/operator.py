@@ -1711,7 +1711,7 @@ class MCBLEND_OT_MoveFakeRc(Operator):
     bl_idname = "mcblend.move_fake_rc"
     bl_label = "Move render controller"
     bl_description = "Change the order of render controllers in this entity"
-    
+
     bl_options = {'UNDO', 'INTERNAL'}
 
     rc_index: IntProperty()  # type: ignore
