@@ -8,10 +8,11 @@ import math
 from enum import Enum
 from typing import (
     Deque, Dict, Iterator, NamedTuple, List, Optional, Tuple, Any, Iterable,
-    Sequence, cast)
+    Sequence, cast, TypeAlias, Literal, ClassVar)
 from collections import deque
 
 import numpy as np
+import numpy.typing as npt
 
 import bpy
 from bpy.types import MeshUVLoopLayer, Object, MeshPolygon, PoseBone, Context
@@ -26,7 +27,9 @@ from .typed_bpy_access import (
 from .texture_generator import Mask, ColorMask, get_masks_from_side
 from .exception import ExporterException
 
-MINECRAFT_SCALE_FACTOR = 16
+NumpyTable: TypeAlias = npt.NDArray[np.float64]
+
+MINECRAFT_SCALE_FACTOR = 16.0
 '''The scale convertion from blender to minecraft (16 units == 1 meter).'''
 
 ANIMATION_TIMESTAMP_PRECISION = 2
@@ -89,15 +92,22 @@ class McblendObject:
     :param group: The :class:`McblendObjectGroup` that stores all of the
         :class:`McblendObject`s being processed with this object.
     '''
+    thisobj_id: ObjectId
+    thisobj: Object
+    parentobj_id: ObjectId | None
+    children_ids: list[ObjectId]
+    mctype: MCObjType
+    group: McblendObjectGroup
+
     def __init__(
             self, thisobj_id: ObjectId, thisobj: Object,
-            parentobj_id: Optional[ObjectId], children_ids: List[ObjectId],
+            parentobj_id: ObjectId | None, children_ids: list[ObjectId],
             mctype: MCObjType, group: McblendObjectGroup):
         self.thisobj_id = thisobj_id
-        self.thisobj: Object = thisobj
-        self.parentobj_id: Optional[ObjectId] = parentobj_id
-        self.children_ids: List[ObjectId] = children_ids
-        self.mctype: MCObjType = mctype
+        self.thisobj = thisobj
+        self.parentobj_id = parentobj_id
+        self.children_ids = children_ids
+        self.mctype = mctype
         self.group = group
 
     @property
@@ -132,13 +142,13 @@ class McblendObject:
         get_mcblend(self.thisobj).inflate = inflate
 
     @property
-    def min_uv_size(self) -> np.ndarray:
+    def min_uv_size(self) -> NumpyTable:
         '''The lower UV size limit of this object.'''
         return np.array(
             get_mcblend(self.thisobj).min_uv_size)
 
     @min_uv_size.setter
-    def min_uv_size(self, min_uv_size: np.ndarray):
+    def min_uv_size(self, min_uv_size: NumpyTable):
         get_mcblend(self.thisobj).min_uv_size = cast(
             tuple[int, int, int],min_uv_size)
 
@@ -226,7 +236,7 @@ class McblendObject:
         return this_obj_matrix_world
 
     @property
-    def mcube_size(self) -> np.ndarray:
+    def mcube_size(self) -> NumpyTable:
         '''
         The cube size in Minecraft format based on the bounding box of the
         blender object wrapped inside this object.
@@ -236,7 +246,7 @@ class McblendObject:
         return (np.array(bound_box[6]) - np.array(bound_box[0]))[[0, 2, 1]]
 
     @property
-    def mccube_position(self) -> np.ndarray:
+    def mccube_position(self) -> NumpyTable:
         '''
         The cube position in Minecraft format based on the bounding box of
         the blender object wrapped inside this object.
@@ -244,7 +254,7 @@ class McblendObject:
         return np.array(self.obj_bound_box[0])[[0, 2, 1]]
 
     @property
-    def mcpivot(self) -> np.ndarray:
+    def mcpivot(self) -> NumpyTable:
         '''
         The pivot point of Minecraft object exported using this object.
         '''
@@ -298,7 +308,7 @@ class McblendObject:
 
     def get_mcrotation(
             self, other: Optional[McblendObject] = None
-        ) -> np.ndarray:
+        ) -> NumpyTable:
         '''
         Returns the Minecraft rotation of this object optionally in relation
         to the other :class:`McblendObject`.
@@ -324,7 +334,7 @@ class McblendObject:
             )
         else:
             result_euler = to_euler(self.obj_matrix_world, 'XZY')
-        result: np.ndarray = np.array(result_euler)[[0, 2, 1]]
+        result: NumpyTable = np.array(result_euler)[[0, 2, 1]]
         result = result * np.array([1, -1, 1])
         result = result * 180/math.pi  # math.degrees() for array
         return result
@@ -450,6 +460,11 @@ class McblendObject:
                 aptr.value = min(a, b)
         return tuple(i.value for i in groups)
 
+FaceName: TypeAlias = Literal[
+    'north', 'east', 'south', 'west', 'up', 'down']
+FacePattern: TypeAlias = Literal[
+    '---', '+--', '-+-', '++-', '--+', '+-+', '-++', '+++']
+
 # TODO - CubePolygonsSolver, CubePolygons and CubePolygon is a messy structure
 # maybe CubePolygonsSolver should be removed
 class CubePolygonsSolver:
@@ -465,7 +480,7 @@ class CubePolygonsSolver:
     - solution - a list of assigned positions of vertices (list of names like
         '+++').
     '''
-    FACE_PATTERNS = [
+    FACE_PATTERNS: ClassVar[list[list[FacePattern]]] = [
         ['---', '+--', '+-+', '--+'],  # Cube Front (north)
         ['--+', '-++', '-+-', '---'],  # Cube Right (east)
         ['-++', '+++', '++-', '-+-'],  # Cube Back (south)
@@ -473,10 +488,13 @@ class CubePolygonsSolver:
         ['--+', '+-+', '+++', '-++'],  # Cube Up (up)
         ['-+-', '++-', '+--', '---'],  # Cube Down (down)
     ]
-    FACE_NAMES = ['north', 'east', 'south', 'west', 'up', 'down']
+    FACE_NAMES: ClassVar[list[FaceName]] = [
+        'north', 'east', 'south', 'west', 'up', 'down']
 
     # key (side, is_mirrored) : value (names of the vertices)
-    MC_MAPPING_UV_ORDERS = {
+    MC_MAPPING_UV_ORDERS: ClassVar[
+        dict[tuple[FaceName, bool], tuple[str, str, str, str]]
+    ] = {
         ('east', False) :('-+-', '---', '--+', '-++'),
         ('north', False) :('---', '+--', '+-+', '--+'),
         ('west', False) :('+--', '++-', '+++', '+-+'),
@@ -491,17 +509,22 @@ class CubePolygonsSolver:
         ('down', True) :('++-', '-+-', '---', '+--'),
     }
 
+    p_options: list[list[str]]
+    polygons: Iterable[MeshPolygon]
+    solved: bool
+    solution: list[str | None]
+
     def __init__(
             self, p_options: List[List[str]],
             polygons: Iterable[MeshPolygon]):
         self.p_options = p_options
         self.polygons = polygons
         self.solved = False
-        self.solution: List[Optional[str]] = [None] * 8
+        self.solution = [None] * 8
 
     @staticmethod
     def _get_vertices_order(
-        name: str, mirror: bool,
+        name: FaceName, mirror: bool,
         bound_box_vertices: List[str | None]
     ) -> Tuple[int, int, int, int]:
         '''Gets the order of vertices for given cube polygon'''
@@ -547,7 +570,7 @@ class CubePolygonsSolver:
         '''
         used_face_patterns = [False]*6
         for polygon in self.polygons:
-            complete_face = [None]*4
+            complete_face: list[str | None] = [None]*4
             for i, vertex_index in enumerate(polygon.vertices):
                 complete_face[i] = self.solution[vertex_index]
             if None in complete_face:
@@ -690,7 +713,7 @@ class CubePolygon(NamedTuple):
     order: Tuple[int, int, int, int]
 
     def uv_layer_coordinates(
-            self, uv_layer: MeshUVLoopLayer) -> np.ndarray:
+            self, uv_layer: MeshUVLoopLayer) -> NumpyTable:
         '''
         Returns 4x2 numpy array with UV coordinates of this cube polygon loops
         from the uv_layer. The order of the coordinates in the array is
@@ -702,7 +725,7 @@ class CubePolygon(NamedTuple):
         return crds
 
     @staticmethod
-    def validate_rectangle_uv(crds: np.ndarray) -> Tuple[bool, bool, bool]:
+    def validate_rectangle_uv(crds: NumpyTable) -> Tuple[bool, bool, bool]:
         '''
         Takes an 4x2 array with UV coordinates of 4 points (left bottom,
         right bottom, right top, left top) and checks if they're mapped to
@@ -758,12 +781,13 @@ class McblendObjectGroup:
         transformation space of the animation. Animating that object is
         equivalent to animating everything else in opposite way.
     '''
-    def __init__(
-            self, armature: Object,
-            world_origin: Optional[Object]):
-        self.data: Dict[ObjectId, McblendObject] = {}
+    data: dict[ObjectId, McblendObject]
+    world_origin: Object | None
+
+    def __init__(self, armature: Object, world_origin: Optional[Object]):
+        self.data = {}
         '''the content of the group.'''
-        self.world_origin: Optional[Object] = world_origin
+        self.world_origin = world_origin
         self._load_objects(armature)
 
     def get_world_origin_matrix(self):
@@ -853,7 +877,7 @@ class McblendObjectGroup:
                     children_ids=[], mctype=MCObjType.LOCATOR, group=self)
                 self.data[parentobj_id].children_ids.append(obj_id)
 
-def cyclic_equiv(u: List, v: List) -> bool:
+def cyclic_equiv(u: list[Any], v: list[Any]) -> bool:
     '''
     Compare cyclic equivalency of two lists.
 
@@ -950,7 +974,7 @@ def fix_cube_rotation(obj: Object):
     set_matrix_local(obj, matmul_chain(
         loc_mat, counter_rotation, rot_mat, scl_mat))
 
-def get_vect_json(arr: Iterable) -> List[float]:
+def get_vect_json(arr: Iterable) -> list[float]:
     '''
     Changes the iterable of numbers into basic python list of floats.
     Values from the original iterable are rounded to the 3rd deimal

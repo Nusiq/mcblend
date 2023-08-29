@@ -4,9 +4,9 @@ Functions related to exporting animations.
 from __future__ import annotations
 
 from typing import NamedTuple, Dict, Optional, List, Tuple, Set, cast
-import math
+import math # pyright: ignore[reportShadowedImports]
 from dataclasses import dataclass, field
-from itertools import tee, islice
+from itertools import tee, islice  # pyright: ignore[reportShadowedImports]
 
 import bpy
 from bpy.types import Action, Context
@@ -15,19 +15,19 @@ from decimal import Decimal
 import numpy as np
 
 from .typed_bpy_access import (
-    get_fcurves, get_keyframe_points, get_nla_tracks, get_selected_objects,
+    get_fcurves, get_keyframe_points, get_nla_tracks,
     get_strips, get_timeline_markers)
 from .json_tools import get_vect_json
 from .common import (
     AnimationLoopType, MINECRAFT_SCALE_FACTOR, MCObjType, McblendObjectGroup,
-    ANIMATION_TIMESTAMP_PRECISION,
+    ANIMATION_TIMESTAMP_PRECISION, NumpyTable
 )
 
 
 def _pick_closest_rotation(
-        base: np.ndarray, close_to: np.ndarray,
-        original_rotation: Optional[np.ndarray] = None
-    ) -> np.ndarray:
+        base: NumpyTable, close_to: NumpyTable,
+        original_rotation: Optional[NumpyTable] = None
+    ) -> NumpyTable:
     '''
     Takes two arrays with euler rotations in degrees. Looks for rotations
     that result in same orientation ad the base rotation. Picks the vector
@@ -37,7 +37,7 @@ def _pick_closest_rotation(
     bones rotated before the animation. Issue #25 on Github describes the
     problem in detail.
 
-    :base: np.ndarray: the base rotation. Function is looking for different
+    :base: NumpyTable: the base rotation. Function is looking for different
         representations of this orientation.
     :param close_to: target rotation. Function returns the result as close
         as possible to this vector.
@@ -50,9 +50,9 @@ def _pick_closest_rotation(
         original_rotation = np.array([0.0, 0.0, 0.0])
 
     def _pick_closet_location(
-            base: np.ndarray, close_to: np.ndarray
-    ) -> Tuple[float, np.ndarray]:
-        choice: np.ndarray = base
+            base: NumpyTable, close_to: NumpyTable
+    ) -> Tuple[float, NumpyTable]:
+        choice: NumpyTable = base
         distance = np.linalg.norm(choice - close_to)
 
         for i in range(3):  # Adds removes 360 to all 3 axis (picks the best)
@@ -175,9 +175,9 @@ def _get_keyframes(context: Context, prec: int=1) -> List[float]:
 class PoseBone(NamedTuple):
     '''Properties of a pose of single bone.'''
     name: str
-    location: np.ndarray
-    rotation: np.ndarray
-    scale: np.ndarray
+    location: NumpyTable
+    rotation: NumpyTable
+    scale: NumpyTable
     parent_name: Optional[str] = None
 
     def relative(self, original: PoseBone) -> PoseBone:

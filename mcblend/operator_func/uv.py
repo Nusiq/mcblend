@@ -19,7 +19,7 @@ from .exception import NotEnoughTextureSpace
 from .json_tools import get_vect_json
 from .common import (
     MINECRAFT_SCALE_FACTOR, McblendObject, McblendObjectGroup, CubePolygon,
-    MeshType)
+    MeshType, NumpyTable)
 from .extra_types import Vector2di
 
 
@@ -36,13 +36,13 @@ class CoordinatesConverter:
     :param space_b: The space to convert to.
     '''
 
-    def __init__(self, space_a: np.ndarray, space_b: np.ndarray):
+    def __init__(self, space_a: NumpyTable, space_b: NumpyTable):
         self.space_a = np.copy(space_a.T)
         self.space_b = np.copy(space_b.T)
         self.scale_a = self.space_a[1] - self.space_a[0]
         self.scale_b = self.space_b[1] - self.space_b[0]
 
-    def convert(self, x: Collection[float]) -> np.ndarray:
+    def convert(self, x: Collection[float]) -> NumpyTable:
         '''
         Performs a conversion on coordinates passed to the function with
         x argument (from space_a to space_b).
@@ -224,7 +224,7 @@ class UvBox:
                 suggestion.position[1] - size[1]
             )
 
-    def paint_texture(self, arr: np.ndarray, resolution: int = 1):
+    def paint_texture(self, arr: NumpyTable, resolution: int = 1):
         '''
         Paints the UvBox on the texture represented by the numpy array.
 
@@ -315,7 +315,7 @@ class UvMcCubeFace(UvBox):
             (self.uv[0] + self.size[0], self.uv[1]))
         uv_data[left_up].uv = converter.convert(self.uv)
 
-    def paint_texture(self, arr: np.ndarray, resolution: int = 1):
+    def paint_texture(self, arr: NumpyTable, resolution: int = 1):
         '''
         Paints the UvBox on the texture.
 
@@ -474,7 +474,7 @@ class UvMcCube(McblendObjUvBox):
                 self.thisobj.obj_data.uv_layers[0]
             )
 
-    def paint_texture(self, arr: np.ndarray, resolution: int = 1):
+    def paint_texture(self, arr: NumpyTable, resolution: int = 1):
         self.side1.paint_texture(arr, resolution)
         self.side2.paint_texture(arr, resolution)
         self.side3.paint_texture(arr, resolution)
@@ -556,7 +556,7 @@ class UvGroup(McblendObjUvBox):
         for obj in self._objects:
             obj.clear_uv_layers()
 
-    def paint_texture(self, arr: np.ndarray, resolution: int = 1):
+    def paint_texture(self, arr: NumpyTable, resolution: int = 1):
         # They mapped to one place (paint only one)
         # for obj in self._objects:
         if len(self._objects) > 0:
@@ -664,7 +664,7 @@ class UvMapper:
                 continue
             dimensions = (
                 objprop.mcube_size *
-                np.array(objprop.obj_matrix_world.decompose()[2].xzy) * # scale
+                np.array(objprop.obj_matrix_world.to_scale().xzy) * # scale
                 MINECRAFT_SCALE_FACTOR
             )
             if objprop.inflate != 0:

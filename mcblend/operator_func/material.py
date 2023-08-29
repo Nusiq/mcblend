@@ -4,7 +4,6 @@ Everything related to creating materials for the model.
 from typing import Deque, Optional, List, Tuple
 from collections import deque
 
-import bpy
 from bpy.types import Image, Material, Node, NodeTree
 
 from .typed_bpy_access import (

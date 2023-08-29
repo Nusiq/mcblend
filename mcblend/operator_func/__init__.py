@@ -298,7 +298,7 @@ def import_model(data: Dict, geometry_name: str, context: Context) -> List[str]:
     model_loader = ModelLoader(data, geometry_name)
     geometry = ImportGeometry(model_loader)
     armature = geometry.build_with_armature(context)
-    model_properties = armature.mcblend
+    model_properties = get_mcblend(armature)
 
     model_properties.texture_width = geometry.texture_width
     model_properties.texture_height = geometry.texture_height
@@ -551,7 +551,7 @@ def import_model_form_project(
         armature = geometry.build_with_armature(context)
 
         # 2.1. Set proper textures resolution and model bounds
-        model_properties = armature.mcblend
+        model_properties = get_mcblend(armature)
         model_properties = cast(
             MCBLEND_ObjectProperties, model_properties)
 
@@ -571,7 +571,7 @@ def import_model_form_project(
 
         # 2.2. Save render controller properties in the armature
         for rc_stack_item in rc_stack:
-            armature_rc = armature.mcblend.\
+            armature_rc = get_mcblend(armature).\
                 render_controllers.add()
             if rc_stack_item.texture is not None:
                 armature_rc.texture = rc_stack_item.texture.name
@@ -752,6 +752,7 @@ def prepare_physics_simulation(context: Context) -> Dict:
             if not child.mctype == MCObjType.CUBE:
                 continue
             new_obj = child.thisobj.copy()
+            new_obj = cast(Object, new_obj)
             new_obj.data = child.obj_data.copy()
             new_obj.animation_data_clear()
             get_objects(context.collection).link(new_obj)

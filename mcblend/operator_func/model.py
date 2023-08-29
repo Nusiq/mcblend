@@ -16,7 +16,7 @@ from bpy.types import MeshUVLoopLayer, MeshPolygon
 
 from .common import (
     MINECRAFT_SCALE_FACTOR, McblendObject, McblendObjectGroup, MCObjType,
-    CubePolygons, CubePolygon, MeshType
+    CubePolygons, CubePolygon, MeshType, NumpyTable
 )
 from .typed_bpy_access import get_data, get_loop_indices, get_mcblend
 from .extra_types import Vector2di, Vector3d, Vector3di
@@ -109,8 +109,8 @@ class BoneExport:
     - `model: ModelExport` - a model that contains this bone.
     - `name: str` - the name of the bone.
     - `parent: Optional[str]` - the name of a parent of this bone
-    - `rotation: np.ndarray` - rotation of the bone.
-    - `pivot: np.ndarray` - pivot of the bone.
+    - `rotation: NumpyTable` - rotation of the bone.
+    - `pivot: NumpyTable` - pivot of the bone.
     - `cubes: List[CubeExport]` - list of cubes to export.
     - `locators: Dict[str, LocatorExport]` - list of locators to export.
       (if exists) or None
@@ -131,8 +131,8 @@ class BoneExport:
         self.name: str = bone.obj_name
         self.parent: Optional[str] = (
             None if bone.parent is None else bone.parent.obj_name)
-        self.rotation: np.ndarray = bone.get_mcrotation(bone.parent)
-        self.pivot: np.ndarray = bone.mcpivot * MINECRAFT_SCALE_FACTOR
+        self.rotation: NumpyTable = bone.get_mcrotation(bone.parent)
+        self.pivot: NumpyTable = bone.mcpivot * MINECRAFT_SCALE_FACTOR
         self.cubes: List[CubeExport] = []
         self.poly_mesh: PolyMesh = PolyMesh()
         self.locators: Dict[str, LocatorExport] = {}
@@ -157,7 +157,7 @@ class BoneExport:
             (self.model.texture_width, self.model.texture_height)
         )
 
-        def _scale(objprop: McblendObject) -> np.ndarray:
+        def _scale(objprop: McblendObject) -> NumpyTable:
             '''Scale of a bone'''
             _, _, scale = objprop.obj_matrix_world.decompose()  # type: ignore
             scale = cast(Vector, scale)  # type: ignore
@@ -286,8 +286,8 @@ class BoneExport:
 @dataclass
 class LocatorExport:
     '''Object that represents a Locator during model export.'''
-    offset: np.ndarray
-    rotation: np.ndarray
+    offset: NumpyTable
+    rotation: NumpyTable
     mcblend_obj: McblendObject
 
     def json(self):
@@ -307,10 +307,10 @@ class LocatorExport:
 @dataclass
 class CubeExport:
     '''Object that represents a cube during model export.'''
-    size: np.ndarray
-    pivot: np.ndarray
-    origin: np.ndarray
-    rotation: np.ndarray
+    size: NumpyTable
+    pivot: NumpyTable
+    origin: NumpyTable
+    rotation: NumpyTable
     inflate: float
     uv: Any
     uv_mirror: bool
@@ -398,7 +398,7 @@ class UvExportFactory:
 
     def get_uv_export(
             self, mcobj: McblendObject,
-            cube_size: np.ndarray) -> Tuple[Any, bool]:
+            cube_size: NumpyTable) -> Tuple[Any, bool]:
         '''
         Creates uv properties for given McblendObject.
 
@@ -434,7 +434,7 @@ class UvExportFactory:
 
     def _get_uv(
             self, uv_layer: MeshUVLoopLayer,
-            cube_polygon: CubePolygon, name: str) -> np.ndarray:
+            cube_polygon: CubePolygon, name: str) -> NumpyTable:
         '''
         Get certain UV coordinates identified by a name from a face.
 
@@ -451,7 +451,7 @@ class UvExportFactory:
 
     def _get_standard_cube_uv_export(
             self, cube_polygons: CubePolygons,
-            uv_layer: MeshUVLoopLayer, cube_size: np.ndarray
+            uv_layer: MeshUVLoopLayer, cube_size: NumpyTable
         ) -> Tuple[Any, bool]:
         '''
         Attempts to return UV and mirror for standard UV mapping. Raises
@@ -459,13 +459,13 @@ class UvExportFactory:
         given input.
         '''
         # Get min and max value of he loop coordinates
-        loop_crds_list: List[np.ndarray] = []
+        loop_crds_list: List[NumpyTable] = []
         for loop in get_data(uv_layer):
             loop_crds_list.append(
                 self.blend_to_mc_converter.convert(np.array(loop.uv))
             )
-        loop_crds_arr: np.ndarray = np.vstack(loop_crds_list)
-        min_loop_crds: np.ndarray = loop_crds_arr.min(0)  # type: ignore
+        loop_crds_arr: NumpyTable = np.vstack(loop_crds_list)
+        min_loop_crds: NumpyTable = loop_crds_arr.min(0)  # type: ignore
         # max_loop_crds = loop_crds_arr.max(0)
 
         # Depth width height

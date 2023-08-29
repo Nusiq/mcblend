@@ -3,7 +3,7 @@ Functions and objects related to importing Minecraft models to Blender.
 '''
 from __future__ import annotations
 
-import math
+import math  # pyright: ignore[reportShadowedImports]
 from typing import (
     Dict, List, Optional, Any, Tuple, Set, Union, TYPE_CHECKING, cast)
 from enum import Enum
@@ -79,18 +79,25 @@ class ModelLoader:
     :param data: The JSON dict with models file.
     :param geometry_name: Optional - the name of the geometry to load.
     '''
-    def __init__(self, data: Dict, geometry_name: str = ""):
+    data: dict[str, Any]
+    warnings: list[str]
+    format_version: str
+    parser_version: str
+    geometry: dict[str, Any]
+    geometry_path: list[str | int]
+
+    def __init__(self, data: dict[str, Any], geometry_name: str = ""):
         self.data = data
         # List of warnings about problems related to loading the model
-        self.warnings: List[str] = []
+        self.warnings = []
         self.format_version, self.parser_version = self._load_format_version(
             data)
         geometry, geometry_path = self._load_geometry(
             geometry_name, self.data)
 
-        self.description: Dict = self._load_description(
+        self.description = self._load_description(
             geometry, geometry_path)
-        self.bones: List = self._load_bones(
+        self.bones = self._load_bones(
             geometry['bones'], geometry_path + ['bones'])
 
     def append_warning(self, warning: str, json_path: List[Union[str, int]]):
@@ -359,7 +366,7 @@ class ModelLoader:
         result = {
             "texture_width" : 64,
             "texture_height" : 64,
-            "visible_bounds_offset" : [0, 0, 0],
+            "visible_bounds_offset" : [0.0, 0.0, 0.0],
             "visible_bounds_width" : 1,
             "visible_bounds_height": 1
         }
@@ -1205,13 +1212,16 @@ class ImportLocator:
     :param name: Name of the locator.
     :param position: The position of the locator.
     '''
-    def __init__(
-            self, name: str, position: Vector3d, rotation: Vector3d):
+    name: str
+    position: Vector3d
+    rotation: Vector3d
+    blend_empty: Optional[Object]
+
+    def __init__(self, name: str, position: Vector3d, rotation: Vector3d):
         self.name = name
         self.position = position
         self.rotation = rotation
-
-        self.blend_empty: Optional[Object] = None
+        self.blend_empty = None
 
 
 class ImportCube:
@@ -1221,8 +1231,16 @@ class ImportCube:
     :param data: The part of the Minecraft model JSON dict that represents this
         cube.
     '''
-    def __init__(
-            self, data: Dict):
+    blend_cube: Optional[Object]
+    uv: Dict
+    mirror: bool
+    inflate: bool
+    origin: Vector3d
+    pivot: Vector3d
+    size: Vector3d
+    rotation: Vector3d
+
+    def __init__(self, data: Dict):
         '''
         Creates ImportCube object created from a dictionary (part of the JSON)
         file in the model.
@@ -1231,18 +1249,18 @@ class ImportCube:
         - `data: Dict` - the part of the Minecraft model JSON file that
         represents the cube.
         '''
-        self.blend_cube: Optional[Object] = None
+        self.blend_cube = None
 
-        self.uv: Dict = data['uv']
-        self.mirror: bool = data['mirror']
-        self.inflate: bool = data['inflate']
-        self.origin: Vector3d = tuple(  # type: ignore
+        self.uv = data['uv']
+        self.mirror = data['mirror']
+        self.inflate = data['inflate']
+        self.origin = tuple(  # type: ignore
             data['origin'])
-        self.pivot: Vector3d = tuple(  # type: ignore
+        self.pivot = tuple(  # type: ignore
             data['pivot'])
-        self.size: Vector3d = tuple(  # type: ignore
+        self.size = tuple(  # type: ignore
             data['size'])
-        self.rotation: Vector3d = tuple(  # type: ignore
+        self.rotation = tuple(  # type: ignore
             data['rotation'])
 
 
@@ -1253,6 +1271,13 @@ class ImportPolyMesh:
     :param data: The part of the Minecraft model JSON dict that represents this
         poly_mesh.
     '''
+    blend_object: Optional[Object]
+    normalized_uvs: bool
+    positions: List[Vector3d]
+    normals: List[Vector3d]
+    uvs: List[Vector2d]
+    polys: List[List[Vector3di]]
+
     def __init__(
             self, data: Dict):
         '''
@@ -1262,13 +1287,13 @@ class ImportPolyMesh:
         :param data: The part of the Minecraft model JSON file that represents
         the poly_mesh.
         '''
-        self.blend_object: Optional[Object] = None
+        self.blend_object = None
+        self.normalized_uvs = data['normalized_uvs']
+        self.positions = data['positions']
+        self.normals = data['normals']
+        self.uvs = data['uvs']
+        self.polys = data['polys']
 
-        self.normalized_uvs: bool = data['normalized_uvs']
-        self.positions: List[Vector3d] = data['positions']
-        self.normals: List[Vector3d] = data['normals']
-        self.uvs: List[Vector2d] = data['uvs']
-        self.polys: List[List[Vector3di]] = data['polys']
 
 class ImportBone:
     '''
@@ -1277,6 +1302,17 @@ class ImportBone:
     :param data: The part of the Minecraft model JSON dict that represents the
         bone.
     '''
+    blend_empty: Object | None
+    name: str
+    parent: str
+    binding: str
+    cubes: list[ImportCube]
+    poly_mesh: ImportPolyMesh | None
+    locators: list[ImportLocator]
+    pivot: Vector3d
+    rotation: Vector3d
+    mirror: bool
+
     def __init__(self, data: Dict):
         self.blend_empty: Optional[Object] = None
 
@@ -1290,17 +1326,17 @@ class ImportBone:
         for cube in data['cubes']:
             import_cubes.append(ImportCube(cube))
 
-        self.name: str = data['name']
-        self.parent: str = data['parent']
-        self.binding: str = data['binding']
+        self.name = data['name']
+        self.parent = data['parent']
+        self.binding = data['binding']
         self.cubes = import_cubes
-        self.poly_mesh: Optional[ImportPolyMesh] = None
+        self.poly_mesh = None
         if data['poly_mesh'] is not None:
             self.poly_mesh = ImportPolyMesh(data['poly_mesh'])
         self.locators = locators
-        self.pivot: Vector3d = tuple(  # type: ignore
+        self.pivot = tuple(  # type: ignore
             data['pivot'])
-        self.rotation: Vector3d = tuple(  # type: ignore
+        self.rotation = tuple(  # type: ignore
             data['rotation'])
         self.mirror = data['mirror']
 
@@ -1311,6 +1347,15 @@ class ImportGeometry:
 
     :param loader: Loader object with all of the required model properties.
     '''
+    indentifier: str
+    texture_width: int
+    texture_height: int
+    visible_bounds_offset: Vector3d
+    visible_bounds_width: float
+    visible_bounds_height: float
+    bones: dict[str, ImportBone]
+    uv_converter: CoordinatesConverter
+
     def __init__(self, loader: ModelLoader):
         # Set the values
         self.identifier = loader.description['identifier']
@@ -1321,7 +1366,7 @@ class ImportGeometry:
         self.visible_bounds_width = loader.description['visible_bounds_width']
         self.visible_bounds_height = loader.description[
             'visible_bounds_height']
-        self.bones: Dict[str, ImportBone] = {}
+        self.bones = {}
         self.uv_converter = CoordinatesConverter(
             np.array([[0, self.texture_width], [0, self.texture_height]]),
             np.array([[0, 1], [1, 0]])

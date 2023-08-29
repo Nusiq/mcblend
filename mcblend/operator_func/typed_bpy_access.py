@@ -375,7 +375,7 @@ def new_collection(name):
 
     >>> bpy.data.collections.new(name)
     '''
-    return bpy.data.collections.new(name)
+    return bpy.data.collections.new(name)  # type: ignore
 
 def new_material(name: str):
     '''
@@ -383,7 +383,7 @@ def new_material(name: str):
 
     >>> bpy.data.materials.new(name)
     '''
-    return bpy.data.materials.new(name)
+    return bpy.data.materials.new(name)  # type: ignore
 
 def set_co(obj, co):
     '''

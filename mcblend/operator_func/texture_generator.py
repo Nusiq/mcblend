@@ -6,13 +6,17 @@ Uses numpy arrays with colors with colors encoded with values in range 0-1.
 from __future__ import annotations
 
 from itertools import cycle, accumulate
-from typing import Tuple, Iterable, NamedTuple, List, Optional, Sequence
+from typing import Tuple, Iterable, NamedTuple, List, Optional, Sequence, TYPE_CHECKING
 from abc import ABC, abstractmethod
 from enum import Enum
+
 
 import numpy as np
 
 from .extra_types import Vector2d, Vector3d
+
+if TYPE_CHECKING:
+    from .common import NumpyTable
 
 class UvMaskTypes(Enum):
     '''
@@ -56,7 +60,7 @@ def list_mix_mask_modes_as_blender_enum(self, context):
 class Mask(ABC):
     '''Abstract class, parent of all Filters.'''
     @abstractmethod
-    def apply(self, image: np.ndarray):
+    def apply(self, image: NumpyTable):
         '''
         Applies the image to the image.
 
@@ -97,7 +101,7 @@ class ColorPaletteMask(Mask):
         self.interpolate = interpolate
         self.normalize = normalize
 
-    def apply(self, image: np.ndarray):
+    def apply(self, image: NumpyTable):
         # xp and fp for np.interp
         if self.interpolate:
             fp_r = [c.r for c in self.colors]
@@ -139,12 +143,12 @@ class MultiplicativeMask(Mask):
     A mask which can return a matrix which can be multiplied element-wise
     by the image matrix to get the result of applying the mask.
     '''
-    def apply(self, image: np.ndarray):
+    def apply(self, image: NumpyTable):
         mask = self.get_mask(image)
         image[:,:,:] = image*mask
 
     @abstractmethod
-    def get_mask(self, image: np.ndarray) -> np.ndarray:
+    def get_mask(self, image: NumpyTable) -> NumpyTable:
         '''Returns 2D matrix with the filter array.'''
 
 
@@ -179,7 +183,7 @@ class TwoPointSurfaceMask(MultiplicativeMask):
         self.relative_boundaries = relative_boundaries
 
     def get_surface_properties(
-            self, image: np.ndarray,
+            self, image: NumpyTable,
             sort_points=False) -> Tuple[int, int, int, int, int, int]:
         '''
         Uses points passed in the constructor and the image to return the
@@ -233,7 +237,7 @@ class GradientMask(TwoPointSurfaceMask):
             expotent: float=1.0):
         super().__init__(p1, p2, relative_boundaries=relative_boundaries)
         self.stripe_strength: List[float] = []
-        stripe_width = []
+        stripe_width: list[float] = []
         for i in stripes:
             if i.width < 0:
                 raise Exception(
@@ -345,7 +349,7 @@ class RectangleMask(TwoPointSurfaceMask):
         self.expotent = expotent
         self.hard_edge = hard_edge
 
-    def get_mask(self, image: np.ndarray):
+    def get_mask(self, image: NumpyTable):
         w, h, u1, u2, v1, v2 = self.get_surface_properties(image)
 
         # Create basic mask array
@@ -423,7 +427,7 @@ class StripesMask(MultiplicativeMask):
         self.horizontal = horizontal
         self.relative_boundaries = relative_boundaries
 
-    def get_mask(self, image: np.ndarray) -> np.ndarray:
+    def get_mask(self, image: NumpyTable) -> NumpyTable:
         w, h, _ = image.shape
         mask = np.ones((w, h))
 
@@ -493,7 +497,7 @@ class MixMask(MultiplicativeMask):
     min, max or median values.
     '''
     def __init__(
-            self, masks: Iterable[MultiplicativeMask], *,
+            self, masks: list[MultiplicativeMask], *,
             strength: Vector2d=(0.0, 1.0),
             expotent: float=1.0, mode='mean'):
         self.strength = strength
