@@ -223,20 +223,20 @@ def register():
         bpy.utils.register_class(_class)
 
     # Project properties
-    bpy.types.Scene.mcblend_project = PointerProperty(
+    bpy.types.Scene.mcblend_project = PointerProperty(  # type: ignore
         type=MCBLEND_ProjectProperties
     )
 
     # Events
-    bpy.types.Scene.mcblend_events = CollectionProperty(
+    bpy.types.Scene.mcblend_events = CollectionProperty(  # type: ignore
         type=MCBLEND_EventProperties)
-    bpy.types.Scene.mcblend_active_event = IntProperty(
+    bpy.types.Scene.mcblend_active_event = IntProperty(  # type: ignore
         default=0)
 
     # UV Groups
-    bpy.types.Scene.mcblend_active_uv_group = IntProperty(
+    bpy.types.Scene.mcblend_active_uv_group = IntProperty(  # type: ignore
         default=0)
-    bpy.types.Scene.mcblend_uv_groups = CollectionProperty(
+    bpy.types.Scene.mcblend_uv_groups = CollectionProperty(  # type: ignore
         type=MCBLEND_UvGroupProperties)
 
     sides = [
@@ -247,15 +247,15 @@ def register():
         ("4", "Top", "The top side of the cube"),
         ("5", "Bottom", "The bottom side of the cube")
     ]
-    bpy.types.Scene.mcblend_active_uv_groups_side = EnumProperty(
+    bpy.types.Scene.mcblend_active_uv_groups_side = EnumProperty(  # type: ignore
         items=sides, name="Face")
 
     # Object properties
-    bpy.types.Object.mcblend = PointerProperty(
+    bpy.types.Object.mcblend = PointerProperty(  # type: ignore
         type=MCBLEND_ObjectProperties)
 
     # Pose bone properties
-    bpy.types.PoseBone.mcblend = PointerProperty(
+    bpy.types.PoseBone.mcblend = PointerProperty(  # type: ignore
         type=MCBLEND_BoneProperties)
 
     # Append operators to the F3 menu

@@ -5,7 +5,7 @@ This module contains all of the operators.
 import json
 from pathlib import Path
 from json.decoder import JSONDecodeError
-from typing import Any, List, Optional, Dict, Any, Set
+from typing import Any, List, Optional, Dict, Any, Set, TYPE_CHECKING
 
 import bpy
 from bpy.types import Operator, Context, Object
@@ -20,7 +20,9 @@ from .operator_func.typed_bpy_access import (
     get_scene_mcblend_events, get_scene_mcblend_active_event,
     get_data_objects, get_mcblend, get_data_images,
     set_scene_mcblend_active_event,
-    get_scene_mcblend_uv_groups, get_selected_objects)
+    get_scene_mcblend_uv_groups, get_selected_objects,
+    set_scene_mcblend_active_uv_group, get_scene_mcblend_active_uv_group,
+    get_scene_mcblend_active_uv_groups_side)
 from .uv_data import get_unused_uv_group_name
 from .operator_func.material import MATERIALS_MAP
 
@@ -54,6 +56,9 @@ class MCBLEND_OT_ExportModel(
         options={'HIDDEN'},
         maxlen=1000
     )
+
+    if TYPE_CHECKING:
+        filepath: str
 
     @classmethod
     def poll(cls, context: Context):
@@ -237,7 +242,7 @@ class MCBLEND_OT_FixUv(Operator):
 
     def execute(self, context):
         for obj in get_selected_objects(context):
-            if obj.type == 'MESH' and any(map(lambda x: x < 0, obj.scale)):
+            if obj.type == 'MESH' and any(x < 0 for x in obj.scale):
                 self.report(
                     {'ERROR'},
                     "Negative object scale is not supported. "
@@ -285,7 +290,7 @@ class MCBLEND_OT_UvGroup(Operator):
     def execute(self, context):
         for obj in get_selected_objects(context):
             if obj.type == 'MESH':
-                obj.mcblend.uv_group = (
+                get_mcblend(obj).uv_group = (
                     self.uv_groups_enum)
         self.report(
             {'INFO'},
@@ -319,7 +324,7 @@ class MCBLEND_OT_ClearUvGroup(Operator):
     def execute(self, context):
         for obj in get_selected_objects(context):
             if obj.type == 'MESH':
-                obj.mcblend.uv_group = ''
+                get_mcblend(obj).uv_group  = ''
         self.report({'INFO'}, 'Cleared UV group of selected objects.')
 
         # The object properties display the property edited by this operator
@@ -345,10 +350,10 @@ class MCBLEND_OT_SetInflate(Operator):
 
     inflate_value: FloatProperty(default=0)  # type: ignore
     mode: EnumProperty(  # type: ignore
-        items=(
+        items=[
             ('RELATIVE', 'Relative', 'Add or remove to current inflate value'),
             ('ABSOLUTE', 'Absolute', 'Set the inflate value'),
-        ),
+        ],
         name='Mode'
     )
 
@@ -431,6 +436,9 @@ class MCBLEND_OT_ImportModel(Operator, ImportHelper):
         maxlen=500,
         name='Geometry name'
     )
+
+    if TYPE_CHECKING:
+        filepath: str
 
     def execute(self, context):
         # Save file and finish
@@ -516,7 +524,7 @@ class MCBLEND_OT_ListAnimations(Operator):
         # pylint: disable=unused-argument
         items = [
             (str(i), x.name, x.name)
-            for i, x in enumerate(bpy.context.object.mcblend.animations)]
+            for i, x in enumerate(get_mcblend(bpy.context.object).animations)]
         return items
 
     animations_enum: bpy.props.EnumProperty(  # type: ignore
@@ -545,17 +553,17 @@ class MCBLEND_OT_ListAnimations(Operator):
                 "selecting new animation")
             return {'CANCELLED'}
         # If OK than save old animation state
-        len_anims = len(context.object.mcblend.animations)
-        curr_anim_id = context.object.mcblend.active_animation
+        len_anims = len(get_mcblend(context.object).animations)
+        curr_anim_id = get_mcblend(context.object).active_animation
         if 0 <= curr_anim_id < len_anims:
             save_animation_properties(
-                context.object.mcblend.animations[curr_anim_id], context)
+                get_mcblend(context.object).animations[curr_anim_id], context)
 
         # Set new animation and load its state
         new_anim_id=int(self.animations_enum)
-        context.object.mcblend.active_animation=new_anim_id
+        get_mcblend(context.object).active_animation=new_anim_id
         load_animation_properties(
-                context.object.mcblend.animations[new_anim_id], context)
+                get_mcblend(context.object).animations[new_anim_id], context)
         return {'FINISHED'}
 
 class MCBLEND_OT_AddAnimation(Operator):
@@ -586,17 +594,17 @@ class MCBLEND_OT_AddAnimation(Operator):
                 "adding new animation")
             return {'CANCELLED'}
         # If OK save old animation
-        len_anims = len(context.object.mcblend.animations)
-        curr_anim_id = context.object.mcblend.active_animation
+        len_anims = len(get_mcblend(context.object).animations)
+        curr_anim_id = get_mcblend(context.object).active_animation
         if 0 <= curr_anim_id < len_anims:
             save_animation_properties(
-                context.object.mcblend.animations[curr_anim_id], context)
+                get_mcblend(context.object).animations[curr_anim_id], context)
             context.scene.timeline_markers.clear()
 
         # Add new animation and set its properties
-        animation_new = context.object.mcblend.animations.add()
-        len_anims = len(context.object.mcblend.animations)
-        context.object.mcblend.active_animation=len_anims-1
+        animation_new = get_mcblend(context.object).animations.add()
+        len_anims = len(get_mcblend(context.object).animations)
+        get_mcblend(context.object).active_animation=len_anims-1
         animation_new.name = f'animation{len_anims}'
 
         # The object properties display the property edited by this operator
@@ -621,7 +629,7 @@ class MCBLEND_OT_RemoveAnimation(Operator):
             return False
         if context.object.type != 'ARMATURE':
             return False
-        return len(context.object.mcblend.animations) > 0
+        return len(get_mcblend(context.object).animations) > 0
 
     def execute(self, context):
         # Cancel operation if there is an action being edited
@@ -636,20 +644,20 @@ class MCBLEND_OT_RemoveAnimation(Operator):
             return {'CANCELLED'}
 
         # Remove animation
-        context.object.mcblend.animations.remove(
-            context.object.mcblend.active_animation)
+        get_mcblend(context.object).animations.remove(
+            get_mcblend(context.object).active_animation)
 
         # Set new active animation
-        last_active=context.object.mcblend.active_animation
-        len_anims=len(context.object.mcblend.animations)
+        last_active=get_mcblend(context.object).active_animation
+        len_anims=len(get_mcblend(context.object).animations)
         if last_active > 0:
-            context.object.mcblend.active_animation=last_active-1
+            get_mcblend(context.object).active_animation=last_active-1
 
         # Load data from new active animation
-        curr_anim_id=context.object.mcblend.active_animation
+        curr_anim_id=get_mcblend(context.object).active_animation
         if 0 <= curr_anim_id < len_anims:
             load_animation_properties(
-                context.object.mcblend.animations[curr_anim_id], context)
+                get_mcblend(context.object).animations[curr_anim_id], context)
 
         # The object properties display the property edited by this operator
         # redraw it.
@@ -687,8 +695,7 @@ class MCBLEND_OT_ListUvGroups(Operator):
         '''
         # Set new uv_group and load its state
         new_uv_group_id=int(self.uv_groups_enum)
-        context.scene.mcblend_active_uv_group=new_uv_group_id
-
+        set_scene_mcblend_active_uv_group(context, new_uv_group_id)
         return {'FINISHED'}
 
 class MCBLEND_OT_AddUvGroup(Operator):
@@ -705,7 +712,7 @@ class MCBLEND_OT_AddUvGroup(Operator):
         # Add new uv_group and set its properties
         uv_group_new = get_scene_mcblend_uv_groups(context).add()
         len_groups = len(get_scene_mcblend_uv_groups(context))
-        context.scene.mcblend_active_uv_group=len_groups-1
+        set_scene_mcblend_active_uv_group(context, len_groups-1)
 
         uv_group_new.name = get_unused_uv_group_name('uv_group')
         sides = [
@@ -735,7 +742,7 @@ class MCBLEND_OT_RemoveUvGroup(Operator):
         return len(get_scene_mcblend_uv_groups(context)) > 0
 
     def execute(self, context):
-        group_id = context.scene.mcblend_active_uv_group
+        group_id = get_scene_mcblend_active_uv_group(context)
         group_name = get_scene_mcblend_uv_groups(context)[group_id].name
         # Remove uv_group
         get_scene_mcblend_uv_groups(context).remove(group_id)
@@ -743,13 +750,13 @@ class MCBLEND_OT_RemoveUvGroup(Operator):
         # Update the names of all of the meshes
         for obj in get_data_objects():
             if obj.type == "MESH":
-                obj_props = obj.mcblend
+                obj_props = get_mcblend(obj)
                 if obj_props.uv_group == group_name:
                     obj_props.uv_group = ''
 
         # Set new active uv_group
         if group_id > 0:
-            context.scene.mcblend_active_uv_group=group_id-1
+            set_scene_mcblend_active_uv_group(context, group_id-1)
         return {'FINISHED'}
 
 class MCBLEND_OT_CopyUvGroupSide(Operator):
@@ -841,8 +848,8 @@ class MCBLEND_OT_CopyUvGroupSide(Operator):
 
     def execute(self, context):
         # Get source masks
-        source_group_id = context.scene.mcblend_active_uv_group
-        source_side_id = int(context.scene.mcblend_active_uv_groups_side)
+        source_group_id = get_scene_mcblend_active_uv_group(context)
+        source_side_id = int(get_scene_mcblend_active_uv_groups_side(context))
 
         # Get target UV group
         target_group_id = int(self.uv_groups_enum)
@@ -1101,12 +1108,15 @@ class MCBLEND_OT_ExportUvGroup(
         maxlen=1000
     )
 
+    if TYPE_CHECKING:
+        filepath: str
+
     @classmethod
     def poll(cls, context: Context):
         return len(get_scene_mcblend_uv_groups(context)) > 0
 
     def execute(self, context):
-        group_id = context.scene.mcblend_active_uv_group
+        group_id = get_scene_mcblend_active_uv_group(context)
         uv_group = get_scene_mcblend_uv_groups(context)[group_id]
 
         with open(self.filepath, 'w') as f:
@@ -1403,11 +1413,11 @@ class MCBLEND_OT_ImportUvGroup(Operator, ImportHelper):
             return {'CANCELLED'}
 
         # Create new UV group
-        len_groups = len(context.scene.mcblend_uv_groups)
+        len_groups = len(get_scene_mcblend_uv_groups(context))
         # Add new uv_group and set its properties
-        uv_group_new = context.scene.mcblend_uv_groups.add()
-        len_groups = len(context.scene.mcblend_uv_groups)
-        context.scene.mcblend_active_uv_group=len_groups-1
+        uv_group_new = get_scene_mcblend_uv_groups(context).add()
+        len_groups = len(get_scene_mcblend_uv_groups(context))
+        set_scene_mcblend_active_uv_group(context, len_groups-1)
 
         # Currently only version 1 is supported
         if 'name' in data and isinstance(data['name'], str):
@@ -1469,7 +1479,7 @@ class MCBLEND_OT_RemoveEvent(Operator):
     def execute(self, context):
         active_event_id = get_scene_mcblend_active_event(context)
         # Remove animation
-        bpy.context.scene.mcblend_events.remove(
+        get_scene_mcblend_events(context).remove(
             active_event_id)
 
         # Set new active event
@@ -1527,7 +1537,7 @@ class MCBLEND_OT_RemoveEffect(Operator):
         return True
 
     def execute(self, context):
-        events = bpy.context.scene.mcblend_events
+        events = get_scene_mcblend_events(context)
         active_event_id = get_scene_mcblend_active_event(context)
         event = events[active_event_id]
         event.effects.remove(self.effect_index)
@@ -1584,6 +1594,9 @@ class MCBLEND_OT_LoadDatabase(Operator, ImportHelper):
         maxlen=1000,
     )
 
+    if TYPE_CHECKING:
+        filepath: str
+
     def execute(self, context):
         self.report({'INFO'}, f"Loading database from {self.filepath}")
         return {'FINISHED'}
@@ -1597,6 +1610,9 @@ class MCBLEND_OT_SaveDatabase(Operator, ExportHelper):
     bl_options = {'REGISTER'}
 
     filename_ext = ".db"
+
+    if TYPE_CHECKING:
+        filepath: str
 
     def execute(self, context):
         self.report({'INFO'}, f"Saving database to {self.filepath}")
@@ -1682,7 +1698,7 @@ class MCBLEND_OT_AddFakeRc(Operator):
 
     def execute(self, context):
         obj = context.object
-        rc = obj.mcblend.render_controllers.add()
+        rc = get_mcblend(obj).render_controllers.add()
         material = rc.materials.add()
         material.pattern = '*'
         material.material = 'entity_alphatest'
@@ -1702,7 +1718,7 @@ class MCBLEND_OT_RemoveFakeRc(Operator):
         return get_context_object(context).type == 'ARMATURE'
 
     def execute(self, context):
-        rcs = context.object.mcblend.render_controllers
+        rcs = get_mcblend(context.object).render_controllers
         rcs.remove(self.rc_index)
         return {'FINISHED'}
 
@@ -1714,15 +1730,20 @@ class MCBLEND_OT_MoveFakeRc(Operator):
 
     bl_options = {'UNDO', 'INTERNAL'}
 
-    rc_index: IntProperty()  # type: ignore
-    move_to: IntProperty()  # type: ignore
+    if TYPE_CHECKING:
+        rc_index: int
+        move_to: int
+    else:
+        rc_index: IntProperty()  # type: ignore
+        move_to: IntProperty()  # type: ignore
+
 
     @classmethod
     def poll(cls, context: Context):
         return get_context_object(context).type == 'ARMATURE'
 
     def execute(self, context):
-        rcs = context.object.mcblend.render_controllers
+        rcs = get_mcblend(context.object).render_controllers
         rcs.move(self.rc_index, self.move_to)
         return {'FINISHED'}
 
@@ -1754,7 +1775,7 @@ class MCBLEND_OT_FakeRcSelectTexture(Operator):
         return get_context_object(context).type == 'ARMATURE'
 
     def execute(self, context):
-        context.object.mcblend.render_controllers[self.rc_index].\
+        get_mcblend(context.object).render_controllers[self.rc_index].\
             texture = self.image
         return {'FINISHED'}
 
@@ -1775,6 +1796,9 @@ class MCBLEND_OT_FakeRcOpenTexture(Operator, ImportHelper):
 
     rc_index: IntProperty(options={'HIDDEN'})  # type: ignore
 
+    if TYPE_CHECKING:
+        filepath: str
+
     def list_images(self, context):
         '''Lists images for dropdown list'''
         # pylint: disable=unused-argument
@@ -1790,7 +1814,7 @@ class MCBLEND_OT_FakeRcOpenTexture(Operator, ImportHelper):
     def execute(self, context):
         img = bpy.data.images.load(
             self.filepath, check_existing=True)
-        context.object.mcblend.render_controllers[self.rc_index].\
+        get_mcblend(context.object).render_controllers[self.rc_index].\
             texture = img.name
         return {'FINISHED'}
 
@@ -1811,7 +1835,7 @@ class MCBLEND_OT_AddFakeRcMaterial(Operator):
         return get_context_object(context).type == 'ARMATURE'
 
     def execute(self, context):
-        rc = context.object.mcblend.render_controllers[
+        rc = get_mcblend(context.object).render_controllers[
             self.rc_index]
         material = rc.materials.add()
         material.pattern = '*'
@@ -1835,7 +1859,7 @@ class MCBLEND_OT_RemoveFakeRcMaterial(Operator):
         return get_context_object(context).type == 'ARMATURE'
 
     def execute(self, context):
-        context.object.mcblend.render_controllers[
+        get_mcblend(context.object).render_controllers[
             self.rc_index].materials.remove(self.material_index)
         return {'FINISHED'}
 
@@ -1859,7 +1883,7 @@ class MCBLEND_OT_MoveFakeRcMaterial(Operator):
         return get_context_object(context).type == 'ARMATURE'
 
     def execute(self, context):
-        context.object.mcblend.render_controllers[
+        get_mcblend(context.object).render_controllers[
             self.rc_index].materials.move(self.material_index, self.move_to)
         return {'FINISHED'}
 
@@ -1884,7 +1908,7 @@ class MCBLEND_OT_FakeRcSMaterailSelectTemplate(Operator):
         return get_context_object(context).type == 'ARMATURE'
 
     def execute(self, context):
-        context.object.mcblend.render_controllers[
+        get_mcblend(context.object).render_controllers[
             self.rc_index].materials[
                 self.material_index].material = self.material
         return {'FINISHED'}

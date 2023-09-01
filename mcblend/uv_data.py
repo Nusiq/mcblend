@@ -10,7 +10,8 @@ from bpy.props import (
     FloatVectorProperty, IntProperty, IntVectorProperty,
     PointerProperty, StringProperty)
 
-from .operator_func.typed_bpy_access import get_data_objects, get_mcblend, get_scene_mcblend_uv_groups
+from .operator_func.typed_bpy_access import (
+    get_data_objects, get_mcblend, get_scene_mcblend_uv_groups)
 from .operator_func.texture_generator import (
     UvMaskTypes, list_mask_types_as_blender_enum,
     list_mix_mask_modes_as_blender_enum)
@@ -202,7 +203,7 @@ def _update_uv_group_name(uv_group, new_name: str, update_references: bool):
     uv_group['name'] = new_name
 
 def _set_uv_group_name(self, value):
-    groups = bpy.context.scene.mcblend_uv_groups
+    groups = get_scene_mcblend_uv_groups(bpy.context)
 
     # Empty name is no allowed
     if value == '':

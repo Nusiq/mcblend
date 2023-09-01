@@ -17,7 +17,9 @@ from .operator_func.common import MeshType
 from .operator_func.texture_generator import UvMaskTypes
 from .operator_func.typed_bpy_access import (
     get_data_bones, set_operator_property, get_scene_mcblend_active_uv_group,
-    get_scene_mcblend_uv_groups, get_scene_mcblend_active_uv_groups_side)
+    get_scene_mcblend_uv_groups, get_scene_mcblend_active_uv_groups_side,
+    get_scene_mcblend_events, get_scene_mcblend_active_event, get_mcblend,
+    get_scene_mcblend_project)
 
 # GUI
 # UV groups names list
@@ -421,13 +423,14 @@ class MCBLEND_PT_EventsPanel(Panel):
         col = self.layout.column(align=True)
         row = col.row()
 
-        events = bpy.context.scene.mcblend_events
-        active_event_id = bpy.context.scene.mcblend_active_event
+        events = get_scene_mcblend_events(bpy.context)
+        active_event_id = get_scene_mcblend_active_event(bpy.context)
         col.template_list(
             listtype_name="MCBLEND_UL_EventsList",
             list_id="",
-            dataptr=bpy.context.scene, propname="mcblend_events",
-            active_dataptr=bpy.context.scene,
+            dataptr=bpy.context.scene,  # type: ignore
+            propname="mcblend_events",
+            active_dataptr=bpy.context.scene,  # type: ignore
             active_propname="mcblend_active_event")
 
         row.operator("mcblend.add_event", icon='ADD')
@@ -456,25 +459,28 @@ class MCBLEND_PT_ObjectPropertiesPanel(Panel):
         if context.mode != "OBJECT":
             return False
         if context.active_object:
-            return context.active_object.type in "MESH"
+            return context.active_object.type == "MESH"
         return False
 
     def draw(self, context):
         col = self.layout.column(align=True)
-        object_properties = context.object.mcblend
-        col.prop(object_properties, "mesh_type", text="")
-
-        mesh_type = (
-            context.object.mcblend.mesh_type)
+        object_properties = get_mcblend(context.object)
+        col.prop(
+            object_properties,  # type: ignore
+            "mesh_type",
+            text=""
+        )
+        
+        mesh_type = get_mcblend(context.object).mesh_type
         if mesh_type == MeshType.CUBE.value:
             if object_properties.uv_group != '':
                 col.label(
                     text=f'UV Group: {object_properties.uv_group}')
             else:
                 col.label(text="This object doesn't have a UV group")
-            col.prop(object_properties, "mirror")
-            col.prop(object_properties, "inflate")
-            col.row().prop(object_properties, "min_uv_size")
+            col.prop(object_properties, "mirror")  # type: ignore
+            col.prop(object_properties, "inflate")  # type: ignore
+            col.row().prop(object_properties, "min_uv_size")  # type: ignore
 
 # Custom object properties panel
 class MCBLEND_PT_ModelPropertiesPanel(Panel):
@@ -492,22 +498,42 @@ class MCBLEND_PT_ModelPropertiesPanel(Panel):
     def draw(self, context):
         col = self.layout.column(align=True)
         # col.prop(context.scene.mcblend, "path", text="")
-        object_properties = context.object.mcblend
-        col.prop(object_properties, "model_origin")
-        col.prop(object_properties, "model_name")
-        col.row().prop(object_properties, "visible_bounds_offset")
-        col.prop(object_properties, "visible_bounds_width")
-        col.prop(object_properties, "visible_bounds_height")
+        object_properties = get_mcblend(context.object)
+        col.prop(
+            object_properties,  # type: ignore
+            "model_origin")
+        col.prop(
+            object_properties,  # type: ignore
+            "model_name")
+        col.row().prop(
+            object_properties,  # type: ignore
+            "visible_bounds_offset")
+        col.prop(
+            object_properties,  # type: ignore
+            "visible_bounds_width")
+        col.prop(
+            object_properties,  # type: ignore
+            "visible_bounds_height")
         col.separator()
-        col.prop(object_properties, "texture_width")
-        col.prop(object_properties, "texture_height")
+        col.prop(
+            object_properties,  # type: ignore
+            "texture_width")
+        col.prop(
+            object_properties,  # type: ignore
+            "texture_height")
         col = col.box().column()
         col.label(text="Texture Generation")
         row = col.row()
-        row.prop(object_properties, "allow_expanding")
-        row.prop(object_properties, "generate_texture")
+        row.prop(
+            object_properties,  # type: ignore
+            "allow_expanding")
+        row.prop(
+            object_properties,  # type: ignore
+            "generate_texture")
         if object_properties.generate_texture:
-            col.prop(object_properties, "texture_template_resolution")
+            col.prop(
+                object_properties,  # type: ignore
+                "texture_template_resolution")
         col.operator("mcblend.map_uv")
 
 # Armature render controllers properties
@@ -530,7 +556,7 @@ class MCBLEND_PT_ArmatureRenderControllersPanel(Panel):
             return
 
         row = col.row()
-        object_properties = context.object.mcblend
+        object_properties = get_mcblend(context.object)
         len_rc = len(object_properties.render_controllers)
         op_props = row.operator("mcblend.add_fake_rc", icon='ADD')
         if len_rc > 0:
@@ -557,7 +583,10 @@ class MCBLEND_PT_ArmatureRenderControllersPanel(Panel):
                 text='')
             set_operator_property(op_props, "rc_index", rc_index)
             row = box_col.row(align=True)
-            row.prop(rc, "texture", text="Texture")
+            row.prop(
+                rc,  # type: ignore
+                "texture",
+                text="Texture")
             # Operator for selecting textures
             op_props = row.operator(
                 "mcblend.fake_rc_select_texture", icon='TEXTURE',
@@ -581,8 +610,14 @@ class MCBLEND_PT_ArmatureRenderControllersPanel(Panel):
             len_rc_materials = len(rc.materials)
             for material_index, rc_material in enumerate(rc.materials):
                 row = box_col.row(align=True)
-                row.prop(rc_material, "pattern", text="")
-                row.prop(rc_material, "material", text="")
+                row.prop(
+                    rc_material,  # type: ignore
+                    "pattern",
+                    text="")
+                row.prop(
+                    rc_material,  # type: ignore
+                    "material",
+                    text="")
                 op_props = row.operator(
                     "mcblend.fake_rc_material_select_template",
                     icon='NODE_MATERIAL', text='')
@@ -636,29 +671,46 @@ class MCBLEND_PT_AnimationPropertiesPanel(Panel):
             "mcblend.add_animation", text="New animation"
         )
 
-        active_anim_id = bpy.context.object.mcblend.active_animation
-        anims = bpy.context.object.mcblend.animations
+        active_anim_id = get_mcblend(context.object).active_animation
+        anims = get_mcblend(context.object).animations
         if active_anim_id < len(anims):
             row.operator("mcblend.remove_animation")
             col.operator_menu_enum(
                 "mcblend.list_animations", "animations_enum")
 
             active_anim = anims[active_anim_id]
-            col.prop(active_anim, "name", text="Name")
-            row = col.row()
-            row.prop(active_anim, "skip_rest_poses", text="Skip rest poses")
-            row.prop(active_anim, "single_frame", text="Export as pose")
             col.prop(
-                active_anim, "override_previous_animation",
+                active_anim,  # type: ignore
+                "name", text="Name")
+            row = col.row()
+            row.prop(
+                active_anim,  # type: ignore
+                "skip_rest_poses", text="Skip rest poses")
+            row.prop(
+                active_anim,  # type: ignore
+                "single_frame", text="Export as pose")
+            col.prop(
+                active_anim,  # type: ignore
+                "override_previous_animation",
                 text="Override previous animation")
             if active_anim.single_frame:
-                col.prop(bpy.context.scene, "frame_current", text="Frame")
+                col.prop(
+                    bpy.context.scene,  # type: ignore
+                    "frame_current", text="Frame")
             else:
-                col.prop(active_anim, "loop", text="Loop")
-                col.prop(active_anim, "anim_time_update",
+                col.prop(
+                    active_anim,  # type: ignore
+                    "loop", text="Loop")
+                col.prop(
+                    active_anim,  # type: ignore
+                    "anim_time_update",
                     text="Anim Time Update")
-                col.prop(bpy.context.scene, "frame_start", text="Frame start")
-                col.prop(bpy.context.scene, "frame_end", text="Frame end")
+                col.prop(
+                    bpy.context.scene,  # type: ignore
+                    "frame_start", text="Frame start")
+                col.prop(
+                    bpy.context.scene,  # type: ignore
+                    "frame_end", text="Frame end")
 
 # "Other" operators panel
 class MCBLEND_PT_OperatorsPanel(Panel):
@@ -704,8 +756,7 @@ class MCBLEND_PT_ProjectPanel(Panel):
 
     def draw(self, context):
         col = self.layout.column()
-        project = context.scene.mcblend_project
-        project = cast(MCBLEND_ProjectProperties, project)
+        project = get_scene_mcblend_project(context)
 
         # col.operator("mcblend.load_database")
         # col.operator("mcblend.save_database")
@@ -713,11 +764,15 @@ class MCBLEND_PT_ProjectPanel(Panel):
         if not get_db_handler().is_loaded:
             return
         col.operator("mcblend.unload_rps")
-        col.prop(project, "importer_type", text="")
+        col.prop(
+            project,  # type: ignore
+            "importer_type", text="")
         if project.importer_type == "ENTITY":
             col.prop_search(
-                data=project, property="selected_entity",
-                search_data=project, search_property="entities",
+                data=project,  # type: ignore
+                property="selected_entity",
+                search_data=project,  # type: ignore
+                search_property="entities",
                 text="Entity"
             )
             if not project.selected_entity in project.entities:
@@ -729,17 +784,24 @@ class MCBLEND_PT_ProjectPanel(Panel):
                 if rc.primary_key == -1:
                     box.label(text="Render controller not found! Using data from client entity.", icon="ERROR")
 
-                box.prop(rc, "geometries", text="Geometry")
-                box.prop(rc, "textures", text="Texture")
+                box.prop(
+                    rc,  # type: ignore
+                    "geometries", text="Geometry")
+                box.prop(
+                    rc,  # type: ignore
+                    "textures", text="Texture")
                 materials_box = box.box()
                 materials_box.label(text="Materials")
                 if len(rc.material_patterns) > 0:
                     for material_pattern in rc.material_patterns:
                         materials_box.prop(
-                            material_pattern, "materials",
+                            material_pattern,  # type: ignore
+                            "materials",
                             text=material_pattern.pattern)
                 else:
-                    materials_box.prop(rc, "fake_material_patterns", text="*")
+                    materials_box.prop(
+                        rc,  # type: ignore
+                        "fake_material_patterns", text="*")
 
             if project.selected_entity in project.entities:
                 col.operator(
@@ -748,8 +810,10 @@ class MCBLEND_PT_ProjectPanel(Panel):
                 )
         elif project.importer_type == "ATTACHABLE":
             col.prop_search(
-                data=project, property="selected_attachable",
-                search_data=project, search_property="attachables",
+                data=project,  # type: ignore
+                property="selected_attachable",
+                search_data=project,  # type: ignore
+                search_property="attachables",
                 text="Attachable"
             )
             if not project.selected_attachable in project.attachables:
@@ -761,17 +825,24 @@ class MCBLEND_PT_ProjectPanel(Panel):
                 if rc.primary_key == -1:
                     box.label(text="Render controller not found! Using data from attachable.", icon="ERROR")
 
-                box.prop(rc, "geometries", text="Geometry")
-                box.prop(rc, "textures", text="Texture")
+                box.prop(
+                    rc,  # type: ignore
+                    "geometries", text="Geometry")
+                box.prop(
+                    rc,  # type: ignore
+                    "textures", text="Texture")
                 materials_box = box.box()
                 materials_box.label(text="Materials")
                 if len(rc.material_patterns) > 0:
                     for material_pattern in rc.material_patterns:
                         materials_box.prop(
-                            material_pattern, "materials",
+                            material_pattern,  # type: ignore
+                            "materials",
                             text=material_pattern.pattern)
                 else:
-                    materials_box.prop(rc, "fake_material_patterns", text="*")
+                    materials_box.prop(
+                        rc,  # type: ignore
+                        "fake_material_patterns", text="*")
 
             if project.selected_attachable in project.attachables:
                 col.operator(
@@ -811,5 +882,9 @@ class MCBLEND_PT_BonePanel(Panel):
         col = self.layout.column()
         # row = col.row()
         # row.label(text="", icon="BONE_DATA")
-        col.prop(pose_bone, "name", text="Bone name", icon="BONE_DATA")
-        col.prop(pose_bone.mcblend, "binding")
+        col.prop(
+            pose_bone,  # type: ignore
+            "name", text="Bone name", icon="BONE_DATA")
+        col.prop(
+            get_mcblend(pose_bone),  # type: ignore
+            "binding")

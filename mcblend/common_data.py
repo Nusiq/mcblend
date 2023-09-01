@@ -18,5 +18,5 @@ class MCBLEND_DbEntry(PropertyGroup):
     Used for creating CollectionProperties that store primary keys from some
     query in the database and a name for displaying in the GUI.
     '''
-    primary_key: IntProperty()
-    name: StringProperty(default="")
+    primary_key: IntProperty()  # type: ignore
+    name: StringProperty(default="")  # type: ignore

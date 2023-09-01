@@ -495,6 +495,16 @@ def set_scene_mcblend_active_event(context, value):
     '''
     context.scene.mcblend_active_event = value
 
+
+def set_scene_mcblend_active_uv_group(context, value):
+    '''
+    Sets the active uv group id in context
+
+    >>> context.scene.mcblend_active_uv_group = value
+    '''
+    context.scene.mcblend_active_uv_group = value
+
+
 def set_use_clamp(obj, use_clamp):
     '''
     >>> obj.use_clamp = use_clamp

@@ -45,7 +45,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo snap install blender --channel=3.3lts/stable --classic
-        pip install mypy pytest numpy fake-bpy-module-3.1
+        pip install pyright pytest numpy fake-bpy-module-3.4
     - name: Build and install the addon
       run: |
         cd $GITHUB_WORKSPACE
@@ -55,7 +55,7 @@ jobs:
     - name: Test syntax with mypy
       run: |
         cd $GITHUB_WORKSPACE
-        python -m mypy ./mcblend
+        python -m pyright ./mcblend
     - name: PyTest tests
       run: |
         cd $GITHUB_WORKSPACE

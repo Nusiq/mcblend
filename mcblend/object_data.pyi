@@ -1,21 +1,21 @@
 from __future__ import annotations
 from typing import Dict, List, Literal, Tuple
 from enum import Enum
-from bpy.types import Context
+from bpy.types import Context, PropertyGroup
 from .operator_func.pyi_types import CollectionProperty
 from .common_data import MCBLEND_JustName
 from .operator_func.common import ModelOriginType
 
 # Animation properties
 class EffectTypes(Enum):
-    SOUND_EFFECT: Literal['Sound Effect'] = ...
-    PARTICLE_EFFECT: Literal['Particle Effect'] = ...
+    SOUND_EFFECT = 'Sound Effect'
+    PARTICLE_EFFECT = 'Sound Effect'
 
 def list_effect_types_as_blender_enum(
         self: MCBLEND_EffectProperties, context: Context
     ) -> list[tuple[str, str, str]]: ...
 
-class MCBLEND_EffectProperties:
+class MCBLEND_EffectProperties(PropertyGroup):
     effect_type: str
     effect: str
     locator: str
@@ -30,17 +30,17 @@ def _set_event_name(self: MCBLEND_EventProperties, value: str) -> None: ...
 
 def _get_event_name(self: MCBLEND_EventProperties) -> str: ...
 
-class MCBLEND_EventProperties:
+class MCBLEND_EventProperties(PropertyGroup):
     name: str
     effects: CollectionProperty[MCBLEND_EffectProperties]
 
     def get_effects_dict(self) -> Tuple[List[Dict], List[Dict]]: ...
 
-class MCBLEND_TimelineMarkerProperties:
+class MCBLEND_TimelineMarkerProperties(PropertyGroup):
     name: str
     frame: int
 
-class MCBLEND_AnimationProperties:
+class MCBLEND_AnimationProperties(PropertyGroup):
     name: str
     world_origin: str
     single_frame: bool
@@ -59,15 +59,15 @@ def list_mesh_types_as_blender_enum(
         self: MCBLEND_FakeRcMaterialProperties, context: Context
     ) -> list[tuple[str, str, str]]: ...
 
-class MCBLEND_FakeRcMaterialProperties:
+class MCBLEND_FakeRcMaterialProperties(PropertyGroup):
     pattern: str
     material: str
 
-class MCBLEND_FakeRcProperties:
+class MCBLEND_FakeRcProperties(PropertyGroup):
     texture: str
     materials: CollectionProperty[MCBLEND_FakeRcMaterialProperties]
 
-class MCBLEND_ObjectProperties:
+class MCBLEND_ObjectProperties(PropertyGroup):
     model_name: str
     texture_template_resolution: int
     allow_expanding: bool
@@ -87,5 +87,5 @@ class MCBLEND_ObjectProperties:
     min_uv_size: tuple[int, int, int]
     model_origin: str
 
-class MCBLEND_BoneProperties:
+class MCBLEND_BoneProperties(PropertyGroup):
     binding: str
