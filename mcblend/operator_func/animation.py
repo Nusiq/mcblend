@@ -7,10 +7,10 @@ from typing import NamedTuple, Dict, Optional, List, Tuple, Set, cast
 import math # pyright: ignore[reportShadowedImports]
 from dataclasses import dataclass, field
 from itertools import tee, islice  # pyright: ignore[reportShadowedImports]
+from decimal import Decimal
 
 import bpy
 from bpy.types import Action, Context
-from decimal import Decimal
 
 import numpy as np
 
@@ -101,7 +101,7 @@ def _get_keyframes(context: Context, prec: int=1) -> List[float]:
     actions of the active object. The results are returned as float (allowing
     use of the subframes). The precision of the results is limited to the value
     specified by the prec argument.
-    
+
     !!! Important note
 
     The precision limitation is applied to avoid very small differences in the
@@ -134,8 +134,8 @@ def _get_keyframes(context: Context, prec: int=1) -> List[float]:
     if obj.animation_data is None:
         return []
     if obj.animation_data.action is not None:
-        for kf in get_action_keyframes(obj.animation_data.action):
-            keyframes.add(round(kf, prec))
+        for keyframe in get_action_keyframes(obj.animation_data.action):
+            keyframes.add(round(keyframe, prec))
     if obj.animation_data.nla_tracks is None:
         return sorted(keyframes)
     for nla_track in get_nla_tracks(obj.animation_data):

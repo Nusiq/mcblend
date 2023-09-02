@@ -5,10 +5,10 @@ This module contains all of the operators.
 import json
 from pathlib import Path
 from json.decoder import JSONDecodeError
-from typing import Any, List, Optional, Dict, Any, Set, TYPE_CHECKING
+from typing import List, Optional, Dict, Any, Set, TYPE_CHECKING
 
 import bpy
-from bpy.types import Operator, Context, Object
+from bpy.types import Operator, Context
 from bpy.props import (
     StringProperty, FloatProperty, EnumProperty, BoolProperty, IntProperty)
 from bpy_extras.io_utils import ExportHelper, ImportHelper
@@ -91,7 +91,7 @@ class MCBLEND_OT_ExportModel(
         finally:
             context.scene.frame_set(original_frame)
 
-        with open(self.filepath, 'w') as f:
+        with open(self.filepath, 'w', encoding='utf8') as f:
             json.dump(result, f, cls=CompactEncoder)
         if warnings_counter > 1:
             self.report(
@@ -153,13 +153,13 @@ class MCBLEND_OT_ExportAnimation(
         old_dict: Optional[Dict] = None
         filepath: str = self.filepath  # type: ignore
         try:
-            with open(filepath, 'r') as f:
+            with open(filepath, 'r', encoding='utf8') as f:
                 old_dict = json.load(f, cls=JSONCDecoder)
         except (json.JSONDecodeError, OSError):
             pass
         animation_dict = export_animation(context, old_dict)
         # Save file and finish
-        with open(filepath, 'w') as f:
+        with open(filepath, 'w', encoding='utf8') as f:
             json.dump(animation_dict, f, cls=CompactEncoder)
         self.report({'INFO'}, f'Animation saved in {filepath}.')
         return {'FINISHED'}
@@ -206,8 +206,7 @@ class MCBLEND_OT_MapUv(Operator):
             #             f"Object: {obj.name}; Frame: 0.")
             #         return {'FINISHED'}
             set_uvs(context)
-        except NotEnoughTextureSpace as e:
-            raise e
+        except NotEnoughTextureSpace:
             self.report(
                 {'ERROR'},
                 "Not enough texture space to create UV mapping.")
@@ -389,7 +388,7 @@ class MCBLEND_OT_SeparateMeshCubes(Operator):
     Adjusts the rotations of the newly created objects to match the rotations
     of the cubes inside of this object.
     '''
-    # pylint: disable=unused-argument, R0201, no-member
+    # pylint: disable=unused-argument, no-member
     bl_idname = "mcblend.separate_mesh_cubes"
     bl_label = "Separate and align cubes"
     bl_options = {'UNDO'}
@@ -442,7 +441,7 @@ class MCBLEND_OT_ImportModel(Operator, ImportHelper):
 
     def execute(self, context):
         # Save file and finish
-        with open(self.filepath, 'r') as f:
+        with open(self.filepath, 'r', encoding='utf8') as f:
             data = json.load(f, cls=JSONCDecoder)
         try:
             warnings = import_model(data, self.geometry_name, context)
@@ -1119,7 +1118,7 @@ class MCBLEND_OT_ExportUvGroup(
         group_id = get_scene_mcblend_active_uv_group(context)
         uv_group = get_scene_mcblend_uv_groups(context)[group_id]
 
-        with open(self.filepath, 'w') as f:
+        with open(self.filepath, 'w', encoding='utf8') as f:
             json.dump(uv_group.json(), f, cls=CompactEncoder)
         self.report({'INFO'}, f'UV group saved in {self.filepath}.')
         return {'FINISHED'}
@@ -1402,7 +1401,7 @@ class MCBLEND_OT_ImportUvGroup(Operator, ImportHelper):
         # Save file and finish
         try:
             filepath: str = self.filepath  # type: ignore
-            with open(filepath, 'r') as f:
+            with open(filepath, 'r', encoding='utf8') as f:
                 data = json.load(f, cls=JSONCDecoder)
             version = data['version']
             if version != 1:

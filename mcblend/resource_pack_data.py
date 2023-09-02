@@ -52,9 +52,8 @@ def enum_entity_geometries(self, context) -> list[tuple[str, str, str]]:
     if self.primary_key != -1:
         return get_db_handler().gui_enum_entity_geometries(
             self.primary_key, entity_pk)
-    else:
-        return get_db_handler().gui_enum_entity_geometries_for_fake_rc(
-            entity_pk)
+    return get_db_handler().gui_enum_entity_geometries_for_fake_rc(
+        entity_pk)
 
 def enum_entity_textures(self, context) -> list[tuple[str, str, str]]:
     '''
@@ -66,9 +65,8 @@ def enum_entity_textures(self, context) -> list[tuple[str, str, str]]:
     if self.primary_key != -1:
         return get_db_handler().gui_enum_entity_textures(
                 self.primary_key, entity_pk)
-    else:
-        return get_db_handler().gui_enum_entity_textures_for_fake_rc(
-            entity_pk)
+    return get_db_handler().gui_enum_entity_textures_for_fake_rc(
+        entity_pk)
 
 def enum_fake_entity_material_patterns(self, context) -> list[tuple[str, str, str]]:
     '''
@@ -160,9 +158,8 @@ def enum_attachable_geometries(self, context) -> list[tuple[str, str, str]]:
     if self.primary_key != -1:
         return get_db_handler().gui_enum_attachable_geometries(
             self.primary_key, attachable_pk)
-    else:
-        return get_db_handler().gui_enum_attachable_geometries_for_fake_rc(
-            attachable_pk)
+    return get_db_handler().gui_enum_attachable_geometries_for_fake_rc(
+        attachable_pk)
 
 def enum_attachable_textures(self, context) -> list[tuple[str, str, str]]:
     '''
@@ -174,9 +171,8 @@ def enum_attachable_textures(self, context) -> list[tuple[str, str, str]]:
     if self.primary_key != -1:
         return get_db_handler().gui_enum_attachable_textures(
                 self.primary_key, attachable_pk)
-    else:
-        return get_db_handler().gui_enum_attachable_textures_for_fake_rc(
-            attachable_pk)
+    return get_db_handler().gui_enum_attachable_textures_for_fake_rc(
+        attachable_pk)
 
 def enum_fake_attachable_material_patterns(self, context) -> list[tuple[str, str, str]]:
     '''

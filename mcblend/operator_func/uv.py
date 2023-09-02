@@ -92,7 +92,7 @@ class Suggestion(NamedTuple):
         '''
         Returns True if this suggestion is smaller than other suggestion.
 
-        The first criteria is the distance from the top left corner, the 
+        The first criteria is the distance from the top left corner, the
         second criteria is the priority of the corner (see UvCorner enum).
 
         The distance is calculated as the length of the bigger coordinate
@@ -586,6 +586,9 @@ class UvModelMerger(McblendObjUvBox):
 
     @property
     def base_image_size(self) -> Vector2di:
+        '''
+        Returns the size of the base texture.
+        '''
         return tuple(self.base_image.size)  # type: ignore
 
     def get_reverse_converter(self) -> CoordinatesConverter:
@@ -623,7 +626,7 @@ class UvModelMerger(McblendObjUvBox):
             active_uv_layer = get_data_uv_layers(obj.thisobj).active
             if active_uv_layer is None:
                 continue  # Unmapped objects remain unmapped
-            for i in range(len(active_uv_layer.data)):  # type: ignore
+            for i, _ in enumerate(active_uv_layer.data):
                 # The UV values on the old texture (as if the image was
                 # self.base_image_size)
                 uv = reverse_converter.convert(get_uv(active_uv_layer.data[i]))
@@ -731,7 +734,7 @@ class UvMapper:
 
         # pylint: disable=too-many-nested-blocks
         for box in unmapped_boxes:
-            for suggestion_i in range(len(suggestions)):
+            for suggestion_i, _ in enumerate(suggestions):
                 # Apply suggestion
                 box.apply_suggestion(suggestions[suggestion_i])
 

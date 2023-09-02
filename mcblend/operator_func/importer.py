@@ -15,9 +15,10 @@ from bpy.types import Object, MeshUVLoopLayer
 import bpy
 
 from .typed_bpy_access import (
-    add, get_data_edit_bones, get_data_meshes, get_data_uv_layers, get_data_vertices, get_head,
-    get_loop_indices, get_matrix_world, get_data, get_objects, get_rotation_euler, get_tail, get_uv_layers,
-    matmul, set_matrix, set_matrix_parent_inverse, set_matrix_world,
+    get_data_edit_bones, get_data_meshes, get_data_uv_layers,
+    get_data_vertices, get_head, get_loop_indices, get_matrix_world, get_data,
+    get_objects, get_rotation_euler, get_tail, get_uv_layers, matmul,
+    set_matrix, set_matrix_parent_inverse, set_matrix_world,
     get_matrix_parent_inverse, get_pose_bones, subtract)
 from .common import (
     MINECRAFT_SCALE_FACTOR, CubePolygons, CubePolygon, MeshType)
@@ -244,7 +245,6 @@ class ModelLoader:
 
         :param data: JSON dict with model file.
         '''
-        # pylint: disable=no-self-use
         if 'format_version' in data:
             parser_version = pick_version_parser(
                 ('1.16.0', '1.12.0', '1.8.0'), data['format_version'])
@@ -701,7 +701,6 @@ class ModelLoader:
         :param uv: Optional - the UV property of the cube (if the cube uses the
             standard Minecraft UV mapping format).
         '''
-        # pylint: disable=no-self-use
         width, height, depth = (int(i) for i in size)
 
         def _face(size: Vector2d, uv: Vector2d):
@@ -1488,7 +1487,7 @@ class ImportGeometry:
                     mesh.use_auto_smooth = True
                     mesh.normals_split_custom_set(
                         blender_normals)  # type: ignore
-                    
+
                     if get_uv_layers(mesh).active is None:
                         get_uv_layers(mesh).new()
                     uv_layer = get_data(get_uv_layers(mesh).active)

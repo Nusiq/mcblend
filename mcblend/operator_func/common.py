@@ -20,8 +20,10 @@ from bpy.types import MeshUVLoopLayer, Object, MeshPolygon, PoseBone, Context
 from mathutils import Vector, Matrix, Euler
 
 from .typed_bpy_access import (
-    add, decompose, get_children, get_co, get_data, get_data_edges, get_matrix, get_pose_bones, get_scene_mcblend_uv_groups, get_data_bones, get_data_polygons, get_data_vertices,
-    get_matrix_local, get_matrix_world, get_mcblend, getitem, matmul, matmul_chain, set_co, set_matrix_local, set_matrix_world,
+    add, decompose, get_children, get_co, get_data, get_data_edges, get_matrix,
+    get_pose_bones, get_scene_mcblend_uv_groups, get_data_bones,
+    get_data_polygons, get_data_vertices, get_matrix_local, get_matrix_world,
+    get_mcblend, getitem, matmul, matmul_chain, set_co, set_matrix_local,
     subtract, cross, neg, to_euler)
 
 from .texture_generator import Mask, ColorMask, get_masks_from_side
@@ -906,8 +908,8 @@ def apply_obj_transform_keep_origin(obj: Object):
     rotation and scale but keeps location the same.
     '''
     # Decompose object transformations
-    loc, rot, scl = decompose(get_matrix_local(obj))
-    loc_mat = Matrix.Translation(loc)
+    _, rot, scl = decompose(get_matrix_local(obj))
+    # loc_mat = Matrix.Translation(loc)
     rot_mat = rot.to_matrix().to_4x4()
     scl_mat =  matmul_chain(
         Matrix.Scale(getitem(scl, 0), 4, Vector([1,0,0])),
@@ -942,7 +944,7 @@ def fix_cube_rotation(obj: Object):
 
     # The cross product creates the 3rd vector that defines
     # the rotated space
-    
+
     w = cross(u, v).normalized()
     # Recalculate V to make sure that all of the vectors are at
     # the right angle (even though they should be)

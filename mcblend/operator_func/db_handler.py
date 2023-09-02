@@ -1,13 +1,18 @@
+'''
+The module that defines the classes and functions that are used to interact
+with the database while loading data from resource packs.
+'''
+# pylint: disable=method-cache-max-size-none
 from __future__ import annotations
 
 from pathlib import Path
-from .sqlite_bedrock_packs import Database
 # load_rp
 from typing import Optional
-
 # Don't use lru_cache(maxsize=1) sometimes there are more than 1 lists of the
 # same type shown in the UI. Just make sure to call cache_clear() when you can.
 from functools import cache
+
+from .sqlite_bedrock_packs import Database
 
 @cache
 def get_db_handler() -> DbHandler:
@@ -15,6 +20,10 @@ def get_db_handler() -> DbHandler:
     return DbHandler()
 
 class DbHandler:
+    '''
+    A singleton class that is used to interact with the database that loads
+    and stores the data from resource packs.
+    '''
     def __init__(self):
         self.db = Database.create()
         self.is_loaded = False
@@ -26,6 +35,8 @@ class DbHandler:
         self.is_loaded = True
 
     def _clear_cache(self):
+        '''Clears all of the cached values.'''
+        # pylint: disable=no-member
         self.gui_enum_entity_materials.cache_clear()
         self.gui_enum_entity_fake_material_patterns.cache_clear()
         self.gui_enum_entity_geometries.cache_clear()
@@ -43,7 +54,7 @@ class DbHandler:
         self.gui_enum_attachable_textures_for_fake_rc.cache_clear()
         self.list_attachable_render_controllers.cache_clear()
         self.list_attachables_with_models_and_rc.cache_clear()
-        
+
         self.list_bone_name_patterns.cache_clear()
 
     def delete_db(self):
@@ -533,7 +544,7 @@ class DbHandler:
         not_found_counter = 0
         for texture_pk, short_name, path in self.db.connection.execute(
                 query, (rc_pk, attachable_pk)):
-                
+
             if texture_pk is None:
                 texture_pk = f'not_found_{not_found_counter}'
                 not_found_counter += 1
@@ -658,7 +669,7 @@ class DbHandler:
         loaded last will be used). If a pack has multiple render controllers
         with the same identifier (which is not allowed), the last one is used.
         '''
-
+        # pylint: disable=unnecessary-comprehension
         query = '''
         SELECT pk, identifier FROM (
             SELECT DISTINCT
@@ -704,7 +715,7 @@ class DbHandler:
         loaded last will be used). If a pack has multiple render controllers
         with the same identifier (which is not allowed), the last one is used.
         '''
-
+        # pylint: disable=unnecessary-comprehension
         query = '''
         SELECT pk, identifier FROM (
             SELECT DISTINCT
@@ -740,6 +751,7 @@ class DbHandler:
         Lists all of the distinct bone name patterns from the given
         render controller. The result is a string with the bone name pattern.
         '''
+        # pylint: disable=unnecessary-comprehension
         query = '''
         SELECT DISTINCT boneNamePattern
         FROM RenderControllerMaterialsField
@@ -755,7 +767,7 @@ class DbHandler:
     def list_entities_with_models_and_rc(self) -> list[tuple[int, str]]:
         '''
         Lists all of the all of the  entities from database that use geometries
-        and render_controlelrs fields. There must be at least one 
+        and render_controlelrs fields. There must be at least one
         geometry in the database that connects to the geometry field. The
         render controller don't have to exist but there must be a render
         controller field in the client entity file.
@@ -767,6 +779,7 @@ class DbHandler:
 
         Results are ordered by identifier
         '''
+        # pylint: disable=unnecessary-comprehension
 
         # DISTINCT in SELECT is needed, because there can be multiple geometry
         # or rc fields in one entity
@@ -794,7 +807,7 @@ class DbHandler:
     def list_attachables_with_models_and_rc(self) -> list[tuple[int, str]]:
         '''
         Lists all of the all of the  attachables from database that use
-        geometries and render_controlelrs fields. There must be at least one 
+        geometries and render_controlelrs fields. There must be at least one
         geometry in the database that connects to the geometry field. The
         render controller don't have to exist but there must be a render
         controller field in the attachable file.
@@ -806,6 +819,7 @@ class DbHandler:
 
         Results are ordered by identifier
         '''
+        # pylint: disable=unnecessary-comprehension
 
         # DISTINCT in SELECT is needed, because there can be multiple geometry
         # or rc fields in one attachable

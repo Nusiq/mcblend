@@ -78,7 +78,7 @@ class Color(NamedTuple):
     def create_from_hex(color: str):
         '''Creates color object from hex string e.g. "ffffff"'''
         if len(color) != 6:
-            raise Exception(
+            raise ValueError(
                 'The color should be passed as 6 digit a hex number with '
                 'format "rrggbb"'
             )
@@ -240,7 +240,7 @@ class GradientMask(TwoPointSurfaceMask):
         stripe_width: list[float] = []
         for i in stripes:
             if i.width < 0:
-                raise Exception(
+                raise ValueError(
                     'All stripe width must be greater or equal 0')
             stripe_width.append(i.width)
             self.stripe_strength.append(i.strength)
@@ -421,7 +421,7 @@ class StripesMask(MultiplicativeMask):
 
         for i in stripes:
             if i.width <= 0:
-                raise Exception('All stripe widths must be greater than 0')
+                raise ValueError('All stripe widths must be greater than 0')
             self.stripe_width.append(i.width)
             self.stripe_strength.append(i.strength)
         self.horizontal = horizontal
@@ -537,7 +537,7 @@ class MixMask(MultiplicativeMask):
         elif self.mode == 'median':
             mask = np.median(mask_arrays, axis=0)
         else:
-            raise Exception(f"Unknown mix mode! {self.mode}")
+            raise ValueError(f"Unknown mix mode! {self.mode}")
 
         mask = np.interp(mask, (0.0, 1.0), self.strength)
         mask = mask**self.expotent

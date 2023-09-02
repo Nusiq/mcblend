@@ -13,9 +13,9 @@ if TYPE_CHECKING:
         MCBLEND_ProjectProperties, MCBLEND_AttachableRenderController,
         MCBLEND_EntityRenderController)
 else:
-    MCBLEND_ProjectProperties = None
-    MCBLEND_AttachableRenderController = None
-    MCBLEND_EntityRenderController = None
+    MCBLEND_ProjectProperties = None  # pylint: disable=invalid-name
+    MCBLEND_AttachableRenderController = None  # pylint: disable=invalid-name
+    MCBLEND_EntityRenderController = None  # pylint: disable=invalid-name
 
 class PksForModelImport(TypedDict):
     '''

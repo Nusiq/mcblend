@@ -4,19 +4,17 @@ Functions used directly by the blender operators.
 from __future__ import annotations
 
 from pathlib import Path
-import json
 from typing import (
     Dict, Iterable, List, Literal, Optional, Tuple, cast, TYPE_CHECKING,
     Callable)
 from dataclasses import dataclass, field
 from collections import defaultdict
-from .common import ModelOriginType
 
 import bpy
-from mathutils import Matrix
 from bpy.types import Image, Material, Context, Object
 import numpy as np
 
+from .common import ModelOriginType
 from .typed_bpy_access import (
     get_data_bones, get_objects,
     get_context_object, get_scene_mcblend_project,
@@ -50,8 +48,8 @@ if TYPE_CHECKING:
     from ..resource_pack_data import MCBLEND_ProjectProperties
     from ..object_data import MCBLEND_ObjectProperties
 else:
-    MCBLEND_ProjectProperties = None
-    MCBLEND_ObjectProperties = None
+    MCBLEND_ProjectProperties = None  # pylint: disable=invalid-name
+    MCBLEND_ObjectProperties = None  # pylint: disable=invalid-name
 
 def export_model(
         context: Context) -> Tuple[Dict, Iterable[str]]:
@@ -460,7 +458,9 @@ def load_rp_to_mcblned(
         last_name = name
 
 def unload_rps(context: Context):
-    # Clear the selection in GUI
+    '''
+    Unload resrouce pakcs in GUI.
+    '''
     mcblend_project = get_scene_mcblend_project(context)
     mcblend_project = cast(MCBLEND_ProjectProperties, mcblend_project)
     mcblend_project.entity_render_controllers.clear()
@@ -807,7 +807,7 @@ def prepare_physics_simulation(context: Context) -> Dict:
             get_objects(context.view_layer).active = armature
             bpy.ops.object.posemode_toggle()  # Pose mode
             bpy.ops.pose.select_all(action='DESELECT')
-            
+
             get_data_bones(armature).active = get_data_bones(
                 armature)[bone.thisobj_id.bone_name]
             # bpy.ops.pose.constraint_add(type='COPY_TRANSFORMS')
@@ -903,7 +903,7 @@ def merge_models(context: Context) -> None:
     arr = np.zeros([image.size[1], image.size[0], 4])
     for merger in uv_mergers:
         pixels = np.array(get_pixels(merger.base_image))
-        merger.base_image_size
+
         pixels = pixels.reshape([
             merger.base_image_size[1], merger.base_image_size[0], 4
         ])

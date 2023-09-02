@@ -10,7 +10,6 @@ from dataclasses import dataclass, field
 import numpy as np
 import mathutils
 from mathutils import Vector
-import bpy
 from bpy.types import MeshUVLoopLayer, MeshPolygon
 
 

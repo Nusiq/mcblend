@@ -2,14 +2,11 @@
 This module contains all of the panels for mcblend GUI.
 '''
 # don't import future annotations Blender needs that
-from cProfile import label
-from typing import List, Optional, cast
+from typing import List, Optional
 from dataclasses import dataclass
 
 import bpy
 from bpy.types import UILayout, UIList, Panel, Context
-
-from .resource_pack_data import MCBLEND_ProjectProperties
 
 from .object_data import EffectTypes
 from .operator_func.db_handler import get_db_handler
@@ -470,7 +467,7 @@ class MCBLEND_PT_ObjectPropertiesPanel(Panel):
             "mesh_type",
             text=""
         )
-        
+
         mesh_type = get_mcblend(context.object).mesh_type
         if mesh_type == MeshType.CUBE.value:
             if object_properties.uv_group != '':
@@ -782,7 +779,11 @@ class MCBLEND_PT_ProjectPanel(Panel):
                 box = col.box()
                 box.label(text=rc.identifier)
                 if rc.primary_key == -1:
-                    box.label(text="Render controller not found! Using data from client entity.", icon="ERROR")
+                    box.label(
+                        text=(
+                            "Render controller not found! "
+                            "Using data from client entity."),
+                        icon="ERROR")
 
                 box.prop(
                     rc,  # type: ignore
@@ -823,7 +824,11 @@ class MCBLEND_PT_ProjectPanel(Panel):
                 box = col.box()
                 box.label(text=rc.identifier)
                 if rc.primary_key == -1:
-                    box.label(text="Render controller not found! Using data from attachable.", icon="ERROR")
+                    box.label(
+                        text=(
+                            "Render controller not found! "
+                            "Using data from attachable."),
+                        icon="ERROR")
 
                 box.prop(
                     rc,  # type: ignore

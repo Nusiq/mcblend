@@ -3,8 +3,7 @@ PropertyGroups commonly used across other PropertyGroups in collections and
 as pointers.
 '''
 from bpy.types import PropertyGroup
-from bpy.props import (
-    CollectionProperty, StringProperty, BoolProperty, IntProperty)
+from bpy.props import StringProperty, IntProperty
 
 
 class MCBLEND_JustName(PropertyGroup):

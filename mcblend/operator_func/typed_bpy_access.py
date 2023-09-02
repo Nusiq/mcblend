@@ -41,16 +41,16 @@ def get_co(obj):
     '''
     return obj.co
 
-def get_constraints(object):
+def get_constraints(obj):
     '''
-    >>> object.constraints
+    >>> obj.constraints
     '''
-    return object.constraints
+    return obj.constraints
 
 def get_context_object(context):
     '''
     Returns the object from the context
-    
+
     >>> context.object
     '''
     return context.object
@@ -256,7 +256,7 @@ def get_rotation_euler(obj):
 def get_scene_mcblend_active_event(context):
     '''
     Returns the active event id from context
-    
+
     >>> context.scene.mcblend_active_event
     '''
     return context.scene.mcblend_active_event
@@ -264,7 +264,7 @@ def get_scene_mcblend_active_event(context):
 def get_scene_mcblend_active_uv_group(context):
     '''
     Returns the active uv group id from context
-    
+
     >>> context.scene.mcblend_active_uv_group
     '''
     return context.scene.mcblend_active_uv_group
@@ -273,7 +273,7 @@ def get_scene_mcblend_active_uv_group(context):
 def get_scene_mcblend_active_uv_groups_side(context):
     '''
     Returns the active uv group side from context
-    
+
     >>> context.scene.mcblend_active_uv_groups_side
     '''
     return context.scene.mcblend_active_uv_groups_side
@@ -281,7 +281,7 @@ def get_scene_mcblend_active_uv_groups_side(context):
 def get_scene_mcblend_events(context):
     '''
     Returns the events properties from context
-    
+
     >>> context.scene.mcblend_events
     '''
     return context.scene.mcblend_events
@@ -289,7 +289,7 @@ def get_scene_mcblend_events(context):
 def get_scene_mcblend_project(context):
     '''
     Returns the project properties from context
-    
+
     >>> context.scene.mcblend_project
     '''
     return context.scene.mcblend_project
@@ -397,7 +397,7 @@ def set_constraint_property(constraint, name, value):
 
     >>> constraint.<name> = value
     '''
-    constraint.__setattr__(name, value)
+    setattr(constraint, name, value)
 
 def set_default_value(obj, value):
     '''
@@ -465,7 +465,7 @@ def set_operator_property(operator, name, value):
 
     >>> operator.<name> = value
     '''
-    operator.__setattr__(name, value)
+    setattr(operator, name, value)
 
 def set_parent(obj, value):
     '''
@@ -485,7 +485,7 @@ def set_pose_bone_constraint_property(constraint, name, value):
 
     >>> constraint.<name> = value
     '''
-    constraint.__setattr__(name, value)
+    setattr(constraint, name, value)
 
 def set_scene_mcblend_active_event(context, value):
     '''
@@ -535,7 +535,6 @@ def to_euler(obj, order, euler_compact=None):
     '''
     >>> obj.to_euler(order, euler_compact)
     '''
-    if euler_compact == None:
+    if euler_compact is None:
         return obj.to_euler(order)
-    else:
-        return obj.to_euler(order, euler_compact)
+    return obj.to_euler(order, euler_compact)
