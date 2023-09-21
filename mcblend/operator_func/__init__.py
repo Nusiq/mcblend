@@ -274,7 +274,7 @@ def fix_uvs(context: Context) -> Vector2di:
                     raise RuntimeError('Invalid state')
             # Apply new_crds to the UV
             ordered_loop_indices = np.array(
-                polygon.side.loop_indices)[[polygon.order]]
+                polygon.side.loop_indices)[polygon.order,]
             for i, loop_index in enumerate(ordered_loop_indices):
                 uv_layer.data[loop_index].uv =  new_crds[i]
             fixed_faces += 1
