@@ -1,3 +1,4 @@
+# type: ignore
 '''
 Custom Blender objects with additional data for the objects and empties.
 '''
@@ -35,25 +36,25 @@ class MCBLEND_EffectProperties(PropertyGroup):
     '''
     An effect of an event (sound or particles)
     '''
-    effect_type: EnumProperty(  # type: ignore
+    effect_type: EnumProperty(
         items=list_effect_types_as_blender_enum,
         name='Effect type')
-    effect: StringProperty(  # type: ignore
+    effect: StringProperty(
         name="Effect",
         description='The name of the effect',
         default='',
         maxlen=1024)
-    locator: StringProperty(  # type: ignore
+    locator: StringProperty(
         name="Locator",
         description='The name of the locator',
         default='',
         maxlen=1024)
-    pre_effect_script: StringProperty(  # type: ignore
+    pre_effect_script: StringProperty(
         name="Pre effect script",
         description='A Molang script to run before the effect is played',
         default='',
         maxlen=2048)
-    bind_to_actor: BoolProperty(  # type: ignore
+    bind_to_actor: BoolProperty(
         name="Bind to actor",
         description=(
             "Specifies whether the effect should be spawned in the world "
@@ -115,14 +116,14 @@ class MCBLEND_EventProperties(PropertyGroup):
     '''
     A collection of sound and particle events.
     '''
-    name: StringProperty(  # type: ignore
+    name: StringProperty(
         name="Name",
         description="The name of the of the event",
         # The Add operator overwrites default value on creation to trigger the
         # update function
         default='',
         maxlen=1024, set=_set_event_name, get=_get_event_name)
-    effects: CollectionProperty(  # type: ignore
+    effects: CollectionProperty(
         type=MCBLEND_EffectProperties,
         name='Sound effects')
 
@@ -151,92 +152,92 @@ class MCBLEND_EventProperties(PropertyGroup):
 
 class MCBLEND_TimelineMarkerProperties(PropertyGroup):
     '''Saves the data about a timeline marker.'''
-    name: StringProperty(  # type: ignore
+    name: StringProperty(
         name="Name",
         description="The name of the timeline marker",
         default="marker",
         maxlen=1024
     )
-    frame: IntProperty(  # type: ignore
+    frame: IntProperty(
         name="Frame",
         default=0
     )
 
 class MCBLEND_AnimationProperties(PropertyGroup):
     '''Properties of an animation template.'''
-    name: StringProperty(  # type: ignore
+    name: StringProperty(
         name="Name",
         description="The name of the animation",
         default="animation",
         maxlen=1024
     )
-    single_frame: BoolProperty(  # type: ignore
+    single_frame: BoolProperty(
         name="Single frame",
         description=(
             "Whether the animation should be exported as a single, "
             "looped frame"),
         default=False,
     )
-    skip_rest_poses: BoolProperty(  # type: ignore
+    skip_rest_poses: BoolProperty(
         name="Skip rest poses",
         description=(
             "Whether bone transformations that represent a rest position "
             "throughout the whole animation should be ignored"),
         default=False,
     )
-    override_previous_animation: BoolProperty(  # type: ignore
+    override_previous_animation: BoolProperty(
         name="Override previos animation",
         description=(
             "Sets the \"override_previous_animation\" property of the "
             "Minecraft animation"),
         default=False,
     )
-    anim_time_update: StringProperty(  # type: ignore
+    anim_time_update: StringProperty(
         name="anim_time_update",
         description=(
             "Sets the \"anim_time_update\" value of the Minecraft animation"),
         default="",
         maxlen=1024
     )
-    loop: EnumProperty(  # type: ignore
+    loop: EnumProperty(
         items=(
-            (  # type: ignore
+            (
                 AnimationLoopType.TRUE.value, AnimationLoopType.TRUE.value,
                 'The animation is looped'
             ),
-            (  # type: ignore
+            (
                 AnimationLoopType.FALSE.value, AnimationLoopType.FALSE.value,
                 'The animation has no effect on entity after it finished'
             ),
-            (  # type: ignore
+            (
                 AnimationLoopType.HOLD_ON_LAST_FRAME.value,
                 AnimationLoopType.HOLD_ON_LAST_FRAME.value,
                 'After the end of animation the entity stays in the pose from '
                 'the last frame'
             )
         ), name='Loop')
-    frame_start: IntProperty(  # type: ignore
+    frame_start: IntProperty(
         name="Frame start",
         description="The first frame of the animation",
         default=0,
         min=0
     )
-    frame_current: IntProperty(  # type: ignore
+    frame_current: IntProperty(
         name="Frame current",
         description="The current frame of the animation",
         default=100,
         min=0
     )
-    frame_end: IntProperty(  # type: ignore
+    frame_end: IntProperty(
         name="Frame end",
         description="The last frame of the animation",
         default=100,
         min=0
     )
-    timeline_markers: CollectionProperty(  # type: ignore
+    timeline_markers: CollectionProperty(
         type=MCBLEND_TimelineMarkerProperties,
     )
-    nla_tracks: CollectionProperty(  # type: ignore
+    nla_tracks: CollectionProperty(
         type=MCBLEND_JustName
     )
 
@@ -250,13 +251,13 @@ class MCBLEND_FakeRcMaterialProperties(PropertyGroup):
     '''
     Pattern-material pair for MCBLEND_FakeRcProperties object.
     '''
-    pattern: StringProperty(  # type: ignore
+    pattern: StringProperty(
         name="Pattern",
         description=(
             "The pattern that matches the name of the bones that should use "
             "this material"),
         default="", maxlen=1024)
-    material: StringProperty(  # type: ignore
+    material: StringProperty(
         name="Material",
         description="The name of the material used by this render controller",
         default="",
@@ -268,25 +269,25 @@ class MCBLEND_FakeRcProperties(PropertyGroup):
     Armature property group similar to Minecraft render controller used for
     generating Minecraft materials.
     '''
-    texture: StringProperty(  # type: ignore
+    texture: StringProperty(
         name="Texture",
         description="The name of the texture used by this render controller",
         default="",
         maxlen=1024
     )
-    materials: CollectionProperty(  # type: ignore
+    materials: CollectionProperty(
         type=MCBLEND_FakeRcMaterialProperties, name='Materials')
 
 class MCBLEND_ObjectProperties(PropertyGroup):
     '''Custom properties of an object.'''
     # ARMATURE PROPERTIES (equivalent of minecraft model)
-    model_name: StringProperty(  # type: ignore
+    model_name: StringProperty(
         name="Model name",
         description="The name of the Minecraft model used during exporting",
         default="model",
         maxlen=1024
     )
-    texture_template_resolution: IntProperty(  # type: ignore
+    texture_template_resolution: IntProperty(
         name="Template resolution",
         description=(
             "The number of pixels per single unit of length of the texture "
@@ -296,95 +297,95 @@ class MCBLEND_ObjectProperties(PropertyGroup):
         min=1,
         soft_max=5,
     )
-    allow_expanding: BoolProperty(  # type: ignore
+    allow_expanding: BoolProperty(
         name="Allow texture expanding",
         description=(
             "Whether the Automatic UV mapping is allowed to expand the "
             "texture size"),
         default=True,
     )
-    generate_texture: BoolProperty(  # type: ignore
+    generate_texture: BoolProperty(
         name="Generate texture",
         description=(
             "Whether the Automatic UV mapping should generate a texture"
         ),
         default=True,
     )
-    visible_bounds_offset: FloatVectorProperty(  # type: ignore
+    visible_bounds_offset: FloatVectorProperty(
         name="Visible bounds offset",
         description=(
             "The \"visible_bounds_offset\" property of the Minecraft model"),
         default=(0.0, 0.0, 0.0)
     )
-    visible_bounds_width: FloatProperty(  # type: ignore
+    visible_bounds_width: FloatProperty(
         name="Visible bounds width",
         description=(
             "The \"visible_bounds_width\" property of the Minecraft model"),
         default=1.0
     )
-    visible_bounds_height: FloatProperty(  # type: ignore
+    visible_bounds_height: FloatProperty(
         name="Visible bounds height",
         description=(
             "The \"visible_bounds_height\" property of the Minecraft model"),
         default=1.0
     )
-    texture_width: IntProperty(  # type: ignore
+    texture_width: IntProperty(
         name="Texture width",
         description="The \"texture_width\" property of the Minecraft model",
         default=64,
         min=1
     )
-    texture_height: IntProperty(  # type: ignore
+    texture_height: IntProperty(
         name="Texture height",
         description="The \"texture_height\" property of the Minecraft model",
         default=64,
         min=1
     )
     # RENDER CONTROLLERS (armature properties used for generating materials)
-    render_controllers: CollectionProperty(  # type: ignore
+    render_controllers: CollectionProperty(
         type=MCBLEND_FakeRcProperties)
     # ANIMATIONS
     # Animation properties
-    active_animation: IntProperty(default=0)  # type: ignore
-    animations: CollectionProperty(  # type: ignore
+    active_animation: IntProperty(default=0)
+    animations: CollectionProperty(
         type=MCBLEND_AnimationProperties)
 
     # CUBE PROPERTIES
-    mirror: BoolProperty(  # type: ignore
+    mirror: BoolProperty(
         name="Mirror",
         description=(
             "The \"mirror\" property of this cube in the Minecraft model"),
         default=False,
     )
-    uv_group: StringProperty(  # type: ignore
+    uv_group: StringProperty(
         name="UV group",
         description=(
             "The name of the UV group that this cube belongs to"),
         default="",
         maxlen=1024
     )
-    inflate: FloatProperty(  # type: ignore
+    inflate: FloatProperty(
         name="Inflate",
         description=(
             "The \"inflate\" value of this cube in the Minecraft model"),
         default=0.0
     )
-    mesh_type: EnumProperty(  # type: ignore
+    mesh_type: EnumProperty(
         items=list_mesh_types_as_blender_enum, # type: ignore
         name='Mesh type')
-    min_uv_size: IntVectorProperty(  # type: ignore
+    min_uv_size: IntVectorProperty(
         name="Min UV bound", default=(0, 0, 0), min=0,
         description=(
             "The minimum size of the UV map for this cube for its "
             "width, height and depth")
     )
-    model_origin: EnumProperty(  # type: ignore
+    model_origin: EnumProperty(
         items=(
-            (  # type: ignore
+            (
                 ModelOriginType.WORLD.value, ModelOriginType.WORLD.value,
                 'Use the world origin as the model origin'
             ),
-            (  # type: ignore
+            (
                 ModelOriginType.ARMATURE.value, ModelOriginType.ARMATURE.value,
                 'Use the armature origin as the model origin'
             ),
@@ -396,7 +397,7 @@ class MCBLEND_BoneProperties(PropertyGroup):
     '''
     Custom properties of a bone
     '''
-    binding: StringProperty(  # type: ignore
+    binding: StringProperty(
         name="Binding",
         description=(
             "The \"binding\" property of this bone in the "

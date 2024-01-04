@@ -1,3 +1,4 @@
+# type: ignore
 '''
 Custom Blender objects with properties of the resource pack.
 '''
@@ -26,18 +27,18 @@ class MCBLEND_EntityMaterialPattern(PropertyGroup):
     the selected entity in the GUI of the model importer.
     '''
     # Reused properties from parent objects for quick access
-    active_rc_pk: IntProperty(  # type: ignore
+    active_rc_pk: IntProperty(
         description=(
             "Primary key of the render controller that owns this material"
             " pattern")
     )
-    active_entity_pk: IntProperty(  # type: ignore
+    active_entity_pk: IntProperty(
         description="Primary key of the active entity")
 
     # Actual properties of the object
-    pattern: StringProperty(  # type: ignore
+    pattern: StringProperty(
         description="The pattern value of this material pattern")
-    materials: EnumProperty(  # type: ignore
+    materials: EnumProperty(
         items=enum_entity_materials,
         description="The material value of this material pattern")
 
@@ -87,29 +88,29 @@ class MCBLEND_EntityRenderController(PropertyGroup):
     selected entity in the GUI of the model impoerter.
     '''
     # Reused properties from parent objects for quick access
-    active_entity_pk: IntProperty(  # type: ignore
+    active_entity_pk: IntProperty(
         description="Primary key of the selected entity")
 
     # Actual properties of the object
-    primary_key: IntProperty(  # type: ignore
+    primary_key: IntProperty(
         description="Primary key of this render controller")
-    identifier: StringProperty(   # type: ignore
+    identifier: StringProperty(
         description="Identifier of this render controller")
 
-    geometries: EnumProperty(  # type: ignore
+    geometries: EnumProperty(
         items=enum_entity_geometries,
         description="List of geometries of this render controller")
         # update=update_geometries)
-    textures: EnumProperty(  # type: ignore
+    textures: EnumProperty(
         items=enum_entity_textures,
         description="List of textures of this render controller")
 
     # Material pattern is a star pattern that matches the names of the bones
     # in the geometry to assign materials
-    material_patterns: CollectionProperty(  # type: ignore
+    material_patterns: CollectionProperty(
         type=MCBLEND_EntityMaterialPattern,
         description="List of material patters used by this render controller")
-    fake_material_patterns: EnumProperty(  # type: ignore
+    fake_material_patterns: EnumProperty(
         description=(
             "List of materials that can be used by this render controller "
             "when it is a fake render controller (i.e. it is not in the "
@@ -132,18 +133,18 @@ class MCBLEND_AttachableMaterialPattern(PropertyGroup):
     the selected attachable in the GUI of the model importer.
     '''
     # Reused properties from parent objects for quick access
-    active_rc_pk: IntProperty(  # type: ignore
+    active_rc_pk: IntProperty(
         description=(
             "Primary key of the render controller that owns this material"
             " pattern")
     )
-    active_attachable_pk: IntProperty(  # type: ignore
+    active_attachable_pk: IntProperty(
         description="Primary key of the active attachable")
 
     # Actual properties of the object
-    pattern: StringProperty(  # type: ignore
+    pattern: StringProperty(
         description="The pattern value of this material pattern")
-    materials: EnumProperty(  # type: ignore
+    materials: EnumProperty(
         items=enum_attachable_materials,
         description="The material value of this material pattern")
 
@@ -193,29 +194,29 @@ class MCBLEND_AttachableRenderController(PropertyGroup):
     selected attachable in the GUI of the model impoerter.
     '''
     # Reused properties from parent objects for quick access
-    active_attachable_pk: IntProperty(  # type: ignore
+    active_attachable_pk: IntProperty(
         description="Primary key of the selected attachable")
 
     # Actual properties of the object
-    primary_key: IntProperty(  # type: ignore
+    primary_key: IntProperty(
         description="Primary key of this render controller")
-    identifier: StringProperty(   # type: ignore
+    identifier: StringProperty(
         description="Identifier of this render controller")
 
-    geometries: EnumProperty(  # type: ignore
+    geometries: EnumProperty(
         items=enum_attachable_geometries,
         description="List of geometries of this render controller")
         # update=update_geometries)
-    textures: EnumProperty(  # type: ignore
+    textures: EnumProperty(
         items=enum_attachable_textures,
         description="List of textures of this render controller")
 
     # Material pattern is a star pattern that matches the names of the bones
     # in the geometry to assign materials
-    material_patterns: CollectionProperty(  # type: ignore
+    material_patterns: CollectionProperty(
         type=MCBLEND_AttachableMaterialPattern,
         description="List of material patters used by this render controller")
-    fake_material_patterns: EnumProperty(  # type: ignore
+    fake_material_patterns: EnumProperty(
         description=(
             "List of materials that can be used by this render controller "
             "when it is a fake render controller (i.e. it is not in the "
@@ -277,7 +278,7 @@ class MCBLEND_ProjectProperties(PropertyGroup):
     Used to store information about the resource pack for the GUI of the model
     importer.
     '''
-    importer_type: EnumProperty(  # type: ignore
+    importer_type: EnumProperty(
         items=[
             (
                 "ENTITY",
@@ -293,24 +294,24 @@ class MCBLEND_ProjectProperties(PropertyGroup):
         name="Importer type",
         description="The type of the model importer"
     )
-    selected_entity: StringProperty(   # type: ignore
+    selected_entity: StringProperty(
         default="",
         description="Name that identifies the entity to be loaded",
         update=update_selected_entity)
-    entities: CollectionProperty(  # type: ignore
+    entities: CollectionProperty(
         type=MCBLEND_DbEntry,
         description="List of the loaded entities")
-    entity_render_controllers: CollectionProperty(  # type: ignore
+    entity_render_controllers: CollectionProperty(
         type=MCBLEND_EntityRenderController,
         description="List of render controllers of the entity")
 
-    selected_attachable: StringProperty(   # type: ignore
+    selected_attachable: StringProperty(
         default="",
         description="Name that identifies the attachable to be loaded",
         update=update_selected_attachable)
-    attachables: CollectionProperty(  # type: ignore
+    attachables: CollectionProperty(
         type=MCBLEND_DbEntry,
         description="List of the loaded attachables")
-    attachable_render_controllers: CollectionProperty(  # type: ignore
+    attachable_render_controllers: CollectionProperty(
         type=MCBLEND_AttachableRenderController,
         description="List of render controllers of the attachable")

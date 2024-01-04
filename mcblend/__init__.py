@@ -4,8 +4,9 @@ This module is used by Blender to register/unregister the plugin.
 # don't import future annotations Blender needs that
 import bpy
 from bpy.props import (
-    PointerProperty, CollectionProperty,
-    IntProperty, EnumProperty)
+    PointerProperty, CollectionProperty, IntProperty,  # type: ignore
+    EnumProperty  # type: ignore
+)
 
 
 from .operator import (
@@ -259,13 +260,13 @@ def register():
         type=MCBLEND_BoneProperties)
 
     # Append operators to the F3 menu
-    bpy.types.TOPBAR_MT_file_export.append(
+    bpy.types.TOPBAR_MT_file_export.append(  # type: ignore
         menu_func_mcblend_export_model
     )
-    bpy.types.TOPBAR_MT_file_export.append(
+    bpy.types.TOPBAR_MT_file_export.append(  # type: ignore
         menu_func_mcblend_export_animation
     )
-    bpy.types.TOPBAR_MT_file_import.append(
+    bpy.types.TOPBAR_MT_file_import.append(  # type: ignore
         menu_func_mcblend_import_model
     )
 
@@ -273,14 +274,14 @@ def unregister():
     '''Unregisters the plugin'''
     # pylint: disable=no-member
     for _class in reversed(classes):
-        bpy.utils.unregister_class(_class)
+        bpy.utils.unregister_class(_class)  # type: ignore
 
-    bpy.types.TOPBAR_MT_file_export.remove(
+    bpy.types.TOPBAR_MT_file_export.remove(  # type: ignore
         menu_func_mcblend_export_model
     )
-    bpy.types.TOPBAR_MT_file_export.remove(
+    bpy.types.TOPBAR_MT_file_export.remove(  # type: ignore
         menu_func_mcblend_export_animation
     )
-    bpy.types.TOPBAR_MT_file_import.remove(
+    bpy.types.TOPBAR_MT_file_import.remove(  # type: ignore
         menu_func_mcblend_import_model
     )

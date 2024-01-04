@@ -10,7 +10,9 @@ from typing import List, Optional, Dict, Any, Set, TYPE_CHECKING
 import bpy
 from bpy.types import Operator, Context
 from bpy.props import (
-    StringProperty, FloatProperty, EnumProperty, BoolProperty, IntProperty)
+    StringProperty, FloatProperty, EnumProperty, BoolProperty,  # type: ignore
+    IntProperty  # type: ignore
+)
 from bpy_extras.io_utils import ExportHelper, ImportHelper
 
 from .object_data import (

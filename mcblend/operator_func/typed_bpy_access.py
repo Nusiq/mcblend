@@ -1,3 +1,4 @@
+# type: ignore
 '''
 This module provides functions to access certain objects from bpy module and
 still have type hints. This is necessary because the stub modules for bpy
@@ -375,7 +376,7 @@ def new_collection(name):
 
     >>> bpy.data.collections.new(name)
     '''
-    return bpy.data.collections.new(name)  # type: ignore
+    return bpy.data.collections.new(name)
 
 def new_material(name: str):
     '''
@@ -383,7 +384,7 @@ def new_material(name: str):
 
     >>> bpy.data.materials.new(name)
     '''
-    return bpy.data.materials.new(name)  # type: ignore
+    return bpy.data.materials.new(name)
 
 def set_co(obj, co):
     '''
