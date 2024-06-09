@@ -476,7 +476,7 @@ class DbHandler:
         ORDER BY
             shortName;
         '''
-        result = []
+        result: list[tuple[str, str, str]] = []
         not_found_counter = 0
         for texture_pk, short_name, path in self.db.connection.execute(
                 query, (rc_pk, entity_pk)):
@@ -540,7 +540,7 @@ class DbHandler:
         ORDER BY
             shortName;
         '''
-        result = []
+        result: list[tuple[str, str, str]] = []
         not_found_counter = 0
         for texture_pk, short_name, path in self.db.connection.execute(
                 query, (rc_pk, attachable_pk)):

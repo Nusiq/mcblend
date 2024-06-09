@@ -251,11 +251,11 @@ class McblendObjUvBox(UvBox):
     to set it's UV.
     '''
 
-    def new_uv_layer(self):
+    def new_uv_layer(self) -> None:
         '''Adds new UV layer to contained McblendObject.'''
         raise NotImplementedError()
 
-    def set_blender_uv(self, converter: CoordinatesConverter):
+    def set_blender_uv(self, converter: CoordinatesConverter) -> None:
         '''
         Sets the UV of a blender object.
 
@@ -265,7 +265,7 @@ class McblendObjUvBox(UvBox):
         '''
         raise NotImplementedError()
 
-    def clear_uv_layers(self):
+    def clear_uv_layers(self) -> None:
         '''
         Clears the uv layers from the wrapped McblendObject.
         '''
@@ -407,7 +407,7 @@ class UvMcCube(McblendObjUvBox):
         return self._uv
 
     @uv.setter
-    def uv(self, uv: Vector2di):
+    def uv(self, uv: Vector2di) -> None:  # type: ignore
         self._uv = uv
         self.side1.uv = (uv[0], uv[1] + self.depth)
         self.side2.uv = (uv[0] + self.depth, uv[1] + self.depth)
@@ -441,7 +441,7 @@ class UvMcCube(McblendObjUvBox):
         '''
         # 0. (top left) 1. (top right) 2. (right top) 3. (right bottom)
         # 4. (bottom right) 5. (bottom left) 6. (left bottom) 7. (left top)
-        result = []
+        result: List[Suggestion] = []
         result.extend([
             s for i, s in enumerate(self.side1.suggest_positions())
             if i in [0, 5, 6]
@@ -511,7 +511,7 @@ class UvGroup(McblendObjUvBox):
         return self._objects[0].uv
 
     @uv.setter
-    def uv(self, uv: Vector2di):
+    def uv(self, uv: Vector2di):  # type: ignore
         for obj in self._objects:
             obj.uv = uv
 
@@ -521,7 +521,7 @@ class UvGroup(McblendObjUvBox):
         return self._objects[0].size
 
     @size.setter
-    def size(self, size: Vector2di):
+    def size(self, size: Vector2di):  # type: ignore
         for obj in self._objects:
             obj.size = size
 
@@ -624,7 +624,7 @@ class UvModelMerger(McblendObjUvBox):
             if obj.obj_type != 'MESH':
                 continue
             active_uv_layer = get_data_uv_layers(obj.thisobj).active
-            if active_uv_layer is None:
+            if active_uv_layer is None:  # pyright: ignore[reportUnnecessaryComparison]
                 continue  # Unmapped objects remain unmapped
             for i, _ in enumerate(active_uv_layer.data):
                 # The UV values on the old texture (as if the image was

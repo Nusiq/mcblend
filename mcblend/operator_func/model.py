@@ -66,25 +66,25 @@ class ModelExport:
             yield from bone.warnings
 
     @staticmethod
-    def json_outer() -> Dict:
+    def json_outer() -> Dict[str, Any]:
         '''
         Returns the outer part of the Minecraft model 1.16.0 JSON file
         without any geometries.
         '''
-        model: Dict = {
+        model: Dict[str, Any] = {
             "format_version": "1.16.0",
             "minecraft:geometry": []
         }
         return model
 
-    def json_inner(self) -> Dict:
+    def json_inner(self) -> Dict[str, Any]:
         '''
         Creates a dict with a geometry for the Minecraft 1.12.0 model JSON
         file (JSON path: [ROOT]->"minecraft:geometry"->int).
 
         :returns: Minecraft model JSON dict.
         '''
-        result: Dict = {
+        result: Dict[str, Any] = {
             "description": {
                 "identifier": f"geometry.{self.model_name}",
                 "visible_bounds_width": round(self.visible_bounds_width, 3),
@@ -249,7 +249,7 @@ class BoneExport:
                 self.poly_mesh.extend_mesh_data(
                     positions, normals, polys, uvs, cubeprop)
 
-    def json(self) -> Dict:
+    def json(self) -> Dict[str, Any]:
         '''
         Returns the dictionary that represents a single mcbone in json file
         of model.
@@ -258,7 +258,7 @@ class BoneExport:
         `Dict` - the single bone from Minecraft model.
         '''
         # Basic bone properties
-        mcbone: Dict = {'name': self.name}
+        mcbone: Dict[str, Any] = {'name': self.name}
         if self.parent is not None:
             mcbone['parent'] = self.parent
         mcbone['pivot'] = get_vect_json(self.pivot)
@@ -275,9 +275,10 @@ class BoneExport:
 
         # Cubess
         if len(self.cubes) > 0:
-            mcbone['cubes'] = []
+            cubes: List[Any] = []
             for cube in self.cubes:
-                mcbone['cubes'].append(cube.json())
+                cubes.append(cube.json())
+            mcbone['cubes'] = cubes
         if len(self.poly_mesh.polys) > 0:  # If not empty
             mcbone['poly_mesh'] = self.poly_mesh.json()
         return mcbone
@@ -315,7 +316,7 @@ class CubeExport:
     uv_mirror: bool
     mcblend_obj: McblendObject
 
-    def json(self):
+    def json(self) -> Dict[str, Any]:
         '''Returns JSON representation of this object.'''
         cube_dict = {
             'uv': self.uv,
@@ -369,7 +370,7 @@ class PolyMesh:
                 ])
             self.polys.append(curr_poly)
 
-    def json(self) -> Dict:
+    def json(self) -> Dict[str, Any]:
         '''Return part of the model JSON with poly_mesh object.'''
         poly_mesh = {
             'normalized_uvs': self.normalized_uvs,
@@ -551,7 +552,7 @@ class UvExportFactory:
     def _get_per_face_uv_export(
             self, cube_polygons: CubePolygons,
             uv_layer: MeshUVLoopLayer) -> Tuple[Any, bool]:
-        result = {}
+        result: Dict[str, Any] = {}
 
         def map_face(cube_polygon: CubePolygon, side_name: str):
             crds = cube_polygon.uv_layer_coordinates(uv_layer)

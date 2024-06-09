@@ -30,6 +30,12 @@ def decompose(obj):
     '''
     return obj.decompose()
 
+def get_animation_data(obj):
+    '''
+    >>> obj.animation_data
+    '''
+    return obj.animation_data
+
 def get_children(obj):
     '''
     >>> obj.children

@@ -4,7 +4,7 @@ Utility functions for working with JSON and dictionaries.
 from __future__ import annotations
 from typing import Iterable, List
 
-def get_vect_json(arr: Iterable, precision: int=3) -> List[float]:
+def get_vect_json(arr: Iterable[float | int], precision: int=3) -> List[float]:
     '''
     Changes the iterable of numbers into basic python list of floats.
     Values from the original iterable are rounded to the 3rd deimal

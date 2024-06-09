@@ -117,8 +117,8 @@ class ModelLoader:
         self.warnings.append(message)
 
     def _assert_vector_type(
-            self, name: str, obj: Any, length: int, types: Tuple,
-            json_path: List, error_level: ErrorLevel=ErrorLevel.ERROR,
+            self, name: str, obj: Any, length: int, types: Tuple[type, ...],
+            json_path: List[str | int], error_level: ErrorLevel=ErrorLevel.ERROR,
             more: str=""
         ) -> bool:
         '''
@@ -136,6 +136,7 @@ class ModelLoader:
                 msg += f' {more}'
             self._error_level_handler(msg, error_level)
             return False
+        obj = cast(List, obj)  # type: ignore
         if not len(obj) == length:
             nice_path = '->'.join([str(i) for i in json_path])
             msg = (
@@ -156,8 +157,8 @@ class ModelLoader:
         return True
 
     def _assert_required_keys(
-            self, what: str, has_keys: Set, required_keys: Set,
-            json_path: List, error_level: ErrorLevel=ErrorLevel.ERROR,
+            self, what: str, has_keys: Set[str], required_keys: Set[str],
+            json_path: List[str | int], error_level: ErrorLevel=ErrorLevel.ERROR,
             more: str="") -> bool:
         '''
         Asserts that object has required keys.
@@ -177,7 +178,8 @@ class ModelLoader:
         return True
 
     def _assert_type(
-            self, name: str, obj: Any, types: Tuple, json_path: List,
+            self, name: str, obj: Any, types: Tuple[Any, ...],
+            json_path: List[str | int],
             error_level: ErrorLevel=ErrorLevel.ERROR, more: str="") -> bool:
         '''
         Asserts that object is instance of specific type.
@@ -208,8 +210,9 @@ class ModelLoader:
         return True
 
     def _assert_acceptable_keys(
-            self, what: str, has_keys: Set, accepted_keys: Set,
-            json_path: List, error_level: ErrorLevel=ErrorLevel.ERROR,
+            self, what: str, has_keys: Set[str], accepted_keys: Set[str],
+            json_path: List[str | int],
+            error_level: ErrorLevel=ErrorLevel.ERROR,
             more: str="") -> bool:
         '''
         Appends warning if object have keys that aren't in the accepted set.
@@ -239,7 +242,7 @@ class ModelLoader:
             return False
         return True
 
-    def _load_format_version(self, data: Dict) -> Tuple[str, str]:
+    def _load_format_version(self, data: Dict[str, Any]) -> Tuple[str, str]:
         '''
         Returns the version of the model from JSON file loaded into data.
 
@@ -278,7 +281,8 @@ class ModelLoader:
         raise ImporterException('Unsupported format version')
 
     def _load_geometry(
-            self, geometry_name: str, data: Any) -> Tuple[Dict, List]:
+            self, geometry_name: str,
+            data: Any) -> Tuple[Dict[str, Any], List[str | int]]:
         '''
         Finds and returns geometry with specific name from list of geometries
         from JSON dict with models. Returns the geometry dict with
@@ -291,12 +295,13 @@ class ModelLoader:
         if self.parser_version in ('1.16.0', '1.12.0'):
             result = None
             geometries = data['minecraft:geometry']
-            path: List = ['minecraft:geometry']
-            self._assert_type('geometries', geometries, (list,), path)
+            path: List[str | int] = ['minecraft:geometry']
+            self._assert_type(
+                'geometries', geometries, (list,), path)  # type: ignore
             for i, geometry in enumerate(geometries):
                 path = ['minecraft:geometry', i]
                 if not self._assert_type(
-                        'geometry', geometry, (dict,), path,
+                        'geometry', geometry, (dict,), path,  # type: ignore
                         ErrorLevel.WARNING):
                     continue
                 if not self._assert_required_keys(
@@ -326,14 +331,15 @@ class ModelLoader:
             result = None
             geometries = data
             path = []
-            self._assert_type('geometries', geometries, (dict,), path)
+            self._assert_type(
+                'geometries', geometries, (dict,), path)  # type: ignore
             for k, geometry in geometries.items():
                 if k in ('format_version', 'debug'):
                     continue
                 path = [k]
                 if not self._assert_type(
-                        'geometry', geometry, (dict,), path,
-                        ErrorLevel.WARNING):
+                        'geometry', geometry, (dict,), # type: ignore
+                        path, ErrorLevel.WARNING):
                     continue
                 self._assert_acceptable_keys(
                     'geometry', set(geometry.keys()),
@@ -355,7 +361,7 @@ class ModelLoader:
         raise ImporterException(
             f'Unsupported format version: {self.format_version}')
 
-    def _load_description(self, geometry: Any, geometry_path: List) -> Dict:
+    def _load_description(self, geometry: Any, geometry_path: List[str | int]) -> Dict[str, Any]:
         '''
         Returns the description of the geometry.
 
@@ -363,7 +369,7 @@ class ModelLoader:
         :param geometry_path: The JSON path to the geometry (used for error
             messages)
         '''
-        result = {
+        result: Dict[str, Any] = {
             "texture_width" : 64,
             "texture_height" : 64,
             "visible_bounds_offset" : [0.0, 0.0, 0.0],
@@ -471,23 +477,26 @@ class ModelLoader:
         raise ImporterException('Unsupported format version')
 
     def _load_bones(
-            self, bones: Any, bones_path: List) -> List[Dict[str, Any]]:
+            self, bones: Any, bones_path: List[str | int]
+    ) -> List[Dict[str, Any]]:
         '''
         Returns the bones from a list of bones, adds missing default values.
 
         :param bones: List of bones.
         :param bones_path: Path to the bones list (used for error messages).
         '''
-        result: List = []
+        result: List[Dict[str, Any]] = []
         if self.parser_version in ('1.16.0', '1.12.0', '1.8.0'):
-            self._assert_type('bones property', bones, (list,), bones_path)
+            self._assert_type(
+                'bones property', bones, (list,), bones_path)  # type: ignore
             for i, bone in enumerate(bones):
                 bone_path = bones_path + [i]
                 result.append(self._load_bone(bone, bone_path))
             return result
         raise ImporterException('Unsupported format version')
 
-    def _load_bone(self, bone: Any, bone_path: List) -> Dict[str, Any]:
+    def _load_bone(
+            self, bone: Any, bone_path: List[str | int]) -> Dict[str, Any]:
         '''
         Returns a bone, adds all of the missing default values of the
         properties.
@@ -511,7 +520,7 @@ class ModelLoader:
             # "render_group_id": 0,  # int >= 0
         }
         if self.parser_version in ('1.16.0', '1.12.0'):
-            self._assert_type('bone', bone, (dict,), bone_path)
+            self._assert_type('bone', bone, (dict,), bone_path)  # type: ignore
 
 
             self._assert_required_keys(
@@ -596,7 +605,7 @@ class ModelLoader:
                     bone['poly_mesh'], bone_path + ['poly_mesh'])
             return result
         if self.parser_version == '1.8.0':
-            self._assert_type('bone', bone, (dict,), bone_path)
+            self._assert_type('bone', bone, (dict,), bone_path)  # type: ignore
 
             self._assert_required_keys(
                 'bone', set(bone.keys()), {'name'}, bone_path)
@@ -677,8 +686,8 @@ class ModelLoader:
         result: List[Dict[str, Any]] = []
         if self.parser_version in ('1.16.0', '1.12.0', '1.8.0'):
             if not self._assert_type(
-                    'cubes property', cubes, (list,), cubes_path,
-                    ErrorLevel.WARNING, more="Skipped."):
+                    'cubes property', cubes, (list,),  # type: ignore
+                    cubes_path, ErrorLevel.WARNING, more="Skipped."):
                 return result
             for i, cube in enumerate(cubes):
                 cube_path = cubes_path + [i]
@@ -691,7 +700,7 @@ class ModelLoader:
 
     def _create_default_uv(
             self, size: Vector3d, mirror: bool,
-            uv: Vector2d = (0.0, 0.0)) -> Dict:
+            uv: Vector2d = (0.0, 0.0)) -> Dict[str, Any]:
         '''
         Creates default UV dictionary (in per-face UV mapping format) based on
         some other properties of a cube.
@@ -719,13 +728,13 @@ class ModelLoader:
         # No mirror: | # Mirror:
         #   5 6      | #   5 6
         # 1 2 3 4    | # 3 2 1 4
-        result: Dict = {
+        result: Dict[str, Any] = {
             "north": face2, "south": face4, "east": face_east,
             "west": face_west, "up": face5, "down": face6}
         return result
 
     def _load_cube(
-            self, cube: Any, cube_path: List, default_mirror: bool,
+            self, cube: Any, cube_path: List[str | int], default_mirror: bool,
             default_inflate: float) -> Dict[str, Any]:
         '''
         Returns a cube with added all of the missing default values of the
@@ -736,7 +745,7 @@ class ModelLoader:
         :param cube_path: JSON path to the cube (used for error messages).
         :param default_mirror: Mirror value of a bone that owns this cube.
         '''
-        result = {
+        result: Dict[str, Any] = {
             "origin" : (0, 0, 0),  # Listfloat] len=3
             "size" : (0, 0, 0),  # Listfloat] len=3
             "rotation" : (0, 0, 0),  # Listfloat] len=3
@@ -749,7 +758,7 @@ class ModelLoader:
             "uv": None
         }
         if self.parser_version in ('1.16.0', '1.12.0'):
-            self._assert_type('cube', cube, (dict,), cube_path)
+            self._assert_type('cube', cube, (dict,), cube_path)  # type: ignore
             # There is no required keys {} is a valid cube
             acceptable_keys = {
                 "mirror", "inflate", "pivot", "rotation", "origin",
@@ -781,7 +790,9 @@ class ModelLoader:
                     result['mirror'] = cube['mirror']
             if 'uv' in cube:
                 success = self._assert_type(
-                    'uv', cube['uv'], (list, dict), cube_path + ['uv'],
+                    'uv', cube['uv'],
+                    (list, dict),  # type: ignore
+                    cube_path + ['uv'],
                     ErrorLevel.WARNING, more="Replaced with default value.")
                 if success:
                     if isinstance(cube['uv'], dict):
@@ -806,7 +817,7 @@ class ModelLoader:
                     result['mirror'])  # type: ignore
             return result
         if self.parser_version == '1.8.0':
-            self._assert_type('cube', cube, (dict,), cube_path)
+            self._assert_type('cube', cube, (dict,), cube_path)  # type: ignore
             # There is no required keys {} is a valid cube
             acceptable_keys = {"origin", "size", "uv", "inflate", "mirror"}
             self._assert_acceptable_keys(
@@ -836,7 +847,8 @@ class ModelLoader:
                     result['mirror'] = cube['mirror']
             if 'uv' in cube:
                 success = self._assert_type(
-                    'uv', cube['uv'], (list,), cube_path + ['uv'],
+                    'uv', cube['uv'], (list,),  # type: ignore
+                    cube_path + ['uv'],
                     ErrorLevel.WARNING, more="Replaced with default value.")
                 success = success and self._assert_vector_type(
                     'uv', cube['uv'], 2, (int, float), cube_path + ['uv'],
@@ -855,7 +867,8 @@ class ModelLoader:
         raise ImporterException('Unsupported format version')
 
     def _load_poly_mesh(
-            self, poly_mesh: Any, poly_mesh_path: List) -> Dict[str, Any]:
+            self, poly_mesh: Any,
+            poly_mesh_path: List[str | int]) -> Dict[str, Any]:
         '''
         Returns a polymesh with added all of the missing default values of the
         properties.
@@ -865,7 +878,7 @@ class ModelLoader:
         :param poly_mesh_path: JSON path to the polymesh (used for error
             messages).
         '''
-        result = {
+        result: Dict[str, Any] = {
             'normalized_uvs': False,
             'positions': [],
             'normals': [],
@@ -874,7 +887,9 @@ class ModelLoader:
         }
         if self.parser_version in ('1.16.0', '1.12.0', '1.8.0'):
             success = self._assert_type(
-                'poly_mesh', poly_mesh, (dict,), poly_mesh_path,
+                'poly_mesh', poly_mesh,
+                (dict,),  # type: ignore
+                poly_mesh_path,
                 ErrorLevel.WARNING, more="Replaced with default value.")
             if not success:
                 return result
@@ -901,7 +916,9 @@ class ModelLoader:
                 positions = poly_mesh['positions']
                 positions_path = poly_mesh_path + ['position']
                 success = self._assert_type(
-                    'positions', positions, (list,), positions_path,
+                    'positions', positions,
+                    (list,),  # type: ignore
+                    positions_path,
                     ErrorLevel.WARNING, more="Ignored.")
                 if success:
                     for position_id, position in enumerate(positions):
@@ -917,7 +934,8 @@ class ModelLoader:
                 normals = poly_mesh['normals']
                 normals_path = poly_mesh_path + ['normal']
                 success = self._assert_type(
-                    'normals', normals, (list,), normals_path,
+                    'normals', normals, (list,),  # type: ignore
+                    normals_path,
                     ErrorLevel.WARNING, more="Ignored.")
                 if success:
                     for normal_id, normal in enumerate(normals):
@@ -933,7 +951,8 @@ class ModelLoader:
                 uvs = poly_mesh['uvs']
                 uvs_path = poly_mesh_path + ['uv']
                 success = self._assert_type(
-                    'uvs', uvs, (list,), uvs_path, ErrorLevel.WARNING,
+                    'uvs', uvs, (list,),  # type: ignore
+                    uvs_path, ErrorLevel.WARNING,
                     more="Ignored.")
                 if success:
                     for uv_id, uv in enumerate(uvs):
@@ -947,7 +966,7 @@ class ModelLoader:
                         result['uvs'].append(tuple(uv))  # type: ignore
             # Required keys
             self._assert_type(
-                'polys', poly_mesh['polys'], (str, list),
+                'polys', poly_mesh['polys'], (str, list),  # type: ignore
                 poly_mesh_path + ['polys'])
             if isinstance(poly_mesh['polys'], str):
                 result['polys'] = self._create_default_polys(
@@ -962,7 +981,8 @@ class ModelLoader:
                     curr_result_poly: List[Vector3di] = []
                     poly_path = polys_path + [poly_id]
                     success = self._assert_type(
-                        'poly', poly, (list,), poly_path, ErrorLevel.WARNING,
+                        'poly', poly, (list,),  # type: ignore
+                        poly_path, ErrorLevel.WARNING,
                         more="Ignored polygon.")
                     if not success:
                         continue
@@ -983,7 +1003,7 @@ class ModelLoader:
     def _create_default_polys(
             self, grouping_mode: str, positions: List[List[float]],
             normals: List[List[float]], uvs: List[List[float]],
-            poly_mesh_path: List[str]
+            poly_mesh_path: List[str | int]
             ) -> List[List[List[int]]]:
         '''
         Creates default "polys" property of a polymesh for "tri_list" or
@@ -1031,7 +1051,7 @@ class ModelLoader:
         return result
 
     def _load_uv(
-            self, uv: Any, uv_path: List,
+            self, uv: Any, uv_path: List[str | int],
             cube_size: Vector3d) -> Dict[str, Any]:
         '''
         Returns UV and adds all of the missing default values of its
@@ -1058,7 +1078,8 @@ class ModelLoader:
 
         if self.parser_version in ('1.16.0', '1.12.0'):
             success = self._assert_type(
-                'uv', uv, (dict,), uv_path, ErrorLevel.WARNING,
+                'uv', uv, (dict,),  # type: ignore
+                uv_path, ErrorLevel.WARNING,
                 more="Replaced with default value.")
             if not success:
                 return result
@@ -1083,7 +1104,7 @@ class ModelLoader:
         raise ImporterException('Unsupported format version')
 
     def _load_uv_face(
-            self, uv_face: Any, uv_face_path: List,
+            self, uv_face: Any, uv_face_path: List[str | int],
             default_size: Vector2d) -> Dict[str, Any]:
         '''
         Returns UV and adds all of the missing default values of its
@@ -1099,7 +1120,8 @@ class ModelLoader:
         }
         if self.parser_version in ('1.16.0', '1.12.0'):
             success = self._assert_type(
-                'uv_face', uv_face, (dict,), uv_face_path, ErrorLevel.WARNING,
+                'uv_face', uv_face, (dict,),  # type: ignore
+                uv_face_path, ErrorLevel.WARNING,
                 more="Replaced with default value.")
             if not success:
                 return result
@@ -1130,7 +1152,8 @@ class ModelLoader:
         raise ImporterException('Unsupported format version')
 
     def _load_locators(
-            self, locators: Any, locators_path: List) -> Dict[str, Any]:
+            self, locators: Any,
+            locators_path: List[str | int]) -> Dict[str, Any]:
         '''
         Returns the locators from the list of locators with added missing
         default values.
@@ -1142,8 +1165,8 @@ class ModelLoader:
         result: Dict[str, Any] = {}
         if self.parser_version in ['1.16.0', '1.12.0', '1.8.0']:
             success = self._assert_type(
-                'locators property', locators, (dict,), locators_path,
-                ErrorLevel.WARNING, more="Ignored.")
+                'locators property', locators, (dict,),  # type: ignore
+                locators_path, ErrorLevel.WARNING, more="Ignored.")
             if not success:
                 return result
             for i, locator in locators.items():
@@ -1152,7 +1175,8 @@ class ModelLoader:
             return result
         raise ImporterException('Unsupported format version')
 
-    def _load_locator(self, locator: Any, locator_path: List) -> Any:
+    def _load_locator(
+            self, locator: Any, locator_path: List[str | int]) -> Any:
         '''
         Returns the locator with added missing default values.
 
@@ -1160,7 +1184,7 @@ class ModelLoader:
         :param locator_path: Path to the locator
         '''
         if self.parser_version in ['1.16.0', '1.12.0']:
-            result = {"offset": [0, 0, 0], "rotation": [0, 0, 0]}
+            result: Dict[str, Any] = {"offset": [0, 0, 0], "rotation": [0, 0, 0]}
             if isinstance(locator, list):
                 success = self._assert_vector_type(
                     'locator', locator, 3, (int, float), locator_path,
@@ -1168,11 +1192,13 @@ class ModelLoader:
                     more="Replaced with default value: [0, 0, 0]")
                 if not success:
                     return result
-                return {"offset": locator, "rotation": [0, 0, 0]}
+                return {"offset": locator, "rotation": [0, 0, 0]}  # type: ignore
 
             if isinstance(locator, dict):
                 self._assert_acceptable_keys(
-                    'locator', set(locator.keys()), {'offset', 'rotation'},
+                    'locator',
+                    set(locator.keys()),  # type: ignore
+                    {'offset', 'rotation'},
                     locator_path, ErrorLevel.WARNING)
                 if "offset" in locator:
                     success = self._assert_vector_type(
@@ -1231,7 +1257,7 @@ class ImportCube:
         cube.
     '''
     blend_cube: Optional[Object]
-    uv: Dict
+    uv: Dict[str, Any]
     mirror: bool
     inflate: bool
     origin: Vector3d
@@ -1239,7 +1265,7 @@ class ImportCube:
     size: Vector3d
     rotation: Vector3d
 
-    def __init__(self, data: Dict):
+    def __init__(self, data: Dict[str, Any]):
         '''
         Creates ImportCube object created from a dictionary (part of the JSON)
         file in the model.
@@ -1278,7 +1304,7 @@ class ImportPolyMesh:
     polys: List[List[Vector3di]]
 
     def __init__(
-            self, data: Dict):
+            self, data: Dict[str, Any]):
         '''
         Creates ImportPolyMesh object created from a dictionary (part of the
         JSON) file in the model.
@@ -1312,7 +1338,7 @@ class ImportBone:
     rotation: Vector3d
     mirror: bool
 
-    def __init__(self, data: Dict):
+    def __init__(self, data: Dict[str, Any]):
         self.blend_empty: Optional[Object] = None
 
         # Locators
@@ -1346,7 +1372,7 @@ class ImportGeometry:
 
     :param loader: Loader object with all of the required model properties.
     '''
-    indentifier: str
+    identifier: str
     texture_width: int
     texture_height: int
     visible_bounds_offset: Vector3d
@@ -1386,35 +1412,42 @@ class ImportGeometry:
         :returns: the armature which represents imported model. Root parent
             of created objects
         '''
+
         # Build armature:
         # Create empty armature and enter edit mode:
-        bpy.ops.object.armature_add(
+        bpy.ops.object.armature_add(  # pyright: ignore[reportUnknownMemberType]
             enter_editmode=True, align='WORLD', location=[0, 0, 0])
-        bpy.ops.armature.select_all(action='SELECT')
-        bpy.ops.armature.delete()
-        bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.ops.armature.select_all(  # pyright: ignore[reportUnknownMemberType]
+            action='SELECT')
+        bpy.ops.armature.delete()  # pyright: ignore[reportUnknownMemberType]
+        bpy.ops.object.mode_set(  # pyright: ignore[reportUnknownMemberType]
+            mode='OBJECT')
         # TODO - build the armature without using bpy.ops for better
         # performance
 
         # Save the armature
-        armature = get_context_object(context)
+        armature: Object = cast(Object, get_context_object(context))
 
         # Create objects - and set their pivots
         for bone in self.bones.values():
             # 1. Spawn bone (empty)
-            bpy.ops.object.empty_add(
+            bpy.ops.object.empty_add(  # pyright: ignore[reportUnknownMemberType]
                 type='SPHERE', location=[0, 0, 0], radius=0.2)
-            bone_obj: Object
-            bone_obj = bone.blend_empty = get_context_object(context)
+
+            # Must be an 'Object' because it has just been created:
+            bone_obj: Object = cast(Object, get_context_object(context))
+            bone.blend_empty = bone_obj
+
             _mc_pivot(bone_obj, bone.pivot)  # 2. Apply translation
             bone_obj.name = bone.name  # 3. Apply custom properties
             for cube in bone.cubes:
-                cube_obj: Object
                 # 1. Spawn cube
-                bpy.ops.mesh.primitive_cube_add(
+                bpy.ops.mesh.primitive_cube_add(  # pyright: ignore[reportUnknownMemberType]
                     size=1, enter_editmode=False, location=[0, 0, 0]
                 )
-                cube_obj = cube.blend_cube = get_context_object(context)
+                # Must be an 'Object' because it has just been created:
+                cube_obj: Object = cast(Object, get_context_object(context))
+                cube.blend_cube  = cube_obj
 
                 # 2. Set uv
                 # warning! Moving this code below cube transformation would
@@ -1471,7 +1504,8 @@ class ImportGeometry:
 
                 # 2. Create mesh
                 mesh = get_data_meshes().new(name='poly_mesh')
-                mesh.from_pydata(blender_vertices, [], blender_polygons)
+                mesh.from_pydata(  # pyright: ignore[reportUnknownMemberType]
+                    blender_vertices, [], blender_polygons)
 
                 if not mesh.validate():  # Valid geometry
                     # 3. Create an object and connect mesh to it, mark as
@@ -1488,7 +1522,7 @@ class ImportGeometry:
                     mesh.normals_split_custom_set(
                         blender_normals)  # type: ignore
 
-                    if get_uv_layers(mesh).active is None:
+                    if get_uv_layers(mesh).active is None:  # pyright: ignore[reportUnnecessaryComparison]
                         get_uv_layers(mesh).new()
                     uv_layer = get_data(get_uv_layers(mesh).active)
                     for i, uv in enumerate(blender_uvs):
@@ -1500,10 +1534,10 @@ class ImportGeometry:
 
             for locator in bone.locators:
                 # 1. Spawn locator (empty)
-                locator_obj: Object
-                bpy.ops.object.empty_add(
+                bpy.ops.object.empty_add(  # pyright: ignore[reportUnknownMemberType]
                     type='SPHERE', location=[0, 0, 0], radius=0.1)
-                locator_obj = locator.blend_empty = get_context_object(context)
+                locator_obj: Object = cast(Object, get_context_object(context))
+                locator.blend_empty = locator_obj 
                 # 2. Apply translation
                 _mc_pivot(locator_obj, locator.position)
                 _mc_rotate(locator_obj, locator.rotation)
@@ -1515,7 +1549,9 @@ class ImportGeometry:
             assert bone.blend_empty is not None
             bone_obj = bone.blend_empty
             # 1. Parent bone keep transform
-            if bone.parent is not None and bone.parent in self.bones:
+            if (
+                    bone.parent is not None and  # pyright: ignore[reportUnnecessaryComparison]
+                    bone.parent in self.bones):
                 parent_obj = cast(Object, self.bones[
                     bone.parent
                 ].blend_empty)
@@ -1576,7 +1612,8 @@ class ImportGeometry:
         # Build everything using empties
         armature = self.build_with_empties(context)
         get_objects(context.view_layer).active = armature
-        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.object.mode_set(  # pyright: ignore[reportUnknownMemberType]
+            mode='EDIT')
 
         edit_bones = get_data_edit_bones(armature)
 
@@ -1587,16 +1624,18 @@ class ImportGeometry:
         # Parent bones
         for bone in self.bones.values():
             # 1. Parent bone keep transform
-            if bone.parent is not None and bone.parent in self.bones:
+            if (
+                    bone.parent is not None and  # pyright: ignore[reportUnnecessaryComparison]
+                    bone.parent in self.bones):
                 parent_obj = self.bones[bone.parent]
                 # context.view_layer.update()
                 edit_bones[bone.name].parent = edit_bones[parent_obj.name]
-        bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.ops.object.mode_set(mode='OBJECT')  # pyright: ignore[reportUnknownMemberType]
 
         # Add bindings to pose bones
         pose_bones = get_pose_bones(armature)
         for bone in self.bones.values():
-            if bone.binding is not None:
+            if bone.binding is not None:  # pyright: ignore[reportUnnecessaryComparison]
                 get_mcblend(pose_bones[bone.name]).binding = bone.binding
 
         def parent_bone_keep_transform(
@@ -1752,7 +1791,7 @@ def _mc_rotate(
 
 def _set_uv(
         uv_converter: CoordinatesConverter, cube_polygons: CubePolygons,
-        uv: Dict, uv_layer: MeshUVLoopLayer):
+        uv: Dict[str, Any], uv_layer: MeshUVLoopLayer):
     '''
     Sets the UV of a face of a Blender cube mesh based on some Minecraft
     properties.

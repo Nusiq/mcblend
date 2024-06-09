@@ -5,8 +5,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import (
-    Dict, Iterable, List, Literal, Optional, Tuple, cast, TYPE_CHECKING,
-    Callable)
+    Dict, Iterable, List, Literal, Optional, Tuple, cast, Callable, Any)
 from dataclasses import dataclass, field
 from collections import defaultdict
 
@@ -43,16 +42,8 @@ from .uv import CoordinatesConverter, UvMapper, UvModelMerger
 from .db_handler import get_db_handler
 from .rp_importer import PksForModelImport
 
-# Import for static type checking only (to avoid circular imports)
-if TYPE_CHECKING:
-    from ..resource_pack_data import MCBLEND_ProjectProperties
-    from ..object_data import MCBLEND_ObjectProperties
-else:
-    MCBLEND_ProjectProperties = None  # pylint: disable=invalid-name
-    MCBLEND_ObjectProperties = None  # pylint: disable=invalid-name
-
 def export_model(
-        context: Context) -> Tuple[Dict, Iterable[str]]:
+        context: Context) -> Tuple[Dict[str, Any], Iterable[str]]:
     '''
     Creates a Minecraft model JSON dict from selected objects.
 
@@ -62,7 +53,10 @@ def export_model(
     '''
     result = ModelExport.json_outer()
     armature = get_context_object(context)  # an armature
-
+    if armature is None or armature.type != 'ARMATURE':
+        # Should never happen (checked in the operator)
+        raise ValueError("Selected object is not an armature")
+    
     origin: Optional[Object] = None
     use_armature_origin: bool = get_mcblend(
         armature).model_origin == ModelOriginType.ARMATURE.value
@@ -85,8 +79,8 @@ def export_model(
     return result, model.yield_warnings()
 
 def export_animation(
-        context: Context, old_dict: Optional[Dict]
-    ) -> Dict:
+        context: Context, old_dict: Optional[Dict[str, Any]]
+    ) -> Dict[str, Any]:
     '''
     Creates a Minecraft animation (dictionary) from selected objects.
 
@@ -95,6 +89,9 @@ def export_animation(
     :returns: JSON dict of Minecraft animations.
     '''
     armature = get_context_object(context)  # an armature
+    if armature is None or armature.type != 'ARMATURE':
+        # Should never happen (checked in the operator)
+        raise ValueError("Selected object is not an armature")
     anim_data = get_mcblend(armature).animations[
         get_mcblend(armature).active_animation]
 
@@ -136,7 +133,9 @@ def set_uvs(context: Context):
     :param context: the execution context.
     '''
     armature = get_context_object(context) # an armature
-
+    if armature is None or armature.type != 'ARMATURE':
+        # Should never happen (checked in the operator)
+        raise ValueError("Selected object is not an armature")
     model_properties = get_mcblend(armature)
     width = model_properties.texture_width
     height = model_properties.texture_height
@@ -214,7 +213,11 @@ def fix_uvs(context: Context) -> Vector2di:
     :returns: The number of fixed cubes and the number of fixed faces.
     '''
     armature = get_context_object(context)  # an armature
-    origin = None
+    if armature is None or armature.type != 'ARMATURE':
+        # Should never happen (checked in the operator)
+        raise ValueError("Selected object is not an armature")
+
+    origin: Object | None = None
     use_armature_origin: bool = get_mcblend(
         armature).model_origin == ModelOriginType.ARMATURE.value
     if use_armature_origin:
@@ -283,7 +286,9 @@ def fix_uvs(context: Context) -> Vector2di:
             total_fixed_uv_faces += fixed_faces
     return total_fixed_cubes, total_fixed_uv_faces
 
-def import_model(data: Dict, geometry_name: str, context: Context) -> List[str]:
+def import_model(
+        data: Dict[str, Any], geometry_name: str, context: Context
+) -> List[str]:
     '''
     Import and build model from JSON dict.
 
@@ -320,7 +325,7 @@ def separate_mesh_cubes(context: Context):
 
     :returns: the number of created objects
     '''
-    bpy.ops.mesh.separate(type='LOOSE')
+    bpy.ops.mesh.separate(type='LOOSE')  # pyright: ignore[reportUnknownMemberType]
     edited_objects = len(get_selected_objects(context))
     for obj in get_selected_objects(context):
         if obj.type != 'MESH':
@@ -409,7 +414,6 @@ def load_rp_to_mcblned(
     :param path: path to the resource pack.
     '''
     mcblend_project = get_scene_mcblend_project(context)
-    mcblend_project = cast(MCBLEND_ProjectProperties, mcblend_project)
     # Cleared cached data for GUI it will be reloaded later
     # Clear cached entity data
     mcblend_project.entities.clear()
@@ -462,7 +466,6 @@ def unload_rps(context: Context):
     Unload resrouce pakcs in GUI.
     '''
     mcblend_project = get_scene_mcblend_project(context)
-    mcblend_project = cast(MCBLEND_ProjectProperties, mcblend_project)
     mcblend_project.entity_render_controllers.clear()
     mcblend_project.entities.clear()
     mcblend_project.selected_entity = ''
@@ -552,8 +555,6 @@ def import_model_form_project(
 
         # 2.1. Set proper textures resolution and model bounds
         model_properties = get_mcblend(armature)
-        model_properties = cast(
-            MCBLEND_ObjectProperties, model_properties)
 
         model_properties.texture_width = geometry.texture_width
         model_properties.texture_height = geometry.texture_height
@@ -628,7 +629,10 @@ def apply_materials(context: Context):
     blender_materials: Dict[
         Tuple[Tuple[Optional[str], str], ...], Material] = {}
     armature = get_context_object(context)
-    origin = None
+    if armature is None or armature.type != 'ARMATURE':
+        # TODO - this should never happen. Rewrite the code so it's guaranteed
+        raise ValueError("Selected object is not an armature")
+    origin: Object | None = None
     use_armature_origin: bool = get_mcblend(
         armature).model_origin == ModelOriginType.ARMATURE.value
     if use_armature_origin:
@@ -700,7 +704,7 @@ class _PhysicsObjectsGroup:
     rigid_body_constraint: Optional[Object] = None
     object_parent_empty: Optional[Object] = None
 
-def prepare_physics_simulation(context: Context) -> Dict:
+def prepare_physics_simulation(context: Context) -> Dict[str, Any]:
     '''
     Creates objects necessary for the rigid body simulation of the Minecraft
     model.
@@ -709,8 +713,8 @@ def prepare_physics_simulation(context: Context) -> Dict:
     '''
     result = ModelExport.json_outer()
     armature = get_context_object(context)
-    if armature.type != 'ARMATURE':
-        raise ValueError("Object is not an armature")
+    if armature is None or armature.type != 'ARMATURE':
+        raise ValueError("Selected object is not an armature")
 
     origin = None
     use_armature_origin: bool = get_mcblend(
@@ -721,13 +725,13 @@ def prepare_physics_simulation(context: Context) -> Dict:
 
     # If there is no rigid body world add it to the scene
     rigidbody_world = context.scene.rigidbody_world
-    if rigidbody_world is None:
-        bpy.ops.rigidbody.world_add()
+    if rigidbody_world is None:  # type: ignore
+        bpy.ops.rigidbody.world_add()  # pyright: ignore[reportUnknownMemberType]
         rigidbody_world = context.scene.rigidbody_world
-    if rigidbody_world.collection is None:
+    if rigidbody_world.collection is None:  # type: ignore
         collection = new_collection("RigidBodyWorld")
         rigidbody_world.collection = collection
-    if rigidbody_world.constraints is None:
+    if rigidbody_world.constraints is None:  # type: ignore
         collection = new_collection("RigidBodyConstraints")
         rigidbody_world.constraints = collection
 
@@ -756,14 +760,15 @@ def prepare_physics_simulation(context: Context) -> Dict:
             new_obj.data = child.obj_data.copy()
             new_obj.animation_data_clear()
             get_objects(context.collection).link(new_obj)
+
             cubes_group.append(new_obj)
-        bpy.ops.object.select_all(action='DESELECT')
+        bpy.ops.object.select_all(action='DESELECT')  # pyright: ignore[reportUnknownMemberType]
         rigid_body: Optional[Object] = None
         if len(cubes_group) > 1:
             for c in cubes_group:
                 c.select_set(True)
             get_objects(context.view_layer).active = cubes_group[-1]
-            bpy.ops.object.join()
+            bpy.ops.object.join()  # pyright: ignore[reportUnknownMemberType]
             rigid_body = get_context_object(context)
         elif len(cubes_group) == 1:
             cubes_group[0].select_set(True)
@@ -772,8 +777,9 @@ def prepare_physics_simulation(context: Context) -> Dict:
         if rigid_body is not None:
             for material_slot in get_material_slots(rigid_body):
                 material_slot.material = None  # type: ignore
-            bpy.ops.object.origin_set(type='ORIGIN_CENTER_OF_VOLUME', center='MEDIAN')
-            bpy.ops.object.visual_transform_apply()
+            bpy.ops.object.origin_set(  # pyright: ignore[reportUnknownMemberType]
+                type='ORIGIN_CENTER_OF_VOLUME', center='MEDIAN')
+            bpy.ops.object.visual_transform_apply()  # pyright: ignore[reportUnknownMemberType]
             matrix_world = get_matrix_world(rigid_body).copy()
             rigid_body.parent = None  # type: ignore
             set_matrix_world(rigid_body, matrix_world)
@@ -805,8 +811,10 @@ def prepare_physics_simulation(context: Context) -> Dict:
             physics_objects_groups[bone].object_parent_empty = empty
             # Add "Copy Transforms" constraint to the bone
             get_objects(context.view_layer).active = armature
-            bpy.ops.object.posemode_toggle()  # Pose mode
-            bpy.ops.pose.select_all(action='DESELECT')
+
+            # Pose mode
+            bpy.ops.object.posemode_toggle()  # pyright: ignore[reportUnknownMemberType]
+            bpy.ops.pose.select_all(action='DESELECT')  # pyright: ignore[reportUnknownMemberType]
 
             get_data_bones(armature).active = get_data_bones(
                 armature)[bone.thisobj_id.bone_name]
@@ -823,7 +831,9 @@ def prepare_physics_simulation(context: Context) -> Dict:
             set_pose_bone_constraint_property(constraint, 'influence', 1)
             constraint.keyframe_insert(
                 "influence", frame=bpy.context.scene.frame_current+1)
-            bpy.ops.object.posemode_toggle()  # Object mode
+
+            # Object mode
+            bpy.ops.object.posemode_toggle()  # pyright: ignore[reportUnknownMemberType]
 
             # Add "Child of" constraint to parent empty
             get_objects(context.view_layer).active = empty
@@ -932,7 +942,7 @@ def merge_models(context: Context) -> None:
             bone.name = f'{bone.name}_{i}'
         # Select the object for merging
         obj.select_set(True)
-    bpy.ops.object.join()
+    bpy.ops.object.join()  # pyright: ignore[reportUnknownMemberType]
     # CREATE A NEW RENDER CONTROLLER FOR THE MODEL
     active_obj = get_view_layer_objects_active(context)
     rcs = get_mcblend(active_obj).render_controllers

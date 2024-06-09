@@ -1,15 +1,16 @@
+# pylint: disable=invalid-name
 '''
 Set of various image filters used for generating textures for models.
 Uses numpy arrays with colors with colors encoded with values in range 0-1.
 '''
-# pylint: disable=invalid-name
 from __future__ import annotations
 
 from itertools import cycle, accumulate
-from typing import Tuple, Iterable, NamedTuple, List, Optional, Sequence, TYPE_CHECKING
+from typing import (
+    Tuple, Iterable, NamedTuple, List, Optional, Sequence, TYPE_CHECKING, Any)
 from abc import ABC, abstractmethod
 from enum import Enum
-
+from bpy.types import Context
 
 import numpy as np
 
@@ -17,6 +18,8 @@ from .extra_types import Vector2d, Vector3d
 
 if TYPE_CHECKING:
     from .common import NumpyTable
+    from ..uv_data import MCBLEND_UvMaskProperties, MCBLEND_ColorProperties
+    from .pyi_types import CollectionProperty
 
 class UvMaskTypes(Enum):
     '''
@@ -32,7 +35,7 @@ class UvMaskTypes(Enum):
     COLOR_MASK='Color Mask'
     MIX_MASK='Mix Mask'
 
-def list_mask_types_as_blender_enum(self, context):
+def list_mask_types_as_blender_enum(self: Any, context: Context):
     '''
     Passing list itself to some operators/panels didn't work.
     This function is a workaround that uses alternative definition for
@@ -50,7 +53,7 @@ class MixMaskMode(Enum):
     max='max'
     median='median'
 
-def list_mix_mask_modes_as_blender_enum(self, context):
+def list_mix_mask_modes_as_blender_enum(self: Any, context: Context):
     '''
     Returns list of tuples for creating EnumProperties with MixMaskMode enum.
     '''
@@ -110,7 +113,7 @@ class ColorPaletteMask(Mask):
             xp = np.array(list(range(len(self.colors))))
             xp = xp/(len(self.colors)-1)
         else:
-            def repeated_list(iterable):
+            def repeated_list(iterable: Iterable[Any]) -> Iterable[Any]:
                 for i in iterable:
                     yield i
                     yield i
@@ -156,7 +159,7 @@ class DummyMask(MultiplicativeMask):
     '''
     A multiplicative mask that always return a white image.
     '''
-    def get_mask(self, image):
+    def get_mask(self, image: NumpyTable):
         w, h, _ = image.shape
         return np.ones((w, h))[:,:, np.newaxis]
 
@@ -184,7 +187,7 @@ class TwoPointSurfaceMask(MultiplicativeMask):
 
     def get_surface_properties(
             self, image: NumpyTable,
-            sort_points=False) -> Tuple[int, int, int, int, int, int]:
+            sort_points: bool=False) -> Tuple[int, int, int, int, int, int]:
         '''
         Uses points passed in the constructor and the image to return the
         coordinates of the points that define which area of the texture
@@ -247,10 +250,10 @@ class GradientMask(TwoPointSurfaceMask):
         self.stripe_width = np.array(stripe_width)/np.sum(stripe_width)
         self.expotent=expotent
 
-    def get_mask(self, image):
+    def get_mask(self, image: NumpyTable):
         w, h, u1, u2, v1, v2 = self.get_surface_properties(
             image, sort_points=False)
-        def split_complex(c):
+        def split_complex(c: complex):
             return (c.real, c.imag)
 
         a = np.array((u1, v1))
@@ -271,15 +274,14 @@ class GradientMask(TwoPointSurfaceMask):
         crds = np.stack([crds[0], crds[1], np.ones((w, h))], axis=2)
 
         # https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line
-        mask = np.abs(
-            np.sum(abc*crds, axis=2))/((np.sum(abc[:2]**2))**0.5
+        mask: NumpyTable = np.abs(  # type: ignore
+            np.sum(abc*crds, axis=2))/((np.sum(abc[:2]**2))**0.5  # type: ignore
         )
         interp_len = np.linalg.norm(b-a)
 
         xp = list(accumulate(self.stripe_width*interp_len))
         fp = self.stripe_strength
-        mask = np.interp(
-            mask, xp, fp)
+        mask = np.interp(mask, xp, fp)  # type: ignore
         mask=mask**self.expotent
 
         return mask[:, :, np.newaxis]
@@ -300,7 +302,7 @@ class EllipseMask(TwoPointSurfaceMask):
         self.hard_edge = hard_edge
         self.expotent=expotent
 
-    def get_mask(self, image):
+    def get_mask(self, image: NumpyTable):
         w, h, u1, u2, v1, v2 = self.get_surface_properties(image)
         # img = np.ones((w, h, 3), dtype=np.float)
         a = (u2-u1)/2
@@ -466,7 +468,7 @@ class RandomMask(MultiplicativeMask):
         self.expotent = expotent
         self.seed = seed
 
-    def get_mask(self, image):
+    def get_mask(self, image: NumpyTable):
         # Get the shape of the image
         w, h, _ = image.shape
         np.random.seed(self.seed)
@@ -482,7 +484,7 @@ class ColorMask(MultiplicativeMask):
     def __init__(self, color: Vector3d):
         self.r, self.g, self.b = color
 
-    def get_mask(self, image):
+    def get_mask(self, image: NumpyTable):
         # Get the shape of the image
         w, h, _ = image.shape
         mask = np.zeros((w, h, 3))
@@ -499,13 +501,14 @@ class MixMask(MultiplicativeMask):
     def __init__(
             self, masks: list[MultiplicativeMask], *,
             strength: Vector2d=(0.0, 1.0),
-            expotent: float=1.0, mode='mean'):
+            expotent: float=1.0,
+            mode: str='mean'):
         self.strength = strength
         self.expotent = expotent
         self.masks = masks
         self.mode = mode
 
-    def get_mask(self, image):
+    def get_mask(self, image: NumpyTable):
         # Get the shape of the image
         w, h, _ = image.shape
 
@@ -519,7 +522,7 @@ class MixMask(MultiplicativeMask):
             if len(m.get_mask(image).shape) == 3:
                 is_rgb = True
                 break
-        mask_arrays = []
+        mask_arrays: List[NumpyTable] = []
         for m in self.masks:
             mask_array = m.get_mask(image)
             if is_rgb:
@@ -543,25 +546,27 @@ class MixMask(MultiplicativeMask):
         mask = mask**self.expotent
         return mask
 
-def _get_color_from_gui_color(color) -> Color:
+def _get_color_from_gui_color(color: MCBLEND_ColorProperties) -> Color:
     '''
     Returns Color object from definition created with the GUI.
     (MCBLEND_ColorProperties)
     '''
     #pylint: disable=singleton-comparison
     # convert linear rgb to srgb
-    rgb = np.array(color.color)
+    rgb: NumpyTable = np.array(color.color)
     selector = rgb < 0.0031308
     rgb[selector] *= 12.92
     rgb[selector == False] = 1.055 * rgb[selector == False]**(1/2.4) - 0.055
     return Color(*rgb)
 
-def get_masks_from_side(side) -> Sequence[Mask]:
+def get_masks_from_side(side: CollectionProperty[MCBLEND_UvMaskProperties]) -> Sequence[Mask]:
     '''
     Returns tuple of Masks from one masks side definition created in GUI.
     '''
 
-    def _get_masks_from_side(side: Iterable, n_steps: int) -> Sequence[Mask]:
+    def _get_masks_from_side(
+            side: Iterable[MCBLEND_UvMaskProperties],
+            n_steps: int) -> Sequence[Mask]:
         result: List[Mask] = []
         mask: Mask
         # n_steps limits maximal number of consumed items

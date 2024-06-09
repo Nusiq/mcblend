@@ -2,13 +2,13 @@
 This module contains all of the panels for mcblend GUI.
 '''
 # don't import future annotations Blender needs that
-from typing import List, Optional
+from typing import List, Optional, Any
 from dataclasses import dataclass
 
 import bpy
 from bpy.types import UILayout, UIList, Panel, Context
 
-from .object_data import EffectTypes
+from .object_data import EffectTypes, MCBLEND_EffectProperties
 from .operator_func.db_handler import get_db_handler
 from .operator_func.common import MeshType
 from .operator_func.texture_generator import UvMaskTypes
@@ -16,15 +16,26 @@ from .operator_func.typed_bpy_access import (
     get_data_bones, set_operator_property, get_scene_mcblend_active_uv_group,
     get_scene_mcblend_uv_groups, get_scene_mcblend_active_uv_groups_side,
     get_scene_mcblend_events, get_scene_mcblend_active_event, get_mcblend,
-    get_scene_mcblend_project)
+    get_scene_mcblend_project, get_context_object)
+from .uv_data import MCBLEND_UvMaskProperties
 
 # GUI
 # UV groups names list
 class MCBLEND_UL_UVGroupList(UIList):
     '''GUI item used for drawing list of names of UV groups.'''
+    
     def draw_item(
-            self, context, layout, data, item, icon, active_data,
-            active_propname):
+            self,
+            context: Context | None,
+            layout: UILayout,
+            data: Any,
+            item: Any,
+            icon: int | None,
+            active_data: Any,
+            active_property: str | None,
+            index: int | None = 0,
+            flt_flag: int | None = 0
+    ):
         '''
         Drawing MCBLEND_UvGroupProperties in a list.
 
@@ -64,7 +75,9 @@ class MCBLEND_PT_UVGroupPanel(Panel):
     bl_context = 'scene'
     bl_label = "Mcblend: UV groups"
 
-    def draw_colors(self, mask, mask_index: int, col: UILayout):
+    def draw_colors(
+            self, mask: MCBLEND_UvMaskProperties, mask_index: int,
+            col: UILayout):
         '''Draws colors of UV mask.'''
         box = col.box()
         row = box.row()
@@ -100,7 +113,9 @@ class MCBLEND_PT_UVGroupPanel(Panel):
             set_operator_property(op_props, "mask_index", mask_index)
             set_operator_property(op_props, "color_index", color_index)
 
-    def draw_stripes(self, mask, mask_index: int, col: UILayout):
+    def draw_stripes(
+            self, mask: MCBLEND_UvMaskProperties, mask_index: int,
+            col: UILayout):
         '''Draws stripes of UV mask.'''
         box = col.box()
         row = box.row()
@@ -145,12 +160,14 @@ class MCBLEND_PT_UVGroupPanel(Panel):
             set_operator_property(op_props, "stripe_index", stripe_index)
 
     def draw_mask_properties(
-            self, mask, index: int, col: UILayout, *,
-            colors=False, interpolate=False,
-            normalize=False, p1p2=False, stripes=False,
-            relative_boundaries=False, expotent=False, strength=False,
-            hard_edge=False, horizontal=False, seed=False,color=False,
-            children=False, mode=False):
+            self, mask: MCBLEND_UvMaskProperties,
+            index: int, col: UILayout, *,
+            colors: bool=False, interpolate: bool=False,
+            normalize: bool=False, p1p2: bool=False, stripes: bool=False,
+            relative_boundaries: bool=False, expotent: bool=False,
+            strength: bool=False, hard_edge: bool=False, horizontal: bool=False,
+            seed: bool=False,color: bool=False, children: bool=False,
+            mode: bool=False):
         '''Draws properties of UV mask.'''
         if colors:
             self.draw_colors(mask, index, col)  # colors
@@ -193,8 +210,8 @@ class MCBLEND_PT_UVGroupPanel(Panel):
             col.prop(mask, "children")
 
     def draw_mask(
-            self, mask, index: int, masks_len: int,
-            ui_stack: List[_UIStackItem]):
+            self, mask: MCBLEND_UvMaskProperties, index: int,
+            masks_len: int, ui_stack: List[_UIStackItem]):
         '''
         Draws whole UV mask gui with additional GUI items for navigation
         between masks like buttons for moving and removing masks.
@@ -363,8 +380,17 @@ class MCBLEND_PT_UVGroupPanel(Panel):
 class MCBLEND_UL_EventsList(UIList):
     '''GUI item used for drawing list of names of events.'''
     def draw_item(
-            self, context, layout, data, item, icon, active_data,
-            active_propname):
+            self,
+            context: Context | None,
+            layout: UILayout,
+            data: Any,
+            item: Any,
+            icon: int | None,
+            active_data: Any,
+            active_property: str | None,
+            index: int | None = 0,
+            flt_flag: int | None = 0
+    ):
         '''
 
         Drawing MCBLEND_EventGroupProperties in a list.
@@ -376,7 +402,7 @@ class MCBLEND_UL_EventsList(UIList):
         :param icon: not used - "the "computed" icon for the item" (?)
         :param active_data: the RNA object containing the active property for the
           collection.
-        :param active_propname: the name of the active property.
+        :param active_property: the name of the active property.
         '''
         # pylint: disable=arguments-differ, unused-argument
         if self.layout_type in {'DEFAULT', 'COMPACT', 'CENTER'}:
@@ -394,7 +420,7 @@ class MCBLEND_PT_EventsPanel(Panel):
     bl_label = "Mcblend: Animation Events"
 
 
-    def draw_effect(self, effect, index: int, col: UILayout):
+    def draw_effect(self, effect: MCBLEND_EffectProperties, index: int, col: UILayout):
         '''Draw single effect in the event'''
 
         # If parent is collapsed don't draw anything
@@ -415,7 +441,7 @@ class MCBLEND_PT_EventsPanel(Panel):
         elif effect.effect_type == EffectTypes.SOUND_EFFECT.value:
             col.prop(effect, "effect")
 
-    def draw(self, context):
+    def draw(self, context: Context):
         '''Draws whole event group panel.'''
         col = self.layout.column(align=True)
         row = col.row()
@@ -452,14 +478,14 @@ class MCBLEND_PT_ObjectPropertiesPanel(Panel):
     bl_label = "Mcblend: Object Properties"
 
     @classmethod
-    def poll(cls, context):
+    def poll(cls, context: Context):
         if context.mode != "OBJECT":
             return False
         if context.active_object:
             return context.active_object.type == "MESH"
         return False
 
-    def draw(self, context):
+    def draw(self, context: Context):
         col = self.layout.column(align=True)
         object_properties = get_mcblend(context.object)
         col.prop(
@@ -487,12 +513,12 @@ class MCBLEND_PT_ModelPropertiesPanel(Panel):
     bl_context = 'object'
     bl_label = "Mcblend: Model Properties"
     @classmethod
-    def poll(cls, context):
+    def poll(cls, context: Context):
         if context.active_object:
             return context.active_object.type == "ARMATURE"
         return False
 
-    def draw(self, context):
+    def draw(self, context: Context):
         col = self.layout.column(align=True)
         # col.prop(context.scene.mcblend, "path", text="")
         object_properties = get_mcblend(context.object)
@@ -542,14 +568,14 @@ class MCBLEND_PT_ArmatureRenderControllersPanel(Panel):
     bl_label = "Mcblend: Render Controllers"
 
     @classmethod
-    def poll(cls, context):
+    def poll(cls, context: Context):
         if context.active_object:
             return context.active_object.type == "ARMATURE"
         return False
 
-    def draw(self, context):
+    def draw(self, context: Context):
         col = self.layout.column(align=True)
-        if not context.mode == "OBJECT" or context.object is None:
+        if not context.mode == "OBJECT" or get_context_object(context) is None:
             return
 
         row = col.row()
@@ -655,12 +681,12 @@ class MCBLEND_PT_AnimationPropertiesPanel(Panel):
 
 
     @classmethod
-    def poll(cls, context):
+    def poll(cls, context: Context):
         if context.active_object:
             return context.active_object.type == "ARMATURE"
         return False
 
-    def draw(self, context):
+    def draw(self, context: Context):
         col = self.layout.column(align=True)
 
         row = col.row()
@@ -720,7 +746,7 @@ class MCBLEND_PT_OperatorsPanel(Panel):
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
 
-    def draw(self, context):
+    def draw(self, context: Context):
         col = self.layout.column()
         box = col.box().column()
         # UV mapping
@@ -751,7 +777,7 @@ class MCBLEND_PT_ProjectPanel(Panel):
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
 
-    def draw(self, context):
+    def draw(self, context: Context):
         col = self.layout.column()
         project = get_scene_mcblend_project(context)
 
@@ -868,7 +894,7 @@ class MCBLEND_PT_BonePanel(Panel):
     bl_label = "Mcblend: Bone Properties"
 
     @classmethod
-    def poll(cls, context):
+    def poll(cls, context: Context):
         if context.mode != 'POSE':
             return False
         try:
@@ -876,9 +902,9 @@ class MCBLEND_PT_BonePanel(Panel):
                 get_data_bones(context.object).active.name]
         except:  # pylint: disable=bare-except
             return False
-        return pose_bone is not None
+        return pose_bone is not None  # type: ignore
 
-    def draw(self, context):
+    def draw(self, context: Context):
         try:
             pose_bone = context.object.pose.bones[
                 get_data_bones(context.object).active.name]

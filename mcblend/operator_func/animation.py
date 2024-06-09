@@ -3,7 +3,7 @@ Functions related to exporting animations.
 '''
 from __future__ import annotations
 
-from typing import NamedTuple, Dict, Optional, List, Tuple, Set, cast
+from typing import NamedTuple, Dict, Optional, List, Tuple, Set, cast, Any
 import math # pyright: ignore[reportShadowedImports]
 from dataclasses import dataclass, field
 from itertools import tee, islice  # pyright: ignore[reportShadowedImports]
@@ -61,13 +61,13 @@ def _pick_closest_rotation(
             while choice[i] < close_to[i]:
                 new_choice = choice + arr
                 new_distance = np.linalg.norm(new_choice - close_to)
-                if new_distance > distance:
+                if new_distance > distance:  # type: ignore
                     break
                 distance, choice = new_distance, new_choice
             while choice[i] > close_to[i]:
                 new_choice = choice - arr
                 new_distance = np.linalg.norm(new_choice - close_to)
-                if new_distance > distance:
+                if new_distance > distance:  # type: ignore
                     break
                 distance, choice = new_distance, new_choice
         return cast(float, distance), choice
@@ -119,11 +119,11 @@ def _get_keyframes(context: Context, prec: int=1) -> List[float]:
 
     def get_action_keyframes(action: Action) -> List[float]:
         '''Gets set of keyframes from an action.'''
-        if action.fcurves is None:
+        if action.fcurves is None:  # type: ignore
             return []
         result: List[float] = []
         for fcurve in get_fcurves(action):
-            if fcurve.keyframe_points is None:
+            if fcurve.keyframe_points is None:  # type: ignore
                 continue
             for keyframe_point in get_keyframe_points(fcurve):
                 result.append(keyframe_point.co[0])  # type: ignore
@@ -131,12 +131,14 @@ def _get_keyframes(context: Context, prec: int=1) -> List[float]:
 
     keyframes: Set[float] = set()
     obj = context.active_object
-    if obj.animation_data is None:
+    if obj is None:
         return []
-    if obj.animation_data.action is not None:
+    if obj.animation_data is None:  # type: ignore
+        return []
+    if obj.animation_data.action is not None:  # type: ignore
         for keyframe in get_action_keyframes(obj.animation_data.action):
             keyframes.add(round(keyframe, prec))
-    if obj.animation_data.nla_tracks is None:
+    if obj.animation_data.nla_tracks is None:  # type: ignore
         return sorted(keyframes)
     for nla_track in get_nla_tracks(obj.animation_data):
         if nla_track.mute:
@@ -255,12 +257,12 @@ class AnimationExport:
     anim_time_update: str
     override_previous_animation: bool
     fps: float
-    effect_events: Dict[str, Tuple[List[Dict], List[Dict]]]
+    effect_events: Dict[str, Tuple[List[Dict[Any, Any]], List[Dict[Any, Any]]]]
     original_pose: Pose = field(default_factory=Pose)
     single_frame: bool = field(default_factory=bool)  # bool() = False
     poses: Dict[float, Pose] = field(default_factory=dict)
-    sound_effects: Dict[int, List[Dict]] = field(default_factory=dict)
-    particle_effects: Dict[int, List[Dict]] = field(default_factory=dict)
+    sound_effects: Dict[int, List[Dict[Any, Any]]] = field(default_factory=dict)
+    particle_effects: Dict[int, List[Dict[Any, Any]]] = field(default_factory=dict)
 
     def load_poses(
             self, object_properties: McblendObjectGroup,
@@ -273,7 +275,7 @@ class AnimationExport:
         :param context: the context of running the operator.
         '''
         original_frame = context.scene.frame_current
-        bpy.ops.screen.animation_cancel()
+        bpy.ops.screen.animation_cancel()  # pyright: ignore[reportUnknownMemberType]
         try:
             context.scene.frame_set(0)
             self.original_pose.load_poses(object_properties)
@@ -316,8 +318,8 @@ class AnimationExport:
             context.scene.frame_set(original_frame)
 
     def json(
-            self, old_json: Optional[Dict]=None,
-            skip_rest_poses: bool=True) -> Dict:
+            self, old_json: Optional[Dict[str, Any]]=None,
+            skip_rest_poses: bool=True) -> Dict[str, Any]:
         '''
         Returns the JSON dict with Minecraft animation. If JSON dict with
         valid animation file is passed to the function the function
@@ -329,14 +331,14 @@ class AnimationExport:
         :returns: JSON dict with Minecraft animation.
         '''
         # Create result dict
-        result: Dict = {"format_version": "1.8.0", "animations": {}}
+        result: Dict[str, Any] = {"format_version": "1.8.0", "animations": {}}
         try:
             if isinstance(old_json['animations'], dict):  # type: ignore
-                result: Dict = old_json  # type: ignore
+                result = old_json  # type: ignore
         except (TypeError, LookupError):
             pass
 
-        bones: Dict[str, Dict] = {}
+        bones: Dict[str, Dict[str, Any]] = {}
         for bone_name in self.original_pose.pose_bones:
             bone = self._json_bone(bone_name, skip_rest_poses)
             if bone != {}:  # Nothing to export
@@ -348,7 +350,7 @@ class AnimationExport:
                 "bones": bones,
                 "loop": True
             }
-            data = result["animations"][f"animation.{self.name}"]
+            data: Any = result["animations"][f"animation.{self.name}"]
             if self.override_previous_animation:
                 data['override_previous_animation'] = True
         else:
@@ -383,7 +385,8 @@ class AnimationExport:
                 data['override_previous_animation'] = True
         return result
 
-    def _json_bone(self, bone_name: str, skip_rest_pose: bool) -> Dict:
+    def _json_bone(
+            self, bone_name: str, skip_rest_pose: bool) -> Dict[str, Any]:
         '''
         Returns optimized JSON dict with an animation of single bone.
 
@@ -393,7 +396,7 @@ class AnimationExport:
         :returns: the part of animation with animation of a single bone.
         '''
         # t, rot, loc, scale
-        poses: List[Dict] = []
+        poses: List[Dict[str, Any]] = []
         prev_pose_bone = PoseBone(
             name=bone_name, scale=np.zeros(3), location=np.zeros(3),
             rotation=np.zeros(3),
@@ -437,7 +440,7 @@ class AnimationExport:
         if not poses:  # If empty return empty animation
             return {'position': {}, 'rotation': {}, 'scale': {}}
         if self.single_frame:  # Returning single frame pose is easier
-            result = {}
+            result: Dict[str, Any] = {}
             loc, rot, scl = poses[0]['loc'], poses[0]['rot'], poses[0]['scl']
             # Filter rest pose positions
             if loc != [0, 0, 0] or not skip_rest_pose:
@@ -447,7 +450,7 @@ class AnimationExport:
             if scl != [1, 1, 1] or not skip_rest_pose:
                 result['scale'] = poses[0]['scl']
             return result
-        bone: Dict = {  # dictionary populated with 0 timestamp frame
+        bone: Dict[str, Any] = {  # dictionary populated with 0 timestamp frame
             'position': {poses[0]['t']: poses[0]['loc']},
             'rotation': {poses[0]['t']: poses[0]['rot']},
             'scale': {poses[0]['t']: poses[0]['scl']},

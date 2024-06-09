@@ -1,10 +1,9 @@
 from __future__ import annotations
-from typing import Dict, List, Literal, Tuple
+from typing import Dict, List, Tuple, Any
 from enum import Enum
 from bpy.types import Context, PropertyGroup
 from .operator_func.pyi_types import CollectionProperty
 from .common_data import MCBLEND_JustName
-from .operator_func.common import ModelOriginType
 
 # Animation properties
 class EffectTypes(Enum):
@@ -34,7 +33,9 @@ class MCBLEND_EventProperties(PropertyGroup):
     name: str
     effects: CollectionProperty[MCBLEND_EffectProperties]
 
-    def get_effects_dict(self) -> Tuple[List[Dict], List[Dict]]: ...
+    def get_effects_dict(
+            self
+    ) -> Tuple[List[Dict[Any, Any]], List[Dict[Any, Any]]]: ...
 
 class MCBLEND_TimelineMarkerProperties(PropertyGroup):
     name: str

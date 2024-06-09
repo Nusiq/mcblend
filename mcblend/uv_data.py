@@ -1,10 +1,11 @@
+# type: ignore
 '''
 Custom blender objects with additional properties of the UV.
 '''
-from typing import Dict, List, cast
+from typing import Dict, List, Any
 
 import bpy
-from bpy.types import PropertyGroup, Context
+from bpy.types import PropertyGroup
 from bpy.props import (
     BoolProperty, CollectionProperty, EnumProperty, FloatProperty,
     FloatVectorProperty, IntProperty, IntVectorProperty,
@@ -26,7 +27,7 @@ class MCBLEND_StripeProperties(PropertyGroup):
     strength: FloatProperty(  # type: ignore
         name='Strength', min=0.0, max=1.0, default=1.0)
 
-    def json(self, relative: bool) -> Dict:
+    def json(self, relative: bool) -> Dict[str, Any]:
         '''
         :returns: JSON representation of this object.
         '''
@@ -121,7 +122,7 @@ class MCBLEND_UvMaskProperties(PropertyGroup):
         type=MCBLEND_ColorProperties,
         name='Color')
 
-    def json(self) -> Dict:
+    def json(self) -> Dict[str, Any]:
         '''
         :returns: JSON represetnation of this object.
         '''
@@ -178,13 +179,13 @@ class MCBLEND_UvMaskProperties(PropertyGroup):
         return result
 
 # UV group
-def get_unused_uv_group_name(base_name: str, i=1):
+def get_unused_uv_group_name(base_name: str, i: int=1):
     '''
     Gets the name of UV group which is not used by any other UV group. Uses
     the base name and adds number at the end of it to find unique name with
     pattern :code:`{base_name}.{number:04}`.
     '''
-    uv_groups = get_scene_mcblend_uv_groups(cast(Context, bpy.context))
+    uv_groups = get_scene_mcblend_uv_groups(bpy.context)
     name = base_name  # f'{base_name}.{i:04}'
     while name in uv_groups.keys():
         name = f'{base_name}.{i:04}'
@@ -202,7 +203,7 @@ def _update_uv_group_name(uv_group, new_name: str, update_references: bool):
     # Update the name of the UV group
     uv_group['name'] = new_name
 
-def _set_uv_group_name(self, value):
+def _set_uv_group_name(self: Any, value: str):
     groups = get_scene_mcblend_uv_groups(bpy.context)
 
     # Empty name is no allowed
@@ -268,7 +269,7 @@ class MCBLEND_UvGroupProperties(PropertyGroup):
         type=MCBLEND_UvMaskProperties,
         description='Collection of the filters for side6 of the cuboid.')
 
-    def json(self) -> Dict:
+    def json(self) -> Dict[str, Any]:
         '''
         :returns: JSON representation of this object.
         '''

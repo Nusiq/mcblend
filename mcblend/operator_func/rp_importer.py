@@ -2,7 +2,7 @@
 Functions related to imoporting models from resource packs.
 '''
 from __future__ import annotations
-from typing import Literal, TypedDict, TYPE_CHECKING, cast, Union
+from typing import Literal, TypedDict, TYPE_CHECKING, Union
 from bpy.types import Context
 from .pyi_types import CollectionProperty
 from .typed_bpy_access import get_scene_mcblend_project
@@ -10,10 +10,9 @@ from .typed_bpy_access import get_scene_mcblend_project
 # Import for static type checking only (to avoid circular imports)
 if TYPE_CHECKING:
     from ..resource_pack_data import (
-        MCBLEND_ProjectProperties, MCBLEND_AttachableRenderController,
+        MCBLEND_AttachableRenderController,
         MCBLEND_EntityRenderController)
 else:
-    MCBLEND_ProjectProperties = None  # pylint: disable=invalid-name
     MCBLEND_AttachableRenderController = None  # pylint: disable=invalid-name
     MCBLEND_EntityRenderController = None  # pylint: disable=invalid-name
 
@@ -67,7 +66,6 @@ def get_pks_for_model_improt(
     '''
     # 1. Load cached data
     project = get_scene_mcblend_project(context)
-    project = cast(MCBLEND_ProjectProperties, project)
     render_controllers: Union[
         CollectionProperty[MCBLEND_AttachableRenderController],
         CollectionProperty[MCBLEND_EntityRenderController]]

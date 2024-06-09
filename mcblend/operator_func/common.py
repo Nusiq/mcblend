@@ -7,7 +7,7 @@ from ctypes import c_int
 import math
 from enum import Enum
 from typing import (
-    Deque, Dict, Iterator, NamedTuple, List, Optional, Tuple, Any, Iterable,
+    Dict, Iterator, NamedTuple, List, Optional, Tuple, Any, Iterable,
     Sequence, cast, TypeAlias, Literal, ClassVar)
 from collections import deque
 
@@ -15,7 +15,7 @@ import numpy as np
 import numpy.typing as npt
 
 import bpy
-from bpy.types import MeshUVLoopLayer, Object, MeshPolygon, PoseBone, Context
+from bpy.types import MeshUVLoopLayer, Object, MeshPolygon, PoseBone
 
 from mathutils import Vector, Matrix, Euler
 
@@ -356,9 +356,7 @@ class McblendObject:
         '''
         if self.uv_group == '':
             return [ColorMask((0, 1, 0))]
-        uv_group = get_scene_mcblend_uv_groups(
-            cast(Context, bpy.context)
-        )[self.uv_group]
+        uv_group = get_scene_mcblend_uv_groups(bpy.context)[self.uv_group]
         return get_masks_from_side(uv_group.side1)
 
     @property
@@ -369,9 +367,7 @@ class McblendObject:
         '''
         if self.uv_group == '':
             return [ColorMask((1, 0, 1))]
-        uv_group = get_scene_mcblend_uv_groups(
-            cast(Context, bpy.context)
-        )[self.uv_group]
+        uv_group = get_scene_mcblend_uv_groups(bpy.context)[self.uv_group]
         return get_masks_from_side(uv_group.side2)
 
     @property
@@ -382,9 +378,7 @@ class McblendObject:
         '''
         if self.uv_group == '':
             return [ColorMask((1, 0, 0))]
-        uv_group = get_scene_mcblend_uv_groups(
-            cast(Context, bpy.context)
-        )[self.uv_group]
+        uv_group = get_scene_mcblend_uv_groups(bpy.context)[self.uv_group]
         return get_masks_from_side(uv_group.side3)
 
     @property
@@ -395,9 +389,7 @@ class McblendObject:
         '''
         if self.uv_group == '':
             return [ColorMask((0, 1, 1))]
-        uv_group = get_scene_mcblend_uv_groups(
-            cast(Context, bpy.context)
-        )[self.uv_group]
+        uv_group = get_scene_mcblend_uv_groups(bpy.context)[self.uv_group]
         return get_masks_from_side(uv_group.side4)
 
     @property
@@ -408,9 +400,7 @@ class McblendObject:
         '''
         if self.uv_group == '':
             return [ColorMask((0, 0, 1))]
-        uv_group = get_scene_mcblend_uv_groups(
-            cast(Context, bpy.context)
-        )[self.uv_group]
+        uv_group = get_scene_mcblend_uv_groups(bpy.context)[self.uv_group]
         return get_masks_from_side(uv_group.side5)
 
     @property
@@ -421,11 +411,8 @@ class McblendObject:
         '''
         if self.uv_group == '':
             return [ColorMask((1, 1, 0))]
-        uv_group = get_scene_mcblend_uv_groups(
-            cast(Context, bpy.context)
-        )[self.uv_group]
-        masks = get_masks_from_side(uv_group.side6)
-        return masks
+        uv_group = get_scene_mcblend_uv_groups(bpy.context)[self.uv_group]
+        return get_masks_from_side(uv_group.side6)
 
     def find_lose_parts(self) -> Tuple[int, ...]:
         '''
@@ -532,7 +519,7 @@ class CubePolygonsSolver:
         '''Gets the order of vertices for given cube polygon'''
         mc_mapping_uv_order = CubePolygonsSolver.MC_MAPPING_UV_ORDERS[
             (name, mirror)]
-        result = []
+        result: List[int] = []
         for vertex_name in mc_mapping_uv_order:
             # Throws ValueError
             index = bound_box_vertices.index(vertex_name)
@@ -561,7 +548,7 @@ class CubePolygonsSolver:
                             polygon,
                             tuple(complete_face),  # type: ignore
                             order))
-        return CubePolygons(**cube_polygons)
+        return CubePolygons(**cube_polygons)  # type: ignore
 
     def is_valid(self):
         '''
@@ -667,14 +654,15 @@ class CubePolygons(NamedTuple):
             shortest_distance: Optional[float] = None
             for k, v in bb_crds.items():
                 p_options.append([])
-                curr_distance = np.linalg.norm(v-vertex_crds)
+                curr_distance: float = np.linalg.norm(
+                    v-vertex_crds)  # type: ignore
                 if shortest_distance is None:
-                    shortest_distance = cast(float, curr_distance)
+                    shortest_distance = curr_distance
                     p_options[vertex_id] = [k]
                 elif np.allclose(shortest_distance, curr_distance):
                     p_options[vertex_id].append(k)
                 elif curr_distance < shortest_distance:
-                    shortest_distance = cast(float, curr_distance)
+                    shortest_distance = curr_distance
                     p_options[vertex_id] = [k]
         solver = CubePolygonsSolver(p_options, list(get_data_polygons(cube)))
         if not solver.solve():
@@ -807,7 +795,7 @@ class McblendObjectGroup:
     def __getitem__(self, key: ObjectId) -> McblendObject:
         return self.data[key]
 
-    def __contains__(self, item):
+    def __contains__(self, item: ObjectId):
         return item in self.data
 
     def __iter__(self):
@@ -836,7 +824,7 @@ class McblendObjectGroup:
         for bone in get_data_bones(armature):
             obj_id: ObjectId = ObjectId(armature.name, bone.name)
             parent_bone_id: Optional[ObjectId] = None
-            if bone.parent is not None:
+            if bone.parent is not None:  # pyright: ignore[reportUnnecessaryComparison]
                 parent_bone_id = ObjectId(armature.name, bone.parent.name)
             self.data[obj_id] = McblendObject(
                 thisobj_id=obj_id, thisobj=armature,
@@ -854,7 +842,7 @@ class McblendObjectGroup:
                 self.data[parentobj_id].children_ids.append(obj_id)
                 # Further offspring of the "child" (share same parent in mc
                 # model)
-                offspring: Deque[Object] = deque(get_children(obj))
+                offspring: deque[Object] = deque(get_children(obj))
                 while offspring:
                     child = offspring.pop()
                     child_id: ObjectId = ObjectId(child.name, "")
@@ -976,7 +964,7 @@ def fix_cube_rotation(obj: Object):
     set_matrix_local(obj, matmul_chain(
         loc_mat, counter_rotation, rot_mat, scl_mat))
 
-def get_vect_json(arr: Iterable) -> list[float]:
+def get_vect_json(arr: Iterable[float | int]) -> list[float]:
     '''
     Changes the iterable of numbers into basic python list of floats.
     Values from the original iterable are rounded to the 3rd deimal
@@ -1007,7 +995,10 @@ def star_pattern_match(text: str, pattern: str) -> bool:
     # The table that represents matching smaller patterns to
     # parts of the text. Row 0 is for empty pattern, column 0
     # represents empty text: matches[text+1][pattern+1]
-    matches = [[False for i in range(lenp + 1)] for j in range(lent + 1)]
+    matches = [
+        [False for _ in range(lenp + 1)]
+        for _ in range(lent + 1)
+    ]
 
     # Empty pattern matches the empty string
     matches[0][0] = True
