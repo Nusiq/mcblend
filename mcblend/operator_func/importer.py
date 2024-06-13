@@ -15,9 +15,9 @@ from bpy.types import Object, MeshUVLoopLayer
 import bpy
 
 from .typed_bpy_access import (
-    get_data_edit_bones, get_data_meshes, get_data_uv_layers,
+    get_data_edit_bones, get_data_meshes,
     get_data_vertices, get_head, get_loop_indices, get_matrix_world, get_data,
-    get_objects, get_rotation_euler, get_tail, get_uv_layers, matmul,
+    get_objects, get_rotation_euler, get_tail, matmul,
     set_matrix, set_matrix_parent_inverse, set_matrix_world,
     get_matrix_parent_inverse, get_pose_bones, subtract)
 from .common import (
@@ -1457,7 +1457,7 @@ class ImportGeometry:
                 _set_uv(
                     self.uv_converter,
                     CubePolygons.build(cube_obj, cube.mirror),
-                    cube.uv, get_data_uv_layers(cube_obj).active)
+                    cube.uv, cube_obj.data.uv_layers.active)
 
                 # 3. Set size & inflate
                 get_mcblend(cube.blend_cube).inflate = (
@@ -1522,9 +1522,9 @@ class ImportGeometry:
                     mesh.normals_split_custom_set(
                         blender_normals)  # type: ignore
 
-                    if get_uv_layers(mesh).active is None:  # pyright: ignore[reportUnnecessaryComparison]
-                        get_uv_layers(mesh).new()
-                    uv_layer = get_data(get_uv_layers(mesh).active)
+                    if mesh.uv_layers.active is None:  # pyright: ignore[reportUnnecessaryComparison]
+                        mesh.uv_layers.new()
+                    uv_layer = get_data(mesh.uv_layers.active)
                     for i, uv in enumerate(blender_uvs):
                         uv_layer[i].uv = cast(list[float],uv)
                 else:

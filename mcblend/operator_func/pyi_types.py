@@ -254,19 +254,6 @@ class ObjectDataPolygons(Sized):
     def __iter__(self) -> Iterator[MeshPolygon]: ...
     def __len__(self) -> int: ...
 
-
-class ObjectDataUvLayers(Sized):
-    '''
-    Fake class defined as a result of:
-    >>> object.data.uv_layers
-    '''
-    active: MeshUVLoopLayer
-    def __getitem__(self, key: MeshUVLoopLayer) -> MeshUVLoopLayer: ...
-    def __iter__(self) -> Iterator[MeshUVLoopLayer]: ...
-    def new(self, name: str="") -> MeshUVLoopLayer: ...
-    def __len__(self) -> int: ...
-
-
 class ObjectDataVertices(Sized):
     '''
     Fake class defined as a result of:

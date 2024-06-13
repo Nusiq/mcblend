@@ -13,7 +13,7 @@ import numpy as np
 import bpy
 
 from .typed_bpy_access import (
-    get_loop_indices, get_data_uv_layers, get_uv, set_uv)
+    get_loop_indices, get_uv, set_uv)
 from .texture_generator import Mask
 from .exception import NotEnoughTextureSpace
 from .json_tools import get_vect_json
@@ -604,10 +604,6 @@ class UvModelMerger(McblendObjUvBox):
         )
 
     def new_uv_layer(self):
-        # for obj in self.model.values():
-        #     if obj.obj_type != 'MESH':
-        #         continue
-        #     get_data_uv_layers(obj.thisobj).new()
         raise RuntimeError(
             'This type of object only moves the UVs, it should never create a '
             'new UV layer')
@@ -623,7 +619,7 @@ class UvModelMerger(McblendObjUvBox):
         for obj in self.model.values():
             if obj.obj_type != 'MESH':
                 continue
-            active_uv_layer = get_data_uv_layers(obj.thisobj).active
+            active_uv_layer = obj.thisobj.data.uv_layers.active
             if active_uv_layer is None:  # pyright: ignore[reportUnnecessaryComparison]
                 continue  # Unmapped objects remain unmapped
             for i, _ in enumerate(active_uv_layer.data):

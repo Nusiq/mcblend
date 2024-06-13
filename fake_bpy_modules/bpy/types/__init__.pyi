@@ -15244,6 +15244,8 @@ class ID(bpy_struct):
     :type: int
     '''
 
+    uv_layers: ObjectDataUvLayers  # Mcblend custom
+
     def evaluated_get(self, depsgraph: 'Depsgraph') -> 'ID':
         ''' Get corresponding evaluated ID from the given dependency graph
 
@@ -61692,6 +61694,17 @@ class Object(ID, bpy_struct):
         :return: The class or default when not found.
         '''
         pass
+
+class ObjectDataUvLayers(typing.Sized):  # Mcblend custom
+    '''
+    Fake class defined as a result of:
+    >>> object.data.uv_layers
+    '''
+    active: MeshUVLoopLayer
+    def __getitem__(self, key: MeshUVLoopLayer) -> MeshUVLoopLayer: ...
+    def __iter__(self) -> Iterator[MeshUVLoopLayer]: ...
+    def new(self, name: str="") -> MeshUVLoopLayer: ...
+    def __len__(self) -> int: ...
 
 
 class PaintCurve(ID, bpy_struct):

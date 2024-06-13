@@ -122,12 +122,6 @@ def get_data_polygons(obj):
     '''
     return obj.data.polygons
 
-def get_data_uv_layers(obj):
-    '''
-    >>> obj.data.uv_layers
-    '''
-    return obj.data.uv_layers
-
 def get_data_vertices(obj):
     '''
     >>> obj.data.vertices
@@ -330,13 +324,6 @@ def get_uv(obj):
     >>> obj.uv
     '''
     return obj.uv
-
-def get_uv_layers(obj):
-    '''
-    >>> obj.uv_layers
-    '''
-    return obj.uv_layers
-
 
 def get_view_layer_objects_active(context):
     '''
