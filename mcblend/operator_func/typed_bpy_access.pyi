@@ -12,7 +12,7 @@ from .pyi_types import (
     CollectionProperty, DataObjects, DataMeshes, ArmatureDataBones, DataImages,
     ObjectDataMaterials, ArmatureDataEditBones, ObjectDataUvLayers,
     MeshUVLoopLayerData, ObjectDataVertices, ObjectDataEdges,
-    ArmaturePoseBones, SceneTimelineMarkers, ActionFCurves,
+    ArmaturePoseBones, SceneTimelineMarkers,
     FCurveKeyframePoints, AnimationDataNlaTracks, NlaTrackNlaStrips,
     ObjectDataPolygons, NodeTreeNodes, NodeInputs, NodeOutputs,
     NodeTreeLinks, DataNodeGroups, NodeTreeInputs, NodeTreeOutputs)
@@ -69,8 +69,6 @@ def get_data_polygons(obj: Object) -> ObjectDataPolygons: ...
 def get_data_uv_layers(obj: Object) -> ObjectDataUvLayers: ...
 
 def get_data_vertices(obj: Object) -> ObjectDataVertices: ...
-
-def get_fcurves(obj: Action) -> ActionFCurves: ...
 
 def get_head(obj: PoseBone) -> Vector: ...
 

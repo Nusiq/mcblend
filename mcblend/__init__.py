@@ -4,8 +4,7 @@ This module is used by Blender to register/unregister the plugin.
 # don't import future annotations Blender needs that
 import bpy
 from bpy.props import (
-    PointerProperty, CollectionProperty, IntProperty,  # type: ignore
-    EnumProperty  # type: ignore
+    PointerProperty, CollectionProperty, IntProperty, EnumProperty
 )
 
 

@@ -134,12 +134,6 @@ def get_data_vertices(obj):
     '''
     return obj.data.vertices
 
-def get_fcurves(obj):
-    '''
-    >>> obj.fcurves
-    '''
-    return obj.fcurves
-
 def get_head(obj):
     '''
     >>> obj.head

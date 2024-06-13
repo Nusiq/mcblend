@@ -15,7 +15,7 @@ from bpy.types import Action, Context
 import numpy as np
 
 from .typed_bpy_access import (
-    get_fcurves, get_keyframe_points, get_nla_tracks,
+    get_keyframe_points, get_nla_tracks,
     get_strips, get_timeline_markers)
 from .json_tools import get_vect_json
 from .common import (
@@ -122,7 +122,7 @@ def _get_keyframes(context: Context, prec: int=1) -> List[float]:
         if action.fcurves is None:  # type: ignore
             return []
         result: List[float] = []
-        for fcurve in get_fcurves(action):
+        for fcurve in action.fcurves:
             if fcurve.keyframe_points is None:  # type: ignore
                 continue
             for keyframe_point in get_keyframe_points(fcurve):

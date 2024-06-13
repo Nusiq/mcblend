@@ -5,22 +5,11 @@ Extra types used only in the PYI files.
 from typing import Any, Iterator, Literal, TypeVar, Generic, Sized, Optional
 from bpy.types import (
     Object, Mesh, Image, Material, Bone, EditBone, MeshUVLoopLayer, PoseBone,
-    MeshUVLoop, MeshVertex, MeshEdge, MeshPolygon, TimelineMarker, FCurve,
+    MeshUVLoop, MeshVertex, MeshEdge, MeshPolygon, TimelineMarker,
     Keyframe, NlaTrack, NlaStrip, Node, NodeSocket, NodeLink, NodeTree,
     NodeSocketInterface)
 
 T = TypeVar("T")
-
-
-class ActionFCurves(Sized):
-    '''
-    Fake class defined as a result of:
-    >>> object.fcurves
-    '''
-    def __getitem__(self, key: Any) -> FCurve: ...
-    def __iter__(self) -> Iterator[FCurve]: ...
-    def __len__(self) -> int: ...
-
 
 class AnimationDataNlaTracks(Sized):
     '''
