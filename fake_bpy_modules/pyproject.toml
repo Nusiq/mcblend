@@ -10,11 +10,18 @@ description = "Fake bpy modules modified for the Mcblend project."
 packages = [
     "bpy",
     "bpy.app",
+    "bpy.msgbus",
     "bpy.ops",
+    "bpy.path",
+    "bpy.props",
+    "bpy.types",
     "bpy.utils",
     "mathutils",
+    "bmesh",
     "bpy_extras",
     "bpy_extras.wm_utils",
+    
+    
 ]
 
 [options.packages.find]
