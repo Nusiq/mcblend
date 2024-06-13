@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+
+[project]
+name = "fake-bpy-modules-mcblend"
+version = "1.0.0"
+description = "Fake bpy modules modified for the Mcblend project."
+
+[tool.setuptools]
+packages = [
+    "bpy",
+    "bpy.app",
+    "bpy.ops",
+    "bpy.utils",
+    "mathutils",
+    "bpy_extras",
+    "bpy_extras.wm_utils",
+]
+
+[options.packages.find]
+where = "."

@@ -13,6 +13,7 @@ on:
     - '**.py'
     - 'tests/data/**.json'
     - '.github/workflows/**.yml'
+  workflow_dispatch:
 
 
 jobs:
