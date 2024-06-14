@@ -625,7 +625,7 @@ class Matrix:
         '''
         pass
 
-    def decompose(self) -> 'Quaternion':
+    def decompose(self) -> tuple['Vector', 'Quaternion', 'Vector']:  # Mcblend
         ''' Return the translation, rotation, and scale components of this matrix.
 
         :rtype: 'Quaternion'

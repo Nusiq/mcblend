@@ -12,12 +12,6 @@ The functions from this module are annotated in typed_bpy_access.pyi
 '''
 import bpy
 
-def decompose(obj):
-    '''
-    >>> obj.decompose()
-    '''
-    return obj.decompose()
-
 def get_animation_data(obj):
     '''
     >>> obj.animation_data

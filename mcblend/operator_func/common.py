@@ -20,7 +20,7 @@ from bpy.types import MeshUVLoopLayer, Object, MeshPolygon, PoseBone
 from mathutils import Vector, Matrix, Euler
 
 from .typed_bpy_access import (
-    decompose, get_children, get_co, get_data, get_data_edges, get_matrix,
+    get_children, get_co, get_data, get_data_edges, get_matrix,
     get_pose_bones, get_scene_mcblend_uv_groups, get_data_bones,
     get_data_polygons, get_data_vertices, get_matrix_local, get_matrix_world,
     get_mcblend, getitem, matmul, matmul_chain, set_co, set_matrix_local,
@@ -896,7 +896,7 @@ def apply_obj_transform_keep_origin(obj: Object):
     rotation and scale but keeps location the same.
     '''
     # Decompose object transformations
-    _, rot, scl = decompose(get_matrix_local(obj))
+    _, rot, scl = get_matrix_local(obj).decompose()
     # loc_mat = Matrix.Translation(loc)
     rot_mat = rot.to_matrix().to_4x4()
     scl_mat =  matmul_chain(
@@ -953,7 +953,7 @@ def fix_cube_rotation(obj: Object):
     # Counter rotate object around its origin
     counter_rotation = rotation_matrix.to_4x4().inverted()
 
-    loc, rot, scl = decompose(get_matrix_local(obj))
+    loc, rot, scl = get_matrix_local(obj).decompose()
     loc_mat = Matrix.Translation(loc)
     rot_mat = rot.to_matrix().to_4x4()
     scl_mat =  matmul_chain(  # A @ B @ C

@@ -158,8 +158,7 @@ class BoneExport:
 
         def _scale(objprop: McblendObject) -> NumpyTable:
             '''Scale of a bone'''
-            _, _, scale = objprop.obj_matrix_world.decompose()  # type: ignore
-            scale = cast(Vector, scale)  # type: ignore
+            _, _, scale = objprop.obj_matrix_world.decompose()
             return np.array(scale.xzy)
 
         # Set locators
