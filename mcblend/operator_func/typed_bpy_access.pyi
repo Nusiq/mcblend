@@ -22,12 +22,6 @@ from ..object_data import (
 from ..uv_data import MCBLEND_UvGroupProperties
 from ..resource_pack_data import MCBLEND_ProjectProperties
 
-@overload
-def get_children(obj: Collection) -> CollectionChildren: ...
-
-@overload
-def get_children(obj: Object) -> tuple[Object, ...]: ...
-
 def get_co(obj: MeshVertex) -> Vector: ...
 
 @overload

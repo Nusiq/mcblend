@@ -60600,6 +60600,8 @@ class Object(ID, bpy_struct):
     :type: typing.Union[typing.List[typing.List[float]], typing.Tuple[typing.Tuple[float, float, float, float, float, float, float, float], typing.Tuple[float, float, float, float, float, float, float, float], typing.Tuple[float, float, float, float, float, float, float, float]]]
     '''
 
+    children: tuple[Object]  # Mcblend
+
     collision: 'CollisionSettings' = None
     ''' Settings for using the object as a collider in physics simulation
 

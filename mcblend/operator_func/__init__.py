@@ -18,7 +18,7 @@ from .typed_bpy_access import (
     get_data_bones, get_objects,
     get_context_object, get_scene_mcblend_project,
     get_scene_mcblend_events, get_selected_objects,
-    get_data_images, get_data_objects, get_children,
+    get_data_images, get_data_objects,
     get_constraints, get_matrix_world, get_mcblend,
     new_collection,
     get_material_slots, set_constraint_property, set_pixels,
@@ -379,7 +379,7 @@ def inflate_objects(
                 delta_inflate = inflate
                 get_mcblend(obj).inflate = inflate
             # Clear parent from children for a moment
-            children = get_children(obj)
+            children = obj.children
             for child in children:
                 old_matrix = get_matrix_world(child).copy()
                 set_parent(child, None)
@@ -741,10 +741,10 @@ def prepare_physics_simulation(context: Context) -> Dict[str, Any]:
     rb_collection = new_collection("Rigid Body")
     rbc_collection = new_collection("Rigid Body Constraints")
     bp_collection = new_collection("Bone Parents")
-    get_children(context.scene.collection).link(main_collection)
-    get_children(main_collection).link(rb_collection)
-    get_children(main_collection).link(rbc_collection)
-    get_children(main_collection).link(bp_collection)
+    context.scene.collection.children.link(main_collection)
+    main_collection.children.link(rb_collection)
+    main_collection.children.link(rbc_collection)
+    main_collection.children.link(bp_collection)
 
     for _, bone in mcblend_obj_group.items():
         if not bone.mctype == MCObjType.BONE:

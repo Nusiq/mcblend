@@ -20,7 +20,7 @@ from bpy.types import MeshUVLoopLayer, Object, MeshPolygon, PoseBone
 from mathutils import Vector, Matrix, Euler
 
 from .typed_bpy_access import (
-    get_children, get_co, get_data, get_data_edges, get_matrix,
+    get_co, get_data, get_data_edges, get_matrix,
     get_pose_bones, get_scene_mcblend_uv_groups, get_data_bones,
     get_data_polygons, get_data_vertices, get_matrix_local, get_matrix_world,
     get_mcblend, getitem, matmul, matmul_chain, set_co, set_matrix_local,
@@ -830,7 +830,7 @@ class McblendObjectGroup:
                 thisobj_id=obj_id, thisobj=armature,
                 parentobj_id=parent_bone_id, children_ids=[],
                 mctype=MCObjType.BONE, group=self)
-        for obj in get_children(armature):
+        for obj in armature.children:
             if obj.parent_type != 'BONE':
                 continue  # TODO - maybe a warning here?
             parentobj_id = ObjectId(obj.parent.name, obj.parent_bone)
@@ -842,7 +842,7 @@ class McblendObjectGroup:
                 self.data[parentobj_id].children_ids.append(obj_id)
                 # Further offspring of the "child" (share same parent in mc
                 # model)
-                offspring: deque[Object] = deque(get_children(obj))
+                offspring: deque[Object] = deque(obj.children)
                 while offspring:
                     child = offspring.pop()
                     child_id: ObjectId = ObjectId(child.name, "")
@@ -854,7 +854,7 @@ class McblendObjectGroup:
                             parentobj_id=parentobj_id, children_ids=[],
                             mctype=MCObjType.CUBE, group=self)
                         self.data[parentobj_id].children_ids.append(child_id)
-                        offspring.extend(get_children(child))
+                        offspring.extend(child.children)
                     elif child.type == 'EMPTY':
                         self.data[child_id] = McblendObject(
                             thisobj_id=child_id, thisobj=child,

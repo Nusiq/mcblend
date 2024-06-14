@@ -12,12 +12,6 @@ The functions from this module are annotated in typed_bpy_access.pyi
 '''
 import bpy
 
-def get_children(obj):
-    '''
-    >>> obj.children
-    '''
-    return obj.children
-
 def get_co(obj):
     '''
     >>> obj.co
