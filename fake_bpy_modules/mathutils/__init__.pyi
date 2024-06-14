@@ -1399,256 +1399,256 @@ class Vector:
     :type: float
     '''
 
-    ww = None
+    ww: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    www = None
+    www: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wwww = None
+    wwww: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wwwx = None
+    wwwx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wwwy = None
+    wwwy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wwwz = None
+    wwwz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wwx = None
+    wwx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wwxw = None
+    wwxw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wwxx = None
+    wwxx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wwxy = None
+    wwxy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wwxz = None
+    wwxz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wwy = None
+    wwy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wwyw = None
+    wwyw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wwyx = None
+    wwyx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wwyy = None
+    wwyy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wwyz = None
+    wwyz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wwz = None
+    wwz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wwzw = None
+    wwzw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wwzx = None
+    wwzx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wwzy = None
+    wwzy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wwzz = None
+    wwzz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wx = None
+    wx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wxw = None
+    wxw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wxww = None
+    wxww: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wxwx = None
+    wxwx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wxwy = None
+    wxwy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wxwz = None
+    wxwz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wxx = None
+    wxx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wxxw = None
+    wxxw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wxxx = None
+    wxxx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wxxy = None
+    wxxy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wxxz = None
+    wxxz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wxy = None
+    wxy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wxyw = None
+    wxyw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wxyx = None
+    wxyx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wxyy = None
+    wxyy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wxyz = None
+    wxyz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wxz = None
+    wxz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wxzw = None
+    wxzw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wxzx = None
+    wxzx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wxzy = None
+    wxzy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wxzz = None
+    wxzz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wy = None
+    wy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wyw = None
+    wyw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wyww = None
+    wyww: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wywx = None
+    wywx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wywy = None
+    wywy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wywz = None
+    wywz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wyx = None
+    wyx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wyxw = None
+    wyxw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wyxx = None
+    wyxx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wyxy = None
+    wyxy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wyxz = None
+    wyxz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wyy = None
+    wyy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wyyw = None
+    wyyw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wyyx = None
+    wyyx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wyyy = None
+    wyyy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wyyz = None
+    wyyz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wyz = None
+    wyz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wyzw = None
+    wyzw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wyzx = None
+    wyzx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wyzy = None
+    wyzy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wyzz = None
+    wyzz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wz = None
+    wz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wzw = None
+    wzw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wzww = None
+    wzww: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wzwx = None
+    wzwx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wzwy = None
+    wzwy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wzwz = None
+    wzwz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wzx = None
+    wzx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wzxw = None
+    wzxw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wzxx = None
+    wzxx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wzxy = None
+    wzxy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wzxz = None
+    wzxz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wzy = None
+    wzy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wzyw = None
+    wzyw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wzyx = None
+    wzyx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wzyy = None
+    wzyy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wzyz = None
+    wzyz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wzz = None
+    wzz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wzzw = None
+    wzzw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wzzx = None
+    wzzx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wzzy = None
+    wzzy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    wzzz = None
+    wzzz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
     x: float = None
@@ -1657,256 +1657,256 @@ class Vector:
     :type: float
     '''
 
-    xw = None
+    xw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xww = None
+    xww: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xwww = None
+    xwww: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xwwx = None
+    xwwx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xwwy = None
+    xwwy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xwwz = None
+    xwwz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xwx = None
+    xwx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xwxw = None
+    xwxw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xwxx = None
+    xwxx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xwxy = None
+    xwxy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xwxz = None
+    xwxz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xwy = None
+    xwy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xwyw = None
+    xwyw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xwyx = None
+    xwyx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xwyy = None
+    xwyy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xwyz = None
+    xwyz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xwz = None
+    xwz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xwzw = None
+    xwzw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xwzx = None
+    xwzx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xwzy = None
+    xwzy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xwzz = None
+    xwzz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xx = None
+    xx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xxw = None
+    xxw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xxww = None
+    xxww: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xxwx = None
+    xxwx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xxwy = None
+    xxwy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xxwz = None
+    xxwz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xxx = None
+    xxx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xxxw = None
+    xxxw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xxxx = None
+    xxxx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xxxy = None
+    xxxy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xxxz = None
+    xxxz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xxy = None
+    xxy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xxyw = None
+    xxyw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xxyx = None
+    xxyx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xxyy = None
+    xxyy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xxyz = None
+    xxyz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xxz = None
+    xxz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xxzw = None
+    xxzw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xxzx = None
+    xxzx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xxzy = None
+    xxzy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xxzz = None
+    xxzz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xy = None
+    xy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xyw = None
+    xyw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xyww = None
+    xyww: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xywx = None
+    xywx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xywy = None
+    xywy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xywz = None
+    xywz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xyx = None
+    xyx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xyxw = None
+    xyxw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xyxx = None
+    xyxx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xyxy = None
+    xyxy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xyxz = None
+    xyxz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xyy = None
+    xyy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xyyw = None
+    xyyw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xyyx = None
+    xyyx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xyyy = None
+    xyyy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xyyz = None
+    xyyz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xyz = None
+    xyz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xyzw = None
+    xyzw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xyzx = None
+    xyzx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xyzy = None
+    xyzy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xyzz = None
+    xyzz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xz = None
+    xz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xzw = None
+    xzw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xzww = None
+    xzww: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xzwx = None
+    xzwx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xzwy = None
+    xzwy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xzwz = None
+    xzwz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xzx = None
+    xzx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xzxw = None
+    xzxw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xzxx = None
+    xzxx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xzxy = None
+    xzxy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xzxz = None
+    xzxz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xzy = None
+    xzy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xzyw = None
+    xzyw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xzyx = None
+    xzyx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xzyy = None
+    xzyy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xzyz = None
+    xzyz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xzz = None
+    xzz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xzzw = None
+    xzzw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xzzx = None
+    xzzx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xzzy = None
+    xzzy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    xzzz = None
+    xzzz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
     y: float = None
@@ -1915,256 +1915,256 @@ class Vector:
     :type: float
     '''
 
-    yw = None
+    yw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yww = None
+    yww: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    ywww = None
+    ywww: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    ywwx = None
+    ywwx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    ywwy = None
+    ywwy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    ywwz = None
+    ywwz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    ywx = None
+    ywx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    ywxw = None
+    ywxw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    ywxx = None
+    ywxx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    ywxy = None
+    ywxy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    ywxz = None
+    ywxz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    ywy = None
+    ywy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    ywyw = None
+    ywyw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    ywyx = None
+    ywyx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    ywyy = None
+    ywyy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    ywyz = None
+    ywyz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    ywz = None
+    ywz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    ywzw = None
+    ywzw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    ywzx = None
+    ywzx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    ywzy = None
+    ywzy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    ywzz = None
+    ywzz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yx = None
+    yx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yxw = None
+    yxw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yxww = None
+    yxww: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yxwx = None
+    yxwx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yxwy = None
+    yxwy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yxwz = None
+    yxwz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yxx = None
+    yxx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yxxw = None
+    yxxw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yxxx = None
+    yxxx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yxxy = None
+    yxxy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yxxz = None
+    yxxz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yxy = None
+    yxy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yxyw = None
+    yxyw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yxyx = None
+    yxyx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yxyy = None
+    yxyy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yxyz = None
+    yxyz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yxz = None
+    yxz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yxzw = None
+    yxzw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yxzx = None
+    yxzx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yxzy = None
+    yxzy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yxzz = None
+    yxzz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yy = None
+    yy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yyw = None
+    yyw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yyww = None
+    yyww: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yywx = None
+    yywx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yywy = None
+    yywy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yywz = None
+    yywz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yyx = None
+    yyx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yyxw = None
+    yyxw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yyxx = None
+    yyxx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yyxy = None
+    yyxy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yyxz = None
+    yyxz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yyy = None
+    yyy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yyyw = None
+    yyyw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yyyx = None
+    yyyx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yyyy = None
+    yyyy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yyyz = None
+    yyyz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yyz = None
+    yyz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yyzw = None
+    yyzw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yyzx = None
+    yyzx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yyzy = None
+    yyzy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yyzz = None
+    yyzz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yz = None
+    yz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yzw = None
+    yzw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yzww = None
+    yzww: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yzwx = None
+    yzwx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yzwy = None
+    yzwy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yzwz = None
+    yzwz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yzx = None
+    yzx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yzxw = None
+    yzxw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yzxx = None
+    yzxx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yzxy = None
+    yzxy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yzxz = None
+    yzxz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yzy = None
+    yzy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yzyw = None
+    yzyw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yzyx = None
+    yzyx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yzyy = None
+    yzyy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yzyz = None
+    yzyz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yzz = None
+    yzz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yzzw = None
+    yzzw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yzzx = None
+    yzzx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yzzy = None
+    yzzy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    yzzz = None
+    yzzz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
     z: float = None
@@ -2173,256 +2173,256 @@ class Vector:
     :type: float
     '''
 
-    zw = None
+    zw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zww = None
+    zww: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zwww = None
+    zwww: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zwwx = None
+    zwwx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zwwy = None
+    zwwy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zwwz = None
+    zwwz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zwx = None
+    zwx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zwxw = None
+    zwxw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zwxx = None
+    zwxx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zwxy = None
+    zwxy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zwxz = None
+    zwxz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zwy = None
+    zwy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zwyw = None
+    zwyw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zwyx = None
+    zwyx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zwyy = None
+    zwyy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zwyz = None
+    zwyz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zwz = None
+    zwz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zwzw = None
+    zwzw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zwzx = None
+    zwzx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zwzy = None
+    zwzy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zwzz = None
+    zwzz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zx = None
+    zx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zxw = None
+    zxw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zxww = None
+    zxww: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zxwx = None
+    zxwx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zxwy = None
+    zxwy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zxwz = None
+    zxwz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zxx = None
+    zxx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zxxw = None
+    zxxw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zxxx = None
+    zxxx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zxxy = None
+    zxxy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zxxz = None
+    zxxz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zxy = None
+    zxy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zxyw = None
+    zxyw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zxyx = None
+    zxyx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zxyy = None
+    zxyy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zxyz = None
+    zxyz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zxz = None
+    zxz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zxzw = None
+    zxzw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zxzx = None
+    zxzx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zxzy = None
+    zxzy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zxzz = None
+    zxzz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zy = None
+    zy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zyw = None
+    zyw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zyww = None
+    zyww: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zywx = None
+    zywx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zywy = None
+    zywy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zywz = None
+    zywz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zyx = None
+    zyx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zyxw = None
+    zyxw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zyxx = None
+    zyxx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zyxy = None
+    zyxy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zyxz = None
+    zyxz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zyy = None
+    zyy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zyyw = None
+    zyyw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zyyx = None
+    zyyx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zyyy = None
+    zyyy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zyyz = None
+    zyyz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zyz = None
+    zyz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zyzw = None
+    zyzw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zyzx = None
+    zyzx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zyzy = None
+    zyzy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zyzz = None
+    zyzz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zz = None
+    zz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zzw = None
+    zzw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zzww = None
+    zzww: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zzwx = None
+    zzwx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zzwy = None
+    zzwy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zzwz = None
+    zzwz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zzx = None
+    zzx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zzxw = None
+    zzxw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zzxx = None
+    zzxx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zzxy = None
+    zzxy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zzxz = None
+    zzxz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zzy = None
+    zzy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zzyw = None
+    zzyw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zzyx = None
+    zzyx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zzyy = None
+    zzyy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zzyz = None
+    zzyz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zzz = None
+    zzz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zzzw = None
+    zzzw: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zzzx = None
+    zzzx: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zzzy = None
+    zzzy: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
-    zzzz = None
+    zzzz: Vector
     ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
 
     @classmethod
