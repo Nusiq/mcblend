@@ -25,7 +25,7 @@ from .operator_func.typed_bpy_access import (
     set_scene_mcblend_active_event,
     get_scene_mcblend_uv_groups, get_selected_objects,
     set_scene_mcblend_active_uv_group, get_scene_mcblend_active_uv_group,
-    get_scene_mcblend_active_uv_groups_side, get_animation_data, get_nla_tracks)
+    get_scene_mcblend_active_uv_groups_side, get_nla_tracks)
 from .uv_data import get_unused_uv_group_name
 from .operator_func.material import MATERIALS_MAP
 
@@ -509,7 +509,7 @@ def save_animation_properties(
     obj = get_context_object(context)
     if obj is None:  # TODO - should this be an error?
         return
-    if get_animation_data(obj) is not None:
+    if obj.animation_data is not None:
         for nla_track in context.object.animation_data.nla_tracks:
             if not nla_track.mute:
                 cached_nla_track = animation.nla_tracks.add()
@@ -532,7 +532,7 @@ def load_animation_properties(animation: MCBLEND_AnimationProperties, context: C
     obj = get_context_object(context)
     if obj is None:
         return
-    anim_data = get_animation_data(obj)
+    anim_data = obj.animation_data
     if anim_data is not None:
         object_nla_tracks = get_nla_tracks(anim_data)
         for nla_track in object_nla_tracks:
@@ -577,7 +577,7 @@ class MCBLEND_OT_ListAnimations(Operator):
         obj = get_context_object(context)
         if obj is None:
             return {'CANCELLED'}
-        anim_data = get_animation_data(obj)
+        anim_data = obj.animation_data
         if anim_data is None:
             return {'CANCELLED'}
         if anim_data.action is not None:  # type: ignore
@@ -622,7 +622,7 @@ class MCBLEND_OT_AddAnimation(Operator):
         obj = get_context_object(context)
         if obj is None:
             return {'CANCELLED'}
-        anim_data = get_animation_data(obj)
+        anim_data = obj.animation_data
         if (
                 anim_data is not None and
                 anim_data.action is not None):  # type: ignore
@@ -676,7 +676,7 @@ class MCBLEND_OT_RemoveAnimation(Operator):
         obj = get_context_object(context)
         if obj is None:
             return {'CANCELLED'}
-        anim_data = get_animation_data(obj)
+        anim_data = obj.animation_data
         if (
                 anim_data is not None and
                 anim_data.action is not None):  # type: ignore

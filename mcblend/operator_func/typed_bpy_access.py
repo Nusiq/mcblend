@@ -12,12 +12,6 @@ The functions from this module are annotated in typed_bpy_access.pyi
 '''
 import bpy
 
-def get_animation_data(obj):
-    '''
-    >>> obj.animation_data
-    '''
-    return obj.animation_data
-
 def get_children(obj):
     '''
     >>> obj.children

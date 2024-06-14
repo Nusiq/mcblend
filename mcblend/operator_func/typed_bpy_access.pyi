@@ -22,8 +22,6 @@ from ..object_data import (
 from ..uv_data import MCBLEND_UvGroupProperties
 from ..resource_pack_data import MCBLEND_ProjectProperties
 
-def get_animation_data(obj: Object) -> AnimData | None: ...
-
 @overload
 def get_children(obj: Collection) -> CollectionChildren: ...
 
