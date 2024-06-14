@@ -12,18 +12,6 @@ The functions from this module are annotated in typed_bpy_access.pyi
 '''
 import bpy
 
-def add(obj1, obj2):
-    '''
-    >>> obj1 + obj2
-    '''
-    return obj1 + obj2
-
-def cross(a, b):
-    '''
-    >>> a.cross(b)
-    '''
-    return a.cross(b)
-
 def decompose(obj):
     '''
     >>> obj.decompose()

@@ -20,11 +20,11 @@ from bpy.types import MeshUVLoopLayer, Object, MeshPolygon, PoseBone
 from mathutils import Vector, Matrix, Euler
 
 from .typed_bpy_access import (
-    add, decompose, get_children, get_co, get_data, get_data_edges, get_matrix,
+    decompose, get_children, get_co, get_data, get_data_edges, get_matrix,
     get_pose_bones, get_scene_mcblend_uv_groups, get_data_bones,
     get_data_polygons, get_data_vertices, get_matrix_local, get_matrix_world,
     get_mcblend, getitem, matmul, matmul_chain, set_co, set_matrix_local,
-    subtract, cross, neg, to_euler)
+    subtract, neg, to_euler)
 
 from .texture_generator import Mask, ColorMask, get_masks_from_side
 from .exception import ExporterException
@@ -274,7 +274,7 @@ class McblendObject:
         def _get_mcpivot(objprop: McblendObject) -> Vector:
             if objprop.parent is not None:
                 result = local_crds(objprop.parent, objprop)
-                result = add(result, _get_mcpivot(objprop.parent))
+                result = result + _get_mcpivot(objprop.parent)
             else:
                 result = objprop.obj_matrix_world.to_translation()
             return result
@@ -933,10 +933,10 @@ def fix_cube_rotation(obj: Object):
     # The cross product creates the 3rd vector that defines
     # the rotated space
 
-    w = cross(u, v).normalized()
+    w = u.cross(v).normalized()
     # Recalculate V to make sure that all of the vectors are at
     # the right angle (even though they should be)
-    v = cross(w, u).normalized()
+    v = w.cross(u).normalized()
 
     # Create rotation matrix (unit vectors x, y, z in columns)
     rotation_matrix = Matrix((w, v, neg(u)))
