@@ -13,7 +13,7 @@ import numpy as np
 import bpy
 
 from .typed_bpy_access import (
-    get_loop_indices, get_uv, set_uv)
+    get_loop_indices, set_uv)
 from .texture_generator import Mask
 from .exception import NotEnoughTextureSpace
 from .json_tools import get_vect_json
@@ -625,7 +625,7 @@ class UvModelMerger(McblendObjUvBox):
             for i, _ in enumerate(active_uv_layer.data):
                 # The UV values on the old texture (as if the image was
                 # self.base_image_size)
-                uv = reverse_converter.convert(get_uv(active_uv_layer.data[i]))
+                uv = reverse_converter.convert(active_uv_layer.data[i].uv)
                 # Shift the UV values by the newly assigned UV
                 uv = uv + offset
                 # Convert the UV values to the new texture and apply

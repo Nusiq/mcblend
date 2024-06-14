@@ -2782,6 +2782,10 @@ class Vector:
         '''
         pass
 
+    def __contains__(self, other: typing.Any) -> bool: ...  # Mcblend
+
+    def __len__(self) -> int: ... # Mcblend
+
     def __sub__(self, other: typing.Union[typing.Sequence[float], 'Vector']
                 ) -> 'Vector':
         ''' 
@@ -2896,6 +2900,8 @@ class Vector:
         :rtype: 'Vector'
         '''
         pass
+
+    def __iter__(self) -> typing.Iterator[float]: ...  # Mcblend
 
     def __itruediv__(self, other: typing.Union[int, float]) -> 'Vector':
         ''' 

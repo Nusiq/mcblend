@@ -319,12 +319,6 @@ def get_timeline_markers(obj):
     '''
     return obj.timeline_markers
 
-def get_uv(obj):
-    '''
-    >>> obj.uv
-    '''
-    return obj.uv
-
 def get_view_layer_objects_active(context):
     '''
     >>> context.view_layer.objects.active
