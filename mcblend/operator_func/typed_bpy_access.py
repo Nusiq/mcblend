@@ -12,12 +12,6 @@ The functions from this module are annotated in typed_bpy_access.pyi
 '''
 import bpy
 
-def get_inputs(obj):
-    '''
-    >>> obj.inputs
-    '''
-    return obj.inputs
-
 def get_keyframe_points(obj):
     '''
     >>> obj.keyframe_points
@@ -95,12 +89,6 @@ def get_objects(obj):
     >>> obj.objects
     '''
     return obj.objects
-
-def get_outputs(obj):
-    '''
-    >>> obj.outputs
-    '''
-    return obj.outputs
 
 def get_parent(obj):
     '''

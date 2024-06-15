@@ -14,19 +14,13 @@ from .pyi_types import (
     MeshUVLoopLayerData, ObjectDataEdges,
     ArmaturePoseBones, SceneTimelineMarkers,
     FCurveKeyframePoints, AnimationDataNlaTracks, NlaTrackNlaStrips,
-    ObjectDataPolygons, NodeTreeNodes, NodeInputs, NodeOutputs,
-    NodeTreeLinks, NodeTreeInputs, NodeTreeOutputs)
+    ObjectDataPolygons, NodeTreeNodes,
+    NodeTreeLinks)
 
 from ..object_data import (
     MCBLEND_EventProperties, MCBLEND_ObjectProperties, MCBLEND_BoneProperties)
 from ..uv_data import MCBLEND_UvGroupProperties
 from ..resource_pack_data import MCBLEND_ProjectProperties
-
-@overload
-def get_inputs(obj: Node) -> NodeInputs: ...
-
-@overload
-def get_inputs(obj: NodeTree) -> NodeTreeInputs: ...
 
 def get_keyframe_points(obj: FCurve) -> FCurveKeyframePoints: ...
 
@@ -64,12 +58,6 @@ def get_objects(obj: ViewLayer) -> LayerObjects: ...
 
 @overload
 def get_objects(obj: LayerCollection) -> CollectionObjects: ...
-
-@overload
-def get_outputs(obj: Node) -> NodeOutputs: ...
-
-@overload
-def get_outputs(obj: NodeTree) -> NodeTreeOutputs: ...
 
 def get_parent(obj: Object) -> Object | None: ...
 
