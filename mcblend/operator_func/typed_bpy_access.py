@@ -12,12 +12,6 @@ The functions from this module are annotated in typed_bpy_access.pyi
 '''
 import bpy
 
-def get_location(obj):
-    '''
-    >>> obj.location
-    '''
-    return obj.location
-
 def get_loop_indices(obj):
     '''
     >>> obj.loop_indices
