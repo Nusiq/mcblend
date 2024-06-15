@@ -15,7 +15,6 @@ from bpy.types import Object, MeshUVLoopLayer, Armature, ArmatureEditBones
 import bpy
 
 from .typed_bpy_access import (
-    get_data_meshes,
     get_data_vertices, get_head, get_loop_indices, get_matrix_world,
     get_objects, get_rotation_euler, get_tail,
     set_matrix, set_matrix_parent_inverse, set_matrix_world,
@@ -1497,7 +1496,7 @@ class ImportGeometry:
                     blender_polygons.append(curr_polygon)
 
                 # 2. Create mesh
-                mesh = get_data_meshes().new(name='poly_mesh')
+                mesh = bpy.data.meshes.new(name='poly_mesh')
                 mesh.from_pydata(  # pyright: ignore[reportUnknownMemberType]
                     blender_vertices, [], blender_polygons)
 
