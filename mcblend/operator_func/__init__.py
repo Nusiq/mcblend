@@ -18,7 +18,7 @@ from .typed_bpy_access import (
     get_objects,
     get_scene_mcblend_project,
     get_scene_mcblend_events, get_selected_objects,
-    get_data_images, get_data_objects,
+    get_data_objects,
     get_matrix_world, get_mcblend,
     new_collection,
     get_material_slots, set_constraint_property, set_pixels,
@@ -173,15 +173,15 @@ def set_uvs(context: Context):
 
     if generate_texture:
         old_image = None
-        if "template" in get_data_images():
-            old_image = get_data_images()['template']
-        image = get_data_images().new(
+        if "template" in bpy.data.images:
+            old_image = bpy.data.images['template']
+        image = bpy.data.images.new(
             "template", width*resolution, height*resolution, alpha=True
         )
         if old_image is not None:
             # If exists remap users of old image and remove it
             old_image.user_remap(image)
-            get_data_images().remove(old_image)
+            bpy.data.images.remove(old_image)
             image.name = "template"
 
 
@@ -500,7 +500,7 @@ def import_model_form_project(
             # texture - Optional[Image] (bpy.types.Image)
             texture_file_path = db_handler.get_texture_file_path(
                 render_controller_data['texture_file_pk'])
-            texture = get_data_images().load(
+            texture = bpy.data.images.load(
                 texture_file_path.as_posix())
         except RuntimeError:
             texture = None
@@ -657,8 +657,8 @@ def apply_materials(context: Context):
 
         for rc in reversed(armature_properties.render_controllers):
             texture: Optional[Image] = None
-            if rc.texture in get_data_images():
-                texture = get_data_images()[rc.texture]
+            if rc.texture in bpy.data.images:
+                texture = bpy.data.images[rc.texture]
             rc_stack_item = RcStackItem(texture)
             for rc_material in rc.materials:
                 rc_stack_item.materials[
@@ -908,7 +908,7 @@ def merge_models(context: Context) -> None:
     mapper.plan_uv(True)
 
     # CREATE A NEW TEXTURE
-    image = get_data_images().new(
+    image = bpy.data.images.new(
         "merged", mapper.width, mapper.height, alpha=True)
 
     # This array represents new texture

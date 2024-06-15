@@ -21,7 +21,7 @@ from .object_data import (
 from .operator_func.typed_bpy_access import (
     get_scene_mcblend_project,
     get_scene_mcblend_events, get_scene_mcblend_active_event,
-    get_data_objects, get_mcblend, get_data_images,
+    get_data_objects, get_mcblend,
     set_scene_mcblend_active_event,
     get_scene_mcblend_uv_groups, get_selected_objects,
     set_scene_mcblend_active_uv_group, get_scene_mcblend_active_uv_group,
@@ -1846,7 +1846,7 @@ class MCBLEND_OT_FakeRcSelectTexture(Operator):
         # pylint: disable=unused-argument
         items = [
             (x.name, x.name, x.name)
-            for x in get_data_images()]
+            for x in bpy.data.images]
         return items
     image: bpy.props.EnumProperty(  # type: ignore
         items=list_images, name="Image")
@@ -1895,7 +1895,7 @@ class MCBLEND_OT_FakeRcOpenTexture(  # pyright: ignore[reportIncompatibleMethodO
         # pylint: disable=unused-argument
         items = [
             (x.name, x.name, x.name)
-            for x in get_data_images()]
+            for x in bpy.data.images]
         return items
 
     @classmethod

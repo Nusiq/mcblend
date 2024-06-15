@@ -149,6 +149,8 @@ class bpy_prop_collection(typing.Generic[GenericType]):
         '''
         pass
 
+    def __contains__(self, other: typing.Any) -> bool: ...  # Mcblend
+
     def __getitem__(self, key: typing.Optional[typing.Union[int, str]]
                     ) -> 'GenericType':
         ''' 
