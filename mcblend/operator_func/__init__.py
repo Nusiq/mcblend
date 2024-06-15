@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from collections import defaultdict
 
 import bpy
-from bpy.types import Image, Material, Context, Object, Armature
+from bpy.types import Image, Material, Context, Object, Armature, Mesh
 import numpy as np
 
 from .common import ModelOriginType
@@ -24,7 +24,7 @@ from .typed_bpy_access import (
     get_material_slots, set_constraint_property, set_pixels,
     set_matrix_parent_inverse, set_matrix_world,
     set_parent, set_pose_bone_constraint_property,
-    get_data_materials, get_pixels, set_view_layer_objects_active,
+    get_pixels, set_view_layer_objects_active,
     get_view_layer_objects_active)
 
 from .sqlite_bedrock_packs.better_json_tools import load_jsonc
@@ -616,7 +616,9 @@ def import_model_form_project(
             for c in bone.cubes:
                 if c.blend_cube is None:
                     continue
-                get_data_materials(c.blend_cube).append(
+                if not isinstance(c.blend_cube.data, Mesh):
+                    continue
+                c.blend_cube.data.materials.append(
                     blender_materials[tuple(bone_materials_id)])
     return warnings
 

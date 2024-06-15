@@ -12,11 +12,6 @@ The functions from this module are annotated in typed_bpy_access.pyi
 '''
 import bpy
 
-def get_data_materials(obj):
-    '''
-    >>> obj.data.materials
-    '''
-    return obj.data.materials
 
 def get_data_meshes():
     '''
