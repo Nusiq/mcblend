@@ -9,7 +9,7 @@ from bpy.types import (
 from mathutils import Matrix, Euler, Vector, Quaternion
 from .common import NumpyTable
 from .pyi_types import (
-    CollectionProperty, DataObjects, DataMeshes, ArmatureDataBones, DataImages,
+    CollectionProperty, DataMeshes, ArmatureDataBones, DataImages,
     ObjectDataMaterials,
     MeshUVLoopLayerData, ObjectDataVertices, ObjectDataEdges,
     ArmaturePoseBones, SceneTimelineMarkers,
@@ -21,8 +21,6 @@ from ..object_data import (
     MCBLEND_EventProperties, MCBLEND_ObjectProperties, MCBLEND_BoneProperties)
 from ..uv_data import MCBLEND_UvGroupProperties
 from ..resource_pack_data import MCBLEND_ProjectProperties
-
-def get_data_objects() -> DataObjects: ...
 
 def get_data_polygons(obj: Object) -> ObjectDataPolygons: ...
 

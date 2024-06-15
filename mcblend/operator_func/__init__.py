@@ -18,7 +18,6 @@ from .typed_bpy_access import (
     get_objects,
     get_scene_mcblend_project,
     get_scene_mcblend_events, get_selected_objects,
-    get_data_objects,
     get_matrix_world, get_mcblend,
     new_collection,
     get_material_slots, set_constraint_property, set_pixels,
@@ -807,7 +806,7 @@ def prepare_physics_simulation(context: Context) -> Dict[str, Any]:
 
 
             # Add bone parent empty
-            empty = get_data_objects().new(
+            empty = bpy.data.objects.new(
                 f'{bone.obj_name}_bp', None)  # bp - bone parent
             get_objects(bp_collection).link(empty)
             empty.empty_display_type = 'CONE'
@@ -846,7 +845,7 @@ def prepare_physics_simulation(context: Context) -> Dict[str, Any]:
                 empty.constraints.new(type='CHILD_OF'),
                 'target', rigid_body)
 
-        empty = get_data_objects().new(
+        empty = bpy.data.objects.new(
             f'{bone.obj_name}_rbc', None)  # bp - bone parent
         get_objects(rbc_collection).link(empty)
         empty.empty_display_type = 'PLAIN_AXES'

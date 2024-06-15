@@ -24,7 +24,7 @@ from .common import (
 from .extra_types import Vector3di, Vector3d, Vector2d
 from .uv import CoordinatesConverter
 from .exception import ImporterException
-from .typed_bpy_access import get_data_objects, get_mcblend
+from .typed_bpy_access import get_mcblend
 
 class ErrorLevel(Enum):
     '''
@@ -1503,7 +1503,7 @@ class ImportGeometry:
                 if not mesh.validate():  # Valid geometry
                     # 3. Create an object and connect mesh to it, mark as
                     # polymesh
-                    poly_mesh_obj = get_data_objects().new('poly_mesh', mesh)
+                    poly_mesh_obj = bpy.data.objects.new('poly_mesh', mesh)
                     get_objects(context.collection).link(poly_mesh_obj)
                     bone.poly_mesh.blend_object = poly_mesh_obj
                     get_mcblend(poly_mesh_obj).mesh_type = (
@@ -1682,7 +1682,7 @@ class ImportGeometry:
 
             # remove the locators
             assert bone_obj is not None
-            get_data_objects().remove(bone_obj)
+            bpy.data.objects.remove(bone_obj)
 
         return armature
 
