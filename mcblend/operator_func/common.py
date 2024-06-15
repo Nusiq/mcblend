@@ -20,10 +20,10 @@ from bpy.types import MeshUVLoopLayer, Object, MeshPolygon, PoseBone
 from mathutils import Vector, Matrix, Euler
 
 from .typed_bpy_access import (
-    get_co, get_data, get_data_edges, get_matrix,
+    get_data, get_data_edges, get_matrix,
     get_pose_bones, get_scene_mcblend_uv_groups, get_data_bones,
     get_data_polygons, get_data_vertices, get_matrix_local, get_matrix_world,
-    get_mcblend, getitem, matmul, matmul_chain, set_co, set_matrix_local,
+    get_mcblend, getitem, set_matrix_local,
     subtract, neg, to_euler)
 
 from .texture_generator import Mask, ColorMask, get_masks_from_side
@@ -224,13 +224,13 @@ class McblendObject:
         '''
         this_obj_matrix_world = get_matrix_world(self.thisobj).copy()
         if self.group.world_origin is not None:
-            this_obj_matrix_world = matmul(
-                get_matrix_world(self.group.world_origin).inverted(),
-                this_obj_matrix_world,
+            this_obj_matrix_world = (
+                get_matrix_world(self.group.world_origin).inverted() @
+                this_obj_matrix_world
             )
         if self.thisobj.type == 'ARMATURE':
-            return matmul(
-                this_obj_matrix_world,
+            return (
+                this_obj_matrix_world @
                 get_matrix(
                     get_pose_bones(self.thisobj)[self.thisobj_id.bone_name]
                 ).copy()
@@ -306,7 +306,7 @@ class McblendObject:
         if normalize:
             p_matrix.normalize()
             c_matrix.normalize()
-        return matmul(p_matrix.inverted(), c_matrix)
+        return p_matrix.inverted() @ c_matrix
 
     def get_mcrotation(
             self, other: Optional[McblendObject] = None
@@ -328,7 +328,7 @@ class McblendObject:
             '''
             child_q = child_matrix.normalized().to_quaternion()
             parent_q = parent_matrix.inverted().normalized().to_quaternion()
-            return to_euler(matmul(parent_q, child_q), 'XZY')
+            return to_euler(parent_q @ child_q, 'XZY')
 
         if other is not None:
             result_euler = local_rotation(
@@ -899,12 +899,13 @@ def apply_obj_transform_keep_origin(obj: Object):
     _, rot, scl = get_matrix_local(obj).decompose()
     # loc_mat = Matrix.Translation(loc)
     rot_mat = rot.to_matrix().to_4x4()
-    scl_mat =  matmul_chain(
-        Matrix.Scale(getitem(scl, 0), 4, Vector([1,0,0])),
-        Matrix.Scale(getitem(scl, 1), 4, Vector([0,1,0])),
-        Matrix.Scale(getitem(scl, 2), 4, Vector([0,0,1])))
+    scl_mat =  (
+        Matrix.Scale(getitem(scl, 0), 4, Vector([1,0,0])) @
+        Matrix.Scale(getitem(scl, 1), 4, Vector([0,1,0])) @
+        Matrix.Scale(getitem(scl, 2), 4, Vector([0,0,1]))
+    )
     for vertex in get_data_vertices(obj):
-        set_co(vertex, matmul(matmul(rot_mat, scl_mat), get_co(vertex)))
+        vertex.co = (rot_mat @ scl_mat) @ vertex.co
 
 def fix_cube_rotation(obj: Object):
     '''
@@ -948,7 +949,7 @@ def fix_cube_rotation(obj: Object):
 
     # Rotate the mesh
     for vertex in get_data_vertices(obj):
-        set_co(vertex, matmul(rotation_matrix, get_co(vertex)))
+        vertex.co = rotation_matrix @ vertex.co
 
     # Counter rotate object around its origin
     counter_rotation = rotation_matrix.to_4x4().inverted()
@@ -956,13 +957,13 @@ def fix_cube_rotation(obj: Object):
     loc, rot, scl = get_matrix_local(obj).decompose()
     loc_mat = Matrix.Translation(loc)
     rot_mat = rot.to_matrix().to_4x4()
-    scl_mat =  matmul_chain(  # A @ B @ C
-        Matrix.Scale(getitem(scl, 0),4, Vector([1,0,0])),
-        Matrix.Scale(getitem(scl, 1),4, Vector([0,1,0])),
-        Matrix.Scale(getitem(scl, 2),4, Vector([0,0,1])))
+    scl_mat =  (
+        Matrix.Scale(getitem(scl, 0),4, Vector([1,0,0])) @
+        Matrix.Scale(getitem(scl, 1),4, Vector([0,1,0])) @
+        Matrix.Scale(getitem(scl, 2),4, Vector([0,0,1]))
+    )
 
-    set_matrix_local(obj, matmul_chain(
-        loc_mat, counter_rotation, rot_mat, scl_mat))
+    set_matrix_local(obj, loc_mat @ counter_rotation @ rot_mat @ scl_mat)
 
 def get_vect_json(arr: Iterable[float | int]) -> list[float]:
     '''

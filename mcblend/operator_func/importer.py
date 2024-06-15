@@ -17,7 +17,7 @@ import bpy
 from .typed_bpy_access import (
     get_data_edit_bones, get_data_meshes,
     get_data_vertices, get_head, get_loop_indices, get_matrix_world, get_data,
-    get_objects, get_rotation_euler, get_tail, matmul,
+    get_objects, get_rotation_euler, get_tail,
     set_matrix, set_matrix_parent_inverse, set_matrix_world,
     get_matrix_parent_inverse, get_pose_bones, subtract)
 from .common import (
@@ -1664,7 +1664,7 @@ class ImportGeometry:
                 subtract(get_head(blend_bone), get_tail(blend_bone))
             )
             set_matrix_world(
-                obj, matmul(correction, get_matrix_world(obj))
+                obj, correction @ get_matrix_world(obj)
             )
 
         # Replace empties with bones

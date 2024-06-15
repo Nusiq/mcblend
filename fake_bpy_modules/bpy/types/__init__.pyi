@@ -19515,12 +19515,15 @@ class MeshVertex(bpy_struct):
     :type: float
     '''
 
-    co: typing.Union[typing.List[float], typing.
-                     Tuple[float, float, float], 'mathutils.Vector'] = None
-    ''' 
+    @property
+    def co(self) -> 'mathutils.Vector':  # Mcblend
+        ''' 
 
-    :type: typing.Union[typing.List[float], typing.Tuple[float, float, float], 'mathutils.Vector']
-    '''
+        :type: typing.Union[typing.List[float], typing.Tuple[float, float, float], 'mathutils.Vector']
+        '''
+
+    @co.setter
+    def co(self, value: typing.Collection[float]) -> None: ...  # Mcblend
 
     groups: bpy_prop_collection['VertexGroupElement'] = None
     ''' Weights for the vertex groups this vertex is member of

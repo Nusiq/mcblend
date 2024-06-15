@@ -873,17 +873,11 @@ class Matrix:
         '''
         pass
 
-    def __matmul__(
-            self, other: typing.Union[typing.Sequence[float], 'Matrix', typing.
-                                      Sequence[float], 'Vector']
-    ) -> typing.Union['Matrix', 'Vector']:
-        ''' 
+    @typing.overload
+    def __matmul__(self, other: 'Matrix') -> 'Matrix': ...  # Mcblend
 
-        :param other: 
-        :type other: typing.Union[typing.Sequence[float], 'Matrix', typing.Sequence[float], 'Vector']
-        :rtype: typing.Union['Matrix', 'Vector']
-        '''
-        pass
+    @typing.overload
+    def __matmul__(self, other: 'Vector') -> 'Vector': ...  # Mcblend
 
     def __radd__(self, other: typing.Union[typing.Sequence[float], 'Matrix']
                  ) -> 'Matrix':
@@ -1208,7 +1202,7 @@ class Quaternion:
         '''
         pass
 
-    def __init__(self, seq=(1.0, 0.0, 0.0, 0.0)) -> typing.Any:
+    def __init__(self, seq=(1.0, 0.0, 0.0, 0.0)) -> None:
         ''' 
 
         :rtype: typing.Any
@@ -1273,17 +1267,11 @@ class Quaternion:
         '''
         pass
 
-    def __matmul__(
-            self, other: typing.Union[typing.Sequence[float], 'Vector', typing.
-                                      Sequence[float], 'Quaternion']
-    ) -> typing.Union['Vector', 'Quaternion']:
-        ''' 
+    @typing.overload
+    def __matmul__(self, other: 'Vector') -> 'Vector': ...
 
-        :param other: 
-        :type other: typing.Union[typing.Sequence[float], 'Vector', typing.Sequence[float], 'Quaternion']
-        :rtype: typing.Union['Vector', 'Quaternion']
-        '''
-        pass
+    @typing.overload
+    def __matmul__(self, other: 'Quaternion') -> 'Quaternion': ...
 
     def __radd__(self,
                  other: typing.Union[typing.Sequence[float], 'Quaternion']
@@ -2731,7 +2719,7 @@ class Vector:
         '''
         pass
 
-    def __init__(self, seq=(0.0, 0.0, 0.0)) -> typing.Any:
+    def __init__(self, seq=(0.0, 0.0, 0.0)) -> None:
         ''' 
 
         :rtype: typing.Any
@@ -2784,8 +2772,6 @@ class Vector:
 
     def __contains__(self, other: typing.Any) -> bool: ...  # Mcblend
 
-    def __len__(self) -> int: ... # Mcblend
-
     def __sub__(self, other: typing.Union[typing.Sequence[float], 'Vector']
                 ) -> 'Vector':
         ''' 
@@ -2814,15 +2800,7 @@ class Vector:
         '''
         pass
 
-    def __matmul__(self, other: typing.Union[typing.Sequence[float], 'Matrix']
-                   ) -> 'Vector':
-        ''' 
-
-        :param other: 
-        :type other: typing.Union[typing.Sequence[float], 'Matrix']
-        :rtype: 'Vector'
-        '''
-        pass
+    def __matmul__(self, other: 'Matrix') -> 'Vector': ...  # Mcblend
 
     def __radd__(self, other: typing.Union[typing.Sequence[float], 'Vector']
                  ) -> 'Vector':

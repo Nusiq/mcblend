@@ -12,11 +12,6 @@ The functions from this module are annotated in typed_bpy_access.pyi
 '''
 import bpy
 
-def get_co(obj):
-    '''
-    >>> obj.co
-    '''
-    return obj.co
 
 def get_constraints(obj):
     '''
@@ -301,20 +296,6 @@ def getitem(obj, index):
     '''
     return obj[index]
 
-def matmul(obj1, obj2):
-    '''
-    >>> obj1 @ obj2
-    '''
-    return obj1 @ obj2
-
-def matmul_chain(obj, *objn):
-    '''
-    >>> obj @ obj1 @ obj2...
-    '''
-    for i in objn:
-        obj = obj @ i
-    return obj
-
 def neg(a):
     '''
     >>> -a
@@ -336,12 +317,6 @@ def new_material(name: str):
     >>> bpy.data.materials.new(name)
     '''
     return bpy.data.materials.new(name)
-
-def set_co(obj, co):
-    '''
-    >>> obj.co = co
-    '''
-    obj.co = co
 
 def set_constraint_property(constraint, name, value):
     '''
