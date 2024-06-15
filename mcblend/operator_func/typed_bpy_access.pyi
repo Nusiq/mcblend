@@ -13,7 +13,7 @@ from .pyi_types import (
     ObjectDataMaterials,
     MeshUVLoopLayerData, ObjectDataEdges,
     ArmaturePoseBones, SceneTimelineMarkers,
-    FCurveKeyframePoints, AnimationDataNlaTracks, NlaTrackNlaStrips,
+    AnimationDataNlaTracks, NlaTrackNlaStrips,
     ObjectDataPolygons, NodeTreeNodes,
     NodeTreeLinks)
 
@@ -21,8 +21,6 @@ from ..object_data import (
     MCBLEND_EventProperties, MCBLEND_ObjectProperties, MCBLEND_BoneProperties)
 from ..uv_data import MCBLEND_UvGroupProperties
 from ..resource_pack_data import MCBLEND_ProjectProperties
-
-def get_keyframe_points(obj: FCurve) -> FCurveKeyframePoints: ...
 
 def get_links(obj: NodeTree) -> NodeTreeLinks: ...
 

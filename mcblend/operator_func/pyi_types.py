@@ -88,16 +88,6 @@ class DataMeshes(Sized):
     def __len__(self) -> int: ...
 
 
-class FCurveKeyframePoints(Sized):
-    '''
-    Fake class defined as a result of:
-    >>> object.keyframe_points
-    '''
-    def __getitem__(self, key: Any) -> Keyframe: ...
-    def __iter__(self) -> Iterator[Keyframe]: ...
-    def __len__(self) -> int: ...
-
-
 class MeshUVLoopLayerData(Sized):
     '''
     Fake class defined as a result of:

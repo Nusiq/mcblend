@@ -12,12 +12,6 @@ The functions from this module are annotated in typed_bpy_access.pyi
 '''
 import bpy
 
-def get_keyframe_points(obj):
-    '''
-    >>> obj.keyframe_points
-    '''
-    return obj.keyframe_points
-
 def get_links(obj):
     '''
     >>> obj.links
