@@ -12,13 +12,6 @@ The functions from this module are annotated in typed_bpy_access.pyi
 '''
 import bpy
 
-
-def get_head(obj):
-    '''
-    >>> obj.head
-    '''
-    return obj.head
-
 def get_inputs(obj):
     '''
     >>> obj.inputs
@@ -191,12 +184,6 @@ def get_strips(obj):
     >>> obj.strips
     '''
     return obj.strips
-
-def get_tail(obj):
-    '''
-    >>> obj.tail
-    '''
-    return obj.tail
 
 def get_timeline_markers(obj):
     '''

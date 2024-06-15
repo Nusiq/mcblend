@@ -16,8 +16,8 @@ from bpy.types import (
 import bpy
 
 from .typed_bpy_access import (
-    get_head, get_loop_indices, get_matrix_world,
-    get_objects, get_rotation_euler, get_tail,
+    get_loop_indices, get_matrix_world,
+    get_objects, get_rotation_euler,
     set_matrix, set_matrix_parent_inverse, set_matrix_world,
     get_matrix_parent_inverse, get_pose_bones, subtract)
 from .common import (
@@ -1656,7 +1656,7 @@ class ImportGeometry:
             blend_bone = get_pose_bones(armature)[bone.name]
             # pylint: disable=no-member
             correction = mathutils.Matrix.Translation(
-                subtract(get_head(blend_bone), get_tail(blend_bone))
+                subtract(blend_bone.head, blend_bone.tail)
             )
             set_matrix_world(
                 obj, correction @ get_matrix_world(obj)

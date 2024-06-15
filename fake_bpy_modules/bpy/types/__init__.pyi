@@ -25406,12 +25406,12 @@ class PoseBone(bpy_struct):
     :type: typing.Union[typing.List[float], typing.Tuple[float, float, float], 'mathutils.Vector']
     '''
 
-    head: typing.Union[typing.List[float], typing.
-                       Tuple[float, float, float], 'mathutils.Vector'] = None
-    ''' Location of head of the channel's bone
+    @property
+    def head(self) -> 'mathutils.Vector':  # Mcblend
+        ''' Location of head of the channel's bone'''
 
-    :type: typing.Union[typing.List[float], typing.Tuple[float, float, float], 'mathutils.Vector']
-    '''
+    @head.setter
+    def head(self, value: typing.Collection[float]) -> None: ...  # Mcblend
 
     ik_linear_weight: float = None
     ''' Weight of scale constraint for IK
@@ -25639,12 +25639,12 @@ class PoseBone(bpy_struct):
     :type: typing.Union[typing.List[float], typing.Tuple[float, float, float], 'mathutils.Vector']
     '''
 
-    tail: typing.Union[typing.List[float], typing.
-                       Tuple[float, float, float], 'mathutils.Vector'] = None
-    ''' Location of tail of the channel's bone
-
-    :type: typing.Union[typing.List[float], typing.Tuple[float, float, float], 'mathutils.Vector']
-    '''
+    @property
+    def tail(self) -> 'mathutils.Vector':  # Mcblend
+        ''' Location of tail of the channel's bone'''
+    
+    @tail.setter
+    def tail(self, value: typing.Collection[float]) -> None: ...  # Mcblend
 
     use_custom_shape_bone_size: bool = None
     ''' Scale the custom object by the bone length
