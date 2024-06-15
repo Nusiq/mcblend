@@ -16,7 +16,7 @@ import bpy
 
 from .typed_bpy_access import (
     get_data_edit_bones, get_data_meshes,
-    get_data_vertices, get_head, get_loop_indices, get_matrix_world, get_data,
+    get_data_vertices, get_head, get_loop_indices, get_matrix_world,
     get_objects, get_rotation_euler, get_tail,
     set_matrix, set_matrix_parent_inverse, set_matrix_world,
     get_matrix_parent_inverse, get_pose_bones, subtract)
@@ -1523,7 +1523,7 @@ class ImportGeometry:
 
                     if mesh.uv_layers.active is None:  # pyright: ignore[reportUnnecessaryComparison]
                         mesh.uv_layers.new()
-                    uv_layer = get_data(mesh.uv_layers.active)
+                    uv_layer = mesh.uv_layers.active.data
                     for i, uv in enumerate(blender_uvs):
                         uv_layer[i].uv = cast(list[float],uv)
                 else:
@@ -1802,7 +1802,7 @@ def _set_uv(
     :param uv: UV mapping for each face.
     :param uv_layer: UV layer of the mesh.
     '''
-    uv_data = get_data(uv_layer)
+    uv_data = uv_layer.data
     def set_uv(
             cube_polygon: CubePolygon, size: Vector2d,
             uv: Vector2d):

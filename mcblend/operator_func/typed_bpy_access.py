@@ -13,12 +13,6 @@ The functions from this module are annotated in typed_bpy_access.pyi
 import bpy
 
 
-def get_data(obj):
-    '''
-    >>> obj.data
-    '''
-    return obj.data
-
 def get_data_bones(obj):
     '''
     >>> obj.data.bones

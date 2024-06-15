@@ -20,7 +20,7 @@ from bpy.types import MeshUVLoopLayer, Object, MeshPolygon, PoseBone
 from mathutils import Vector, Matrix, Euler
 
 from .typed_bpy_access import (
-    get_data, get_data_edges, get_matrix,
+    get_data_edges, get_matrix,
     get_pose_bones, get_scene_mcblend_uv_groups, get_data_bones,
     get_data_polygons, get_data_vertices, get_matrix_local, get_matrix_world,
     get_mcblend, getitem, set_matrix_local,
@@ -711,7 +711,8 @@ class CubePolygon(NamedTuple):
         '''
         # The indexing must be a tuple to work with numpy, see issue  #111
         ordered_loop_indices = np.array(self.side.loop_indices)[(self.order,)]
-        crds = np.array([get_data(uv_layer)[i].uv for i in ordered_loop_indices])
+        
+        crds = np.array([uv_layer.data[i].uv for i in ordered_loop_indices])
         return crds
 
     @staticmethod
