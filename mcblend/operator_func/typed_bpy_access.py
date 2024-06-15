@@ -12,12 +12,6 @@ The functions from this module are annotated in typed_bpy_access.pyi
 '''
 import bpy
 
-def get_links(obj):
-    '''
-    >>> obj.links
-    '''
-    return obj.links
-
 def get_location(obj):
     '''
     >>> obj.location

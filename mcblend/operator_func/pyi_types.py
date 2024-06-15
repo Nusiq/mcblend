@@ -108,17 +108,6 @@ class NlaTrackNlaStrips(Sized):
     def __len__(self) -> int: ...
 
 
-class NodeTreeLinks(Sized):
-    '''
-    Fake class defined as a result of:
-    >>> object.links
-    '''
-    def __getitem__(self, key: Any) -> NodeLink: ...
-    def __iter__(self) -> Iterator[NodeLink]: ...
-    def new(self, a: NodeSocket, b: NodeSocket) -> NodeLink: ...
-    def __len__(self) -> int: ...
-
-
 class NodeTreeNodes(Sized):
     '''
     Fake class defined as a result of:

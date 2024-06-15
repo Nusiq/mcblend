@@ -14,15 +14,12 @@ from .pyi_types import (
     MeshUVLoopLayerData, ObjectDataEdges,
     ArmaturePoseBones, SceneTimelineMarkers,
     AnimationDataNlaTracks, NlaTrackNlaStrips,
-    ObjectDataPolygons, NodeTreeNodes,
-    NodeTreeLinks)
+    ObjectDataPolygons, NodeTreeNodes)
 
 from ..object_data import (
     MCBLEND_EventProperties, MCBLEND_ObjectProperties, MCBLEND_BoneProperties)
 from ..uv_data import MCBLEND_UvGroupProperties
 from ..resource_pack_data import MCBLEND_ProjectProperties
-
-def get_links(obj: NodeTree) -> NodeTreeLinks: ...
 
 def get_location(obj: Object) -> Vector: ...
 
