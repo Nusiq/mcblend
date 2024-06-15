@@ -130,7 +130,7 @@ def _get_keyframes(context: Context, prec: int=1) -> List[float]:
         return result
 
     keyframes: Set[float] = set()
-    obj = context.active_object
+    obj = context.object
     if obj is None:
         return []
     if obj.animation_data is None:  # type: ignore

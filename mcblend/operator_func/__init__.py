@@ -16,7 +16,7 @@ import numpy as np
 from .common import ModelOriginType
 from .typed_bpy_access import (
     get_data_bones, get_objects,
-    get_context_object, get_scene_mcblend_project,
+    get_scene_mcblend_project,
     get_scene_mcblend_events, get_selected_objects,
     get_data_images, get_data_objects,
     get_matrix_world, get_mcblend,
@@ -52,7 +52,7 @@ def export_model(
         warnings about exporting.
     '''
     result = ModelExport.json_outer()
-    armature = get_context_object(context)  # an armature
+    armature = context.object  # an armature
     if armature is None or armature.type != 'ARMATURE':
         # Should never happen (checked in the operator)
         raise ValueError("Selected object is not an armature")
@@ -88,7 +88,7 @@ def export_animation(
     :param old_dict: optional - JSON dict with animation to write into.
     :returns: JSON dict of Minecraft animations.
     '''
-    armature = get_context_object(context)  # an armature
+    armature = context.object  # an armature
     if armature is None or armature.type != 'ARMATURE':
         # Should never happen (checked in the operator)
         raise ValueError("Selected object is not an armature")
@@ -132,7 +132,7 @@ def set_uvs(context: Context):
 
     :param context: the execution context.
     '''
-    armature = get_context_object(context) # an armature
+    armature = context.object # an armature
     if armature is None or armature.type != 'ARMATURE':
         # Should never happen (checked in the operator)
         raise ValueError("Selected object is not an armature")
@@ -212,7 +212,7 @@ def fix_uvs(context: Context) -> Vector2di:
 
     :returns: The number of fixed cubes and the number of fixed faces.
     '''
-    armature = get_context_object(context)  # an armature
+    armature = context.object  # an armature
     if armature is None or armature.type != 'ARMATURE':
         # Should never happen (checked in the operator)
         raise ValueError("Selected object is not an armature")
@@ -628,7 +628,7 @@ def apply_materials(context: Context):
     '''
     blender_materials: Dict[
         Tuple[Tuple[Optional[str], str], ...], Material] = {}
-    armature = get_context_object(context)
+    armature = context.object
     if armature is None or armature.type != 'ARMATURE':
         # TODO - this should never happen. Rewrite the code so it's guaranteed
         raise ValueError("Selected object is not an armature")
@@ -712,7 +712,7 @@ def prepare_physics_simulation(context: Context) -> Dict[str, Any]:
     :param context: the context of running the operator.
     '''
     result = ModelExport.json_outer()
-    armature = get_context_object(context)
+    armature = context.object
     if armature is None or armature.type != 'ARMATURE':
         raise ValueError("Selected object is not an armature")
 
@@ -769,7 +769,7 @@ def prepare_physics_simulation(context: Context) -> Dict[str, Any]:
                 c.select_set(True)
             get_objects(context.view_layer).active = cubes_group[-1]
             bpy.ops.object.join()  # pyright: ignore[reportUnknownMemberType]
-            rigid_body = get_context_object(context)
+            rigid_body = context.object
         elif len(cubes_group) == 1:
             cubes_group[0].select_set(True)
             rigid_body = cubes_group[0]

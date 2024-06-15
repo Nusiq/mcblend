@@ -25,8 +25,7 @@ from .common import (
 from .extra_types import Vector3di, Vector3d, Vector2d
 from .uv import CoordinatesConverter
 from .exception import ImporterException
-from .typed_bpy_access import (
-    get_context_object, get_data_objects, get_mcblend)
+from .typed_bpy_access import get_data_objects, get_mcblend
 
 if TYPE_CHECKING:
     from .pyi_types import ArmatureDataEditBones
@@ -1426,7 +1425,7 @@ class ImportGeometry:
         # performance
 
         # Save the armature
-        armature: Object = cast(Object, get_context_object(context))
+        armature: Object = cast(Object, context.object)
 
         # Create objects - and set their pivots
         for bone in self.bones.values():
@@ -1435,7 +1434,7 @@ class ImportGeometry:
                 type='SPHERE', location=[0, 0, 0], radius=0.2)
 
             # Must be an 'Object' because it has just been created:
-            bone_obj: Object = cast(Object, get_context_object(context))
+            bone_obj: Object = cast(Object, context.object)
             bone.blend_empty = bone_obj
 
             _mc_pivot(bone_obj, bone.pivot)  # 2. Apply translation
@@ -1446,7 +1445,7 @@ class ImportGeometry:
                     size=1, enter_editmode=False, location=[0, 0, 0]
                 )
                 # Must be an 'Object' because it has just been created:
-                cube_obj: Object = cast(Object, get_context_object(context))
+                cube_obj: Object = cast(Object, context.object)
                 cube.blend_cube  = cube_obj
 
                 # 2. Set uv
@@ -1536,7 +1535,7 @@ class ImportGeometry:
                 # 1. Spawn locator (empty)
                 bpy.ops.object.empty_add(  # pyright: ignore[reportUnknownMemberType]
                     type='SPHERE', location=[0, 0, 0], radius=0.1)
-                locator_obj: Object = cast(Object, get_context_object(context))
+                locator_obj: Object = cast(Object, context.object)
                 locator.blend_empty = locator_obj 
                 # 2. Apply translation
                 _mc_pivot(locator_obj, locator.position)

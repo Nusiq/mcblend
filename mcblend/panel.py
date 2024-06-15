@@ -16,7 +16,7 @@ from .operator_func.typed_bpy_access import (
     get_data_bones, set_operator_property, get_scene_mcblend_active_uv_group,
     get_scene_mcblend_uv_groups, get_scene_mcblend_active_uv_groups_side,
     get_scene_mcblend_events, get_scene_mcblend_active_event, get_mcblend,
-    get_scene_mcblend_project, get_context_object)
+    get_scene_mcblend_project)
 from .uv_data import MCBLEND_UvMaskProperties
 
 # GUI
@@ -481,11 +481,13 @@ class MCBLEND_PT_ObjectPropertiesPanel(Panel):
     def poll(cls, context: Context):
         if context.mode != "OBJECT":
             return False
-        if context.active_object:
-            return context.active_object.type == "MESH"
+        if context.object is not None:
+            return context.object.type == "MESH"
         return False
 
     def draw(self, context: Context):
+        if context.object is None:
+            return
         col = self.layout.column(align=True)
         object_properties = get_mcblend(context.object)
         col.prop(
@@ -514,11 +516,13 @@ class MCBLEND_PT_ModelPropertiesPanel(Panel):
     bl_label = "Mcblend: Model Properties"
     @classmethod
     def poll(cls, context: Context):
-        if context.active_object:
-            return context.active_object.type == "ARMATURE"
+        if context.object is not None:
+            return context.object.type == "ARMATURE"
         return False
 
     def draw(self, context: Context):
+        if context.object is None:
+            return
         col = self.layout.column(align=True)
         # col.prop(context.scene.mcblend, "path", text="")
         object_properties = get_mcblend(context.object)
@@ -569,13 +573,13 @@ class MCBLEND_PT_ArmatureRenderControllersPanel(Panel):
 
     @classmethod
     def poll(cls, context: Context):
-        if context.active_object:
-            return context.active_object.type == "ARMATURE"
+        if context.object is not None:
+            return context.object.type == "ARMATURE"
         return False
 
     def draw(self, context: Context):
         col = self.layout.column(align=True)
-        if not context.mode == "OBJECT" or get_context_object(context) is None:
+        if not context.mode == "OBJECT" or context.object is None:
             return
 
         row = col.row()
@@ -682,11 +686,13 @@ class MCBLEND_PT_AnimationPropertiesPanel(Panel):
 
     @classmethod
     def poll(cls, context: Context):
-        if context.active_object:
-            return context.active_object.type == "ARMATURE"
+        if context.object is not None:
+            return context.object.type == "ARMATURE"
         return False
 
     def draw(self, context: Context):
+        if context.object is None:
+            return
         col = self.layout.column(align=True)
 
         row = col.row()
@@ -895,6 +901,8 @@ class MCBLEND_PT_BonePanel(Panel):
 
     @classmethod
     def poll(cls, context: Context):
+        if context.object is None:
+            return False
         if context.mode != 'POSE':
             return False
         try:
@@ -905,6 +913,8 @@ class MCBLEND_PT_BonePanel(Panel):
         return pose_bone is not None  # type: ignore
 
     def draw(self, context: Context):
+        if context.object is None:
+            return
         try:
             pose_bone = context.object.pose.bones[
                 get_data_bones(context.object).active.name]

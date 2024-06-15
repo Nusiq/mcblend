@@ -19,7 +19,7 @@ from .object_data import (
     get_unused_event_name, list_effect_types_as_blender_enum,
     MCBLEND_AnimationProperties)
 from .operator_func.typed_bpy_access import (
-    get_scene_mcblend_project, get_context_object,
+    get_scene_mcblend_project,
     get_scene_mcblend_events, get_scene_mcblend_active_event,
     get_data_objects, get_mcblend, get_data_images,
     set_scene_mcblend_active_event,
@@ -75,7 +75,7 @@ class MCBLEND_OT_ExportModel(  # pyright: ignore[reportIncompatibleMethodOverrid
     def poll(cls, context: Context):
         if context.mode != 'OBJECT':
             return False
-        obj = get_context_object(context)
+        obj = context.object
         if obj is None:
             return False
         return obj.type == 'ARMATURE'
@@ -148,7 +148,7 @@ class MCBLEND_OT_ExportAnimation(  # pyright: ignore[reportIncompatibleMethodOve
     def poll(cls, context: Context) -> bool:
         if context.mode != 'OBJECT':
             return False
-        obj = get_context_object(context)
+        obj = context.object
         if obj is None:
             return False
         if obj.type != 'ARMATURE':
@@ -202,7 +202,7 @@ class MCBLEND_OT_MapUv(Operator):
     def poll(cls, context: Context):
         if context.mode != 'OBJECT':
             return False
-        obj = get_context_object(context)
+        obj = context.object
         if obj is None:
             return False
         return obj.type == 'ARMATURE'
@@ -250,7 +250,7 @@ class MCBLEND_OT_FixUv(Operator):
     def poll(cls, context: Context):
         if context.mode != 'OBJECT':
             return False
-        obj = get_context_object(context)
+        obj = context.object
         if obj is None:
             return False
         return obj.type == 'ARMATURE'
@@ -506,11 +506,11 @@ def save_animation_properties(
         anim_timeline_marker.frame = timeline_marker.frame
     animation.nla_tracks.clear()
     
-    obj = get_context_object(context)
+    obj = context.object
     if obj is None:  # TODO - should this be an error?
         return
     if obj.animation_data is not None:
-        for nla_track in context.object.animation_data.nla_tracks:
+        for nla_track in obj.animation_data.nla_tracks:
             if not nla_track.mute:
                 cached_nla_track = animation.nla_tracks.add()
                 cached_nla_track.name = nla_track.name
@@ -529,7 +529,7 @@ def load_animation_properties(animation: MCBLEND_AnimationProperties, context: C
         context.scene.timeline_markers.new(
             anim_timeline_marker.name,
             frame=anim_timeline_marker.frame)
-    obj = get_context_object(context)
+    obj = context.object
     if obj is None:
         return
     anim_data = obj.animation_data
@@ -552,9 +552,11 @@ class MCBLEND_OT_ListAnimations(Operator):
 
     def _list_animations(self, context: Context):
         # pylint: disable=unused-argument
+        if context.object is None:
+            return []
         items = [
             (str(i), x.name, x.name)
-            for i, x in enumerate(get_mcblend(bpy.context.object).animations)]
+            for i, x in enumerate(get_mcblend(context.object).animations)]
         return items
 
     animations_enum: bpy.props.EnumProperty(  # type: ignore
@@ -562,6 +564,8 @@ class MCBLEND_OT_ListAnimations(Operator):
 
     @classmethod
     def poll(cls, context: Context):
+        if context.object is None:
+            return False
         if context.mode != 'OBJECT':
             return False
         if context.object.type != 'ARMATURE':
@@ -574,7 +578,7 @@ class MCBLEND_OT_ListAnimations(Operator):
         panel. Sets the active animation.
         '''
         # Cancel operation if there is an action being edited
-        obj = get_context_object(context)
+        obj = context.object
         if obj is None:
             return {'CANCELLED'}
         anim_data = obj.animation_data
@@ -589,17 +593,17 @@ class MCBLEND_OT_ListAnimations(Operator):
                 "selecting new animation")
             return {'CANCELLED'}
         # If OK than save old animation state
-        len_anims = len(get_mcblend(context.object).animations)
-        curr_anim_id = get_mcblend(context.object).active_animation
+        len_anims = len(get_mcblend(obj).animations)
+        curr_anim_id = get_mcblend(obj).active_animation
         if 0 <= curr_anim_id < len_anims:
             save_animation_properties(
-                get_mcblend(context.object).animations[curr_anim_id], context)
+                get_mcblend(obj).animations[curr_anim_id], context)
 
         # Set new animation and load its state
         new_anim_id=int(self.animations_enum)  # type: ignore
-        get_mcblend(context.object).active_animation=new_anim_id
+        get_mcblend(obj).active_animation=new_anim_id
         load_animation_properties(
-                get_mcblend(context.object).animations[new_anim_id], context)
+                get_mcblend(obj).animations[new_anim_id], context)
         return {'FINISHED'}
 
 class MCBLEND_OT_AddAnimation(Operator):
@@ -611,6 +615,8 @@ class MCBLEND_OT_AddAnimation(Operator):
 
     @classmethod
     def poll(cls, context: Context):
+        if context.object is None:
+            return False
         if context.mode != 'OBJECT':
             return False
         if context.object.type != 'ARMATURE':
@@ -619,7 +625,7 @@ class MCBLEND_OT_AddAnimation(Operator):
 
     def execute(self, context: Context):
         # Cancel operation if there is an action being edited
-        obj = get_context_object(context)
+        obj = context.object
         if obj is None:
             return {'CANCELLED'}
         anim_data = obj.animation_data
@@ -665,6 +671,8 @@ class MCBLEND_OT_RemoveAnimation(Operator):
 
     @classmethod
     def poll(cls, context: Context):
+        if context.object is None:
+            return False
         if context.mode != 'OBJECT':
             return False
         if context.object.type != 'ARMATURE':
@@ -673,7 +681,7 @@ class MCBLEND_OT_RemoveAnimation(Operator):
 
     def execute(self, context: Context):
         # Cancel operation if there is an action being edited
-        obj = get_context_object(context)
+        obj = context.object
         if obj is None:
             return {'CANCELLED'}
         anim_data = obj.animation_data
@@ -1755,13 +1763,15 @@ class MCBLEND_OT_AddFakeRc(Operator):
 
     @classmethod
     def poll(cls, context: Context):
-        obj = get_context_object(context)
+        obj = context.object
         if obj is None:
             return False
         return obj.type == 'ARMATURE'
 
     def execute(self, context: Context):
         obj = context.object
+        if obj is None:
+            return {'CANCELLED'}
         rc = get_mcblend(obj).render_controllers.add()
         material = rc.materials.add()
         material.pattern = '*'
@@ -1779,12 +1789,14 @@ class MCBLEND_OT_RemoveFakeRc(Operator):
 
     @classmethod
     def poll(cls, context: Context):
-        obj = get_context_object(context)
+        obj = context.object
         if obj is None:
             return False
         return obj.type == 'ARMATURE'
 
     def execute(self, context: Context):
+        if context.object is None:
+            return {'CANCELLED'}
         rcs = get_mcblend(context.object).render_controllers
         rcs.remove(self.rc_index)  # type: ignore
         return {'FINISHED'}
@@ -1807,12 +1819,14 @@ class MCBLEND_OT_MoveFakeRc(Operator):
 
     @classmethod
     def poll(cls, context: Context):
-        obj = get_context_object(context)
+        obj = context.object
         if obj is None:
             return False
         return obj.type == 'ARMATURE'
 
     def execute(self, context: Context):
+        if context.object is None:
+            return {'CANCELLED'}
         rcs = get_mcblend(context.object).render_controllers
         rcs.move(self.rc_index, self.move_to)
         return {'FINISHED'}
@@ -1842,12 +1856,14 @@ class MCBLEND_OT_FakeRcSelectTexture(Operator):
 
     @classmethod
     def poll(cls, context: Context):
-        obj = get_context_object(context)
+        obj = context.object
         if obj is None:
             return False
         return obj.type == 'ARMATURE'
 
     def execute(self, context: Context):
+        if context.object is None:
+            return {'CANCELLED'}
         get_mcblend(context.object).render_controllers[
             self.rc_index  # type: ignore
         ].texture = self.image  # type: ignore
@@ -1884,12 +1900,14 @@ class MCBLEND_OT_FakeRcOpenTexture(  # pyright: ignore[reportIncompatibleMethodO
 
     @classmethod
     def poll(cls, context: Context):
-        obj = get_context_object(context)
+        obj = context.object
         if obj is None:
             return False
         return obj.type == 'ARMATURE'
 
     def execute(self, context: Context):
+        if context.object is None:
+            return {'CANCELLED'}
         img = bpy.data.images.load(
             self.filepath, check_existing=True)
         get_mcblend(context.object).render_controllers[
@@ -1911,12 +1929,14 @@ class MCBLEND_OT_AddFakeRcMaterial(Operator):
 
     @classmethod
     def poll(cls, context: Context):
-        obj = get_context_object(context)
+        obj = context.object
         if obj is None:
             return False
         return obj.type == 'ARMATURE'
 
     def execute(self, context: Context):
+        if context.object is None:
+            return {'CANCELLED'}
         rc = get_mcblend(context.object).render_controllers[
             self.rc_index]  # type: ignore
         material = rc.materials.add()
@@ -1938,12 +1958,14 @@ class MCBLEND_OT_RemoveFakeRcMaterial(Operator):
 
     @classmethod
     def poll(cls, context: Context):
-        obj = get_context_object(context)
+        obj = context.object
         if obj is None:
             return False
         return obj.type == 'ARMATURE'
 
     def execute(self, context: Context):
+        if context.object is None:
+            return {'CANCELLED'}
         get_mcblend(context.object).render_controllers[
             self.rc_index  # type: ignore
         ].materials.remove(
@@ -1968,13 +1990,13 @@ class MCBLEND_OT_MoveFakeRcMaterial(Operator):
 
     @classmethod
     def poll(cls, context: Context):
-        obj = get_context_object(context)
+        obj = context.object
         if obj is None:
             return False
         return obj.type == 'ARMATURE'
 
     def execute(self, context: Context):
-        obj = get_context_object(context)
+        obj = context.object
         if obj is None:
             return {'CANCELLED'}
         get_mcblend(
@@ -2002,13 +2024,13 @@ class MCBLEND_OT_FakeRcSMaterailSelectTemplate(Operator):
 
     @classmethod
     def poll(cls, context: Context):
-        obj = get_context_object(context)
+        obj = context.object
         if obj is None:
             return False
         return obj.type == 'ARMATURE'
 
     def execute(self, context: Context):
-        obj = get_context_object(context)
+        obj = context.object
         if obj is None:
             return {'CANCELLED'}
         get_mcblend(
@@ -2030,7 +2052,7 @@ class MCBLEND_OT_FakeRcApplyMaterials(Operator):
 
     @classmethod
     def poll(cls, context: Context):
-        obj = get_context_object(context)
+        obj = context.object
         if obj is None:
             return False
         return obj.type == 'ARMATURE'
@@ -2053,7 +2075,7 @@ class MCBLEND_OT_PreparePhysicsSimulation(Operator):
     def poll(cls, context: Context):
         if context.mode != 'OBJECT':
             return False
-        obj = get_context_object(context)
+        obj = context.object
         if obj is None:
             return False
         return obj.type == 'ARMATURE'

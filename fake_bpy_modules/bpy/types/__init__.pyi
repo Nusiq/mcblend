@@ -5817,7 +5817,7 @@ class Context(bpy_struct):
     :type: 'World'
     '''
 
-    object: 'Object' = None
+    object: 'Object' | None  # Mcblend
     ''' 
 
     :type: 'Object'
@@ -6165,7 +6165,7 @@ class Context(bpy_struct):
     :type: 'PoseBone'
     '''
 
-    active_object: 'Object' = None
+    active_object: 'Object' | None  # Mcblend
     ''' 
 
     :type: 'Object'
