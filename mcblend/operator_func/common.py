@@ -23,7 +23,7 @@ from mathutils import Vector, Matrix, Euler
 from .typed_bpy_access import (
     get_matrix,
     get_pose_bones, get_scene_mcblend_uv_groups,
-    get_data_vertices, get_matrix_local, get_matrix_world,
+    get_matrix_local, get_matrix_world,
     get_mcblend, getitem, set_matrix_local,
     subtract, neg, to_euler)
 
@@ -433,7 +433,7 @@ class McblendObject:
 
         # List that represents the grouping - index: the index of vertex
         # value: the pointer to identifier of a group of that vertex
-        groups = [c_int(-1) for _ in range(len(get_data_vertices(obj)))]
+        groups = [c_int(-1) for _ in range(len(obj.data.vertices))]
 
         for edge in obj.data.edges:
             a, b = edge.vertices
@@ -654,7 +654,7 @@ class CubePolygons(NamedTuple):
 
         p_options: List[List[str]] =  []
         for vertex_id in range(8):
-            vertex_crds = np.array(get_data_vertices(cube)[vertex_id].co)
+            vertex_crds = np.array(cube.data.vertices[vertex_id].co)
             # Find the closest point of bounding box (key from bb_crds)
             shortest_distance: Optional[float] = None
             for k, v in bb_crds.items():
@@ -903,6 +903,8 @@ def apply_obj_transform_keep_origin(obj: Object):
     Apply object transformations but keep the origin in place. Resets object
     rotation and scale but keeps location the same.
     '''
+    # This assert should never raise an Exception
+    assert isinstance(obj.data, Mesh), "The object is not a Mesh"
     # Decompose object transformations
     _, rot, scl = get_matrix_local(obj).decompose()
     # loc_mat = Matrix.Translation(loc)
@@ -912,7 +914,7 @@ def apply_obj_transform_keep_origin(obj: Object):
         Matrix.Scale(getitem(scl, 1), 4, Vector([0,1,0])) @
         Matrix.Scale(getitem(scl, 2), 4, Vector([0,0,1]))
     )
-    for vertex in get_data_vertices(obj):
+    for vertex in obj.data.vertices:
         vertex.co = (rot_mat @ scl_mat) @ vertex.co
 
 def fix_cube_rotation(obj: Object):
@@ -931,7 +933,7 @@ def fix_cube_rotation(obj: Object):
     # u = vector(b, a) and v = (b, c)
     poly = obj.data.polygons[0]
 
-    vertices = get_data_vertices(obj)
+    vertices = obj.data.vertices
     a = cast(Vector, vertices[poly.vertices[0]].co)
     b = cast(Vector, vertices[poly.vertices[1]].co)
     c = cast(Vector, vertices[poly.vertices[2]].co)
@@ -958,7 +960,7 @@ def fix_cube_rotation(obj: Object):
 
 
     # Rotate the mesh
-    for vertex in get_data_vertices(obj):
+    for vertex in obj.data.vertices:
         vertex.co = rotation_matrix @ vertex.co
 
     # Counter rotate object around its origin

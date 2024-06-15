@@ -11,11 +11,12 @@ from enum import Enum
 import numpy as np
 
 import mathutils
-from bpy.types import Object, MeshUVLoopLayer, Armature, ArmatureEditBones
+from bpy.types import (
+    Object, MeshUVLoopLayer, Armature, ArmatureEditBones, Mesh)
 import bpy
 
 from .typed_bpy_access import (
-    get_data_vertices, get_head, get_loop_indices, get_matrix_world,
+    get_head, get_loop_indices, get_matrix_world,
     get_objects, get_rotation_euler, get_tail,
     set_matrix, set_matrix_parent_inverse, set_matrix_world,
     get_matrix_parent_inverse, get_pose_bones, subtract)
@@ -1700,6 +1701,8 @@ def _mc_translate(
     :param mcsize: Minecraft size.
     :param mcpivot: Minecraft pivot.
     '''
+    # This assert should never raise an Exception
+    assert isinstance(obj.data, Mesh), "The object is not a Mesh"
     pivot_offset = mathutils.Vector(
         np.array(mcpivot)[[0, 2, 1]] / MINECRAFT_SCALE_FACTOR
     )
@@ -1709,7 +1712,7 @@ def _mc_translate(
     translation = mathutils.Vector(
         np.array(mctranslation)[[0, 2, 1]] / MINECRAFT_SCALE_FACTOR
     )
-    for vertex in get_data_vertices(obj):
+    for vertex in obj.data.vertices:
         vertex.co += (translation - pivot_offset + size_offset)  # type: ignore
 
 def _mc_set_size(
@@ -1722,6 +1725,8 @@ def _mc_set_size(
     :param obj: Blender object
     :param mcsize: Minecraft object size.
     '''
+    # This assert should never raise an Exception
+    assert isinstance(obj.data, Mesh), "The object is not a Mesh"
     # cube_obj.dimensions = (
     #     np.array(cube_obj.dimensions) +
     #     (2*-cube.inflate/MINECRAFT_SCALE_FACTOR)
@@ -1734,7 +1739,7 @@ def _mc_set_size(
         (np.array(mcsize)[[0, 2, 1]] / 2) / MINECRAFT_SCALE_FACTOR
     )
     pos_delta += effective_inflate
-    vertices = get_data_vertices(obj)
+    vertices = obj.data.vertices
     # 0. ---; 1. --+; 2. -+-; 3. -++; 4. +--; 5. +-+; 6. ++- 7. +++
     vertices[0].co = cast(
         list[float], mathutils.Vector(pos_delta * np.array([-1, -1, -1])))

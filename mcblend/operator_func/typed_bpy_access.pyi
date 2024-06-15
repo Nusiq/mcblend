@@ -11,7 +11,7 @@ from .common import NumpyTable
 from .pyi_types import (
     CollectionProperty, DataMeshes, ArmatureDataBones, DataImages,
     ObjectDataMaterials,
-    MeshUVLoopLayerData, ObjectDataVertices, ObjectDataEdges,
+    MeshUVLoopLayerData, ObjectDataEdges,
     ArmaturePoseBones, SceneTimelineMarkers,
     FCurveKeyframePoints, AnimationDataNlaTracks, NlaTrackNlaStrips,
     ObjectDataPolygons, NodeTreeNodes, NodeInputs, NodeOutputs,
@@ -21,8 +21,6 @@ from ..object_data import (
     MCBLEND_EventProperties, MCBLEND_ObjectProperties, MCBLEND_BoneProperties)
 from ..uv_data import MCBLEND_UvGroupProperties
 from ..resource_pack_data import MCBLEND_ProjectProperties
-
-def get_data_vertices(obj: Object) -> ObjectDataVertices: ...
 
 def get_head(obj: PoseBone) -> Vector: ...
 
