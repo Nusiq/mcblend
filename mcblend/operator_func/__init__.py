@@ -19,7 +19,7 @@ from .typed_bpy_access import (
     get_context_object, get_scene_mcblend_project,
     get_scene_mcblend_events, get_selected_objects,
     get_data_images, get_data_objects,
-    get_constraints, get_matrix_world, get_mcblend,
+    get_matrix_world, get_mcblend,
     new_collection,
     get_material_slots, set_constraint_property, set_pixels,
     set_matrix_parent_inverse, set_matrix_world,
@@ -819,8 +819,8 @@ def prepare_physics_simulation(context: Context) -> Dict[str, Any]:
             get_data_bones(armature).active = get_data_bones(
                 armature)[bone.thisobj_id.bone_name]
             # bpy.ops.pose.constraint_add(type='COPY_TRANSFORMS')
-            constraint = get_constraints(
-                bone.this_pose_bone).new(type='COPY_TRANSFORMS')
+            constraint = bone.this_pose_bone.constraints.new(
+                type='COPY_TRANSFORMS')
             set_pose_bone_constraint_property(constraint, 'target', empty)
             # Add keyframes to the "copy transformation" constraint (
             # enable it 1 frame after current frame)
@@ -838,7 +838,7 @@ def prepare_physics_simulation(context: Context) -> Dict[str, Any]:
             # Add "Child of" constraint to parent empty
             get_objects(context.view_layer).active = empty
             set_constraint_property(
-                get_constraints(empty).new(type='CHILD_OF'),
+                empty.constraints.new(type='CHILD_OF'),
                 'target', rigid_body)
 
         empty = get_data_objects().new(

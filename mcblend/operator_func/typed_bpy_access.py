@@ -13,12 +13,6 @@ The functions from this module are annotated in typed_bpy_access.pyi
 import bpy
 
 
-def get_constraints(obj):
-    '''
-    >>> obj.constraints
-    '''
-    return obj.constraints
-
 def get_context_object(context):
     '''
     Returns the object from the context
