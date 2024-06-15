@@ -10,7 +10,7 @@ from mathutils import Matrix, Euler, Vector, Quaternion
 from .common import NumpyTable
 from .pyi_types import (
     CollectionProperty, DataObjects, DataMeshes, ArmatureDataBones, DataImages,
-    ObjectDataMaterials, ArmatureDataEditBones,
+    ObjectDataMaterials,
     MeshUVLoopLayerData, ObjectDataVertices, ObjectDataEdges,
     ArmaturePoseBones, SceneTimelineMarkers,
     FCurveKeyframePoints, AnimationDataNlaTracks, NlaTrackNlaStrips,
@@ -21,8 +21,6 @@ from ..object_data import (
     MCBLEND_EventProperties, MCBLEND_ObjectProperties, MCBLEND_BoneProperties)
 from ..uv_data import MCBLEND_UvGroupProperties
 from ..resource_pack_data import MCBLEND_ProjectProperties
-
-def get_data_edit_bones(obj: Object) -> ArmatureDataEditBones: ...
 
 def get_data_images() -> DataImages: ...
 

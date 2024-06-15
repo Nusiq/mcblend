@@ -11,11 +11,11 @@ from enum import Enum
 import numpy as np
 
 import mathutils
-from bpy.types import Object, MeshUVLoopLayer
+from bpy.types import Object, MeshUVLoopLayer, Armature, ArmatureEditBones
 import bpy
 
 from .typed_bpy_access import (
-    get_data_edit_bones, get_data_meshes,
+    get_data_meshes,
     get_data_vertices, get_head, get_loop_indices, get_matrix_world,
     get_objects, get_rotation_euler, get_tail,
     set_matrix, set_matrix_parent_inverse, set_matrix_world,
@@ -26,11 +26,6 @@ from .extra_types import Vector3di, Vector3d, Vector2d
 from .uv import CoordinatesConverter
 from .exception import ImporterException
 from .typed_bpy_access import get_data_objects, get_mcblend
-
-if TYPE_CHECKING:
-    from .pyi_types import ArmatureDataEditBones
-else:
-    ArmatureDataEditBones = bpy.types.bpy_prop_collection  # type: ignore
 
 class ErrorLevel(Enum):
     '''
@@ -1610,12 +1605,13 @@ class ImportGeometry:
         '''
         # Build everything using empties
         armature = self.build_with_empties(context)
+        # This assert should never raise an Exception
+        assert isinstance(armature.data, Armature), "Object is not Armature"
         get_objects(context.view_layer).active = armature
         bpy.ops.object.mode_set(  # pyright: ignore[reportUnknownMemberType]
             mode='EDIT')
-
-        edit_bones = get_data_edit_bones(armature)
-
+        edit_bones = armature.data.edit_bones
+        
         # Create bones
         for bone in self.bones.values():
             add_bone(edit_bones, 0.3, bone)
@@ -1837,7 +1833,7 @@ def _set_uv(
     set_uv(cube_polygons.down, uv["down"]["uv_size"], uv["down"]["uv"])
 
 def add_bone(
-        edit_bones: ArmatureDataEditBones,
+        edit_bones: ArmatureEditBones,
         length: float, import_bone: ImportBone):
     '''
     :param edit_bones: edit bones of the armature (from

@@ -32,18 +32,6 @@ class ArmatureDataBones(Sized):
     def __len__(self) -> int: ...
 
 
-class ArmatureDataEditBones(Sized):
-    '''
-    Fake class defined as a result of:
-    >>> armature.data.bones
-    '''
-    active: EditBone
-    def __getitem__(self, key: Any) -> EditBone: ...
-    def __iter__(self) -> Iterator[EditBone]: ...
-    def new(self, name: str) -> EditBone: ...
-    def __len__(self) -> int: ...
-
-
 class ArmaturePoseBones(Sized):
     '''
     Fake class defined as a result of:
