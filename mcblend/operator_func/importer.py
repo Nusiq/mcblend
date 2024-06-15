@@ -19,7 +19,7 @@ from .typed_bpy_access import (
     get_loop_indices, get_matrix_world,
     get_objects, get_rotation_euler,
     set_matrix, set_matrix_parent_inverse, set_matrix_world,
-    get_matrix_parent_inverse, get_pose_bones, subtract)
+    get_matrix_parent_inverse, get_pose_bones)
 from .common import (
     MINECRAFT_SCALE_FACTOR, CubePolygons, CubePolygon, MeshType)
 from .extra_types import Vector3di, Vector3d, Vector2d
@@ -1656,8 +1656,7 @@ class ImportGeometry:
             blend_bone = get_pose_bones(armature)[bone.name]
             # pylint: disable=no-member
             correction = mathutils.Matrix.Translation(
-                subtract(blend_bone.head, blend_bone.tail)
-            )
+                blend_bone.head - blend_bone.tail)
             set_matrix_world(
                 obj, correction @ get_matrix_world(obj)
             )

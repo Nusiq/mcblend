@@ -359,12 +359,6 @@ def set_view_layer_objects_active(context, value):
     '''
     context.view_layer.objects.active = value
 
-def subtract(obj1, obj2):
-    '''
-    >>> obj1 - obj2
-    '''
-    return obj1 - obj2
-
 def to_euler(obj, order, euler_compact=None):
     '''
     >>> obj.to_euler(order, euler_compact)

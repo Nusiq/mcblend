@@ -25,7 +25,7 @@ from .typed_bpy_access import (
     get_pose_bones, get_scene_mcblend_uv_groups,
     get_matrix_local, get_matrix_world,
     get_mcblend, getitem, set_matrix_local,
-    subtract, neg, to_euler)
+    neg, to_euler)
 
 from .texture_generator import Mask, ColorMask, get_masks_from_side
 from .exception import ExporterException
@@ -940,8 +940,8 @@ def fix_cube_rotation(obj: Object):
 
     # Calculate the normal vector of the surface with points
     # a, b and c
-    u: Vector = subtract(a, b).normalized()
-    v: Vector = subtract(c, b).normalized()
+    u: Vector = (a - b).normalized()
+    v: Vector = (c - b).normalized()
 
     # The cross product creates the 3rd vector that defines
     # the rotated space
