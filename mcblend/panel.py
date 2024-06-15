@@ -6,14 +6,14 @@ from typing import List, Optional, Any
 from dataclasses import dataclass
 
 import bpy
-from bpy.types import UILayout, UIList, Panel, Context
+from bpy.types import UILayout, UIList, Panel, Context, Armature
 
 from .object_data import EffectTypes, MCBLEND_EffectProperties
 from .operator_func.db_handler import get_db_handler
 from .operator_func.common import MeshType
 from .operator_func.texture_generator import UvMaskTypes
 from .operator_func.typed_bpy_access import (
-    get_data_bones, set_operator_property, get_scene_mcblend_active_uv_group,
+    set_operator_property, get_scene_mcblend_active_uv_group,
     get_scene_mcblend_uv_groups, get_scene_mcblend_active_uv_groups_side,
     get_scene_mcblend_events, get_scene_mcblend_active_event, get_mcblend,
     get_scene_mcblend_project)
@@ -905,9 +905,12 @@ class MCBLEND_PT_BonePanel(Panel):
             return False
         if context.mode != 'POSE':
             return False
+        obj_data = context.object.data
+        if not isinstance(obj_data, Armature):
+            return False
         try:
             pose_bone = context.object.pose.bones[
-                get_data_bones(context.object).active.name]
+                obj_data.bones.active.name]
         except:  # pylint: disable=bare-except
             return False
         return pose_bone is not None  # type: ignore
@@ -915,9 +918,11 @@ class MCBLEND_PT_BonePanel(Panel):
     def draw(self, context: Context):
         if context.object is None:
             return
+        obj_data = context.object.data
+        if not isinstance(obj_data, Armature):
+            return
         try:
-            pose_bone = context.object.pose.bones[
-                get_data_bones(context.object).active.name]
+            pose_bone = context.object.pose.bones[obj_data.bones.active.name]
         except:  # pylint: disable=bare-except
             return
         col = self.layout.column()

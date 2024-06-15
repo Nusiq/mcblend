@@ -15,13 +15,13 @@ import numpy as np
 import numpy.typing as npt
 
 import bpy
-from bpy.types import MeshUVLoopLayer, Object, MeshPolygon, PoseBone
+from bpy.types import MeshUVLoopLayer, Object, MeshPolygon, PoseBone, Armature
 
 from mathutils import Vector, Matrix, Euler
 
 from .typed_bpy_access import (
     get_data_edges, get_matrix,
-    get_pose_bones, get_scene_mcblend_uv_groups, get_data_bones,
+    get_pose_bones, get_scene_mcblend_uv_groups,
     get_data_polygons, get_data_vertices, get_matrix_local, get_matrix_world,
     get_mcblend, getitem, set_matrix_local,
     subtract, neg, to_euler)
@@ -821,8 +821,10 @@ class McblendObjectGroup:
 
         :param armature: the armature used as a root of the object group.
         '''
+        # This assertion should never raise an exception
+        assert isinstance(armature.data, Armature), "Object is not an armature"
         # Loop bones
-        for bone in get_data_bones(armature):
+        for bone in armature.data.bones:
             obj_id: ObjectId = ObjectId(armature.name, bone.name)
             parent_bone_id: Optional[ObjectId] = None
             if bone.parent is not None:  # pyright: ignore[reportUnnecessaryComparison]

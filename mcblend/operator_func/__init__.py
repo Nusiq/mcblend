@@ -10,12 +10,12 @@ from dataclasses import dataclass, field
 from collections import defaultdict
 
 import bpy
-from bpy.types import Image, Material, Context, Object
+from bpy.types import Image, Material, Context, Object, Armature
 import numpy as np
 
 from .common import ModelOriginType
 from .typed_bpy_access import (
-    get_data_bones, get_objects,
+    get_objects,
     get_scene_mcblend_project,
     get_scene_mcblend_events, get_selected_objects,
     get_data_images, get_data_objects,
@@ -713,7 +713,10 @@ def prepare_physics_simulation(context: Context) -> Dict[str, Any]:
     '''
     result = ModelExport.json_outer()
     armature = context.object
-    if armature is None or armature.type != 'ARMATURE':
+    if (
+            armature is None
+            or armature.type != 'ARMATURE'
+            or not isinstance(armature.data, Armature)):
         raise ValueError("Selected object is not an armature")
 
     origin = None
@@ -816,8 +819,8 @@ def prepare_physics_simulation(context: Context) -> Dict[str, Any]:
             bpy.ops.object.posemode_toggle()  # pyright: ignore[reportUnknownMemberType]
             bpy.ops.pose.select_all(action='DESELECT')  # pyright: ignore[reportUnknownMemberType]
 
-            get_data_bones(armature).active = get_data_bones(
-                armature)[bone.thisobj_id.bone_name]
+            armature.data.bones.active = armature.data.bones[
+                bone.thisobj_id.bone_name]
             # bpy.ops.pose.constraint_add(type='COPY_TRANSFORMS')
             constraint = bone.this_pose_bone.constraints.new(
                 type='COPY_TRANSFORMS')
@@ -937,8 +940,10 @@ def merge_models(context: Context) -> None:
     # MERGE THE ARMATURES
     set_view_layer_objects_active(context, armatures[0])
     for i, obj in enumerate(armatures):
+        # This assertion should never raise an exception
+        assert isinstance(obj.data, Armature), "Object is not an Armature"
         # Update bone names
-        for bone in get_data_bones(obj):
+        for bone in obj.data.bones:
             bone.name = f'{bone.name}_{i}'
         # Select the object for merging
         obj.select_set(True)

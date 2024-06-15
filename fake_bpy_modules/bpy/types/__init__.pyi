@@ -60629,7 +60629,7 @@ class Object(ID, bpy_struct):
     :type: typing.Any
     '''
 
-    data: 'ID' = None
+    data: 'ID' | 'Armature' | 'Mesh'  # Mcblend
     ''' Object data
 
     :type: 'ID'

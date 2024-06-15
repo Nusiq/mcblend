@@ -12,13 +12,6 @@ The functions from this module are annotated in typed_bpy_access.pyi
 '''
 import bpy
 
-
-def get_data_bones(obj):
-    '''
-    >>> obj.data.bones
-    '''
-    return obj.data.bones
-
 def get_data_edges(obj):
     '''
     >>> obj.data.edges
