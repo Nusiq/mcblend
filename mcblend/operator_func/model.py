@@ -17,7 +17,7 @@ from .common import (
     MINECRAFT_SCALE_FACTOR, McblendObject, McblendObjectGroup, MCObjType,
     CubePolygons, CubePolygon, MeshType, NumpyTable
 )
-from .typed_bpy_access import get_loop_indices, get_mcblend
+from .typed_bpy_access import get_mcblend
 from .extra_types import Vector2di, Vector3d, Vector3di
 from .json_tools import get_vect_json
 from .exception import ExporterException
@@ -443,7 +443,7 @@ class UvExportFactory:
         face: MeshPolygon = cube_polygon.side
         name_index = cube_polygon.orientation.index(name)
 
-        uv_layer_data_index = get_loop_indices(face)[name_index]
+        uv_layer_data_index = face.loop_indices[name_index]
         return self.blend_to_mc_converter.convert(
             np.array(uv_layer.data[uv_layer_data_index].uv)
         )

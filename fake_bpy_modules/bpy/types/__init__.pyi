@@ -18843,8 +18843,9 @@ class MeshPolygon(bpy_struct):
     edge_keys = None
     ''' (readonly)'''
 
-    loop_indices = None
-    ''' (readonly)'''
+    @property
+    def loop_indices(self) -> range:  # Mcblend
+        ''' (readonly)'''
 
     def flip(self):
         ''' Invert winding of this polygon (flip its normal)

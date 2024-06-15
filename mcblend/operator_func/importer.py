@@ -16,7 +16,7 @@ from bpy.types import (
 import bpy
 
 from .typed_bpy_access import (
-    get_loop_indices, get_matrix_world,
+    get_matrix_world,
     get_objects, get_rotation_euler,
     set_matrix, set_matrix_parent_inverse, set_matrix_world,
     get_matrix_parent_inverse, get_pose_bones)
@@ -1805,7 +1805,7 @@ def _set_uv(
     def set_uv(
             cube_polygon: CubePolygon, size: Vector2d,
             uv: Vector2d):
-        cp_loop_indices = get_loop_indices(cube_polygon.side)
+        cp_loop_indices = cube_polygon.side.loop_indices
         cp_order = cube_polygon.order
 
         left_down = cp_loop_indices[cp_order[0]]

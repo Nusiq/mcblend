@@ -12,8 +12,7 @@ import bisect
 import numpy as np
 import bpy
 
-from .typed_bpy_access import (
-    get_loop_indices, set_uv)
+from .typed_bpy_access import set_uv
 from .texture_generator import Mask
 from .exception import NotEnoughTextureSpace
 from .json_tools import get_vect_json
@@ -297,7 +296,7 @@ class UvMcCubeFace(UvBox):
         # Order of the faces for: left_down, right_down, right_up, left_up
 
         # Cube polygon data
-        cp_loop_indices = get_loop_indices(self.cube_polygon.side)
+        cp_loop_indices = self.cube_polygon.side.loop_indices
         cp_order = self.cube_polygon.order
 
         left_down = cp_loop_indices[cp_order[0]]
