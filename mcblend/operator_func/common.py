@@ -23,7 +23,7 @@ from mathutils import Vector, Matrix, Euler
 from .typed_bpy_access import (
     get_matrix,
     get_pose_bones, get_scene_mcblend_uv_groups,
-    get_data_polygons, get_data_vertices, get_matrix_local, get_matrix_world,
+    get_data_vertices, get_matrix_local, get_matrix_world,
     get_mcblend, getitem, set_matrix_local,
     subtract, neg, to_euler)
 
@@ -627,11 +627,11 @@ class CubePolygons(NamedTuple):
                 f"Object {cube.name.split('.')[0]} is not a cube. Number of edges != 12."
             )
         # 1. Check if object has 6 quadrilateral faces
-        if len(get_data_polygons(cube)) != 6:
+        if len(cube.data.polygons) != 6:
             raise ExporterException(
                 f"Object {cube.name.split('.')[0]} is not a cube. Number of faces != 6."
             )
-        for polygon in get_data_polygons(cube):
+        for polygon in cube.data.polygons:
             if len(polygon.vertices) != 4:
                 raise ExporterException(
                     f"Object {cube.name.split('.')[0]} is not a cube. Not all faces are "
@@ -669,7 +669,7 @@ class CubePolygons(NamedTuple):
                 elif curr_distance < shortest_distance:
                     shortest_distance = curr_distance
                     p_options[vertex_id] = [k]
-        solver = CubePolygonsSolver(p_options, list(get_data_polygons(cube)))
+        solver = CubePolygonsSolver(p_options, list(cube.data.polygons))
         if not solver.solve():
             raise ExporterException(
                 f'Object "{cube.name}" is not a cube.')
@@ -923,11 +923,13 @@ def fix_cube_rotation(obj: Object):
 
     :param obj: blender object with cuboid mesh.
     '''
+    # This assert should never raise an exception
+    assert isinstance(obj.data, Mesh), "Object is not a Mesh"
     # Get coordinates of 3 points (a,b and c) from any polygon
     # I'm assuming this is a cuboid so I also can assume that
     # vectors u and v are not planar:
     # u = vector(b, a) and v = (b, c)
-    poly = get_data_polygons(obj)[0]
+    poly = obj.data.polygons[0]
 
     vertices = get_data_vertices(obj)
     a = cast(Vector, vertices[poly.vertices[0]].co)

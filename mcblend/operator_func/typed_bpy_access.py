@@ -13,12 +13,6 @@ The functions from this module are annotated in typed_bpy_access.pyi
 import bpy
 
 
-def get_data_polygons(obj):
-    '''
-    >>> obj.data.polygons
-    '''
-    return obj.data.polygons
-
 def get_data_vertices(obj):
     '''
     >>> obj.data.vertices
