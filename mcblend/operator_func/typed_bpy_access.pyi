@@ -15,14 +15,12 @@ from .pyi_types import (
     ArmaturePoseBones, SceneTimelineMarkers,
     FCurveKeyframePoints, AnimationDataNlaTracks, NlaTrackNlaStrips,
     ObjectDataPolygons, NodeTreeNodes, NodeInputs, NodeOutputs,
-    NodeTreeLinks, DataNodeGroups, NodeTreeInputs, NodeTreeOutputs)
+    NodeTreeLinks, NodeTreeInputs, NodeTreeOutputs)
 
 from ..object_data import (
     MCBLEND_EventProperties, MCBLEND_ObjectProperties, MCBLEND_BoneProperties)
 from ..uv_data import MCBLEND_UvGroupProperties
 from ..resource_pack_data import MCBLEND_ProjectProperties
-
-def get_data_node_groups() -> DataNodeGroups: ...
 
 def get_data_objects() -> DataObjects: ...
 

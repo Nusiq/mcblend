@@ -88,24 +88,6 @@ class DataMeshes(Sized):
     def __len__(self) -> int: ...
 
 
-class DataNodeGroups(Sized):
-    '''
-    Fake class defined as a result of:
-    >>> bpy.data.node_groups
-    '''
-    def __getitem__(self, key: Any) -> NodeTree: ...
-    def __iter__(self) -> Iterator[NodeTree]: ...
-    def new(
-        self,
-        name: str,
-        type_: Literal[
-            'CompositorNodeTree', 'TextureNodeTree', 'GeometryNodeTree',
-            'ShaderNodeTree'
-        ]
-    ) -> NodeTree: ...
-    def __len__(self) -> int: ...
-
-
 class DataObjects(Sized):
     '''
     Fake class defined as a result of:

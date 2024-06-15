@@ -5,16 +5,17 @@ from typing import Deque, Optional, List, Tuple
 from collections import deque
 
 from bpy.types import Image, Material, Node, NodeTree
+import bpy
 
 from .typed_bpy_access import (
-    get_data_node_groups, get_inputs, get_links, get_nodes, get_outputs,
+    get_inputs, get_links, get_nodes, get_outputs,
     new_material, set_default_value, set_image, set_interpolation,
     set_node_tree, set_operation, set_use_clamp)
 
 PADDING = 300
 
 def _create_node_group_defaults(name: str) -> Tuple[NodeTree, Node, Node]:
-    group: NodeTree = get_data_node_groups().new(name, 'ShaderNodeTree')
+    group: NodeTree = bpy.data.node_groups.new(name, 'ShaderNodeTree')
 
     # create group inputs
     inputs: Node = get_nodes(group).new('NodeGroupInput')
@@ -39,7 +40,7 @@ def create_entity_alphatest_node_group(material: Material, is_first: bool) -> No
     if is_first:
         material.blend_method = 'CLIP'
     try:
-        return get_data_node_groups()['entity_alphatest']
+        return bpy.data.node_groups['entity_alphatest']
     except:  # pylint: disable=bare-except
         pass
     group, inputs, outputs = _create_node_group_defaults('entity_alphatest')
@@ -70,7 +71,7 @@ def create_entity_alphatest_one_sided_node_group(
         material.blend_method = 'CLIP'
         material.use_backface_culling = True
     try:
-        return get_data_node_groups()['entity_alphatest_one_sided']
+        return bpy.data.node_groups['entity_alphatest_one_sided']
     except:  # pylint: disable=bare-except
         pass
     group, inputs, outputs = _create_node_group_defaults(
@@ -104,7 +105,7 @@ def create_entity_node_group(material: Material, is_first: bool) -> NodeTree:
     # if is_first:
     #    pass
     try:
-        return get_data_node_groups()['entity']
+        return bpy.data.node_groups['entity']
     except:  # pylint: disable=bare-except
         pass
     group, inputs, outputs = _create_node_group_defaults('entity')
@@ -133,7 +134,7 @@ def create_entity_alphablend_node_group(material: Material, is_first: bool) -> N
         material.blend_method = 'BLEND'
         material.use_backface_culling = True
     try:
-        return get_data_node_groups()['entity_alphablend']
+        return bpy.data.node_groups['entity_alphablend']
     except:  # pylint: disable=bare-except
         pass
     group, inputs, outputs = _create_node_group_defaults('entity_alphablend')
@@ -162,7 +163,7 @@ def create_entity_emissive_node_group(material: Material, is_first: bool) -> Nod
     # if is_first:
     #    pass
     try:
-        return get_data_node_groups()['entity_emissive']
+        return bpy.data.node_groups['entity_emissive']
     except:  # pylint: disable=bare-except
         pass
     group, inputs, outputs = _create_node_group_defaults('entity_emissive')
@@ -202,7 +203,7 @@ def create_entity_emissive_alpha_node_group(material: Material, is_first: bool) 
     if is_first:
         material.blend_method = 'CLIP'
     try:
-        return get_data_node_groups()['entity_emissive_alpha']
+        return bpy.data.node_groups['entity_emissive_alpha']
     except:  # pylint: disable=bare-except
         pass
     group, inputs, outputs = _create_node_group_defaults('entity_emissive_alpha')
@@ -241,10 +242,10 @@ def create_material_mix_node_group() -> NodeTree:
     already, otherwise it returns existing node group.
     '''
     try:
-        return get_data_node_groups()['material_mix']
+        return bpy.data.node_groups['material_mix']
     except:  # pylint: disable=bare-except
         pass
-    group = get_data_node_groups().new('material_mix', 'ShaderNodeTree')
+    group = bpy.data.node_groups.new('material_mix', 'ShaderNodeTree')
     # create group inputs
     inputs = get_nodes(group).new('NodeGroupInput')
     inputs.location = [0, 0]
