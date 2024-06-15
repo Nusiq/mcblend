@@ -15,12 +15,13 @@ import numpy as np
 import numpy.typing as npt
 
 import bpy
-from bpy.types import MeshUVLoopLayer, Object, MeshPolygon, PoseBone, Armature
+from bpy.types import (
+    MeshUVLoopLayer, Object, MeshPolygon, PoseBone, Armature, Mesh)
 
 from mathutils import Vector, Matrix, Euler
 
 from .typed_bpy_access import (
-    get_data_edges, get_matrix,
+    get_matrix,
     get_pose_bones, get_scene_mcblend_uv_groups,
     get_data_polygons, get_data_vertices, get_matrix_local, get_matrix_world,
     get_mcblend, getitem, set_matrix_local,
@@ -427,12 +428,14 @@ class McblendObject:
         if self.obj_type != 'MESH':
             return tuple()
         obj = self.thisobj
+        # This assert should never raise an exception
+        assert isinstance(obj.data, Mesh), "Object is not a Mesh."
 
         # List that represents the grouping - index: the index of vertex
         # value: the pointer to identifier of a group of that vertex
         groups = [c_int(-1) for _ in range(len(get_data_vertices(obj)))]
 
-        for edge in get_data_edges(obj):
+        for edge in obj.data.edges:
             a, b = edge.vertices
             aptr, bptr = groups[a], groups[b]
             if aptr.value != -1:
@@ -616,8 +619,10 @@ class CubePolygons(NamedTuple):
             :class:`CubePolygons` should match Minecraft mirrored mapping format
             or not.
         '''
+        # This assert should never raise an exception
+        assert isinstance(cube.data, Mesh), "Object is not a Mesh"
         # 0. Check if mesh has 12 edges
-        if len(get_data_edges(cube)) != 12:
+        if len(cube.data.edges) != 12:
             raise ExporterException(
                 f"Object {cube.name.split('.')[0]} is not a cube. Number of edges != 12."
             )
