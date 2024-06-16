@@ -15,7 +15,6 @@ import numpy as np
 
 from .common import ModelOriginType
 from .typed_bpy_access import (
-    get_objects,
     get_scene_mcblend_project,
     get_scene_mcblend_events, get_selected_objects,
     get_mcblend,
@@ -760,7 +759,7 @@ def prepare_physics_simulation(context: Context) -> Dict[str, Any]:
             new_obj = cast(Object, new_obj)
             new_obj.data = child.obj_data.copy()
             new_obj.animation_data_clear()
-            get_objects(context.collection).link(new_obj)
+            context.collection.objects.link(new_obj)
 
             cubes_group.append(new_obj)
         bpy.ops.object.select_all(action='DESELECT')  # pyright: ignore[reportUnknownMemberType]
@@ -768,7 +767,7 @@ def prepare_physics_simulation(context: Context) -> Dict[str, Any]:
         if len(cubes_group) > 1:
             for c in cubes_group:
                 c.select_set(True)
-            get_objects(context.view_layer).active = cubes_group[-1]
+            context.view_layer.objects.active = cubes_group[-1]
             bpy.ops.object.join()  # pyright: ignore[reportUnknownMemberType]
             rigid_body = context.object
         elif len(cubes_group) == 1:
@@ -782,12 +781,12 @@ def prepare_physics_simulation(context: Context) -> Dict[str, Any]:
                 type='ORIGIN_CENTER_OF_VOLUME', center='MEDIAN')
             bpy.ops.object.visual_transform_apply()  # pyright: ignore[reportUnknownMemberType]
             matrix_world = rigid_body.matrix_world.copy()
-            rigid_body.parent = None  # type: ignore
+            rigid_body.parent = None
             rigid_body.matrix_world = matrix_world
-            get_objects(rigidbody_world.collection).link(rigid_body)
+            rigidbody_world.collection.objects.link(rigid_body)
             # Move to rigid body colleciton
-            get_objects(context.collection).unlink(rigid_body)
-            get_objects(rb_collection).link(rigid_body)
+            context.collection.objects.unlink(rigid_body)
+            rb_collection.objects.link(rigid_body)
             # Add keyframes to the rigid body "animated"/"kinematic" property (
             # enable it 1 frame after current frame)
             rigid_body.rigid_body.kinematic = True
@@ -805,13 +804,13 @@ def prepare_physics_simulation(context: Context) -> Dict[str, Any]:
             # Add bone parent empty
             empty = bpy.data.objects.new(
                 f'{bone.obj_name}_bp', None)  # bp - bone parent
-            get_objects(bp_collection).link(empty)
+            bp_collection.objects.link(empty)
             empty.empty_display_type = 'CONE'
             empty.empty_display_size = 0.1
             empty.matrix_world = bone.obj_matrix_world
             physics_objects_groups[bone].object_parent_empty = empty
             # Add "Copy Transforms" constraint to the bone
-            get_objects(context.view_layer).active = armature
+            context.view_layer.objects.active = armature
 
             # Pose mode
             bpy.ops.object.posemode_toggle()  # pyright: ignore[reportUnknownMemberType]
@@ -837,14 +836,14 @@ def prepare_physics_simulation(context: Context) -> Dict[str, Any]:
             bpy.ops.object.posemode_toggle()  # pyright: ignore[reportUnknownMemberType]
 
             # Add "Child of" constraint to parent empty
-            get_objects(context.view_layer).active = empty
+            context.view_layer.objects.active = empty
             set_constraint_property(
                 empty.constraints.new(type='CHILD_OF'),
                 'target', rigid_body)
 
         empty = bpy.data.objects.new(
             f'{bone.obj_name}_rbc', None)  # bp - bone parent
-        get_objects(rbc_collection).link(empty)
+        rbc_collection.objects.link(empty)
         empty.empty_display_type = 'PLAIN_AXES'
         empty.empty_display_size = 0.1
         empty.matrix_world = bone.obj_matrix_world

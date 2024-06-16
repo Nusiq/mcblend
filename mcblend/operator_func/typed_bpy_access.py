@@ -18,18 +18,6 @@ def get_mcblend(obj):
     '''
     return obj.mcblend
 
-def get_objects(obj):
-    '''
-    >>> obj.objects
-    '''
-    return obj.objects
-
-def get_parent(obj):
-    '''
-    >>> obj.parent
-    '''
-    return obj.parent
-
 def get_pixels(obj):
     '''
     >>> obj.pixels[:]

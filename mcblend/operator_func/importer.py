@@ -16,7 +16,7 @@ from bpy.types import (
 import bpy
 
 from .typed_bpy_access import (
-    get_objects, get_rotation_euler,
+    get_rotation_euler,
     get_pose_bones)
 from .common import (
     MINECRAFT_SCALE_FACTOR, CubePolygons, CubePolygon, MeshType)
@@ -1503,7 +1503,7 @@ class ImportGeometry:
                     # 3. Create an object and connect mesh to it, mark as
                     # polymesh
                     poly_mesh_obj = bpy.data.objects.new('poly_mesh', mesh)
-                    get_objects(context.collection).link(poly_mesh_obj)
+                    context.collection.objects.link(poly_mesh_obj)
                     bone.poly_mesh.blend_object = poly_mesh_obj
                     get_mcblend(poly_mesh_obj).mesh_type = (
                         MeshType.POLY_MESH.value)
@@ -1542,7 +1542,7 @@ class ImportGeometry:
             bone_obj = bone.blend_empty
             # 1. Parent bone keep transform
             if (
-                    bone.parent is not None and  # pyright: ignore[reportUnnecessaryComparison]
+                    bone.parent is not None and
                     bone.parent in self.bones):
                 parent_obj = cast(Object, self.bones[
                     bone.parent
@@ -1597,7 +1597,7 @@ class ImportGeometry:
         armature = self.build_with_empties(context)
         # This assert should never raise an Exception
         assert isinstance(armature.data, Armature), "Object is not Armature"
-        get_objects(context.view_layer).active = armature
+        context.view_layer.objects.active = armature
         bpy.ops.object.mode_set(  # pyright: ignore[reportUnknownMemberType]
             mode='EDIT')
         edit_bones = armature.data.edit_bones
@@ -1610,7 +1610,7 @@ class ImportGeometry:
         for bone in self.bones.values():
             # 1. Parent bone keep transform
             if (
-                    bone.parent is not None and  # pyright: ignore[reportUnnecessaryComparison]
+                    bone.parent is not None and
                     bone.parent in self.bones):
                 parent_obj = self.bones[bone.parent]
                 # context.view_layer.update()
@@ -1635,7 +1635,7 @@ class ImportGeometry:
             # transformation as the new one (bone)
             parent_inverse = obj.matrix_parent_inverse.copy()
 
-            obj.parent = armature  # type: ignore
+            obj.parent = armature
             obj.parent_bone = bone.name  # type: ignore
             obj.parent_type = 'BONE'  # type: ignore
 

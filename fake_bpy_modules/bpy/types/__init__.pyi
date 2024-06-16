@@ -60979,7 +60979,7 @@ class Object(ID, bpy_struct):
     :type: 'MotionPath'
     '''
 
-    parent: 'Object' = None
+    parent: 'Object' | None  # Mcblend
     ''' Parent object
 
     :type: 'Object'

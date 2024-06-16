@@ -829,7 +829,7 @@ class McblendObjectGroup:
         for bone in armature.data.bones:
             obj_id: ObjectId = ObjectId(armature.name, bone.name)
             parent_bone_id: Optional[ObjectId] = None
-            if bone.parent is not None:  # pyright: ignore[reportUnnecessaryComparison]
+            if bone.parent is not None:
                 parent_bone_id = ObjectId(armature.name, bone.parent.name)
             self.data[obj_id] = McblendObject(
                 thisobj_id=obj_id, thisobj=armature,
@@ -838,6 +838,8 @@ class McblendObjectGroup:
         for obj in armature.children:
             if obj.parent_type != 'BONE':
                 continue  # TODO - maybe a warning here?
+            if obj.parent is None:
+                continue
             parentobj_id = ObjectId(obj.parent.name, obj.parent_bone)
             obj_id = ObjectId(obj.name, "")
             if obj.type  == 'MESH':
