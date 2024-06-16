@@ -25,7 +25,7 @@ from .operator_func.typed_bpy_access import (
     set_scene_mcblend_active_event,
     get_scene_mcblend_uv_groups, get_selected_objects,
     set_scene_mcblend_active_uv_group, get_scene_mcblend_active_uv_group,
-    get_scene_mcblend_active_uv_groups_side, get_nla_tracks)
+    get_scene_mcblend_active_uv_groups_side)
 from .uv_data import get_unused_uv_group_name
 from .operator_func.material import MATERIALS_MAP
 
@@ -534,7 +534,7 @@ def load_animation_properties(animation: MCBLEND_AnimationProperties, context: C
         return
     anim_data = obj.animation_data
     if anim_data is not None:
-        object_nla_tracks = get_nla_tracks(anim_data)
+        object_nla_tracks = anim_data.nla_tracks
         for nla_track in object_nla_tracks:
             nla_track.mute = True
         for cached_nla_track in animation.nla_tracks:

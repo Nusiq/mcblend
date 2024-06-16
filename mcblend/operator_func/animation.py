@@ -15,7 +15,6 @@ from bpy.types import Action, Context
 import numpy as np
 
 from .typed_bpy_access import (
-    get_nla_tracks,
     get_strips, get_timeline_markers)
 from .json_tools import get_vect_json
 from .common import (
@@ -140,7 +139,7 @@ def _get_keyframes(context: Context, prec: int=1) -> List[float]:
             keyframes.add(round(keyframe, prec))
     if obj.animation_data.nla_tracks is None:  # type: ignore
         return sorted(keyframes)
-    for nla_track in get_nla_tracks(obj.animation_data):
+    for nla_track in obj.animation_data.nla_tracks:
         if nla_track.mute:
             continue
         for strip in get_strips(nla_track):

@@ -13,7 +13,7 @@ from .pyi_types import (
     ObjectDataMaterials,
     MeshUVLoopLayerData, ObjectDataEdges,
     ArmaturePoseBones, SceneTimelineMarkers,
-    AnimationDataNlaTracks, NlaTrackNlaStrips,
+    NlaTrackNlaStrips,
     ObjectDataPolygons, NodeTreeNodes)
 
 from ..object_data import (
@@ -26,8 +26,6 @@ def get_mcblend(obj: Object) -> MCBLEND_ObjectProperties: ...
 
 @overload
 def get_mcblend(obj: PoseBone) -> MCBLEND_BoneProperties: ...
-
-def get_nla_tracks(obj: AnimData) -> AnimationDataNlaTracks: ...
 
 def get_nodes(obj: NodeTree) -> NodeTreeNodes: ...
 

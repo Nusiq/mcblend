@@ -11,16 +11,6 @@ from bpy.types import (
 
 T = TypeVar("T")
 
-class AnimationDataNlaTracks(Sized):
-    '''
-    Fake class defined as a result of:
-    >>> object.nla_tracks
-    '''
-    def __getitem__(self, key: Any) -> NlaTrack: ...
-    def __iter__(self) -> Iterator[NlaTrack]: ...
-    def __len__(self) -> int: ...
-    def __contains__(self, key: str) -> bool: ...
-
 class ArmatureDataBones(Sized):
     '''
     Fake class defined as a result of:

@@ -18,12 +18,6 @@ def get_mcblend(obj):
     '''
     return obj.mcblend
 
-def get_nla_tracks(obj):
-    '''
-    >>> obj.nla_tracks
-    '''
-    return obj.nla_tracks
-
 def get_nodes(obj):
     '''
     >>> obj.nodes
