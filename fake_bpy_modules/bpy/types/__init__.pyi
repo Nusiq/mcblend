@@ -25554,38 +25554,59 @@ class PoseBone(bpy_struct):
     :type: typing.List[bool]
     '''
 
-    matrix: typing.Union[
-        typing.List[typing.List[float]], typing.
-        Tuple[typing.Tuple[float, float, float, float], typing.
-              Tuple[float, float, float, float], typing.
-              Tuple[float, float, float, float], typing.
-              Tuple[float, float, float, float]], 'mathutils.Matrix'] = None
-    ''' Final 4x4 matrix after constraints and drivers are applied, in the armature object space
+    @property
+    def matrix(self) -> 'mathutils.Matrix':  # Mcblend
+        '''Final 4x4 matrix after constraints and drivers are applied, in the armature object space'''
 
-    :type: typing.Union[typing.List[typing.List[float]], typing.Tuple[typing.Tuple[float, float, float, float], typing.Tuple[float, float, float, float], typing.Tuple[float, float, float, float], typing.Tuple[float, float, float, float]], 'mathutils.Matrix']
-    '''
+    @matrix.setter
+    def matrix(
+        self,
+        value: typing.Union[
+                typing.List[typing.List[float]],
+                typing.Tuple[
+                    typing.Tuple[float, float, float, float],
+                    typing.Tuple[float, float, float, float],
+                    typing.Tuple[float, float, float, float],
+                    typing.Tuple[float, float, float, float]],
+                    'mathutils.Matrix'
+                ]
+    ) -> None: ...
 
-    matrix_basis: typing.Union[
-        typing.List[typing.List[float]], typing.
-        Tuple[typing.Tuple[float, float, float, float], typing.
-              Tuple[float, float, float, float], typing.
-              Tuple[float, float, float, float], typing.
-              Tuple[float, float, float, float]], 'mathutils.Matrix'] = None
-    ''' Alternative access to location/scale/rotation relative to the parent and own rest bone
+    @property
+    def matrix_basis(self) -> 'mathutils.Matrix':  # Mcblend
+        '''Alternative access to location/scale/rotation relative to the parent and own rest bone'''
 
-    :type: typing.Union[typing.List[typing.List[float]], typing.Tuple[typing.Tuple[float, float, float, float], typing.Tuple[float, float, float, float], typing.Tuple[float, float, float, float], typing.Tuple[float, float, float, float]], 'mathutils.Matrix']
-    '''
+    @matrix_basis.setter
+    def matrix_basis(
+        self,
+        value: typing.Union[
+                typing.List[typing.List[float]],
+                typing.Tuple[
+                    typing.Tuple[float, float, float, float],
+                    typing.Tuple[float, float, float, float],
+                    typing.Tuple[float, float, float, float],
+                    typing.Tuple[float, float, float, float]],
+                    'mathutils.Matrix'
+                ]
+    ) -> None: ...
 
-    matrix_channel: typing.Union[
-        typing.List[typing.List[float]], typing.
-        Tuple[typing.Tuple[float, float, float, float], typing.
-              Tuple[float, float, float, float], typing.
-              Tuple[float, float, float, float], typing.
-              Tuple[float, float, float, float]], 'mathutils.Matrix'] = None
-    ''' 4x4 matrix of the bone's location/rotation/scale channels (including animation and drivers) and the effect of bone constraints
+    @property
+    def matrix_channel(self) -> 'mathutils.Matrix':  # Mcblend
+        '''4x4 matrix of the bone's location/rotation/scale channels (including animation and drivers) and the effect of bone constraints'''
 
-    :type: typing.Union[typing.List[typing.List[float]], typing.Tuple[typing.Tuple[float, float, float, float], typing.Tuple[float, float, float, float], typing.Tuple[float, float, float, float], typing.Tuple[float, float, float, float]], 'mathutils.Matrix']
-    '''
+    @matrix_channel.setter
+    def matrix_channel(
+        self,
+        value: typing.Union[
+                typing.List[typing.List[float]],
+                typing.Tuple[
+                    typing.Tuple[float, float, float, float],
+                    typing.Tuple[float, float, float, float],
+                    typing.Tuple[float, float, float, float],
+                    typing.Tuple[float, float, float, float]],
+                    'mathutils.Matrix'
+                ]
+    ) -> None: ...
 
     motion_path: 'MotionPath' = None
     ''' Motion Path for this element
@@ -60883,38 +60904,62 @@ class Object(ID, bpy_struct):
     :type: typing.Union[typing.List[typing.List[float]], typing.Tuple[typing.Tuple[float, float, float, float], typing.Tuple[float, float, float, float], typing.Tuple[float, float, float, float], typing.Tuple[float, float, float, float]], 'mathutils.Matrix']
     '''
 
-    matrix_local: typing.Union[
-        typing.List[typing.List[float]], typing.
-        Tuple[typing.Tuple[float, float, float, float], typing.
-              Tuple[float, float, float, float], typing.
-              Tuple[float, float, float, float], typing.
-              Tuple[float, float, float, float]], 'mathutils.Matrix'] = None
-    ''' Parent relative transformation matrix. Warning: Only takes into account object parenting, so e.g. in case of bone parenting you get a matrix relative to the Armature object, not to the actual parent bone
+    @property
+    def matrix_local(self) -> 'mathutils.Matrix': # Mcblend
+        '''Parent relative transformation matrix. Warning: Only takes into account object parenting, so e.g. in case of bone parenting you get a matrix relative to the Armature object, not to the actual parent bone'''
 
-    :type: typing.Union[typing.List[typing.List[float]], typing.Tuple[typing.Tuple[float, float, float, float], typing.Tuple[float, float, float, float], typing.Tuple[float, float, float, float], typing.Tuple[float, float, float, float]], 'mathutils.Matrix']
-    '''
+    @matrix_local.setter
+    def matrix_local(  # Mcblend
+        self,
+        value: typing.Union[
+            typing.List[typing.List[float]],
+            typing.Tuple[
+                typing.Tuple[float, float, float, float],
+                typing.Tuple[float, float, float, float],
+                typing.Tuple[float, float, float, float],
+                typing.Tuple[float, float, float, float]
+            ],
+            'mathutils.Matrix'
+        ] = None
+    ) -> None: ...
 
-    matrix_parent_inverse: typing.Union[
-        typing.List[typing.List[float]], typing.
-        Tuple[typing.Tuple[float, float, float, float], typing.
-              Tuple[float, float, float, float], typing.
-              Tuple[float, float, float, float], typing.
-              Tuple[float, float, float, float]], 'mathutils.Matrix'] = None
-    ''' Inverse of object's parent matrix at time of parenting
+    @property
+    def matrix_parent_inverse(self) -> 'mathutils.Matrix': # Mcblend
+        '''Inverse of object's parent matrix at time of parenting'''
 
-    :type: typing.Union[typing.List[typing.List[float]], typing.Tuple[typing.Tuple[float, float, float, float], typing.Tuple[float, float, float, float], typing.Tuple[float, float, float, float], typing.Tuple[float, float, float, float]], 'mathutils.Matrix']
-    '''
+    @matrix_parent_inverse.setter
+    def matrix_parent_inverse(  # Mcblend
+        self,
+        value: typing.Union[
+            typing.List[typing.List[float]],
+            typing.Tuple[
+                typing.Tuple[float, float, float, float],
+                typing.Tuple[float, float, float, float],
+                typing.Tuple[float, float, float, float],
+                typing.Tuple[float, float, float, float]
+            ],
+            'mathutils.Matrix'
+        ] = None
+    ) -> None: ...
 
-    matrix_world: typing.Union[
-        typing.List[typing.List[float]], typing.
-        Tuple[typing.Tuple[float, float, float, float], typing.
-              Tuple[float, float, float, float], typing.
-              Tuple[float, float, float, float], typing.
-              Tuple[float, float, float, float]], 'mathutils.Matrix'] = None
-    ''' Worldspace transformation matrix
+    @property
+    def matrix_world(self) -> 'mathutils.Matrix': # Mcblend
+        '''Worldspace transformation matrix'''
 
-    :type: typing.Union[typing.List[typing.List[float]], typing.Tuple[typing.Tuple[float, float, float, float], typing.Tuple[float, float, float, float], typing.Tuple[float, float, float, float], typing.Tuple[float, float, float, float]], 'mathutils.Matrix']
-    '''
+    @matrix_world.setter
+    def matrix_world(  # Mcblend
+        self,
+        value: typing.Union[
+            typing.List[typing.List[float]],
+            typing.Tuple[
+                typing.Tuple[float, float, float, float],
+                typing.Tuple[float, float, float, float],
+                typing.Tuple[float, float, float, float],
+                typing.Tuple[float, float, float, float]
+            ],
+            'mathutils.Matrix'
+        ] = None
+    ) -> None: ...
 
     mode: typing.Union[str, int] = None
     ''' Object interaction mode

@@ -21,10 +21,8 @@ from bpy.types import (
 from mathutils import Vector, Matrix, Euler
 
 from .typed_bpy_access import (
-    get_matrix,
     get_pose_bones, get_scene_mcblend_uv_groups,
-    get_matrix_local, get_matrix_world,
-    get_mcblend, getitem, set_matrix_local,
+    get_mcblend, getitem,
     neg, to_euler)
 
 from .texture_generator import Mask, ColorMask, get_masks_from_side
@@ -223,18 +221,17 @@ class McblendObject:
         The copy of the translation matrix (matrix_world) of the blender
         wrapped inside this object.
         '''
-        this_obj_matrix_world = get_matrix_world(self.thisobj).copy()
+        this_obj_matrix_world = self.thisobj.matrix_world.copy()
         if self.group.world_origin is not None:
             this_obj_matrix_world = (
-                get_matrix_world(self.group.world_origin).inverted() @
+                self.group.world_origin.matrix_world.inverted() @
                 this_obj_matrix_world
             )
         if self.thisobj.type == 'ARMATURE':
             return (
                 this_obj_matrix_world @
-                get_matrix(
-                    get_pose_bones(self.thisobj)[self.thisobj_id.bone_name]
-                ).copy()
+                get_pose_bones(
+                    self.thisobj)[self.thisobj_id.bone_name].matrix.copy()
             )
         return this_obj_matrix_world
 
@@ -793,7 +790,7 @@ class McblendObjectGroup:
         '''
         if self.world_origin is None:
             raise RuntimeError("World origin not defined")
-        return get_matrix_world(self.world_origin)
+        return self.world_origin.matrix_world
 
     def __len__(self):
         return len(self.data)
@@ -906,7 +903,7 @@ def apply_obj_transform_keep_origin(obj: Object):
     # This assert should never raise an Exception
     assert isinstance(obj.data, Mesh), "The object is not a Mesh"
     # Decompose object transformations
-    _, rot, scl = get_matrix_local(obj).decompose()
+    _, rot, scl = obj.matrix_local.decompose()
     # loc_mat = Matrix.Translation(loc)
     rot_mat = rot.to_matrix().to_4x4()
     scl_mat =  (
@@ -966,7 +963,7 @@ def fix_cube_rotation(obj: Object):
     # Counter rotate object around its origin
     counter_rotation = rotation_matrix.to_4x4().inverted()
 
-    loc, rot, scl = get_matrix_local(obj).decompose()
+    loc, rot, scl = obj.matrix_local.decompose()
     loc_mat = Matrix.Translation(loc)
     rot_mat = rot.to_matrix().to_4x4()
     scl_mat =  (
@@ -975,7 +972,7 @@ def fix_cube_rotation(obj: Object):
         Matrix.Scale(getitem(scl, 2),4, Vector([0,0,1]))
     )
 
-    set_matrix_local(obj, loc_mat @ counter_rotation @ rot_mat @ scl_mat)
+    obj.matrix_local = loc_mat @ counter_rotation @ rot_mat @ scl_mat
 
 def get_vect_json(arr: Iterable[float | int]) -> list[float]:
     '''

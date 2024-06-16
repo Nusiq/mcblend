@@ -16,10 +16,8 @@ from bpy.types import (
 import bpy
 
 from .typed_bpy_access import (
-    get_matrix_world,
     get_objects, get_rotation_euler,
-    set_matrix, set_matrix_parent_inverse, set_matrix_world,
-    get_matrix_parent_inverse, get_pose_bones)
+    get_pose_bones)
 from .common import (
     MINECRAFT_SCALE_FACTOR, CubePolygons, CubePolygon, MeshType)
 from .extra_types import Vector3di, Vector3d, Vector2d
@@ -1551,38 +1549,30 @@ class ImportGeometry:
                 ].blend_empty)
                 context.view_layer.update()
                 bone_obj.parent = parent_obj
-                set_matrix_parent_inverse(
-                    bone_obj,
-                    get_matrix_world(parent_obj).inverted()
-                )
+                bone_obj.matrix_parent_inverse = (
+                    parent_obj.matrix_world.inverted())
             # 2. Parent cubes keep transform
             for cube in bone.cubes:
                 cube_obj = cast(Object, cube.blend_cube)
                 context.view_layer.update()
                 cube_obj.parent = bone_obj
-                set_matrix_parent_inverse(
-                    cube_obj,
-                    get_matrix_world(bone_obj).inverted()
-                )
+                cube_obj.matrix_parent_inverse = (
+                    bone_obj.matrix_world.inverted())
             # 3. Parent poly_mesh keep transform
             if bone.poly_mesh is not None:
                 poly_mesh_obj = cast(Object, bone.poly_mesh.blend_object)
                 context.view_layer.update()
                 poly_mesh_obj.parent = bone_obj
-                set_matrix_parent_inverse(
-                    poly_mesh_obj,
-                    get_matrix_world(bone_obj).inverted()
-                )
+                poly_mesh_obj.matrix_parent_inverse = (
+                    bone_obj.matrix_world.inverted())
 
             # 4. Parent locators keep transform
             for locator in bone.locators:
                 locator_obj = cast(Object, locator.blend_empty)
                 context.view_layer.update()
                 locator_obj.parent = bone_obj
-                set_matrix_parent_inverse(
-                    locator_obj,
-                    get_matrix_world(bone_obj).inverted()
-                )
+                locator_obj.matrix_parent_inverse = (
+                    bone_obj.matrix_world.inverted())
 
         # Rotate objects
         for bone in self.bones.values():
@@ -1643,13 +1633,13 @@ class ImportGeometry:
             # Copy matrix_parent_inverse from previous parent
             # It can be copied because old parent (locator) has the same
             # transformation as the new one (bone)
-            parent_inverse = get_matrix_parent_inverse(obj).copy()
+            parent_inverse = obj.matrix_parent_inverse.copy()
 
             obj.parent = armature  # type: ignore
             obj.parent_bone = bone.name  # type: ignore
             obj.parent_type = 'BONE'  # type: ignore
 
-            set_matrix_parent_inverse(obj, parent_inverse)
+            obj.matrix_parent_inverse = parent_inverse
 
             # Correct parenting to tail of the bone instead of head
             context.view_layer.update()
@@ -1657,9 +1647,7 @@ class ImportGeometry:
             # pylint: disable=no-member
             correction = mathutils.Matrix.Translation(
                 blend_bone.head - blend_bone.tail)
-            set_matrix_world(
-                obj, correction @ get_matrix_world(obj)
-            )
+            obj.matrix_world = correction @ obj.matrix_world
 
         # Replace empties with bones
         for bone in self.bones.values():
@@ -1848,8 +1836,8 @@ def add_bone(
     import_bone_blend_empty = import_bone.blend_empty
     if import_bone_blend_empty is None:
         raise ValueError("Failed to add bone.")
-    matrix_world = get_matrix_world(import_bone_blend_empty)
+    matrix_world = import_bone_blend_empty.matrix_world
     bone = edit_bones.new(import_bone.name)
     bone.head = cast(List[float], (0.0, 0.0, 0.0))
     bone.tail = cast(List[float], (0.0, length, 0.0))
-    set_matrix(bone, matrix_world)
+    bone.matrix = matrix_world

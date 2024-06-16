@@ -12,30 +12,6 @@ The functions from this module are annotated in typed_bpy_access.pyi
 '''
 import bpy
 
-def get_matrix(obj):
-    '''
-    >>> obj.matrix
-    '''
-    return obj.matrix
-
-def get_matrix_local(obj):
-    '''
-    >>> obj.matrix_local
-    '''
-    return obj.matrix_local
-
-def get_matrix_parent_inverse(obj):
-    '''
-    >>> obj.matrix_parent_inverse
-    '''
-    return obj.matrix_parent_inverse
-
-def get_matrix_world(obj):
-    '''
-    >>> obj.matrix_world
-    '''
-    return obj.matrix_world
-
 def get_mcblend(obj):
     '''
     >>> obj.mcblend
@@ -214,30 +190,6 @@ def set_location(obj, value):
     >>> obj.location = value
     '''
     obj.location = value
-
-def set_matrix(obj, matrix):
-    '''
-    >>> obj.matrix = matrix
-    '''
-    obj.matrix = matrix
-
-def set_matrix_local(obj, matrix):
-    '''
-    >>> obj.matrix_local = matrix
-    '''
-    obj.matrix_local = matrix
-
-def set_matrix_parent_inverse(obj, matrix):
-    '''
-    >>> obj.matrix_parent_inverse = matrix
-    '''
-    obj.matrix_parent_inverse = matrix
-
-def set_matrix_world(obj, matrix):
-    '''
-    >>> obj.matrix_world = matrix
-    '''
-    obj.matrix_world = matrix
 
 def set_node_tree(obj, node_tree):
     '''

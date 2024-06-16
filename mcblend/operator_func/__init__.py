@@ -18,10 +18,9 @@ from .typed_bpy_access import (
     get_objects,
     get_scene_mcblend_project,
     get_scene_mcblend_events, get_selected_objects,
-    get_matrix_world, get_mcblend,
+    get_mcblend,
     new_collection,
     set_constraint_property, set_pixels,
-    set_matrix_parent_inverse, set_matrix_world,
     set_parent, set_pose_bone_constraint_property,
     get_pixels, set_view_layer_objects_active,
     get_view_layer_objects_active)
@@ -380,9 +379,9 @@ def inflate_objects(
             # Clear parent from children for a moment
             children = obj.children
             for child in children:
-                old_matrix = get_matrix_world(child).copy()
+                old_matrix = child.matrix_world.copy()
                 set_parent(child, None)
-                set_matrix_world(child, old_matrix)
+                child.matrix_world = old_matrix
 
             dimensions = np.array(obj.dimensions)
 
@@ -397,9 +396,7 @@ def inflate_objects(
             # Add children back and set their previous transformations
             for child in children:
                 set_parent(child, obj)
-                set_matrix_parent_inverse(
-                    child,
-                    get_matrix_world(obj).inverted())
+                child.matrix_parent_inverse = obj.matrix_world.inverted()
 
             counter += 1
     return counter
@@ -784,9 +781,9 @@ def prepare_physics_simulation(context: Context) -> Dict[str, Any]:
             bpy.ops.object.origin_set(  # pyright: ignore[reportUnknownMemberType]
                 type='ORIGIN_CENTER_OF_VOLUME', center='MEDIAN')
             bpy.ops.object.visual_transform_apply()  # pyright: ignore[reportUnknownMemberType]
-            matrix_world = get_matrix_world(rigid_body).copy()
+            matrix_world = rigid_body.matrix_world.copy()
             rigid_body.parent = None  # type: ignore
-            set_matrix_world(rigid_body, matrix_world)
+            rigid_body.matrix_world = matrix_world
             get_objects(rigidbody_world.collection).link(rigid_body)
             # Move to rigid body colleciton
             get_objects(context.collection).unlink(rigid_body)
@@ -811,7 +808,7 @@ def prepare_physics_simulation(context: Context) -> Dict[str, Any]:
             get_objects(bp_collection).link(empty)
             empty.empty_display_type = 'CONE'
             empty.empty_display_size = 0.1
-            set_matrix_world(empty, bone.obj_matrix_world)
+            empty.matrix_world = bone.obj_matrix_world
             physics_objects_groups[bone].object_parent_empty = empty
             # Add "Copy Transforms" constraint to the bone
             get_objects(context.view_layer).active = armature
@@ -850,8 +847,7 @@ def prepare_physics_simulation(context: Context) -> Dict[str, Any]:
         get_objects(rbc_collection).link(empty)
         empty.empty_display_type = 'PLAIN_AXES'
         empty.empty_display_size = 0.1
-        set_matrix_world(
-            empty, bone.obj_matrix_world)
+        empty.matrix_world = bone.obj_matrix_world
         physics_objects_groups[bone].rigid_body_constraint = empty
 
     # Add constraints to rigid body constraints empty
