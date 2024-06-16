@@ -98,17 +98,6 @@ class NlaTrackNlaStrips(Sized):
     def __len__(self) -> int: ...
 
 
-class NodeTreeNodes(Sized):
-    '''
-    Fake class defined as a result of:
-    >>> object.nodes
-    '''
-    def __getitem__(self, key: Any) -> Node: ...
-    def __iter__(self) -> Iterator[Node]: ...
-    def new(self, type_: str) -> Node: ...
-    def __len__(self) -> int: ...
-
-
 class ObjectDataEdges(Sized):
     '''
     Fake class defined as a result of:

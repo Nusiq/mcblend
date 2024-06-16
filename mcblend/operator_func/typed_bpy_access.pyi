@@ -14,7 +14,7 @@ from .pyi_types import (
     MeshUVLoopLayerData, ObjectDataEdges,
     ArmaturePoseBones, SceneTimelineMarkers,
     NlaTrackNlaStrips,
-    ObjectDataPolygons, NodeTreeNodes)
+    ObjectDataPolygons)
 
 from ..object_data import (
     MCBLEND_EventProperties, MCBLEND_ObjectProperties, MCBLEND_BoneProperties)
@@ -26,8 +26,6 @@ def get_mcblend(obj: Object) -> MCBLEND_ObjectProperties: ...
 
 @overload
 def get_mcblend(obj: PoseBone) -> MCBLEND_BoneProperties: ...
-
-def get_nodes(obj: NodeTree) -> NodeTreeNodes: ...
 
 @overload
 def get_objects(obj: Collection) -> CollectionObjects: ...

@@ -18,12 +18,6 @@ def get_mcblend(obj):
     '''
     return obj.mcblend
 
-def get_nodes(obj):
-    '''
-    >>> obj.nodes
-    '''
-    return obj.nodes
-
 def get_objects(obj):
     '''
     >>> obj.objects

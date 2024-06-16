@@ -8,7 +8,6 @@ from bpy.types import Image, Material, Node, NodeTree
 import bpy
 
 from .typed_bpy_access import (
-    get_nodes,
     new_material, set_default_value, set_image, set_interpolation,
     set_node_tree, set_operation, set_use_clamp)
 
@@ -18,13 +17,13 @@ def _create_node_group_defaults(name: str) -> Tuple[NodeTree, Node, Node]:
     group: NodeTree = bpy.data.node_groups.new(name, 'ShaderNodeTree')
 
     # create group inputs
-    inputs: Node = get_nodes(group).new('NodeGroupInput')
+    inputs: Node = group.nodes.new('NodeGroupInput')
     inputs.location = [0, 0]
     group.inputs.new('NodeSocketColor','Color')
     group.inputs.new('NodeSocketFloat','Alpha')
 
     # create group outputs
-    outputs: Node = get_nodes(group).new('NodeGroupOutput')
+    outputs: Node = group.nodes.new('NodeGroupOutput')
     outputs.location = [4*PADDING, 0]
     group.outputs.new('NodeSocketColor','Color')
     group.outputs.new('NodeSocketFloat','Alpha')
@@ -48,13 +47,13 @@ def create_entity_alphatest_node_group(material: Material, is_first: bool) -> No
     # In: Color-> Out: Color
     group.links.new(outputs.inputs[0], inputs.outputs[0])
     # In: Alpha -> Math[ADD] -> Math[FLOOR] -> Out: Alpha
-    math_node = get_nodes(group).new('ShaderNodeMath')
+    math_node = group.nodes.new('ShaderNodeMath')
     set_operation(math_node, 'GREATER_THAN')
     math_node.location = [1*PADDING, -1*PADDING]
     group.links.new(math_node.inputs[0], inputs.outputs[1])
     group.links.new(outputs.inputs[1], math_node.outputs[0])
     # RGB (black) -> Out: Emission
-    rgb_node = get_nodes(group).new("ShaderNodeRGB")
+    rgb_node = group.nodes.new("ShaderNodeRGB")
     set_default_value(rgb_node.outputs['Color'], [0, 0, 0, 1])  # black
     rgb_node.location = [2*PADDING, -2*PADDING]
     group.links.new(outputs.inputs[2], rgb_node.outputs[0])
@@ -80,13 +79,13 @@ def create_entity_alphatest_one_sided_node_group(
     # In: Color-> Out: Color
     group.links.new(outputs.inputs[0], inputs.outputs[0])
     # In: Alpha -> Math[ADD] -> Math[FLOOR] -> Out: Alpha
-    math_node = get_nodes(group).new('ShaderNodeMath')
+    math_node = group.nodes.new('ShaderNodeMath')
     set_operation(math_node, 'GREATER_THAN')
     math_node.location = [1*PADDING, -1*PADDING]
     group.links.new(math_node.inputs[0], inputs.outputs[1])
     group.links.new(outputs.inputs[1], math_node.outputs[0])
     # RGB (black) -> Out: Emission
-    rgb_node = get_nodes(group).new("ShaderNodeRGB")
+    rgb_node = group.nodes.new("ShaderNodeRGB")
     set_default_value(rgb_node.outputs['Color'], [0, 0, 0, 1])  # black
     rgb_node.location = [2*PADDING, -2*PADDING]
     group.links.new(outputs.inputs[2], rgb_node.outputs[0])
@@ -113,12 +112,12 @@ def create_entity_node_group(material: Material, is_first: bool) -> NodeTree:
     # In: Color-> Out: Color
     group.links.new(outputs.inputs[0], inputs.outputs[0])
     # Value (1.0) -> Out: Alpha
-    value_node = get_nodes(group).new("ShaderNodeValue")
+    value_node = group.nodes.new("ShaderNodeValue")
     set_default_value(value_node.outputs['Value'], 1.0)
     value_node.location = [2*PADDING, -1*PADDING]
     group.links.new(outputs.inputs[1], value_node.outputs[0])
     # RGB (black) -> Out: Emission
-    rgb_node = get_nodes(group).new("ShaderNodeRGB")
+    rgb_node = group.nodes.new("ShaderNodeRGB")
     set_default_value(rgb_node.outputs['Color'], [0, 0, 0, 1])  # black
     rgb_node.location = [2*PADDING, -2*PADDING]
     group.links.new(outputs.inputs[2], rgb_node.outputs[0])
@@ -144,7 +143,7 @@ def create_entity_alphablend_node_group(material: Material, is_first: bool) -> N
     # In: Alpha -> Out: Alpha
     group.links.new(outputs.inputs[1], inputs.outputs[1])
     # RGB (black) -> Out: Emission
-    rgb_node = get_nodes(group).new("ShaderNodeRGB")
+    rgb_node = group.nodes.new("ShaderNodeRGB")
     set_default_value(rgb_node.outputs['Color'], [0, 0, 0, 1])  # black
     rgb_node.location = [1*PADDING, -1*PADDING]
     group.links.new(outputs.inputs[2], rgb_node.outputs[0])
@@ -171,21 +170,21 @@ def create_entity_emissive_node_group(material: Material, is_first: bool) -> Nod
     # In: Color-> Out: Color
     group.links.new(outputs.inputs[0], inputs.outputs[0])
     # Value (1.0) -> Out: Alpha
-    value_node = get_nodes(group).new("ShaderNodeValue")
+    value_node = group.nodes.new("ShaderNodeValue")
     set_default_value(value_node.outputs['Value'], 1.0)
     value_node.location = [2*PADDING, -1*PADDING]
     group.links.new(outputs.inputs[1], value_node.outputs[0])
     # In: Color -> ... -> ... -> Vector[MULTIPLY][0] -> Out: Emission
-    vector_node = get_nodes(group).new('ShaderNodeVectorMath')
+    vector_node = group.nodes.new('ShaderNodeVectorMath')
     set_operation(vector_node, 'MULTIPLY')
     vector_node.location = [3*PADDING, -2*PADDING]
     group.links.new(vector_node.inputs[0], inputs.outputs[0])
     group.links.new(outputs.inputs[2], vector_node.outputs[0])
     # In: Alpha -> Math[MULTIPLY] -> Math[SUBTRACT][1] -> Vector[MULTIPLY][1]
-    math_1_node = get_nodes(group).new('ShaderNodeMath')
+    math_1_node = group.nodes.new('ShaderNodeMath')
     set_operation(math_1_node, 'MULTIPLY')
     math_1_node.location = [1*PADDING, -2*PADDING]
-    math_2_node = get_nodes(group).new('ShaderNodeMath')
+    math_2_node = group.nodes.new('ShaderNodeMath')
     set_operation(math_2_node, 'SUBTRACT')
     set_use_clamp(math_2_node, True)
     math_2_node.location = [2*PADDING, -2*PADDING]
@@ -211,22 +210,22 @@ def create_entity_emissive_alpha_node_group(material: Material, is_first: bool) 
     # In: Color-> Out: Color
     group.links.new(outputs.inputs[0], inputs.outputs[0])
     #  In: Alpha -> MATH[CEIL] -> Out: Alpha
-    math_3_node = get_nodes(group).new('ShaderNodeMath')
+    math_3_node = group.nodes.new('ShaderNodeMath')
     set_operation(math_3_node, 'CEIL')
     math_3_node.location = [2*PADDING, -1*PADDING]
     group.links.new(math_3_node.inputs[0], inputs.outputs[1])
     group.links.new(outputs.inputs[1], math_3_node.outputs[0])
     # In: Color -> ... -> ... -> Vector[MULTIPLY][0] -> Out: Emission
-    vector_node = get_nodes(group).new('ShaderNodeVectorMath')
+    vector_node = group.nodes.new('ShaderNodeVectorMath')
     set_operation(vector_node, 'MULTIPLY')
     vector_node.location = [3*PADDING, -2*PADDING]
     group.links.new(vector_node.inputs[0], inputs.outputs[0])
     group.links.new(outputs.inputs[2], vector_node.outputs[0])
     # In: Alpha -> Math[MULTIPLY] -> Math[SUBTRACT][1] -> Vector[MULTIPLY][1]
-    math_1_node = get_nodes(group).new('ShaderNodeMath')
+    math_1_node = group.nodes.new('ShaderNodeMath')
     set_operation(math_1_node, 'MULTIPLY')
     math_1_node.location = [1*PADDING, -2*PADDING]
-    math_2_node = get_nodes(group).new('ShaderNodeMath')
+    math_2_node = group.nodes.new('ShaderNodeMath')
     set_operation(math_2_node, 'SUBTRACT')
     set_use_clamp(math_2_node, True)
     math_2_node.location = [2*PADDING, -2*PADDING]
@@ -247,7 +246,7 @@ def create_material_mix_node_group() -> NodeTree:
         pass
     group = bpy.data.node_groups.new('material_mix', 'ShaderNodeTree')
     # create group inputs
-    inputs = get_nodes(group).new('NodeGroupInput')
+    inputs = group.nodes.new('NodeGroupInput')
     inputs.location = [0, 0]
     group.inputs.new('NodeSocketColor','Color1')
     group.inputs.new('NodeSocketColor','Color2')
@@ -257,14 +256,14 @@ def create_material_mix_node_group() -> NodeTree:
     group.inputs.new('NodeSocketFloat','Emission2')
 
     # create group outputs
-    outputs = get_nodes(group).new('NodeGroupOutput')
+    outputs = group.nodes.new('NodeGroupOutput')
     outputs.location = [2*PADDING, 0]
     group.outputs.new('NodeSocketColor','Color')
     group.outputs.new('NodeSocketFloat','Alpha')
     group.outputs.new('NodeSocketColor','Emission')
 
     # Mix colors (Color mix node)
-    mix_colors_node = get_nodes(group).new('ShaderNodeMixRGB')
+    mix_colors_node = group.nodes.new('ShaderNodeMixRGB')
     mix_colors_node.location = [1*PADDING, 1*PADDING]
     group.links.new(mix_colors_node.inputs['Color1'], inputs.outputs['Color1'])
     group.links.new(mix_colors_node.inputs['Color2'], inputs.outputs['Color2'])
@@ -272,7 +271,7 @@ def create_material_mix_node_group() -> NodeTree:
     group.links.new(outputs.inputs['Color'], mix_colors_node.outputs['Color'])
 
     # Mix alpha (Add and clamp aplha)
-    math_node = get_nodes(group).new('ShaderNodeMath')
+    math_node = group.nodes.new('ShaderNodeMath')
     set_operation(math_node, 'MAXIMUM')
     math_node.location = [1*PADDING, 0]
     # set_use_clamp(math_node, True)
@@ -281,7 +280,7 @@ def create_material_mix_node_group() -> NodeTree:
     group.links.new(outputs.inputs['Alpha'], math_node.outputs[0])
 
     # Mix emissions (Color mix node)
-    mix_emissions_node = get_nodes(group).new('ShaderNodeMixRGB')
+    mix_emissions_node = group.nodes.new('ShaderNodeMixRGB')
     mix_emissions_node.location = [1*PADDING, -1*PADDING]
     group.links.new(mix_emissions_node.inputs['Color1'], inputs.outputs['Emission1'])
     group.links.new(mix_emissions_node.inputs['Color2'], inputs.outputs['Emission2'])
@@ -476,8 +475,8 @@ def create_bone_material(
     material.blend_method = 'OPAQUE'
 
     node_tree = material.node_tree
-    output_node = get_nodes(node_tree)['Material Output']
-    bsdf_node = get_nodes(node_tree)["Principled BSDF"]
+    output_node = node_tree.nodes['Material Output']
+    bsdf_node = node_tree.nodes["Principled BSDF"]
     set_default_value(bsdf_node.inputs['Specular'], 0)
     set_default_value(bsdf_node.inputs['Sheen Tint'], 0)
     set_default_value(bsdf_node.inputs['Roughness'], 1)
@@ -496,10 +495,10 @@ def create_bone_material(
             continue
         # Reach this code only with OPAQUE_MATERIALS (executed onece)
         node_group_data = MATERIALS_MAP[true_material_name](material, i == 0)
-        node_group: Node = get_nodes(node_tree).new('ShaderNodeGroup')
+        node_group: Node = node_tree.nodes.new('ShaderNodeGroup')
         set_node_tree(node_group, node_group_data)
         node_group.location = [-3*PADDING, -i*PADDING]
-        image_node = get_nodes(node_tree).new('ShaderNodeTexImage')
+        image_node = node_tree.nodes.new('ShaderNodeTexImage')
         set_interpolation(image_node, 'Closest')
         set_image(image_node, img)
         image_node.location = [-4*PADDING, -i*PADDING]
@@ -521,10 +520,10 @@ def create_bone_material(
             except KeyError:
                 true_material_name = 'entity_alphatest'  # default
             node_group_data = MATERIALS_MAP[true_material_name](material, i == 0)
-            node_group = get_nodes(node_tree).new('ShaderNodeGroup')
+            node_group = node_tree.nodes.new('ShaderNodeGroup')
             set_node_tree(node_group, node_group_data)
             node_group.location = [-3*PADDING, -i*PADDING]
-            image_node = get_nodes(node_tree).new('ShaderNodeTexImage')
+            image_node = node_tree.nodes.new('ShaderNodeTexImage')
             set_interpolation(image_node, 'Closest')
             set_image(image_node, img)
             image_node.location = [-4*PADDING, -i*PADDING]
@@ -540,7 +539,7 @@ def create_bone_material(
     i = 0
     while True:
         if len(node_groups) > 1:
-            connection = get_nodes(node_tree).new('ShaderNodeGroup')
+            connection = node_tree.nodes.new('ShaderNodeGroup')
             set_node_tree(connection, create_material_mix_node_group())
             connection.location = [(i-2)*PADDING, -i*PADDING]
             bottom = node_groups.popleft()
