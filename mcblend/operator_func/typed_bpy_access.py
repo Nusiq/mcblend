@@ -12,12 +12,6 @@ The functions from this module are annotated in typed_bpy_access.pyi
 '''
 import bpy
 
-def get_material_slots(obj):
-    '''
-    >>> obj.material_slots
-    '''
-    return obj.material_slots
-
 def get_matrix(obj):
     '''
     >>> obj.matrix

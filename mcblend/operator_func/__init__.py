@@ -20,7 +20,7 @@ from .typed_bpy_access import (
     get_scene_mcblend_events, get_selected_objects,
     get_matrix_world, get_mcblend,
     new_collection,
-    get_material_slots, set_constraint_property, set_pixels,
+    set_constraint_property, set_pixels,
     set_matrix_parent_inverse, set_matrix_world,
     set_parent, set_pose_bone_constraint_property,
     get_pixels, set_view_layer_objects_active,
@@ -779,7 +779,7 @@ def prepare_physics_simulation(context: Context) -> Dict[str, Any]:
             rigid_body = cubes_group[0]
         # Move origin to the center of mass and rename the object
         if rigid_body is not None:
-            for material_slot in get_material_slots(rigid_body):
+            for material_slot in rigid_body.material_slots:
                 material_slot.material = None  # type: ignore
             bpy.ops.object.origin_set(  # pyright: ignore[reportUnknownMemberType]
                 type='ORIGIN_CENTER_OF_VOLUME', center='MEDIAN')
