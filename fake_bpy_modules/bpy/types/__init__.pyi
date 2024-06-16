@@ -490,6 +490,7 @@ class bpy_prop_array(typing.Generic[GenericType]):
         '''
         pass
 
+    @typing.overload
     def __getitem__(self, key: typing.Optional[typing.Union[int, str]]
                     ) -> 'GenericType':
         ''' 
@@ -499,6 +500,9 @@ class bpy_prop_array(typing.Generic[GenericType]):
         :rtype: 'GenericType'
         '''
         pass
+
+    @typing.overload
+    def __getitem__(self, key: slice) -> tuple['GenericType']: ...
 
     def __setitem__(self, key: typing.Optional[typing.Union[int, str]],
                     value: 'GenericType'):
@@ -58483,11 +58487,12 @@ class Image(ID, bpy_struct):
     :type: bpy_prop_collection['ImagePackedFile']
     '''
 
-    pixels: float = None
-    ''' Image buffer pixels in floating-point values
-
-    :type: float
-    '''
+    @property
+    def pixels(self) -> bpy_prop_array[float]:  # Mcblend
+        '''Image buffer pixels in floating-point values'''
+    
+    @pixels.setter
+    def pixels(self, value: typing.Collecction[float]) -> None: ... # Mcblend
 
     render_slots: 'RenderSlots' = None
     ''' Render slots of the image

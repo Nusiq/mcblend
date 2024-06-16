@@ -18,12 +18,6 @@ def get_mcblend(obj):
     '''
     return obj.mcblend
 
-def get_pixels(obj):
-    '''
-    >>> obj.pixels[:]
-    '''
-    return obj.pixels[:]
-
 def get_pose_bones(obj):
     '''
     >>> obj.pose.bones
@@ -192,12 +186,6 @@ def set_parent(obj, value):
     >>> obj.parent = value
     '''
     obj.parent = value
-
-def set_pixels(obj, pixels):
-    '''
-    >>> obj.pixels = pixels
-    '''
-    obj.pixels = pixels
 
 def set_pose_bone_constraint_property(constraint, name, value):
     '''

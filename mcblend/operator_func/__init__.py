@@ -19,9 +19,9 @@ from .typed_bpy_access import (
     get_scene_mcblend_events, get_selected_objects,
     get_mcblend,
     new_collection,
-    set_constraint_property, set_pixels,
+    set_constraint_property,
     set_parent, set_pose_bone_constraint_property,
-    get_pixels, set_view_layer_objects_active,
+    set_view_layer_objects_active,
     get_view_layer_objects_active)
 
 from .sqlite_bedrock_packs.better_json_tools import load_jsonc
@@ -188,7 +188,7 @@ def set_uvs(context: Context):
 
         for uv_cube in mapper.uv_boxes:
             uv_cube.paint_texture(arr, resolution)
-        set_pixels(image, arr.ravel())  # Apply texture pixels values
+        image.pixels = arr.ravel()  # Apply texture pixels values
 
     # Set blender UVs
     converter = CoordinatesConverter(
@@ -911,7 +911,7 @@ def merge_models(context: Context) -> None:
     # DIM0:up axis DIM1:right axis DIM2:rgba axis
     arr = np.zeros([image.size[1], image.size[0], 4])
     for merger in uv_mergers:
-        pixels = np.array(get_pixels(merger.base_image))
+        pixels = np.array(merger.base_image.pixels[:])
 
         pixels = pixels.reshape([
             merger.base_image_size[1], merger.base_image_size[0], 4
@@ -923,7 +923,7 @@ def merge_models(context: Context) -> None:
         min_y = mapper.height-merger.uv[1]-merger.base_image_size[1]
         max_y = mapper.height-merger.uv[1]
         arr[min_y:max_y, min_x:max_x] = pixels
-    set_pixels(image, arr.ravel())  # Apply texture pixels values
+    image.pixels = arr.ravel()  # Apply texture pixels values
 
     # APPLY THE UVs
     converter = CoordinatesConverter(
