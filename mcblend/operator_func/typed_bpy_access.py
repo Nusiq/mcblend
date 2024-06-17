@@ -65,12 +65,6 @@ def get_scene_mcblend_uv_groups(context):
     '''
     return context.scene.mcblend_uv_groups
 
-def set_image(obj, image):
-    '''
-    >>> obj.image = image
-    '''
-    obj.image = image
-
 def set_interpolation(obj, interpolation):
     '''
     >>> obj.interpolation = interpolation

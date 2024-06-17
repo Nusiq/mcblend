@@ -22001,6 +22001,8 @@ class Node(bpy_struct):
     :type: bool
     '''
 
+    image: 'Image' | None  # Mcblend
+
     inputs: 'NodeInputs' = None
     ''' 
 
