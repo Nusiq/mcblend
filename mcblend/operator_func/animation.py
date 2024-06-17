@@ -46,7 +46,7 @@ def _pick_closest_rotation(
     if original_rotation is None:
         original_rotation = np.array([0.0, 0.0, 0.0])
 
-    def _pick_closet_location(
+    def _pick_closest_location(
             base: NumpyTable, close_to: NumpyTable
     ) -> Tuple[float, NumpyTable]:
         choice: NumpyTable = base
@@ -69,8 +69,8 @@ def _pick_closest_rotation(
                 distance, choice = new_distance, new_choice
         return cast(float, distance), choice
 
-    distance1, choice1 = _pick_closet_location(base, close_to)
-    distance2, choice2 = _pick_closet_location(  # Counterintuitive but works
+    distance1, choice1 = _pick_closest_location(base, close_to)
+    distance2, choice2 = _pick_closest_location(  # Counterintuitive but works
         (
             base +
             np.array([180, 180 + original_rotation[1] * 2, 180])) *
