@@ -18,12 +18,6 @@ def get_mcblend(obj):
     '''
     return obj.mcblend
 
-def get_pose_bones(obj):
-    '''
-    >>> obj.pose.bones
-    '''
-    return obj.pose.bones
-
 def get_rotation_euler(obj):
     '''
     >>> obj.rotation_euler

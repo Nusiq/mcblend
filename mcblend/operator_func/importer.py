@@ -16,8 +16,7 @@ from bpy.types import (
 import bpy
 
 from .typed_bpy_access import (
-    get_rotation_euler,
-    get_pose_bones)
+    get_rotation_euler)
 from .common import (
     MINECRAFT_SCALE_FACTOR, CubePolygons, CubePolygon, MeshType)
 from .extra_types import Vector3di, Vector3d, Vector2d
@@ -1618,7 +1617,7 @@ class ImportGeometry:
         bpy.ops.object.mode_set(mode='OBJECT')  # pyright: ignore[reportUnknownMemberType]
 
         # Add bindings to pose bones
-        pose_bones = get_pose_bones(armature)
+        pose_bones = armature.pose.bones
         for bone in self.bones.values():
             if bone.binding is not None:  # pyright: ignore[reportUnnecessaryComparison]
                 get_mcblend(pose_bones[bone.name]).binding = bone.binding
@@ -1643,7 +1642,7 @@ class ImportGeometry:
 
             # Correct parenting to tail of the bone instead of head
             context.view_layer.update()
-            blend_bone = get_pose_bones(armature)[bone.name]
+            blend_bone = armature.pose.bones[bone.name]
             # pylint: disable=no-member
             correction = mathutils.Matrix.Translation(
                 blend_bone.head - blend_bone.tail)

@@ -21,7 +21,7 @@ from bpy.types import (
 from mathutils import Vector, Matrix, Euler
 
 from .typed_bpy_access import (
-    get_pose_bones, get_scene_mcblend_uv_groups,
+    get_scene_mcblend_uv_groups,
     get_mcblend, getitem,
     neg, to_euler)
 
@@ -191,13 +191,13 @@ class McblendObject:
     @property
     def this_pose_bone(self) -> PoseBone:
         '''The pose bone of this object (doesn't work for non-bone objects)'''
-        return get_pose_bones(self.thisobj)[self.thisobj_id.bone_name]
+        return self.thisobj.pose.bones[self.thisobj_id.bone_name]
 
     @property
     def obj_name(self) -> str:
         '''The name of this object used for exporting to Minecraft model.'''
         if self.thisobj.type == 'ARMATURE':
-            return get_pose_bones(self.thisobj)[
+            return self.thisobj.pose.bones[
                 self.thisobj_id.bone_name
             ].name
         return self.thisobj.name
@@ -230,8 +230,7 @@ class McblendObject:
         if self.thisobj.type == 'ARMATURE':
             return (
                 this_obj_matrix_world @
-                get_pose_bones(
-                    self.thisobj)[self.thisobj_id.bone_name].matrix.copy()
+                self.thisobj.pose.bones[self.thisobj_id.bone_name].matrix.copy()
             )
         return this_obj_matrix_world
 
