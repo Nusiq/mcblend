@@ -65,14 +65,6 @@ def get_scene_mcblend_uv_groups(context):
     '''
     return context.scene.mcblend_uv_groups
 
-def set_constraint_property(constraint, name, value):
-    '''
-    Sets the property of the constraint
-
-    >>> constraint.<name> = value
-    '''
-    setattr(constraint, name, value)
-
 def set_default_value(obj, value):
     '''
     >>> obj.default_value = value

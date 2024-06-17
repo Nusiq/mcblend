@@ -18,7 +18,6 @@ from .typed_bpy_access import (
     get_scene_mcblend_project,
     get_scene_mcblend_events,
     get_mcblend,
-    set_constraint_property,
     set_parent, set_pose_bone_constraint_property,
     set_view_layer_objects_active)
 
@@ -835,9 +834,7 @@ def prepare_physics_simulation(context: Context) -> Dict[str, Any]:
 
             # Add "Child of" constraint to parent empty
             context.view_layer.objects.active = empty
-            set_constraint_property(
-                empty.constraints.new(type='CHILD_OF'),
-                'target', rigid_body)
+            empty.constraints.new(type='CHILD_OF').target = rigid_body
 
         empty = bpy.data.objects.new(
             f'{bone.obj_name}_rbc', None)  # bp - bone parent
