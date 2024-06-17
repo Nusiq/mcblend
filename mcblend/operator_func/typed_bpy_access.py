@@ -65,22 +65,6 @@ def get_scene_mcblend_uv_groups(context):
     '''
     return context.scene.mcblend_uv_groups
 
-def new_collection(name):
-    '''
-    Creates new collection with given name
-
-    >>> bpy.data.collections.new(name)
-    '''
-    return bpy.data.collections.new(name)
-
-def new_material(name: str):
-    '''
-    Creates new material with given name
-
-    >>> bpy.data.materials.new(name)
-    '''
-    return bpy.data.materials.new(name)
-
 def set_constraint_property(constraint, name, value):
     '''
     Sets the property of the constraint

@@ -8,7 +8,7 @@ from bpy.types import Image, Material, Node, NodeTree
 import bpy
 
 from .typed_bpy_access import (
-    new_material, set_default_value, set_image, set_interpolation,
+    set_default_value, set_image, set_interpolation,
     set_node_tree, set_operation, set_use_clamp)
 
 PADDING = 300
@@ -470,7 +470,7 @@ def create_bone_material(
         material name used by render controllers that display the bone.
     :returns: Material for Blender object that represent Minecraft bone.
     '''
-    material: Material = new_material(material_name)
+    material: Material = bpy.data.materials.new(material_name)
     material.use_nodes = True
     material.blend_method = 'OPAQUE'
 
