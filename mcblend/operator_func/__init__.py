@@ -21,8 +21,7 @@ from .typed_bpy_access import (
     new_collection,
     set_constraint_property,
     set_parent, set_pose_bone_constraint_property,
-    set_view_layer_objects_active,
-    get_view_layer_objects_active)
+    set_view_layer_objects_active)
 
 from .sqlite_bedrock_packs.better_json_tools import load_jsonc
 
@@ -945,7 +944,7 @@ def merge_models(context: Context) -> None:
         obj.select_set(True)
     bpy.ops.object.join()  # pyright: ignore[reportUnknownMemberType]
     # CREATE A NEW RENDER CONTROLLER FOR THE MODEL
-    active_obj = get_view_layer_objects_active(context)
+    active_obj = context.view_layer.objects.active
     rcs = get_mcblend(active_obj).render_controllers
     rcs.clear()
     rc = rcs.add()
