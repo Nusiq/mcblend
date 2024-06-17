@@ -22015,6 +22015,8 @@ class Node(bpy_struct):
     :type: bpy_prop_collection['NodeLink']
     '''
 
+    interpolation: str # Mcblend
+
     label: typing.Union[str, typing.Any] = None
     ''' Optional custom node label
 

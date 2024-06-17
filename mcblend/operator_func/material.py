@@ -8,7 +8,6 @@ from bpy.types import Image, Material, Node, NodeTree
 import bpy
 
 from .typed_bpy_access import (
-    set_interpolation,
     set_node_tree, set_operation, set_use_clamp)
 
 PADDING = 300
@@ -499,7 +498,7 @@ def create_bone_material(
         set_node_tree(node_group, node_group_data)
         node_group.location = [-3*PADDING, -i*PADDING]
         image_node = node_tree.nodes.new('ShaderNodeTexImage')
-        set_interpolation(image_node, 'Closest')
+        image_node.interpolation = 'Closest'
         image_node.image = img
         image_node.location = [-4*PADDING, -i*PADDING]
         node_tree.links.new(
@@ -524,7 +523,7 @@ def create_bone_material(
             set_node_tree(node_group, node_group_data)
             node_group.location = [-3*PADDING, -i*PADDING]
             image_node = node_tree.nodes.new('ShaderNodeTexImage')
-            set_interpolation(image_node, 'Closest')
+            image_node.interpolation = 'Closest'
             image_node.image = img
             image_node.location = [-4*PADDING, -i*PADDING]
             node_tree.links.new(
