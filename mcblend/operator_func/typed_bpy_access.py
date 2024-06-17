@@ -65,12 +65,6 @@ def get_scene_mcblend_uv_groups(context):
     '''
     return context.scene.mcblend_uv_groups
 
-def get_timeline_markers(obj):
-    '''
-    >>> obj.timeline_markers
-    '''
-    return obj.timeline_markers
-
 def get_view_layer_objects_active(context):
     '''
     >>> context.view_layer.objects.active

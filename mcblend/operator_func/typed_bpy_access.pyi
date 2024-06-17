@@ -12,7 +12,7 @@ from .pyi_types import (
     CollectionProperty, DataMeshes, ArmatureDataBones, DataImages,
     ObjectDataMaterials,
     MeshUVLoopLayerData, ObjectDataEdges,
-    ArmaturePoseBones, SceneTimelineMarkers,
+    ArmaturePoseBones,
     ObjectDataPolygons)
 
 from ..object_data import (
@@ -40,8 +40,6 @@ def get_scene_mcblend_project(context: Context) ->\
 
 def get_scene_mcblend_uv_groups(context: Context) ->\
     CollectionProperty[MCBLEND_UvGroupProperties]: ...
-
-def get_timeline_markers(obj: Scene) -> SceneTimelineMarkers: ...
 
 def get_view_layer_objects_active(context: Context) -> Object: ...
 

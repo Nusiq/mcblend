@@ -14,7 +14,6 @@ from bpy.types import Action, Context
 
 import numpy as np
 
-from .typed_bpy_access import get_timeline_markers
 from .json_tools import get_vect_json
 from .common import (
     AnimationLoopType, MINECRAFT_SCALE_FACTOR, MCObjType, McblendObjectGroup,
@@ -304,7 +303,7 @@ class AnimationExport:
                     curr_pose.load_poses(object_properties)
                     self.poses[keyframe] = curr_pose
                 # Load sound effects and particle effects
-                for timeline_marker in get_timeline_markers(context.scene):
+                for timeline_marker in context.scene.timeline_markers:
                     if timeline_marker.name not in self.effect_events:
                         continue
                     sound, particle = self.effect_events[timeline_marker.name]
