@@ -22042,6 +22042,8 @@ class Node(bpy_struct):
     :type: typing.Union[str, typing.Any]
     '''
 
+    node_tree: 'NodeTree'  # Mcblend
+
     outputs: 'NodeOutputs' = None
     ''' 
 

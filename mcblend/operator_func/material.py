@@ -8,7 +8,7 @@ from bpy.types import Image, Material, Node, NodeTree
 import bpy
 
 from .typed_bpy_access import (
-    set_node_tree, set_operation, set_use_clamp)
+    set_operation, set_use_clamp)
 
 PADDING = 300
 
@@ -495,7 +495,7 @@ def create_bone_material(
         # Reach this code only with OPAQUE_MATERIALS (executed onece)
         node_group_data = MATERIALS_MAP[true_material_name](material, i == 0)
         node_group: Node = node_tree.nodes.new('ShaderNodeGroup')
-        set_node_tree(node_group, node_group_data)
+        node_group.node_tree = node_group_data
         node_group.location = [-3*PADDING, -i*PADDING]
         image_node = node_tree.nodes.new('ShaderNodeTexImage')
         image_node.interpolation = 'Closest'
@@ -520,7 +520,7 @@ def create_bone_material(
                 true_material_name = 'entity_alphatest'  # default
             node_group_data = MATERIALS_MAP[true_material_name](material, i == 0)
             node_group = node_tree.nodes.new('ShaderNodeGroup')
-            set_node_tree(node_group, node_group_data)
+            node_group.node_tree = node_group_data
             node_group.location = [-3*PADDING, -i*PADDING]
             image_node = node_tree.nodes.new('ShaderNodeTexImage')
             image_node.interpolation = 'Closest'
@@ -539,7 +539,7 @@ def create_bone_material(
     while True:
         if len(node_groups) > 1:
             connection = node_tree.nodes.new('ShaderNodeGroup')
-            set_node_tree(connection, create_material_mix_node_group())
+            connection.node_tree = create_material_mix_node_group()
             connection.location = [(i-2)*PADDING, -i*PADDING]
             bottom = node_groups.popleft()
             top = node_groups.popleft()

@@ -65,12 +65,6 @@ def get_scene_mcblend_uv_groups(context):
     '''
     return context.scene.mcblend_uv_groups
 
-def set_node_tree(obj, node_tree):
-    '''
-    >>> obj.node_tree = node_tree
-    '''
-    obj.node_tree = node_tree
-
 def set_operation(obj, operation):
     '''
     >>> obj.operation = operation
