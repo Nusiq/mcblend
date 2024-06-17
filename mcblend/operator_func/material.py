@@ -8,7 +8,7 @@ from bpy.types import Image, Material, Node, NodeTree
 import bpy
 
 from .typed_bpy_access import (
-    set_default_value, set_image, set_interpolation,
+    set_image, set_interpolation,
     set_node_tree, set_operation, set_use_clamp)
 
 PADDING = 300
@@ -54,7 +54,7 @@ def create_entity_alphatest_node_group(material: Material, is_first: bool) -> No
     group.links.new(outputs.inputs[1], math_node.outputs[0])
     # RGB (black) -> Out: Emission
     rgb_node = group.nodes.new("ShaderNodeRGB")
-    set_default_value(rgb_node.outputs['Color'], [0, 0, 0, 1])  # black
+    rgb_node.outputs['Color'].default_value = [0, 0, 0, 1]  # black
     rgb_node.location = [2*PADDING, -2*PADDING]
     group.links.new(outputs.inputs[2], rgb_node.outputs[0])
 
@@ -86,7 +86,7 @@ def create_entity_alphatest_one_sided_node_group(
     group.links.new(outputs.inputs[1], math_node.outputs[0])
     # RGB (black) -> Out: Emission
     rgb_node = group.nodes.new("ShaderNodeRGB")
-    set_default_value(rgb_node.outputs['Color'], [0, 0, 0, 1])  # black
+    rgb_node.outputs['Color'].default_value = [0, 0, 0, 1]  # black
     rgb_node.location = [2*PADDING, -2*PADDING]
     group.links.new(outputs.inputs[2], rgb_node.outputs[0])
 
@@ -113,12 +113,12 @@ def create_entity_node_group(material: Material, is_first: bool) -> NodeTree:
     group.links.new(outputs.inputs[0], inputs.outputs[0])
     # Value (1.0) -> Out: Alpha
     value_node = group.nodes.new("ShaderNodeValue")
-    set_default_value(value_node.outputs['Value'], 1.0)
+    value_node.outputs['Value'].default_value = 1.0
     value_node.location = [2*PADDING, -1*PADDING]
     group.links.new(outputs.inputs[1], value_node.outputs[0])
     # RGB (black) -> Out: Emission
     rgb_node = group.nodes.new("ShaderNodeRGB")
-    set_default_value(rgb_node.outputs['Color'], [0, 0, 0, 1])  # black
+    rgb_node.outputs['Color'].default_value = [0, 0, 0, 1]  # black
     rgb_node.location = [2*PADDING, -2*PADDING]
     group.links.new(outputs.inputs[2], rgb_node.outputs[0])
 
@@ -144,7 +144,7 @@ def create_entity_alphablend_node_group(material: Material, is_first: bool) -> N
     group.links.new(outputs.inputs[1], inputs.outputs[1])
     # RGB (black) -> Out: Emission
     rgb_node = group.nodes.new("ShaderNodeRGB")
-    set_default_value(rgb_node.outputs['Color'], [0, 0, 0, 1])  # black
+    rgb_node.outputs['Color'].default_value = [0, 0, 0, 1]  # black
     rgb_node.location = [1*PADDING, -1*PADDING]
     group.links.new(outputs.inputs[2], rgb_node.outputs[0])
 
@@ -171,7 +171,7 @@ def create_entity_emissive_node_group(material: Material, is_first: bool) -> Nod
     group.links.new(outputs.inputs[0], inputs.outputs[0])
     # Value (1.0) -> Out: Alpha
     value_node = group.nodes.new("ShaderNodeValue")
-    set_default_value(value_node.outputs['Value'], 1.0)
+    value_node.outputs['Value'].default_value =  1.0
     value_node.location = [2*PADDING, -1*PADDING]
     group.links.new(outputs.inputs[1], value_node.outputs[0])
     # In: Color -> ... -> ... -> Vector[MULTIPLY][0] -> Out: Emission
@@ -477,9 +477,9 @@ def create_bone_material(
     node_tree = material.node_tree
     output_node = node_tree.nodes['Material Output']
     bsdf_node = node_tree.nodes["Principled BSDF"]
-    set_default_value(bsdf_node.inputs['Specular'], 0)
-    set_default_value(bsdf_node.inputs['Sheen Tint'], 0)
-    set_default_value(bsdf_node.inputs['Roughness'], 1)
+    bsdf_node.inputs['Specular'].default_value = 0
+    bsdf_node.inputs['Sheen Tint'].default_value = 0
+    bsdf_node.inputs['Roughness'].default_value = 1
 
     node_groups: Deque[Node] = deque()
     # Test for opaque materials, if you don't find eny enter second loop

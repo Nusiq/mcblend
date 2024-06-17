@@ -65,12 +65,6 @@ def get_scene_mcblend_uv_groups(context):
     '''
     return context.scene.mcblend_uv_groups
 
-def set_default_value(obj, value):
-    '''
-    >>> obj.default_value = value
-    '''
-    obj.default_value = value
-
 def set_image(obj, image):
     '''
     >>> obj.image = image

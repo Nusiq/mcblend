@@ -22480,6 +22480,8 @@ class NodeSocket(bpy_struct):
     :type: typing.Union[str, typing.Any]
     '''
 
+    default_value: int | float | Iterable[float] | Iterable[int]  # Mcblend
+
     description: typing.Union[str, typing.Any] = None
     ''' Socket tooltip
 
