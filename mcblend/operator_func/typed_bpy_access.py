@@ -65,12 +65,6 @@ def get_scene_mcblend_uv_groups(context):
     '''
     return context.scene.mcblend_uv_groups
 
-def get_strips(obj):
-    '''
-    >>> obj.strips
-    '''
-    return obj.strips
-
 def get_timeline_markers(obj):
     '''
     >>> obj.timeline_markers

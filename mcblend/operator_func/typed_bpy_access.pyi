@@ -13,7 +13,6 @@ from .pyi_types import (
     ObjectDataMaterials,
     MeshUVLoopLayerData, ObjectDataEdges,
     ArmaturePoseBones, SceneTimelineMarkers,
-    NlaTrackNlaStrips,
     ObjectDataPolygons)
 
 from ..object_data import (
@@ -41,8 +40,6 @@ def get_scene_mcblend_project(context: Context) ->\
 
 def get_scene_mcblend_uv_groups(context: Context) ->\
     CollectionProperty[MCBLEND_UvGroupProperties]: ...
-
-def get_strips(obj: NlaTrack) -> NlaTrackNlaStrips: ...
 
 def get_timeline_markers(obj: Scene) -> SceneTimelineMarkers: ...
 

@@ -14,8 +14,7 @@ from bpy.types import Action, Context
 
 import numpy as np
 
-from .typed_bpy_access import (
-    get_strips, get_timeline_markers)
+from .typed_bpy_access import get_timeline_markers
 from .json_tools import get_vect_json
 from .common import (
     AnimationLoopType, MINECRAFT_SCALE_FACTOR, MCObjType, McblendObjectGroup,
@@ -142,7 +141,7 @@ def _get_keyframes(context: Context, prec: int=1) -> List[float]:
     for nla_track in obj.animation_data.nla_tracks:
         if nla_track.mute:
             continue
-        for strip in get_strips(nla_track):
+        for strip in nla_track.strips:
             if strip.type != 'CLIP':
                 continue
             strip_action_keyframes = get_action_keyframes(strip.action)

@@ -88,16 +88,6 @@ class MeshUVLoopLayerData(Sized):
     def __len__(self) -> int: ...
 
 
-class NlaTrackNlaStrips(Sized):
-    '''
-    Fake class defined as a result of:
-    >>> object.strips
-    '''
-    def __getitem__(self, key: Any) -> NlaStrip: ...
-    def __iter__(self) -> Iterator[NlaStrip]: ...
-    def __len__(self) -> int: ...
-
-
 class ObjectDataEdges(Sized):
     '''
     Fake class defined as a result of:
