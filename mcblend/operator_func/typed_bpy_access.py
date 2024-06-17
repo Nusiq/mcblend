@@ -65,12 +65,6 @@ def get_scene_mcblend_uv_groups(context):
     '''
     return context.scene.mcblend_uv_groups
 
-def getitem(obj, index):
-    '''
-    >>> obj[index]
-    '''
-    return obj[index]
-
 def neg(a):
     '''
     >>> -a

@@ -22,7 +22,7 @@ from mathutils import Vector, Matrix, Euler
 
 from .typed_bpy_access import (
     get_scene_mcblend_uv_groups,
-    get_mcblend, getitem,
+    get_mcblend,
     neg, to_euler)
 
 from .texture_generator import Mask, ColorMask, get_masks_from_side
@@ -908,9 +908,9 @@ def apply_obj_transform_keep_origin(obj: Object):
     # loc_mat = Matrix.Translation(loc)
     rot_mat = rot.to_matrix().to_4x4()
     scl_mat =  (
-        Matrix.Scale(getitem(scl, 0), 4, Vector([1,0,0])) @
-        Matrix.Scale(getitem(scl, 1), 4, Vector([0,1,0])) @
-        Matrix.Scale(getitem(scl, 2), 4, Vector([0,0,1]))
+        Matrix.Scale(scl[0], 4, Vector([1,0,0])) @
+        Matrix.Scale(scl[1], 4, Vector([0,1,0])) @
+        Matrix.Scale(scl[2], 4, Vector([0,0,1]))
     )
     for vertex in obj.data.vertices:
         vertex.co = (rot_mat @ scl_mat) @ vertex.co
@@ -968,9 +968,9 @@ def fix_cube_rotation(obj: Object):
     loc_mat = Matrix.Translation(loc)
     rot_mat = rot.to_matrix().to_4x4()
     scl_mat =  (
-        Matrix.Scale(getitem(scl, 0),4, Vector([1,0,0])) @
-        Matrix.Scale(getitem(scl, 1),4, Vector([0,1,0])) @
-        Matrix.Scale(getitem(scl, 2),4, Vector([0,0,1]))
+        Matrix.Scale(scl[0],4, Vector([1,0,0])) @
+        Matrix.Scale(scl[1],4, Vector([0,1,0])) @
+        Matrix.Scale(scl[2],4, Vector([0,0,1]))
     )
 
     obj.matrix_local = loc_mat @ counter_rotation @ rot_mat @ scl_mat
