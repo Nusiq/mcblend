@@ -25636,13 +25636,15 @@ class PoseBone(bpy_struct):
     :type: bpy_prop_array[float]
     '''
 
-    rotation_euler: typing.Union[typing.List[float], typing.
-                                 Tuple[float, float, float],
-                                 'mathutils.Euler'] = None
-    ''' Rotation in Eulers
+    @property
+    def rotation_euler(self) -> 'mathutils.Euler':  # Mcblend
+        '''Rotation in Eulers'''
 
-    :type: typing.Union[typing.List[float], typing.Tuple[float, float, float], 'mathutils.Euler']
-    '''
+    @rotation_euler.setter
+    def rotation_euler(
+        self,
+        value: Union[list[float],tuple[float, float, float],'mathutils.Euler']
+    ) -> None: ...
 
     rotation_mode: typing.Union[str, int] = None
     ''' 
@@ -42867,13 +42869,15 @@ class View3DCursor(bpy_struct):
     :type: bpy_prop_array[float]
     '''
 
-    rotation_euler: typing.Union[typing.List[float], typing.
-                                 Tuple[float, float, float],
-                                 'mathutils.Euler'] = None
-    ''' 3D rotation
+    @property
+    def rotation_euler(self) -> 'mathutils.Euler':  # Mcblend
+        '''3D rotation'''
 
-    :type: typing.Union[typing.List[float], typing.Tuple[float, float, float], 'mathutils.Euler']
-    '''
+    @rotation_euler.setter
+    def rotation_euler(
+        self,
+        value: Union[list[float],tuple[float, float, float],'mathutils.Euler']
+    ) -> None: ...
 
     rotation_mode: typing.Union[str, int] = None
     ''' 
@@ -61044,13 +61048,15 @@ class Object(ID, bpy_struct):
     :type: bpy_prop_array[float]
     '''
 
-    rotation_euler: typing.Union[typing.List[float], typing.
-                                 Tuple[float, float, float],
-                                 'mathutils.Euler'] = None
-    ''' Rotation in Eulers
+    @property
+    def rotation_euler(self) -> 'mathutils.Euler':  # Mcblend
+        '''Rotation in Eulers'''
 
-    :type: typing.Union[typing.List[float], typing.Tuple[float, float, float], 'mathutils.Euler']
-    '''
+    @rotation_euler.setter
+    def rotation_euler(
+        self,
+        value: Union[list[float],tuple[float, float, float],'mathutils.Euler']
+    ) -> None: ...
 
     rotation_mode: typing.Union[str, int] = None
     ''' 

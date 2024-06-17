@@ -18,12 +18,6 @@ def get_mcblend(obj):
     '''
     return obj.mcblend
 
-def get_rotation_euler(obj):
-    '''
-    >>> obj.rotation_euler
-    '''
-    return obj.rotation_euler
-
 def get_scene_mcblend_active_event(context):
     '''
     Returns the active event id from context

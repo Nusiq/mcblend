@@ -15,8 +15,6 @@ from bpy.types import (
     Object, MeshUVLoopLayer, Armature, ArmatureEditBones, Mesh)
 import bpy
 
-from .typed_bpy_access import (
-    get_rotation_euler)
 from .common import (
     MINECRAFT_SCALE_FACTOR, CubePolygons, CubePolygon, MeshType)
 from .extra_types import Vector3di, Vector3d, Vector2d
@@ -1772,7 +1770,7 @@ def _mc_rotate(
         (np.array(mcrotation)[[0, 2, 1]] * np.array([1, 1, -1])) * math.pi/180,
         'XZY'
     )
-    get_rotation_euler(obj).rotate(rotation)
+    obj.rotation_euler.rotate(rotation)
 
 def _set_uv(
         uv_converter: CoordinatesConverter, cube_polygons: CubePolygons,
