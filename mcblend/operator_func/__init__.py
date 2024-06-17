@@ -16,7 +16,7 @@ import numpy as np
 from .common import ModelOriginType
 from .typed_bpy_access import (
     get_scene_mcblend_project,
-    get_scene_mcblend_events, get_selected_objects,
+    get_scene_mcblend_events,
     get_mcblend,
     new_collection,
     set_constraint_property,
@@ -323,8 +323,8 @@ def separate_mesh_cubes(context: Context):
     :returns: the number of created objects
     '''
     bpy.ops.mesh.separate(type='LOOSE')  # pyright: ignore[reportUnknownMemberType]
-    edited_objects = len(get_selected_objects(context))
-    for obj in get_selected_objects(context):
+    edited_objects = len(context.selected_objects)
+    for obj in context.selected_objects:
         if obj.type != 'MESH':
             continue
         apply_obj_transform_keep_origin(obj)
@@ -877,7 +877,7 @@ def merge_models(context: Context) -> None:
     # GET OBJECTS TO MERGE
     uv_mergers: list[UvModelMerger] = []
     armatures: list[Object] = []
-    for obj in get_selected_objects(context):
+    for obj in context.selected_objects:
         # Deselect every object (for later)
         obj.select_set(False)
         # Exclude unwanted objects

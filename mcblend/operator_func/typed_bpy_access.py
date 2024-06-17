@@ -65,12 +65,6 @@ def get_scene_mcblend_uv_groups(context):
     '''
     return context.scene.mcblend_uv_groups
 
-def get_selected_objects(context):
-    '''
-    >>> context.selected_objects
-    '''
-    return context.selected_objects
-
 def get_strips(obj):
     '''
     >>> obj.strips

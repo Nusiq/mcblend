@@ -23,7 +23,7 @@ from .operator_func.typed_bpy_access import (
     get_scene_mcblend_events, get_scene_mcblend_active_event,
     get_mcblend,
     set_scene_mcblend_active_event,
-    get_scene_mcblend_uv_groups, get_selected_objects,
+    get_scene_mcblend_uv_groups,
     set_scene_mcblend_active_uv_group, get_scene_mcblend_active_uv_group,
     get_scene_mcblend_active_uv_groups_side)
 from .uv_data import get_unused_uv_group_name
@@ -256,7 +256,7 @@ class MCBLEND_OT_FixUv(Operator):
         return obj.type == 'ARMATURE'
 
     def execute(self, context: Context):
-        for obj in get_selected_objects(context):
+        for obj in context.selected_objects:
             if obj.type == 'MESH' and any(x < 0 for x in obj.scale):
                 self.report(
                     {'ERROR'},
@@ -293,7 +293,7 @@ class MCBLEND_OT_UvGroup(Operator):
     def poll(cls, context: Context):
         if context.mode != 'OBJECT':
             return False
-        if len(get_selected_objects(context)) < 1:
+        if len(context.selected_objects) < 1:
             return False
         if len(get_scene_mcblend_uv_groups(context)) == 0:
             return False
@@ -303,7 +303,7 @@ class MCBLEND_OT_UvGroup(Operator):
         return context.window_manager.invoke_props_dialog(self)
 
     def execute(self, context: Context):
-        for obj in get_selected_objects(context):
+        for obj in context.selected_objects:
             if obj.type == 'MESH':
                 get_mcblend(obj).uv_group = (
                     self.uv_groups_enum)  # type: ignore
@@ -332,14 +332,14 @@ class MCBLEND_OT_ClearUvGroup(Operator):
     def poll(cls, context: Context):
         if context.mode != 'OBJECT':
             return False
-        if len(get_selected_objects(context)) < 1:
+        if len(context.selected_objects) < 1:
             return False
         if len(get_scene_mcblend_uv_groups(context)) == 0:
             return False
         return True
 
     def execute(self, context: Context):
-        for obj in get_selected_objects(context):
+        for obj in context.selected_objects:
             if obj.type == 'MESH':
                 get_mcblend(obj).uv_group  = ''
         self.report({'INFO'}, 'Cleared UV group of selected objects.')
@@ -378,12 +378,12 @@ class MCBLEND_OT_SetInflate(Operator):
     def poll(cls, context: Context):
         if context.mode != 'OBJECT':
             return False
-        if len(get_selected_objects(context)) < 1:
+        if len(context.selected_objects) < 1:
             return False
         return True
 
     def invoke(self, context: Context, event: Event):
-        for obj in get_selected_objects(context):
+        for obj in context.selected_objects:
             if obj.type == 'MESH':
                 break
         else:
@@ -395,7 +395,7 @@ class MCBLEND_OT_SetInflate(Operator):
 
     def execute(self, context: Context):
         inflate_objects(
-            context, get_selected_objects(context),
+            context, context.selected_objects,
             self.inflate_value, self.mode)  # type: ignore
         return {'FINISHED'}
 
@@ -419,7 +419,7 @@ class MCBLEND_OT_SeparateMeshCubes(Operator):
     def poll(cls, context: Context):
         if context.mode != 'OBJECT':
             return False
-        if len(get_selected_objects(context)) < 1:
+        if len(context.selected_objects) < 1:
             return False
         return True
 
@@ -2105,7 +2105,7 @@ class MCBLEND_OT_MergeModels(Operator):
             text="You're about to merge multiple using their main textures")
         row = layout.row()
         # layout.operator("mcblend.fix_uv")
-        selected_objects = get_selected_objects(context)
+        selected_objects = context.selected_objects
         for obj in selected_objects:
             if obj.type != 'ARMATURE':
                 continue
@@ -2125,7 +2125,7 @@ class MCBLEND_OT_MergeModels(Operator):
     def poll(cls, context: Context):
         if context.mode != 'OBJECT':
             return False
-        selected_objects = get_selected_objects(context)
+        selected_objects = context.selected_objects
         for obj in selected_objects:
             if obj.type == 'ARMATURE':
                 return True

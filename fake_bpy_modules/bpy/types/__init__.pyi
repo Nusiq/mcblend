@@ -6087,11 +6087,8 @@ class Context(bpy_struct):
     :type: typing.Iterable['Object']
     '''
 
-    selected_objects: typing.Iterable['Object'] = None
-    ''' 
-
-    :type: typing.Iterable['Object']
-    '''
+    @property  # Read only
+    def selected_objects(self) -> list['Object']: None  # Mcblend
 
     editable_objects: typing.Iterable['Object'] = None
     ''' 
