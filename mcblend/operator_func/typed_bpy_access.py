@@ -65,12 +65,6 @@ def get_scene_mcblend_uv_groups(context):
     '''
     return context.scene.mcblend_uv_groups
 
-def set_operation(obj, operation):
-    '''
-    >>> obj.operation = operation
-    '''
-    obj.operation = operation
-
 def set_operator_property(operator, name, value):
     '''
     Sets the property of the operator

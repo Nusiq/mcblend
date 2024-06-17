@@ -8,7 +8,7 @@ from bpy.types import Image, Material, Node, NodeTree
 import bpy
 
 from .typed_bpy_access import (
-    set_operation, set_use_clamp)
+    set_use_clamp)
 
 PADDING = 300
 
@@ -47,7 +47,7 @@ def create_entity_alphatest_node_group(material: Material, is_first: bool) -> No
     group.links.new(outputs.inputs[0], inputs.outputs[0])
     # In: Alpha -> Math[ADD] -> Math[FLOOR] -> Out: Alpha
     math_node = group.nodes.new('ShaderNodeMath')
-    set_operation(math_node, 'GREATER_THAN')
+    math_node.operation = 'GREATER_THAN'
     math_node.location = [1*PADDING, -1*PADDING]
     group.links.new(math_node.inputs[0], inputs.outputs[1])
     group.links.new(outputs.inputs[1], math_node.outputs[0])
@@ -79,7 +79,7 @@ def create_entity_alphatest_one_sided_node_group(
     group.links.new(outputs.inputs[0], inputs.outputs[0])
     # In: Alpha -> Math[ADD] -> Math[FLOOR] -> Out: Alpha
     math_node = group.nodes.new('ShaderNodeMath')
-    set_operation(math_node, 'GREATER_THAN')
+    math_node.operation = 'GREATER_THAN'
     math_node.location = [1*PADDING, -1*PADDING]
     group.links.new(math_node.inputs[0], inputs.outputs[1])
     group.links.new(outputs.inputs[1], math_node.outputs[0])
@@ -175,16 +175,16 @@ def create_entity_emissive_node_group(material: Material, is_first: bool) -> Nod
     group.links.new(outputs.inputs[1], value_node.outputs[0])
     # In: Color -> ... -> ... -> Vector[MULTIPLY][0] -> Out: Emission
     vector_node = group.nodes.new('ShaderNodeVectorMath')
-    set_operation(vector_node, 'MULTIPLY')
+    vector_node.operation = 'MULTIPLY'
     vector_node.location = [3*PADDING, -2*PADDING]
     group.links.new(vector_node.inputs[0], inputs.outputs[0])
     group.links.new(outputs.inputs[2], vector_node.outputs[0])
     # In: Alpha -> Math[MULTIPLY] -> Math[SUBTRACT][1] -> Vector[MULTIPLY][1]
     math_1_node = group.nodes.new('ShaderNodeMath')
-    set_operation(math_1_node, 'MULTIPLY')
+    math_1_node.operation = 'MULTIPLY'
     math_1_node.location = [1*PADDING, -2*PADDING]
     math_2_node = group.nodes.new('ShaderNodeMath')
-    set_operation(math_2_node, 'SUBTRACT')
+    math_2_node.operation = 'SUBTRACT'
     set_use_clamp(math_2_node, True)
     math_2_node.location = [2*PADDING, -2*PADDING]
     group.links.new(math_1_node.inputs[0], inputs.outputs[1])
@@ -210,22 +210,22 @@ def create_entity_emissive_alpha_node_group(material: Material, is_first: bool) 
     group.links.new(outputs.inputs[0], inputs.outputs[0])
     #  In: Alpha -> MATH[CEIL] -> Out: Alpha
     math_3_node = group.nodes.new('ShaderNodeMath')
-    set_operation(math_3_node, 'CEIL')
+    math_3_node.operation = 'CEIL'
     math_3_node.location = [2*PADDING, -1*PADDING]
     group.links.new(math_3_node.inputs[0], inputs.outputs[1])
     group.links.new(outputs.inputs[1], math_3_node.outputs[0])
     # In: Color -> ... -> ... -> Vector[MULTIPLY][0] -> Out: Emission
     vector_node = group.nodes.new('ShaderNodeVectorMath')
-    set_operation(vector_node, 'MULTIPLY')
+    vector_node.operation = 'MULTIPLY'
     vector_node.location = [3*PADDING, -2*PADDING]
     group.links.new(vector_node.inputs[0], inputs.outputs[0])
     group.links.new(outputs.inputs[2], vector_node.outputs[0])
     # In: Alpha -> Math[MULTIPLY] -> Math[SUBTRACT][1] -> Vector[MULTIPLY][1]
     math_1_node = group.nodes.new('ShaderNodeMath')
-    set_operation(math_1_node, 'MULTIPLY')
+    math_1_node.operation = 'MULTIPLY'
     math_1_node.location = [1*PADDING, -2*PADDING]
     math_2_node = group.nodes.new('ShaderNodeMath')
-    set_operation(math_2_node, 'SUBTRACT')
+    math_2_node.operation = 'SUBTRACT'
     set_use_clamp(math_2_node, True)
     math_2_node.location = [2*PADDING, -2*PADDING]
     group.links.new(math_1_node.inputs[0], inputs.outputs[1])
@@ -271,7 +271,7 @@ def create_material_mix_node_group() -> NodeTree:
 
     # Mix alpha (Add and clamp aplha)
     math_node = group.nodes.new('ShaderNodeMath')
-    set_operation(math_node, 'MAXIMUM')
+    math_node.operation = 'MAXIMUM'
     math_node.location = [1*PADDING, 0]
     # set_use_clamp(math_node, True)
     group.links.new(math_node.inputs[0], inputs.outputs['Alpha1'])

@@ -22044,6 +22044,8 @@ class Node(bpy_struct):
 
     node_tree: 'NodeTree'  # Mcblend
 
+    operation: str  # Mcblend
+
     outputs: 'NodeOutputs' = None
     ''' 
 
