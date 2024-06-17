@@ -65,12 +65,6 @@ def get_scene_mcblend_uv_groups(context):
     '''
     return context.scene.mcblend_uv_groups
 
-def neg(a):
-    '''
-    >>> -a
-    '''
-    return -a
-
 def new_collection(name):
     '''
     Creates new collection with given name

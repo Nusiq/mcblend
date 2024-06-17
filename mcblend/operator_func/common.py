@@ -23,7 +23,7 @@ from mathutils import Vector, Matrix, Euler
 from .typed_bpy_access import (
     get_scene_mcblend_uv_groups,
     get_mcblend,
-    neg, to_euler)
+    to_euler)
 
 from .texture_generator import Mask, ColorMask, get_masks_from_side
 from .exception import ExporterException
@@ -950,7 +950,7 @@ def fix_cube_rotation(obj: Object):
     v = w.cross(u).normalized()
 
     # Create rotation matrix (unit vectors x, y, z in columns)
-    rotation_matrix = Matrix((w, v, neg(u)))
+    rotation_matrix = Matrix((w, v, -u))
     # (w, v, -u) - this order of normals in rotation matrix is set up in
     # such way that applying the operator to the default cube (without
     # rotations) will not change its rotation and won't flip its scale to -1.
