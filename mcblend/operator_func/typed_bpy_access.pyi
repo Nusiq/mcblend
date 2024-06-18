@@ -52,8 +52,6 @@ def set_scene_mcblend_active_event(
 def set_scene_mcblend_active_uv_group(
     context: Context, value: int) -> None: ...
 
-def set_view_layer_objects_active(context: Context, obj: Object) -> None: ...
-
 @overload
 def to_euler(
     obj: Matrix, order: str, euler_compact: None | Euler=None

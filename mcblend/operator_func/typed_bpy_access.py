@@ -91,14 +91,6 @@ def set_scene_mcblend_active_uv_group(context, value):
     context.scene.mcblend_active_uv_group = value
 
 
-def set_view_layer_objects_active(context, value):
-    '''
-    Sets the active object in context
-
-    >>> context.view_layer.objects.active = value
-    '''
-    context.view_layer.objects.active = value
-
 def to_euler(obj, order, euler_compact=None):
     '''
     >>> obj.to_euler(order, euler_compact)

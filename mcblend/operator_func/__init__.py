@@ -17,8 +17,7 @@ from .common import ModelOriginType
 from .typed_bpy_access import (
     get_scene_mcblend_project,
     get_scene_mcblend_events,
-    get_mcblend,
-    set_view_layer_objects_active)
+    get_mcblend)
 
 from .sqlite_bedrock_packs.better_json_tools import load_jsonc
 
@@ -928,7 +927,7 @@ def merge_models(context: Context) -> None:
         merger.set_blender_uv(converter)
 
     # MERGE THE ARMATURES
-    set_view_layer_objects_active(context, armatures[0])
+    context.view_layer.objects.active = armatures[0]
     for i, obj in enumerate(armatures):
         # This assertion should never raise an exception
         assert isinstance(obj.data, Armature), "Object is not an Armature"
