@@ -22,8 +22,7 @@ from mathutils import Vector, Matrix, Euler
 
 from .typed_bpy_access import (
     get_scene_mcblend_uv_groups,
-    get_mcblend,
-    to_euler)
+    get_mcblend)
 
 from .texture_generator import Mask, ColorMask, get_masks_from_side
 from .exception import ExporterException
@@ -325,14 +324,14 @@ class McblendObject:
             '''
             child_q = child_matrix.normalized().to_quaternion()
             parent_q = parent_matrix.inverted().normalized().to_quaternion()
-            return to_euler(parent_q @ child_q, 'XZY')
+            return (parent_q @ child_q).to_euler('XZY')
 
         if other is not None:
             result_euler = local_rotation(
                 self.obj_matrix_world, other.obj_matrix_world
             )
         else:
-            result_euler = to_euler(self.obj_matrix_world, 'XZY')
+            result_euler = self.obj_matrix_world.to_euler('XZY')
         result: NumpyTable = np.array(result_euler)[[0, 2, 1]]
         result = result * np.array([1, -1, 1])
         result = result * 180/math.pi  # math.degrees() for array

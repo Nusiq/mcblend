@@ -89,12 +89,3 @@ def set_scene_mcblend_active_uv_group(context, value):
     >>> context.scene.mcblend_active_uv_group = value
     '''
     context.scene.mcblend_active_uv_group = value
-
-
-def to_euler(obj, order, euler_compact=None):
-    '''
-    >>> obj.to_euler(order, euler_compact)
-    '''
-    if euler_compact is None:
-        return obj.to_euler(order)
-    return obj.to_euler(order, euler_compact)

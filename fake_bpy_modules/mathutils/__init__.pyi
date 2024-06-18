@@ -759,9 +759,7 @@ class Matrix:
         '''
         pass
 
-    def to_euler(self, order: str,
-                 euler_compat: typing.Union[typing.Sequence[float], 'Euler']
-                 ) -> 'Euler':
+    def to_euler(self, order: str=..., euler_compat: 'Euler'=..., /) -> 'Euler':
         ''' Return an Euler representation of the rotation matrix (3x3 or 4x4 matrix only).
 
         :param order: Optional rotation order argument in ['XYZ', 'XZY', 'YXZ', 'YZX', 'ZXY', 'ZYX'].
@@ -1161,9 +1159,7 @@ class Quaternion:
         '''
         pass
 
-    def to_euler(self, order: str,
-                 euler_compat: typing.Union[typing.Sequence[float], 'Euler']
-                 ) -> 'Euler':
+    def to_euler(self, order: str=..., euler_compat: 'Euler'=..., /) -> 'Euler':  # Mcblend
         ''' Return Euler representation of the quaternion.
 
         :param order: Optional rotation order argument in ['XYZ', 'XZY', 'YXZ', 'YZX', 'ZXY', 'ZYX'].
