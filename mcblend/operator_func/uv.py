@@ -12,7 +12,6 @@ import bisect
 import numpy as np
 import bpy
 
-from .typed_bpy_access import set_uv
 from .texture_generator import Mask
 from .exception import NotEnoughTextureSpace
 from .json_tools import get_vect_json
@@ -628,7 +627,7 @@ class UvModelMerger(McblendObjUvBox):
                 # Shift the UV values by the newly assigned UV
                 uv = uv + offset
                 # Convert the UV values to the new texture and apply
-                set_uv(active_uv_layer.data[i], converter.convert(uv))
+                active_uv_layer.data[i].uv = converter.convert(uv)
 
 
 

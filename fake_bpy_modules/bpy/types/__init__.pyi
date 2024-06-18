@@ -19311,12 +19311,15 @@ class MeshUVLoop(bpy_struct):
     :type: bool
     '''
 
-    uv: typing.Union[typing.List[float], typing.
-                     Tuple[float, float], 'mathutils.Vector'] = None
-    ''' 
+    @property
+    def uv(self) -> 'mathutils.Vector':  # Mcblend
+        ''' 
 
-    :type: typing.Union[typing.List[float], typing.Tuple[float, float], 'mathutils.Vector']
-    '''
+        :type: typing.Union[typing.List[float], typing.Tuple[float, float], 'mathutils.Vector']
+        '''
+
+    @uv.setter
+    def uv(self, uv: typing.Collection[float]): ...
 
     @classmethod
     def bl_rna_get_subclass(cls, id: typing.Optional[str],

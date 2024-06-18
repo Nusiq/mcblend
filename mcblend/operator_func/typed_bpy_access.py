@@ -91,12 +91,6 @@ def set_scene_mcblend_active_uv_group(context, value):
     context.scene.mcblend_active_uv_group = value
 
 
-def set_uv(obj, uv):
-    '''
-    >>> obj.uv = uv
-    '''
-    obj.uv = uv
-
 def set_view_layer_objects_active(context, value):
     '''
     Sets the active object in context
