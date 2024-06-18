@@ -73,12 +73,6 @@ def set_operator_property(operator, name, value):
     '''
     setattr(operator, name, value)
 
-def set_parent(obj, value):
-    '''
-    >>> obj.parent = value
-    '''
-    obj.parent = value
-
 def set_pose_bone_constraint_property(constraint, name, value):
     '''
     Sets the property of the constraint

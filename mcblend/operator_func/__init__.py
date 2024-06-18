@@ -18,7 +18,7 @@ from .typed_bpy_access import (
     get_scene_mcblend_project,
     get_scene_mcblend_events,
     get_mcblend,
-    set_parent, set_pose_bone_constraint_property,
+    set_pose_bone_constraint_property,
     set_view_layer_objects_active)
 
 from .sqlite_bedrock_packs.better_json_tools import load_jsonc
@@ -376,7 +376,7 @@ def inflate_objects(
             children = obj.children
             for child in children:
                 old_matrix = child.matrix_world.copy()
-                set_parent(child, None)
+                child.parent = None
                 child.matrix_world = old_matrix
 
             dimensions = np.array(obj.dimensions)
@@ -391,7 +391,7 @@ def inflate_objects(
 
             # Add children back and set their previous transformations
             for child in children:
-                set_parent(child, obj)
+                child.parent = obj
                 child.matrix_parent_inverse = obj.matrix_world.inverted()
 
             counter += 1

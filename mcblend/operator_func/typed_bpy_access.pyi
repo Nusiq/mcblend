@@ -46,8 +46,6 @@ def set_operator_property(
     value: bool | int | float | str | list[Any] | dict[Any, Any] | Object
 ) -> None: ...
 
-def set_parent(obj: Object, parent: Object | None) -> None: ...
-
 def set_pose_bone_constraint_property(
     constraint: Constraint, name: str,
     value: bool | int | float | str | list[Any] | dict[Any, Any] | Object
