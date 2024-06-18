@@ -22088,6 +22088,8 @@ class Node(bpy_struct):
     :type: typing.Union[str, int]
     '''
 
+    use_clamp: bool # Mcblend
+
     use_custom_color: bool = None
     ''' Use custom color for the node
 

@@ -7,9 +7,6 @@ from collections import deque
 from bpy.types import Image, Material, Node, NodeTree
 import bpy
 
-from .typed_bpy_access import (
-    set_use_clamp)
-
 PADDING = 300
 
 def _create_node_group_defaults(name: str) -> Tuple[NodeTree, Node, Node]:
@@ -185,7 +182,7 @@ def create_entity_emissive_node_group(material: Material, is_first: bool) -> Nod
     math_1_node.location = [1*PADDING, -2*PADDING]
     math_2_node = group.nodes.new('ShaderNodeMath')
     math_2_node.operation = 'SUBTRACT'
-    set_use_clamp(math_2_node, True)
+    math_2_node.use_clamp = True
     math_2_node.location = [2*PADDING, -2*PADDING]
     group.links.new(math_1_node.inputs[0], inputs.outputs[1])
     group.links.new(math_2_node.inputs[1], math_1_node.outputs[0])
@@ -226,7 +223,7 @@ def create_entity_emissive_alpha_node_group(material: Material, is_first: bool) 
     math_1_node.location = [1*PADDING, -2*PADDING]
     math_2_node = group.nodes.new('ShaderNodeMath')
     math_2_node.operation = 'SUBTRACT'
-    set_use_clamp(math_2_node, True)
+    math_2_node.use_clamp = True
     math_2_node.location = [2*PADDING, -2*PADDING]
     group.links.new(math_1_node.inputs[0], inputs.outputs[1])
     group.links.new(math_2_node.inputs[1], math_1_node.outputs[0])
@@ -273,7 +270,7 @@ def create_material_mix_node_group() -> NodeTree:
     math_node = group.nodes.new('ShaderNodeMath')
     math_node.operation = 'MAXIMUM'
     math_node.location = [1*PADDING, 0]
-    # set_use_clamp(math_node, True)
+    # math_node.use_clamp = True
     group.links.new(math_node.inputs[0], inputs.outputs['Alpha1'])
     group.links.new(math_node.inputs[1], inputs.outputs['Alpha2'])
     group.links.new(outputs.inputs['Alpha'], math_node.outputs[0])
