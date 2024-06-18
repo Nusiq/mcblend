@@ -73,14 +73,6 @@ def set_operator_property(operator, name, value):
     '''
     setattr(operator, name, value)
 
-def set_pose_bone_constraint_property(constraint, name, value):
-    '''
-    Sets the property of the constraint
-
-    >>> constraint.<name> = value
-    '''
-    setattr(constraint, name, value)
-
 def set_scene_mcblend_active_event(context, value):
     '''
     Sets the active event id in context

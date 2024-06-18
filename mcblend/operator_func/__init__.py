@@ -18,7 +18,6 @@ from .typed_bpy_access import (
     get_scene_mcblend_project,
     get_scene_mcblend_events,
     get_mcblend,
-    set_pose_bone_constraint_property,
     set_view_layer_objects_active)
 
 from .sqlite_bedrock_packs.better_json_tools import load_jsonc
@@ -818,14 +817,14 @@ def prepare_physics_simulation(context: Context) -> Dict[str, Any]:
             # bpy.ops.pose.constraint_add(type='COPY_TRANSFORMS')
             constraint = bone.this_pose_bone.constraints.new(
                 type='COPY_TRANSFORMS')
-            set_pose_bone_constraint_property(constraint, 'target', empty)
+            constraint.target = empty
             # Add keyframes to the "copy transformation" constraint (
             # enable it 1 frame after current frame)
-            set_pose_bone_constraint_property(constraint, 'influence', 0)
+            constraint.influence = 0
             constraint.keyframe_insert("influence", frame=0)
             constraint.keyframe_insert(
                 "influence", frame=bpy.context.scene.frame_current)
-            set_pose_bone_constraint_property(constraint, 'influence', 1)
+            constraint.influence = 1
             constraint.keyframe_insert(
                 "influence", frame=bpy.context.scene.frame_current+1)
 

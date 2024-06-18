@@ -46,11 +46,6 @@ def set_operator_property(
     value: bool | int | float | str | list[Any] | dict[Any, Any] | Object
 ) -> None: ...
 
-def set_pose_bone_constraint_property(
-    constraint: Constraint, name: str,
-    value: bool | int | float | str | list[Any] | dict[Any, Any] | Object
-) -> None: ...
-
 def set_scene_mcblend_active_event(
     context: Context, value: int) -> None: ...
 
