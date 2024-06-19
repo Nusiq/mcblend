@@ -41,11 +41,6 @@ def get_mcblend_project(scene: Scene) ->\
 def get_mcblend_uv_groups(scene: Scene) ->\
     CollectionProperty[MCBLEND_UvGroupProperties]: ...
 
-def set_operator_property(
-    operator: OperatorProperties, name: str,
-    value: bool | int | float | str | list[Any] | dict[Any, Any] | Object
-) -> None: ...
-
 def set_mcblend_active_event(
     scene: Scene, value: int) -> None: ...
 

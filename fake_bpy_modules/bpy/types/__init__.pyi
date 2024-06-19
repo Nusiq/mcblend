@@ -23318,6 +23318,18 @@ class OperatorProperties(bpy_struct):
         '''
         pass
 
+    # The OperatorProperties allows adding custom undefined properties
+    def __setattr__(  # Mcblend
+        self,
+        name: str,
+        value: bool | int | float | str | list[Any] | dict[Any, Any] | Object
+    ) -> None: ...
+
+    def __getattribute__(  # Mcblend
+        self,
+        name: str
+    ) -> bool | int | float | str | list[Any] | dict[Any, Any] | Object: ...
+
 
 class PackedFile(bpy_struct):
     ''' External file packed into the .blend file

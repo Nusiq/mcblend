@@ -65,14 +65,6 @@ def get_mcblend_uv_groups(scene):
     '''
     return scene.mcblend_uv_groups
 
-def set_operator_property(operator, name, value):
-    '''
-    Sets the property of the operator
-
-    >>> operator.<name> = value
-    '''
-    setattr(operator, name, value)
-
 def set_mcblend_active_event(scene, value):
     '''
     Sets the active event id in scene
