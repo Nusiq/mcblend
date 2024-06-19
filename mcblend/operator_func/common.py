@@ -21,7 +21,7 @@ from bpy.types import (
 from mathutils import Vector, Matrix, Euler
 
 from .typed_bpy_access import (
-    get_scene_mcblend_uv_groups,
+    get_mcblend_uv_groups,
     get_mcblend)
 
 from .texture_generator import Mask, ColorMask, get_masks_from_side
@@ -352,7 +352,7 @@ class McblendObject:
         '''
         if self.uv_group == '':
             return [ColorMask((0, 1, 0))]
-        uv_group = get_scene_mcblend_uv_groups(bpy.context)[self.uv_group]
+        uv_group = get_mcblend_uv_groups(bpy.context.scene)[self.uv_group]
         return get_masks_from_side(uv_group.side1)
 
     @property
@@ -363,7 +363,7 @@ class McblendObject:
         '''
         if self.uv_group == '':
             return [ColorMask((1, 0, 1))]
-        uv_group = get_scene_mcblend_uv_groups(bpy.context)[self.uv_group]
+        uv_group = get_mcblend_uv_groups(bpy.context.scene)[self.uv_group]
         return get_masks_from_side(uv_group.side2)
 
     @property
@@ -374,7 +374,7 @@ class McblendObject:
         '''
         if self.uv_group == '':
             return [ColorMask((1, 0, 0))]
-        uv_group = get_scene_mcblend_uv_groups(bpy.context)[self.uv_group]
+        uv_group = get_mcblend_uv_groups(bpy.context.scene)[self.uv_group]
         return get_masks_from_side(uv_group.side3)
 
     @property
@@ -385,7 +385,7 @@ class McblendObject:
         '''
         if self.uv_group == '':
             return [ColorMask((0, 1, 1))]
-        uv_group = get_scene_mcblend_uv_groups(bpy.context)[self.uv_group]
+        uv_group = get_mcblend_uv_groups(bpy.context.scene)[self.uv_group]
         return get_masks_from_side(uv_group.side4)
 
     @property
@@ -396,7 +396,7 @@ class McblendObject:
         '''
         if self.uv_group == '':
             return [ColorMask((0, 0, 1))]
-        uv_group = get_scene_mcblend_uv_groups(bpy.context)[self.uv_group]
+        uv_group = get_mcblend_uv_groups(bpy.context.scene)[self.uv_group]
         return get_masks_from_side(uv_group.side5)
 
     @property
@@ -407,7 +407,7 @@ class McblendObject:
         '''
         if self.uv_group == '':
             return [ColorMask((1, 1, 0))]
-        uv_group = get_scene_mcblend_uv_groups(bpy.context)[self.uv_group]
+        uv_group = get_mcblend_uv_groups(bpy.context.scene)[self.uv_group]
         return get_masks_from_side(uv_group.side6)
 
     def find_lose_parts(self) -> Tuple[int, ...]:

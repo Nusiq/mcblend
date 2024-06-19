@@ -15,8 +15,8 @@ import numpy as np
 
 from .common import ModelOriginType
 from .typed_bpy_access import (
-    get_scene_mcblend_project,
-    get_scene_mcblend_events,
+    get_mcblend_project,
+    get_mcblend_events,
     get_mcblend)
 
 from .sqlite_bedrock_packs.better_json_tools import load_jsonc
@@ -108,7 +108,7 @@ def export_animation(
         fps=context.scene.render.fps,
         effect_events={
             event.name: event.get_effects_dict()
-            for event in get_scene_mcblend_events(context)
+            for event in get_mcblend_events(context.scene)
         }
     )
     animation.load_poses(object_properties, context)
@@ -403,7 +403,7 @@ def load_rp_to_mcblned(
     :param context: the context of running the operator.
     :param path: path to the resource pack.
     '''
-    mcblend_project = get_scene_mcblend_project(context)
+    mcblend_project = get_mcblend_project(context.scene)
     # Cleared cached data for GUI it will be reloaded later
     # Clear cached entity data
     mcblend_project.entities.clear()
@@ -455,7 +455,7 @@ def unload_rps(context: Context):
     '''
     Unload resrouce pakcs in GUI.
     '''
-    mcblend_project = get_scene_mcblend_project(context)
+    mcblend_project = get_mcblend_project(context.scene)
     mcblend_project.entity_render_controllers.clear()
     mcblend_project.entities.clear()
     mcblend_project.selected_entity = ''

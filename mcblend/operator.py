@@ -19,13 +19,13 @@ from .object_data import (
     get_unused_event_name, list_effect_types_as_blender_enum,
     MCBLEND_AnimationProperties)
 from .operator_func.typed_bpy_access import (
-    get_scene_mcblend_project,
-    get_scene_mcblend_events, get_scene_mcblend_active_event,
+    get_mcblend_project,
+    get_mcblend_events, get_mcblend_active_event,
     get_mcblend,
-    set_scene_mcblend_active_event,
-    get_scene_mcblend_uv_groups,
-    set_scene_mcblend_active_uv_group, get_scene_mcblend_active_uv_group,
-    get_scene_mcblend_active_uv_groups_side)
+    set_mcblend_active_event,
+    get_mcblend_uv_groups,
+    set_mcblend_active_uv_group, get_mcblend_active_uv_group,
+    get_mcblend_active_uv_groups_side)
 from .uv_data import get_unused_uv_group_name
 from .operator_func.material import MATERIALS_MAP
 
@@ -284,7 +284,7 @@ class MCBLEND_OT_UvGroup(Operator):
     def _list_uv_groups(self, context: Context):
         items = [
             (x.name, x.name, x.name)
-            for x in get_scene_mcblend_uv_groups(context)]
+            for x in get_mcblend_uv_groups(context.scene)]
         return items
     uv_groups_enum: bpy.props.EnumProperty(  # type: ignore
         items=_list_uv_groups, name="UV Groups")
@@ -295,7 +295,7 @@ class MCBLEND_OT_UvGroup(Operator):
             return False
         if len(context.selected_objects) < 1:
             return False
-        if len(get_scene_mcblend_uv_groups(context)) == 0:
+        if len(get_mcblend_uv_groups(context.scene)) == 0:
             return False
         return True
 
@@ -334,7 +334,7 @@ class MCBLEND_OT_ClearUvGroup(Operator):
             return False
         if len(context.selected_objects) < 1:
             return False
-        if len(get_scene_mcblend_uv_groups(context)) == 0:
+        if len(get_mcblend_uv_groups(context.scene)) == 0:
             return False
         return True
 
@@ -733,7 +733,7 @@ class MCBLEND_OT_ListUvGroups(Operator):
         items = [
             (str(i), x.name, x.name)
             for i, x in enumerate(
-                get_scene_mcblend_uv_groups(context))
+                get_mcblend_uv_groups(context.scene))
             ]
         return items
 
@@ -747,7 +747,7 @@ class MCBLEND_OT_ListUvGroups(Operator):
         '''
         # Set new uv_group and load its state
         new_uv_group_id=int(self.uv_groups_enum)  # type: ignore
-        set_scene_mcblend_active_uv_group(context, new_uv_group_id)
+        set_mcblend_active_uv_group(context.scene, new_uv_group_id)
         return {'FINISHED'}
 
 class MCBLEND_OT_AddUvGroup(Operator):
@@ -759,12 +759,12 @@ class MCBLEND_OT_AddUvGroup(Operator):
 
     def execute(self, context: Context):
         # If OK save old uv_group
-        len_groups = len(get_scene_mcblend_uv_groups(context))
+        len_groups = len(get_mcblend_uv_groups(context.scene))
 
         # Add new uv_group and set its properties
-        uv_group_new = get_scene_mcblend_uv_groups(context).add()
-        len_groups = len(get_scene_mcblend_uv_groups(context))
-        set_scene_mcblend_active_uv_group(context, len_groups-1)
+        uv_group_new = get_mcblend_uv_groups(context.scene).add()
+        len_groups = len(get_mcblend_uv_groups(context.scene))
+        set_mcblend_active_uv_group(context.scene, len_groups-1)
 
         uv_group_new.name = get_unused_uv_group_name('uv_group')
         sides = [
@@ -791,13 +791,13 @@ class MCBLEND_OT_RemoveUvGroup(Operator):
 
     @classmethod
     def poll(cls, context: Context):
-        return len(get_scene_mcblend_uv_groups(context)) > 0
+        return len(get_mcblend_uv_groups(context.scene)) > 0
 
     def execute(self, context: Context):
-        group_id = get_scene_mcblend_active_uv_group(context)
-        group_name = get_scene_mcblend_uv_groups(context)[group_id].name
+        group_id = get_mcblend_active_uv_group(context.scene)
+        group_name = get_mcblend_uv_groups(context.scene)[group_id].name
         # Remove uv_group
-        get_scene_mcblend_uv_groups(context).remove(group_id)
+        get_mcblend_uv_groups(context.scene).remove(group_id)
 
         # Update the names of all of the meshes
         for obj in bpy.data.objects:
@@ -808,7 +808,7 @@ class MCBLEND_OT_RemoveUvGroup(Operator):
 
         # Set new active uv_group
         if group_id > 0:
-            set_scene_mcblend_active_uv_group(context, group_id-1)
+            set_mcblend_active_uv_group(context.scene, group_id-1)
         return {'FINISHED'}
 
 class MCBLEND_OT_CopyUvGroupSide(Operator):
@@ -823,7 +823,7 @@ class MCBLEND_OT_CopyUvGroupSide(Operator):
         # pylint: disable=unused-argument
         items = [
             (str(i), x.name, x.name)
-            for i, x in enumerate(get_scene_mcblend_uv_groups(context))]
+            for i, x in enumerate(get_mcblend_uv_groups(context.scene))]
         return items
 
     uv_groups_enum: bpy.props.EnumProperty(  # type: ignore
@@ -840,7 +840,7 @@ class MCBLEND_OT_CopyUvGroupSide(Operator):
 
     @classmethod
     def poll(cls, context: Context):
-        return len(get_scene_mcblend_uv_groups(context)) >= 1
+        return len(get_mcblend_uv_groups(context.scene)) >= 1
 
     def _copy_side(
             self, context: Context,
@@ -852,16 +852,16 @@ class MCBLEND_OT_CopyUvGroupSide(Operator):
         ):
             return  # If source and target is the same don't do anything
         # Get source
-        source_group = get_scene_mcblend_uv_groups(
-            context)[source_group_id]
+        source_group = get_mcblend_uv_groups(
+            context.scene)[source_group_id]
         source_sides = [
             source_group.side1, source_group.side2,
             source_group.side3, source_group.side4,
             source_group.side5, source_group.side6]
         source_masks = source_sides[source_side_id]
         # Get target
-        target_group = get_scene_mcblend_uv_groups(
-            context)[target_group_id]
+        target_group = get_mcblend_uv_groups(
+            context.scene)[target_group_id]
         target_sides = [
             target_group.side1, target_group.side2,
             target_group.side3, target_group.side4,
@@ -900,8 +900,8 @@ class MCBLEND_OT_CopyUvGroupSide(Operator):
 
     def execute(self, context: Context):
         # Get source masks
-        source_group_id = get_scene_mcblend_active_uv_group(context)
-        source_side_id = int(get_scene_mcblend_active_uv_groups_side(context))
+        source_group_id = get_mcblend_active_uv_group(context.scene)
+        source_side_id = int(get_mcblend_active_uv_groups_side(context.scene))
 
         # Get target UV group
         target_group_id = int(self.uv_groups_enum)  # type: ignore
@@ -930,14 +930,14 @@ class MCBLEND_OT_CopyUvGroupSide(Operator):
 # UV Mask (GUI)
 def get_active_masks(context: Context):
     '''Returns active masks of active UV Group from context.'''
-    curr_group_id = get_scene_mcblend_active_uv_group(context)
-    curr_group = get_scene_mcblend_uv_groups(context)[curr_group_id]
+    curr_group_id = get_mcblend_active_uv_group(context.scene)
+    curr_group = get_mcblend_uv_groups(context.scene)[curr_group_id]
     sides = [
         curr_group.side1, curr_group.side2,
         curr_group.side3, curr_group.side4,
         curr_group.side5, curr_group.side6
     ]
-    masks = sides[int(get_scene_mcblend_active_uv_groups_side(context))]
+    masks = sides[int(get_mcblend_active_uv_groups_side(context.scene))]
     return masks
 
 class MCBLEND_OT_AddUvMask(Operator):
@@ -953,7 +953,7 @@ class MCBLEND_OT_AddUvMask(Operator):
 
     @classmethod
     def poll(cls, context: Context):
-        if len(get_scene_mcblend_uv_groups(context)) < 1:
+        if len(get_mcblend_uv_groups(context.scene)) < 1:
             return False
         return True
 
@@ -976,7 +976,7 @@ class MCBLEND_OT_RemoveUvMask(Operator):
 
     @classmethod
     def poll(cls, context: Context):
-        if len(get_scene_mcblend_uv_groups(context)) < 1:
+        if len(get_mcblend_uv_groups(context.scene)) < 1:
             return False
         return True
 
@@ -997,7 +997,7 @@ class MCBLEND_OT_MoveUvMask(Operator):
 
     @classmethod
     def poll(cls, context: Context):
-        if len(get_scene_mcblend_uv_groups(context)) < 1:
+        if len(get_mcblend_uv_groups(context.scene)) < 1:
             return False
         return True
 
@@ -1018,7 +1018,7 @@ class MCBLEND_OT_AddUvMaskColor(Operator):
 
     @classmethod
     def poll(cls, context: Context):
-        if len(get_scene_mcblend_uv_groups(context)) < 1:
+        if len(get_mcblend_uv_groups(context.scene)) < 1:
             return False
         return True
 
@@ -1041,7 +1041,7 @@ class MCBLEND_OT_RemoveUvMaskColor(Operator):
 
     @classmethod
     def poll(cls, context: Context):
-        if len(get_scene_mcblend_uv_groups(context)) < 1:
+        if len(get_mcblend_uv_groups(context.scene)) < 1:
             return False
         return True
 
@@ -1064,7 +1064,7 @@ class MCBLEND_OT_MoveUvMaskColor(Operator):
 
     @classmethod
     def poll(cls, context: Context):
-        if len(get_scene_mcblend_uv_groups(context)) < 1:
+        if len(get_mcblend_uv_groups(context.scene)) < 1:
             return False
         return True
 
@@ -1086,7 +1086,7 @@ class MCBLEND_OT_AddUvMaskStripe(Operator):
 
     @classmethod
     def poll(cls, context: Context):
-        if len(get_scene_mcblend_uv_groups(context)) < 1:
+        if len(get_mcblend_uv_groups(context.scene)) < 1:
             return False
         return True
 
@@ -1109,7 +1109,7 @@ class MCBLEND_OT_RemoveUvMaskStripe(Operator):
 
     @classmethod
     def poll(cls, context: Context):
-        if len(get_scene_mcblend_uv_groups(context)) < 1:
+        if len(get_mcblend_uv_groups(context.scene)) < 1:
             return False
         return True
 
@@ -1132,7 +1132,7 @@ class MCBLEND_OT_MoveUvMaskStripe(Operator):
 
     @classmethod
     def poll(cls, context: Context):
-        if len(get_scene_mcblend_uv_groups(context)) < 1:
+        if len(get_mcblend_uv_groups(context.scene)) < 1:
             return False
         return True
 
@@ -1165,11 +1165,11 @@ class MCBLEND_OT_ExportUvGroup(  # pyright: ignore[reportIncompatibleMethodOverr
 
     @classmethod
     def poll(cls, context: Context):
-        return len(get_scene_mcblend_uv_groups(context)) > 0
+        return len(get_mcblend_uv_groups(context.scene)) > 0
 
     def execute(self, context: Context):
-        group_id = get_scene_mcblend_active_uv_group(context)
-        uv_group = get_scene_mcblend_uv_groups(context)[group_id]
+        group_id = get_mcblend_active_uv_group(context.scene)
+        uv_group = get_mcblend_uv_groups(context.scene)[group_id]
 
         with open(self.filepath, 'w', encoding='utf8') as f:
             json.dump(uv_group.json(), f, cls=CompactEncoder)
@@ -1479,11 +1479,11 @@ class MCBLEND_OT_ImportUvGroup(  # pyright: ignore[reportIncompatibleMethodOverr
             return {'CANCELLED'}
 
         # Create new UV group
-        len_groups = len(get_scene_mcblend_uv_groups(context))
+        len_groups = len(get_mcblend_uv_groups(context.scene))
         # Add new uv_group and set its properties
-        uv_group_new = get_scene_mcblend_uv_groups(context).add()
-        len_groups = len(get_scene_mcblend_uv_groups(context))
-        set_scene_mcblend_active_uv_group(context, len_groups-1)
+        uv_group_new = get_mcblend_uv_groups(context.scene).add()
+        len_groups = len(get_mcblend_uv_groups(context.scene))
+        set_mcblend_active_uv_group(context.scene, len_groups-1)
 
         # Currently only version 1 is supported
         if 'name' in data and isinstance(data['name'], str):
@@ -1524,7 +1524,7 @@ class MCBLEND_OT_AddEvent(Operator):
     bl_options = {'UNDO', 'INTERNAL'}
 
     def execute(self, context: Context):
-        event_new = get_scene_mcblend_events(context).add()
+        event_new = get_mcblend_events(context.scene).add()
         event_new.name = get_unused_event_name('event')
         return {'FINISHED'}
 
@@ -1537,21 +1537,21 @@ class MCBLEND_OT_RemoveEvent(Operator):
 
     @classmethod
     def poll(cls, context: Context):
-        events = get_scene_mcblend_events(context)
-        active_event_id = get_scene_mcblend_active_event(context)
+        events = get_mcblend_events(context.scene)
+        active_event_id = get_mcblend_active_event(context.scene)
         if not 0 <= active_event_id < len(events):
             return False
         return True
 
     def execute(self, context: Context):
-        active_event_id = get_scene_mcblend_active_event(context)
+        active_event_id = get_mcblend_active_event(context.scene)
         # Remove animation
-        get_scene_mcblend_events(context).remove(
+        get_mcblend_events(context.scene).remove(
             active_event_id)
 
         # Set new active event
         if active_event_id > 0:
-            set_scene_mcblend_active_event(context, active_event_id-1)
+            set_mcblend_active_event(context.scene, active_event_id-1)
         return {'FINISHED'}
 
 class MCBLEND_OT_AddEffect(Operator):
@@ -1567,15 +1567,15 @@ class MCBLEND_OT_AddEffect(Operator):
 
     @classmethod
     def poll(cls, context: Context):
-        events = get_scene_mcblend_events(context)
-        active_event_id = get_scene_mcblend_active_event(context)
+        events = get_mcblend_events(context.scene)
+        active_event_id = get_mcblend_active_event(context.scene)
         if not 0 <= active_event_id < len(events):
             return False
         return True
 
     def execute(self, context: Context):
-        events = get_scene_mcblend_events(context)
-        active_event_id = get_scene_mcblend_active_event(context)
+        events = get_mcblend_events(context.scene)
+        active_event_id = get_mcblend_active_event(context.scene)
         event = events[active_event_id]
 
         effect = event.effects.add()
@@ -1593,8 +1593,8 @@ class MCBLEND_OT_RemoveEffect(Operator):
 
     @classmethod
     def poll(cls, context: Context):
-        events = get_scene_mcblend_events(context)
-        active_event_id = get_scene_mcblend_active_event(context)
+        events = get_mcblend_events(context.scene)
+        active_event_id = get_mcblend_active_event(context.scene)
         if not 0 <= active_event_id < len(events):
             return False
         event = events[active_event_id]
@@ -1604,8 +1604,8 @@ class MCBLEND_OT_RemoveEffect(Operator):
         return True
 
     def execute(self, context: Context):
-        events = get_scene_mcblend_events(context)
-        active_event_id = get_scene_mcblend_active_event(context)
+        events = get_mcblend_events(context.scene)
+        active_event_id = get_mcblend_active_event(context.scene)
         event = events[active_event_id]
         event.effects.remove(self.effect_index)  # type: ignore
 
@@ -1697,7 +1697,7 @@ class MCBLEND_OT_ImportRpEntity(Operator):
 
     @classmethod
     def poll(cls, context: Context):
-        return len(get_scene_mcblend_project(context).entities) > 0
+        return len(get_mcblend_project(context.scene).entities) > 0
 
     def execute(self, context: Context):
         try:
@@ -1730,7 +1730,7 @@ class MCBLEND_OT_ImportAttachable(Operator):
 
     @classmethod
     def poll(cls, context: Context):
-        return len(get_scene_mcblend_project(context).attachables) > 0
+        return len(get_mcblend_project(context.scene).attachables) > 0
 
     def execute(self, context: Context):
         try:

@@ -12,7 +12,7 @@ from bpy.props import (
     PointerProperty, StringProperty)
 
 from .operator_func.typed_bpy_access import (
-    get_mcblend, get_scene_mcblend_uv_groups)
+    get_mcblend, get_mcblend_uv_groups)
 from .operator_func.texture_generator import (
     UvMaskTypes, list_mask_types_as_blender_enum,
     list_mix_mask_modes_as_blender_enum)
@@ -185,7 +185,7 @@ def get_unused_uv_group_name(base_name: str, i: int=1):
     the base name and adds number at the end of it to find unique name with
     pattern :code:`{base_name}.{number:04}`.
     '''
-    uv_groups = get_scene_mcblend_uv_groups(bpy.context)
+    uv_groups = get_mcblend_uv_groups(bpy.context.scene)
     name = base_name  # f'{base_name}.{i:04}'
     while name in uv_groups.keys():
         name = f'{base_name}.{i:04}'
@@ -204,7 +204,7 @@ def _update_uv_group_name(uv_group, new_name: str, update_references: bool):
     uv_group['name'] = new_name
 
 def _set_uv_group_name(self: Any, value: str):
-    groups = get_scene_mcblend_uv_groups(bpy.context)
+    groups = get_mcblend_uv_groups(bpy.context.scene)
 
     # Empty name is no allowed
     if value == '':

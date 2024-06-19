@@ -18,52 +18,52 @@ def get_mcblend(obj):
     '''
     return obj.mcblend
 
-def get_scene_mcblend_active_event(context):
+def get_mcblend_active_event(scene):
     '''
-    Returns the active event id from context
+    Returns the active event id from scene
 
-    >>> context.scene.mcblend_active_event
+    >>> scene.mcblend_active_event
     '''
-    return context.scene.mcblend_active_event
+    return scene.mcblend_active_event
 
-def get_scene_mcblend_active_uv_group(context):
+def get_mcblend_active_uv_group(scene):
     '''
-    Returns the active uv group id from context
+    Returns the active uv group id from scene
 
-    >>> context.scene.mcblend_active_uv_group
+    >>> scene.mcblend_active_uv_group
     '''
-    return context.scene.mcblend_active_uv_group
+    return scene.mcblend_active_uv_group
 
 
-def get_scene_mcblend_active_uv_groups_side(context):
+def get_mcblend_active_uv_groups_side(scene):
     '''
     Returns the active uv group side from context
 
-    >>> context.scene.mcblend_active_uv_groups_side
+    >>> scene.mcblend_active_uv_groups_side
     '''
-    return context.scene.mcblend_active_uv_groups_side
+    return scene.mcblend_active_uv_groups_side
 
-def get_scene_mcblend_events(context):
+def get_mcblend_events(scene):
     '''
     Returns the events properties from context
 
-    >>> context.scene.mcblend_events
+    >>> scene.mcblend_events
     '''
-    return context.scene.mcblend_events
+    return scene.mcblend_events
 
-def get_scene_mcblend_project(context):
+def get_mcblend_project(scene):
     '''
     Returns the project properties from context
 
-    >>> context.scene.mcblend_project
+    >>> scene.mcblend_project
     '''
-    return context.scene.mcblend_project
+    return scene.mcblend_project
 
-def get_scene_mcblend_uv_groups(context):
+def get_mcblend_uv_groups(scene):
     '''
-    >>> context.scene.mcblend_uv_groups
+    >>> scene.mcblend_uv_groups
     '''
-    return context.scene.mcblend_uv_groups
+    return scene.mcblend_uv_groups
 
 def set_operator_property(operator, name, value):
     '''
@@ -73,19 +73,19 @@ def set_operator_property(operator, name, value):
     '''
     setattr(operator, name, value)
 
-def set_scene_mcblend_active_event(context, value):
+def set_mcblend_active_event(scene, value):
     '''
-    Sets the active event id in context
+    Sets the active event id in scene
 
-    >>> context.scene.mcblend_active_event = value
+    >>> scene.mcblend_active_event = value
     '''
-    context.scene.mcblend_active_event = value
+    scene.mcblend_active_event = value
 
 
-def set_scene_mcblend_active_uv_group(context, value):
+def set_mcblend_active_uv_group(scene, value):
     '''
-    Sets the active uv group id in context
+    Sets the active uv group id in scene
 
-    >>> context.scene.mcblend_active_uv_group = value
+    >>> scene.mcblend_active_uv_group = value
     '''
-    context.scene.mcblend_active_uv_group = value
+    scene.mcblend_active_uv_group = value

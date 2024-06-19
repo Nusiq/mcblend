@@ -13,10 +13,10 @@ from .operator_func.db_handler import get_db_handler
 from .operator_func.common import MeshType
 from .operator_func.texture_generator import UvMaskTypes
 from .operator_func.typed_bpy_access import (
-    set_operator_property, get_scene_mcblend_active_uv_group,
-    get_scene_mcblend_uv_groups, get_scene_mcblend_active_uv_groups_side,
-    get_scene_mcblend_events, get_scene_mcblend_active_event, get_mcblend,
-    get_scene_mcblend_project)
+    set_operator_property, get_mcblend_active_uv_group,
+    get_mcblend_uv_groups, get_mcblend_active_uv_groups_side,
+    get_mcblend_events, get_mcblend_active_event, get_mcblend,
+    get_mcblend_project)
 from .uv_data import MCBLEND_UvMaskProperties
 
 # GUI
@@ -325,8 +325,8 @@ class MCBLEND_PT_UVGroupPanel(Panel):
         row_import_export = col.row()
         row_import_export.operator("mcblend.import_uv_group", icon='IMPORT')
 
-        active_uv_group_id = get_scene_mcblend_active_uv_group(bpy.context)
-        uv_groups = get_scene_mcblend_uv_groups(bpy.context)
+        active_uv_group_id = get_mcblend_active_uv_group(bpy.context.scene)
+        uv_groups = get_mcblend_uv_groups(bpy.context.scene)
         col.template_list(
             listtype_name="MCBLEND_UL_UVGroupList",
             list_id="",
@@ -361,7 +361,7 @@ class MCBLEND_PT_UVGroupPanel(Panel):
                 active_uv_group.side5, active_uv_group.side6
             ]
             masks = sides[
-                int(get_scene_mcblend_active_uv_groups_side(bpy.context))]
+                int(get_mcblend_active_uv_groups_side(bpy.context.scene))]
             # Stack of UI items to draw in
             ui_stack: List[_UIStackItem] = [
                 _UIStackItem(col, 0)]
@@ -446,8 +446,8 @@ class MCBLEND_PT_EventsPanel(Panel):
         col = self.layout.column(align=True)
         row = col.row()
 
-        events = get_scene_mcblend_events(bpy.context)
-        active_event_id = get_scene_mcblend_active_event(bpy.context)
+        events = get_mcblend_events(bpy.context.scene)
+        active_event_id = get_mcblend_active_event(bpy.context.scene)
         col.template_list(
             listtype_name="MCBLEND_UL_EventsList",
             list_id="",
@@ -785,7 +785,7 @@ class MCBLEND_PT_ProjectPanel(Panel):
 
     def draw(self, context: Context):
         col = self.layout.column()
-        project = get_scene_mcblend_project(context)
+        project = get_mcblend_project(context.scene)
 
         # col.operator("mcblend.load_database")
         # col.operator("mcblend.save_database")

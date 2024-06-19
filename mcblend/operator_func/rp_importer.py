@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Literal, TypedDict, TYPE_CHECKING, Union
 from bpy.types import Context
 from .pyi_types import CollectionProperty
-from .typed_bpy_access import get_scene_mcblend_project
+from .typed_bpy_access import get_mcblend_project
 
 # Import for static type checking only (to avoid circular imports)
 if TYPE_CHECKING:
@@ -65,7 +65,7 @@ def get_pks_for_model_improt(
     resource pack based on the settings selected in the UI.
     '''
     # 1. Load cached data
-    project = get_scene_mcblend_project(context)
+    project = get_mcblend_project(context.scene)
     render_controllers: Union[
         CollectionProperty[MCBLEND_AttachableRenderController],
         CollectionProperty[MCBLEND_EntityRenderController]]
