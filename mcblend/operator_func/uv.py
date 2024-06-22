@@ -12,8 +12,6 @@ import bisect
 import numpy as np
 import bpy
 
-from .typed_bpy_access import (
-    get_loop_indices, get_data_uv_layers, get_uv, set_uv)
 from .texture_generator import Mask
 from .exception import NotEnoughTextureSpace
 from .json_tools import get_vect_json
@@ -297,7 +295,7 @@ class UvMcCubeFace(UvBox):
         # Order of the faces for: left_down, right_down, right_up, left_up
 
         # Cube polygon data
-        cp_loop_indices = get_loop_indices(self.cube_polygon.side)
+        cp_loop_indices = self.cube_polygon.side.loop_indices
         cp_order = self.cube_polygon.order
 
         left_down = cp_loop_indices[cp_order[0]]
@@ -604,10 +602,6 @@ class UvModelMerger(McblendObjUvBox):
         )
 
     def new_uv_layer(self):
-        # for obj in self.model.values():
-        #     if obj.obj_type != 'MESH':
-        #         continue
-        #     get_data_uv_layers(obj.thisobj).new()
         raise RuntimeError(
             'This type of object only moves the UVs, it should never create a '
             'new UV layer')
@@ -623,17 +617,17 @@ class UvModelMerger(McblendObjUvBox):
         for obj in self.model.values():
             if obj.obj_type != 'MESH':
                 continue
-            active_uv_layer = get_data_uv_layers(obj.thisobj).active
+            active_uv_layer = obj.thisobj.data.uv_layers.active
             if active_uv_layer is None:  # pyright: ignore[reportUnnecessaryComparison]
                 continue  # Unmapped objects remain unmapped
             for i, _ in enumerate(active_uv_layer.data):
                 # The UV values on the old texture (as if the image was
                 # self.base_image_size)
-                uv = reverse_converter.convert(get_uv(active_uv_layer.data[i]))
+                uv = reverse_converter.convert(active_uv_layer.data[i].uv)
                 # Shift the UV values by the newly assigned UV
                 uv = uv + offset
                 # Convert the UV values to the new texture and apply
-                set_uv(active_uv_layer.data[i], converter.convert(uv))
+                active_uv_layer.data[i].uv = converter.convert(uv)
 
 
 

@@ -19,3 +19,9 @@ Feel free to reach out to me on the #mcblend channel of the [Bedrock OSS](https:
 
 ## 💡 Planned features
 Some of the planned features for the Mcblend project can be found in the ["Issues"](https://github.com/Nusiq/mcblend/issues) tab of this repository.
+
+## 📜 License
+
+The license for Mcblend plugin can be found in the the "LICENSE" file.
+
+The project uses a modified version of [fake-bpy-module](https://github.com/nutti/fake-bpy-module) for type checking (stored in the "fake_bpy_modules" directory). The license for the fake-bpy-module can be found in the "fake_bpy_modules/LICENSE" file.

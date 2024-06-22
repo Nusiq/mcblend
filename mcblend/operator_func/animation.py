@@ -14,9 +14,6 @@ from bpy.types import Action, Context
 
 import numpy as np
 
-from .typed_bpy_access import (
-    get_fcurves, get_keyframe_points, get_nla_tracks,
-    get_strips, get_timeline_markers)
 from .json_tools import get_vect_json
 from .common import (
     AnimationLoopType, MINECRAFT_SCALE_FACTOR, MCObjType, McblendObjectGroup,
@@ -49,7 +46,7 @@ def _pick_closest_rotation(
     if original_rotation is None:
         original_rotation = np.array([0.0, 0.0, 0.0])
 
-    def _pick_closet_location(
+    def _pick_closest_location(
             base: NumpyTable, close_to: NumpyTable
     ) -> Tuple[float, NumpyTable]:
         choice: NumpyTable = base
@@ -72,8 +69,8 @@ def _pick_closest_rotation(
                 distance, choice = new_distance, new_choice
         return cast(float, distance), choice
 
-    distance1, choice1 = _pick_closet_location(base, close_to)
-    distance2, choice2 = _pick_closet_location(  # Counterintuitive but works
+    distance1, choice1 = _pick_closest_location(base, close_to)
+    distance2, choice2 = _pick_closest_location(  # Counterintuitive but works
         (
             base +
             np.array([180, 180 + original_rotation[1] * 2, 180])) *
@@ -122,15 +119,15 @@ def _get_keyframes(context: Context, prec: int=1) -> List[float]:
         if action.fcurves is None:  # type: ignore
             return []
         result: List[float] = []
-        for fcurve in get_fcurves(action):
+        for fcurve in action.fcurves:
             if fcurve.keyframe_points is None:  # type: ignore
                 continue
-            for keyframe_point in get_keyframe_points(fcurve):
+            for keyframe_point in fcurve.keyframe_points:
                 result.append(keyframe_point.co[0])  # type: ignore
         return result
 
     keyframes: Set[float] = set()
-    obj = context.active_object
+    obj = context.object
     if obj is None:
         return []
     if obj.animation_data is None:  # type: ignore
@@ -140,10 +137,10 @@ def _get_keyframes(context: Context, prec: int=1) -> List[float]:
             keyframes.add(round(keyframe, prec))
     if obj.animation_data.nla_tracks is None:  # type: ignore
         return sorted(keyframes)
-    for nla_track in get_nla_tracks(obj.animation_data):
+    for nla_track in obj.animation_data.nla_tracks:
         if nla_track.mute:
             continue
-        for strip in get_strips(nla_track):
+        for strip in nla_track.strips:
             if strip.type != 'CLIP':
                 continue
             strip_action_keyframes = get_action_keyframes(strip.action)
@@ -306,7 +303,7 @@ class AnimationExport:
                     curr_pose.load_poses(object_properties)
                     self.poses[keyframe] = curr_pose
                 # Load sound effects and particle effects
-                for timeline_marker in get_timeline_markers(context.scene):
+                for timeline_marker in context.scene.timeline_markers:
                     if timeline_marker.name not in self.effect_events:
                         continue
                     sound, particle = self.effect_events[timeline_marker.name]

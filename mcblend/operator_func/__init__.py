@@ -10,22 +10,14 @@ from dataclasses import dataclass, field
 from collections import defaultdict
 
 import bpy
-from bpy.types import Image, Material, Context, Object
+from bpy.types import Image, Material, Context, Object, Armature, Mesh
 import numpy as np
 
 from .common import ModelOriginType
 from .typed_bpy_access import (
-    get_data_bones, get_objects,
-    get_context_object, get_scene_mcblend_project,
-    get_scene_mcblend_events, get_selected_objects,
-    get_data_images, get_data_objects, get_children,
-    get_constraints, get_matrix_world, get_mcblend,
-    new_collection,
-    get_material_slots, set_constraint_property, set_pixels,
-    set_matrix_parent_inverse, set_matrix_world,
-    set_parent, set_pose_bone_constraint_property,
-    get_data_materials, get_pixels, set_view_layer_objects_active,
-    get_view_layer_objects_active)
+    get_mcblend_project,
+    get_mcblend_events,
+    get_mcblend)
 
 from .sqlite_bedrock_packs.better_json_tools import load_jsonc
 
@@ -52,7 +44,7 @@ def export_model(
         warnings about exporting.
     '''
     result = ModelExport.json_outer()
-    armature = get_context_object(context)  # an armature
+    armature = context.object  # an armature
     if armature is None or armature.type != 'ARMATURE':
         # Should never happen (checked in the operator)
         raise ValueError("Selected object is not an armature")
@@ -88,7 +80,7 @@ def export_animation(
     :param old_dict: optional - JSON dict with animation to write into.
     :returns: JSON dict of Minecraft animations.
     '''
-    armature = get_context_object(context)  # an armature
+    armature = context.object  # an armature
     if armature is None or armature.type != 'ARMATURE':
         # Should never happen (checked in the operator)
         raise ValueError("Selected object is not an armature")
@@ -116,7 +108,7 @@ def export_animation(
         fps=context.scene.render.fps,
         effect_events={
             event.name: event.get_effects_dict()
-            for event in get_scene_mcblend_events(context)
+            for event in get_mcblend_events(context.scene)
         }
     )
     animation.load_poses(object_properties, context)
@@ -132,7 +124,7 @@ def set_uvs(context: Context):
 
     :param context: the execution context.
     '''
-    armature = get_context_object(context) # an armature
+    armature = context.object # an armature
     if armature is None or armature.type != 'ARMATURE':
         # Should never happen (checked in the operator)
         raise ValueError("Selected object is not an armature")
@@ -173,15 +165,15 @@ def set_uvs(context: Context):
 
     if generate_texture:
         old_image = None
-        if "template" in get_data_images():
-            old_image = get_data_images()['template']
-        image = get_data_images().new(
+        if "template" in bpy.data.images:
+            old_image = bpy.data.images['template']
+        image = bpy.data.images.new(
             "template", width*resolution, height*resolution, alpha=True
         )
         if old_image is not None:
             # If exists remap users of old image and remove it
             old_image.user_remap(image)
-            get_data_images().remove(old_image)
+            bpy.data.images.remove(old_image)
             image.name = "template"
 
 
@@ -191,7 +183,7 @@ def set_uvs(context: Context):
 
         for uv_cube in mapper.uv_boxes:
             uv_cube.paint_texture(arr, resolution)
-        set_pixels(image, arr.ravel())  # Apply texture pixels values
+        image.pixels = arr.ravel()  # Apply texture pixels values
 
     # Set blender UVs
     converter = CoordinatesConverter(
@@ -212,7 +204,7 @@ def fix_uvs(context: Context) -> Vector2di:
 
     :returns: The number of fixed cubes and the number of fixed faces.
     '''
-    armature = get_context_object(context)  # an armature
+    armature = context.object  # an armature
     if armature is None or armature.type != 'ARMATURE':
         # Should never happen (checked in the operator)
         raise ValueError("Selected object is not an armature")
@@ -326,8 +318,8 @@ def separate_mesh_cubes(context: Context):
     :returns: the number of created objects
     '''
     bpy.ops.mesh.separate(type='LOOSE')  # pyright: ignore[reportUnknownMemberType]
-    edited_objects = len(get_selected_objects(context))
-    for obj in get_selected_objects(context):
+    edited_objects = len(context.selected_objects)
+    for obj in context.selected_objects:
         if obj.type != 'MESH':
             continue
         apply_obj_transform_keep_origin(obj)
@@ -379,11 +371,11 @@ def inflate_objects(
                 delta_inflate = inflate
                 get_mcblend(obj).inflate = inflate
             # Clear parent from children for a moment
-            children = get_children(obj)
+            children = obj.children
             for child in children:
-                old_matrix = get_matrix_world(child).copy()
-                set_parent(child, None)
-                set_matrix_world(child, old_matrix)
+                old_matrix = child.matrix_world.copy()
+                child.parent = None
+                child.matrix_world = old_matrix
 
             dimensions = np.array(obj.dimensions)
 
@@ -397,10 +389,8 @@ def inflate_objects(
 
             # Add children back and set their previous transformations
             for child in children:
-                set_parent(child, obj)
-                set_matrix_parent_inverse(
-                    child,
-                    get_matrix_world(obj).inverted())
+                child.parent = obj
+                child.matrix_parent_inverse = obj.matrix_world.inverted()
 
             counter += 1
     return counter
@@ -413,7 +403,7 @@ def load_rp_to_mcblned(
     :param context: the context of running the operator.
     :param path: path to the resource pack.
     '''
-    mcblend_project = get_scene_mcblend_project(context)
+    mcblend_project = get_mcblend_project(context.scene)
     # Cleared cached data for GUI it will be reloaded later
     # Clear cached entity data
     mcblend_project.entities.clear()
@@ -465,7 +455,7 @@ def unload_rps(context: Context):
     '''
     Unload resrouce pakcs in GUI.
     '''
-    mcblend_project = get_scene_mcblend_project(context)
+    mcblend_project = get_mcblend_project(context.scene)
     mcblend_project.entity_render_controllers.clear()
     mcblend_project.entities.clear()
     mcblend_project.selected_entity = ''
@@ -500,7 +490,7 @@ def import_model_form_project(
             # texture - Optional[Image] (bpy.types.Image)
             texture_file_path = db_handler.get_texture_file_path(
                 render_controller_data['texture_file_pk'])
-            texture = get_data_images().load(
+            texture = bpy.data.images.load(
                 texture_file_path.as_posix())
         except RuntimeError:
             texture = None
@@ -616,7 +606,9 @@ def import_model_form_project(
             for c in bone.cubes:
                 if c.blend_cube is None:
                     continue
-                get_data_materials(c.blend_cube).append(
+                if not isinstance(c.blend_cube.data, Mesh):
+                    continue
+                c.blend_cube.data.materials.append(
                     blender_materials[tuple(bone_materials_id)])
     return warnings
 
@@ -628,7 +620,7 @@ def apply_materials(context: Context):
     '''
     blender_materials: Dict[
         Tuple[Tuple[Optional[str], str], ...], Material] = {}
-    armature = get_context_object(context)
+    armature = context.object
     if armature is None or armature.type != 'ARMATURE':
         # TODO - this should never happen. Rewrite the code so it's guaranteed
         raise ValueError("Selected object is not an armature")
@@ -657,8 +649,8 @@ def apply_materials(context: Context):
 
         for rc in reversed(armature_properties.render_controllers):
             texture: Optional[Image] = None
-            if rc.texture in get_data_images():
-                texture = get_data_images()[rc.texture]
+            if rc.texture in bpy.data.images:
+                texture = bpy.data.images[rc.texture]
             rc_stack_item = RcStackItem(texture)
             for rc_material in rc.materials:
                 rc_stack_item.materials[
@@ -712,8 +704,11 @@ def prepare_physics_simulation(context: Context) -> Dict[str, Any]:
     :param context: the context of running the operator.
     '''
     result = ModelExport.json_outer()
-    armature = get_context_object(context)
-    if armature is None or armature.type != 'ARMATURE':
+    armature = context.object
+    if (
+            armature is None
+            or armature.type != 'ARMATURE'
+            or not isinstance(armature.data, Armature)):
         raise ValueError("Selected object is not an armature")
 
     origin = None
@@ -729,22 +724,22 @@ def prepare_physics_simulation(context: Context) -> Dict[str, Any]:
         bpy.ops.rigidbody.world_add()  # pyright: ignore[reportUnknownMemberType]
         rigidbody_world = context.scene.rigidbody_world
     if rigidbody_world.collection is None:  # type: ignore
-        collection = new_collection("RigidBodyWorld")
+        collection = bpy.data.collections.new("RigidBodyWorld")
         rigidbody_world.collection = collection
     if rigidbody_world.constraints is None:  # type: ignore
-        collection = new_collection("RigidBodyConstraints")
+        collection = bpy.data.collections.new("RigidBodyConstraints")
         rigidbody_world.constraints = collection
 
     # Create new collections for the scene
     physics_objects_groups: Dict[McblendObject, _PhysicsObjectsGroup] = {}
-    main_collection = new_collection("Mcblend: Physics")
-    rb_collection = new_collection("Rigid Body")
-    rbc_collection = new_collection("Rigid Body Constraints")
-    bp_collection = new_collection("Bone Parents")
-    get_children(context.scene.collection).link(main_collection)
-    get_children(main_collection).link(rb_collection)
-    get_children(main_collection).link(rbc_collection)
-    get_children(main_collection).link(bp_collection)
+    main_collection = bpy.data.collections.new("Mcblend: Physics")
+    rb_collection = bpy.data.collections.new("Rigid Body")
+    rbc_collection = bpy.data.collections.new("Rigid Body Constraints")
+    bp_collection = bpy.data.collections.new("Bone Parents")
+    context.scene.collection.children.link(main_collection)
+    main_collection.children.link(rb_collection)
+    main_collection.children.link(rbc_collection)
+    main_collection.children.link(bp_collection)
 
     for _, bone in mcblend_obj_group.items():
         if not bone.mctype == MCObjType.BONE:
@@ -759,7 +754,7 @@ def prepare_physics_simulation(context: Context) -> Dict[str, Any]:
             new_obj = cast(Object, new_obj)
             new_obj.data = child.obj_data.copy()
             new_obj.animation_data_clear()
-            get_objects(context.collection).link(new_obj)
+            context.collection.objects.link(new_obj)
 
             cubes_group.append(new_obj)
         bpy.ops.object.select_all(action='DESELECT')  # pyright: ignore[reportUnknownMemberType]
@@ -767,26 +762,26 @@ def prepare_physics_simulation(context: Context) -> Dict[str, Any]:
         if len(cubes_group) > 1:
             for c in cubes_group:
                 c.select_set(True)
-            get_objects(context.view_layer).active = cubes_group[-1]
+            context.view_layer.objects.active = cubes_group[-1]
             bpy.ops.object.join()  # pyright: ignore[reportUnknownMemberType]
-            rigid_body = get_context_object(context)
+            rigid_body = context.object
         elif len(cubes_group) == 1:
             cubes_group[0].select_set(True)
             rigid_body = cubes_group[0]
         # Move origin to the center of mass and rename the object
         if rigid_body is not None:
-            for material_slot in get_material_slots(rigid_body):
+            for material_slot in rigid_body.material_slots:
                 material_slot.material = None  # type: ignore
             bpy.ops.object.origin_set(  # pyright: ignore[reportUnknownMemberType]
                 type='ORIGIN_CENTER_OF_VOLUME', center='MEDIAN')
             bpy.ops.object.visual_transform_apply()  # pyright: ignore[reportUnknownMemberType]
-            matrix_world = get_matrix_world(rigid_body).copy()
-            rigid_body.parent = None  # type: ignore
-            set_matrix_world(rigid_body, matrix_world)
-            get_objects(rigidbody_world.collection).link(rigid_body)
+            matrix_world = rigid_body.matrix_world.copy()
+            rigid_body.parent = None
+            rigid_body.matrix_world = matrix_world
+            rigidbody_world.collection.objects.link(rigid_body)
             # Move to rigid body colleciton
-            get_objects(context.collection).unlink(rigid_body)
-            get_objects(rb_collection).link(rigid_body)
+            context.collection.objects.unlink(rigid_body)
+            rb_collection.objects.link(rigid_body)
             # Add keyframes to the rigid body "animated"/"kinematic" property (
             # enable it 1 frame after current frame)
             rigid_body.rigid_body.kinematic = True
@@ -802,33 +797,33 @@ def prepare_physics_simulation(context: Context) -> Dict[str, Any]:
 
 
             # Add bone parent empty
-            empty = get_data_objects().new(
+            empty = bpy.data.objects.new(
                 f'{bone.obj_name}_bp', None)  # bp - bone parent
-            get_objects(bp_collection).link(empty)
+            bp_collection.objects.link(empty)
             empty.empty_display_type = 'CONE'
             empty.empty_display_size = 0.1
-            set_matrix_world(empty, bone.obj_matrix_world)
+            empty.matrix_world = bone.obj_matrix_world
             physics_objects_groups[bone].object_parent_empty = empty
             # Add "Copy Transforms" constraint to the bone
-            get_objects(context.view_layer).active = armature
+            context.view_layer.objects.active = armature
 
             # Pose mode
             bpy.ops.object.posemode_toggle()  # pyright: ignore[reportUnknownMemberType]
             bpy.ops.pose.select_all(action='DESELECT')  # pyright: ignore[reportUnknownMemberType]
 
-            get_data_bones(armature).active = get_data_bones(
-                armature)[bone.thisobj_id.bone_name]
+            armature.data.bones.active = armature.data.bones[
+                bone.thisobj_id.bone_name]
             # bpy.ops.pose.constraint_add(type='COPY_TRANSFORMS')
-            constraint = get_constraints(
-                bone.this_pose_bone).new(type='COPY_TRANSFORMS')
-            set_pose_bone_constraint_property(constraint, 'target', empty)
+            constraint = bone.this_pose_bone.constraints.new(
+                type='COPY_TRANSFORMS')
+            constraint.target = empty
             # Add keyframes to the "copy transformation" constraint (
             # enable it 1 frame after current frame)
-            set_pose_bone_constraint_property(constraint, 'influence', 0)
+            constraint.influence = 0
             constraint.keyframe_insert("influence", frame=0)
             constraint.keyframe_insert(
                 "influence", frame=bpy.context.scene.frame_current)
-            set_pose_bone_constraint_property(constraint, 'influence', 1)
+            constraint.influence = 1
             constraint.keyframe_insert(
                 "influence", frame=bpy.context.scene.frame_current+1)
 
@@ -836,18 +831,15 @@ def prepare_physics_simulation(context: Context) -> Dict[str, Any]:
             bpy.ops.object.posemode_toggle()  # pyright: ignore[reportUnknownMemberType]
 
             # Add "Child of" constraint to parent empty
-            get_objects(context.view_layer).active = empty
-            set_constraint_property(
-                get_constraints(empty).new(type='CHILD_OF'),
-                'target', rigid_body)
+            context.view_layer.objects.active = empty
+            empty.constraints.new(type='CHILD_OF').target = rigid_body
 
-        empty = get_data_objects().new(
+        empty = bpy.data.objects.new(
             f'{bone.obj_name}_rbc', None)  # bp - bone parent
-        get_objects(rbc_collection).link(empty)
+        rbc_collection.objects.link(empty)
         empty.empty_display_type = 'PLAIN_AXES'
         empty.empty_display_size = 0.1
-        set_matrix_world(
-            empty, bone.obj_matrix_world)
+        empty.matrix_world = bone.obj_matrix_world
         physics_objects_groups[bone].rigid_body_constraint = empty
 
     # Add constraints to rigid body constraints empty
@@ -878,7 +870,7 @@ def merge_models(context: Context) -> None:
     # GET OBJECTS TO MERGE
     uv_mergers: list[UvModelMerger] = []
     armatures: list[Object] = []
-    for obj in get_selected_objects(context):
+    for obj in context.selected_objects:
         # Deselect every object (for later)
         obj.select_set(False)
         # Exclude unwanted objects
@@ -905,14 +897,14 @@ def merge_models(context: Context) -> None:
     mapper.plan_uv(True)
 
     # CREATE A NEW TEXTURE
-    image = get_data_images().new(
+    image = bpy.data.images.new(
         "merged", mapper.width, mapper.height, alpha=True)
 
     # This array represents new texture
     # DIM0:up axis DIM1:right axis DIM2:rgba axis
     arr = np.zeros([image.size[1], image.size[0], 4])
     for merger in uv_mergers:
-        pixels = np.array(get_pixels(merger.base_image))
+        pixels = np.array(merger.base_image.pixels[:])
 
         pixels = pixels.reshape([
             merger.base_image_size[1], merger.base_image_size[0], 4
@@ -924,7 +916,7 @@ def merge_models(context: Context) -> None:
         min_y = mapper.height-merger.uv[1]-merger.base_image_size[1]
         max_y = mapper.height-merger.uv[1]
         arr[min_y:max_y, min_x:max_x] = pixels
-    set_pixels(image, arr.ravel())  # Apply texture pixels values
+    image.pixels = arr.ravel()  # Apply texture pixels values
 
     # APPLY THE UVs
     converter = CoordinatesConverter(
@@ -935,16 +927,18 @@ def merge_models(context: Context) -> None:
         merger.set_blender_uv(converter)
 
     # MERGE THE ARMATURES
-    set_view_layer_objects_active(context, armatures[0])
+    context.view_layer.objects.active = armatures[0]
     for i, obj in enumerate(armatures):
+        # This assertion should never raise an exception
+        assert isinstance(obj.data, Armature), "Object is not an Armature"
         # Update bone names
-        for bone in get_data_bones(obj):
+        for bone in obj.data.bones:
             bone.name = f'{bone.name}_{i}'
         # Select the object for merging
         obj.select_set(True)
     bpy.ops.object.join()  # pyright: ignore[reportUnknownMemberType]
     # CREATE A NEW RENDER CONTROLLER FOR THE MODEL
-    active_obj = get_view_layer_objects_active(context)
+    active_obj = context.view_layer.objects.active
     rcs = get_mcblend(active_obj).render_controllers
     rcs.clear()
     rc = rcs.add()

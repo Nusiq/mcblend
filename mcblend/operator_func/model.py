@@ -17,7 +17,7 @@ from .common import (
     MINECRAFT_SCALE_FACTOR, McblendObject, McblendObjectGroup, MCObjType,
     CubePolygons, CubePolygon, MeshType, NumpyTable
 )
-from .typed_bpy_access import get_data, get_loop_indices, get_mcblend
+from .typed_bpy_access import get_mcblend
 from .extra_types import Vector2di, Vector3d, Vector3di
 from .json_tools import get_vect_json
 from .exception import ExporterException
@@ -158,8 +158,7 @@ class BoneExport:
 
         def _scale(objprop: McblendObject) -> NumpyTable:
             '''Scale of a bone'''
-            _, _, scale = objprop.obj_matrix_world.decompose()  # type: ignore
-            scale = cast(Vector, scale)  # type: ignore
+            _, _, scale = objprop.obj_matrix_world.decompose()
             return np.array(scale.xzy)
 
         # Set locators
@@ -444,9 +443,9 @@ class UvExportFactory:
         face: MeshPolygon = cube_polygon.side
         name_index = cube_polygon.orientation.index(name)
 
-        uv_layer_data_index = get_loop_indices(face)[name_index]
+        uv_layer_data_index = face.loop_indices[name_index]
         return self.blend_to_mc_converter.convert(
-            np.array(get_data(uv_layer)[uv_layer_data_index].uv)
+            np.array(uv_layer.data[uv_layer_data_index].uv)
         )
 
     def _get_standard_cube_uv_export(
@@ -460,7 +459,7 @@ class UvExportFactory:
         '''
         # Get min and max value of he loop coordinates
         loop_crds_list: List[NumpyTable] = []
-        for loop in get_data(uv_layer):
+        for loop in uv_layer.data:
             loop_crds_list.append(
                 self.blend_to_mc_converter.convert(np.array(loop.uv))
             )

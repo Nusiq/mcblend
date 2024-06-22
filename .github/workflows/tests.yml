@@ -46,18 +46,19 @@ jobs:
     - name: Install dependencies
       run: |
         sudo snap install blender --channel=3.3lts/stable --classic
-        pip install pyright pytest numpy fake-bpy-module-3.4
+        cd $GITHUB_WORKSPACE
+        pip install pyright pytest numpy ./fake_bpy_modules
     - name: Build and install the addon
       run: |
         cd $GITHUB_WORKSPACE
         python --version
         zip_name=$(python build.py | grep 'mcblend_[0-9.]*.zip' -o)
         blender -b --python ./blender_scripts/install.py -- "$GITHUB_WORKSPACE/$zip_name"
-    - name: Test syntax with mypy
+    - name: Static Type Checking (Pyright)
       run: |
         cd $GITHUB_WORKSPACE
         python -m pyright ./mcblend
-    - name: PyTest tests
+    - name: Tests (Pytest)
       run: |
         cd $GITHUB_WORKSPACE
         python -m pytest

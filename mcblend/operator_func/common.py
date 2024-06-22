@@ -15,16 +15,14 @@ import numpy as np
 import numpy.typing as npt
 
 import bpy
-from bpy.types import MeshUVLoopLayer, Object, MeshPolygon, PoseBone
+from bpy.types import (
+    MeshUVLoopLayer, Object, MeshPolygon, PoseBone, Armature, Mesh)
 
 from mathutils import Vector, Matrix, Euler
 
 from .typed_bpy_access import (
-    add, decompose, get_children, get_co, get_data, get_data_edges, get_matrix,
-    get_pose_bones, get_scene_mcblend_uv_groups, get_data_bones,
-    get_data_polygons, get_data_vertices, get_matrix_local, get_matrix_world,
-    get_mcblend, getitem, matmul, matmul_chain, set_co, set_matrix_local,
-    subtract, cross, neg, to_euler)
+    get_mcblend_uv_groups,
+    get_mcblend)
 
 from .texture_generator import Mask, ColorMask, get_masks_from_side
 from .exception import ExporterException
@@ -192,13 +190,13 @@ class McblendObject:
     @property
     def this_pose_bone(self) -> PoseBone:
         '''The pose bone of this object (doesn't work for non-bone objects)'''
-        return get_pose_bones(self.thisobj)[self.thisobj_id.bone_name]
+        return self.thisobj.pose.bones[self.thisobj_id.bone_name]
 
     @property
     def obj_name(self) -> str:
         '''The name of this object used for exporting to Minecraft model.'''
         if self.thisobj.type == 'ARMATURE':
-            return get_pose_bones(self.thisobj)[
+            return self.thisobj.pose.bones[
                 self.thisobj_id.bone_name
             ].name
         return self.thisobj.name
@@ -222,18 +220,16 @@ class McblendObject:
         The copy of the translation matrix (matrix_world) of the blender
         wrapped inside this object.
         '''
-        this_obj_matrix_world = get_matrix_world(self.thisobj).copy()
+        this_obj_matrix_world = self.thisobj.matrix_world.copy()
         if self.group.world_origin is not None:
-            this_obj_matrix_world = matmul(
-                get_matrix_world(self.group.world_origin).inverted(),
-                this_obj_matrix_world,
+            this_obj_matrix_world = (
+                self.group.world_origin.matrix_world.inverted() @
+                this_obj_matrix_world
             )
         if self.thisobj.type == 'ARMATURE':
-            return matmul(
-                this_obj_matrix_world,
-                get_matrix(
-                    get_pose_bones(self.thisobj)[self.thisobj_id.bone_name]
-                ).copy()
+            return (
+                this_obj_matrix_world @
+                self.thisobj.pose.bones[self.thisobj_id.bone_name].matrix.copy()
             )
         return this_obj_matrix_world
 
@@ -274,7 +270,7 @@ class McblendObject:
         def _get_mcpivot(objprop: McblendObject) -> Vector:
             if objprop.parent is not None:
                 result = local_crds(objprop.parent, objprop)
-                result = add(result, _get_mcpivot(objprop.parent))
+                result = result + _get_mcpivot(objprop.parent)
             else:
                 result = objprop.obj_matrix_world.to_translation()
             return result
@@ -306,7 +302,7 @@ class McblendObject:
         if normalize:
             p_matrix.normalize()
             c_matrix.normalize()
-        return matmul(p_matrix.inverted(), c_matrix)
+        return p_matrix.inverted() @ c_matrix
 
     def get_mcrotation(
             self, other: Optional[McblendObject] = None
@@ -328,14 +324,14 @@ class McblendObject:
             '''
             child_q = child_matrix.normalized().to_quaternion()
             parent_q = parent_matrix.inverted().normalized().to_quaternion()
-            return to_euler(matmul(parent_q, child_q), 'XZY')
+            return (parent_q @ child_q).to_euler('XZY')
 
         if other is not None:
             result_euler = local_rotation(
                 self.obj_matrix_world, other.obj_matrix_world
             )
         else:
-            result_euler = to_euler(self.obj_matrix_world, 'XZY')
+            result_euler = self.obj_matrix_world.to_euler('XZY')
         result: NumpyTable = np.array(result_euler)[[0, 2, 1]]
         result = result * np.array([1, -1, 1])
         result = result * 180/math.pi  # math.degrees() for array
@@ -356,7 +352,7 @@ class McblendObject:
         '''
         if self.uv_group == '':
             return [ColorMask((0, 1, 0))]
-        uv_group = get_scene_mcblend_uv_groups(bpy.context)[self.uv_group]
+        uv_group = get_mcblend_uv_groups(bpy.context.scene)[self.uv_group]
         return get_masks_from_side(uv_group.side1)
 
     @property
@@ -367,7 +363,7 @@ class McblendObject:
         '''
         if self.uv_group == '':
             return [ColorMask((1, 0, 1))]
-        uv_group = get_scene_mcblend_uv_groups(bpy.context)[self.uv_group]
+        uv_group = get_mcblend_uv_groups(bpy.context.scene)[self.uv_group]
         return get_masks_from_side(uv_group.side2)
 
     @property
@@ -378,7 +374,7 @@ class McblendObject:
         '''
         if self.uv_group == '':
             return [ColorMask((1, 0, 0))]
-        uv_group = get_scene_mcblend_uv_groups(bpy.context)[self.uv_group]
+        uv_group = get_mcblend_uv_groups(bpy.context.scene)[self.uv_group]
         return get_masks_from_side(uv_group.side3)
 
     @property
@@ -389,7 +385,7 @@ class McblendObject:
         '''
         if self.uv_group == '':
             return [ColorMask((0, 1, 1))]
-        uv_group = get_scene_mcblend_uv_groups(bpy.context)[self.uv_group]
+        uv_group = get_mcblend_uv_groups(bpy.context.scene)[self.uv_group]
         return get_masks_from_side(uv_group.side4)
 
     @property
@@ -400,7 +396,7 @@ class McblendObject:
         '''
         if self.uv_group == '':
             return [ColorMask((0, 0, 1))]
-        uv_group = get_scene_mcblend_uv_groups(bpy.context)[self.uv_group]
+        uv_group = get_mcblend_uv_groups(bpy.context.scene)[self.uv_group]
         return get_masks_from_side(uv_group.side5)
 
     @property
@@ -411,7 +407,7 @@ class McblendObject:
         '''
         if self.uv_group == '':
             return [ColorMask((1, 1, 0))]
-        uv_group = get_scene_mcblend_uv_groups(bpy.context)[self.uv_group]
+        uv_group = get_mcblend_uv_groups(bpy.context.scene)[self.uv_group]
         return get_masks_from_side(uv_group.side6)
 
     def find_lose_parts(self) -> Tuple[int, ...]:
@@ -427,12 +423,14 @@ class McblendObject:
         if self.obj_type != 'MESH':
             return tuple()
         obj = self.thisobj
+        # This assert should never raise an exception
+        assert isinstance(obj.data, Mesh), "Object is not a Mesh."
 
         # List that represents the grouping - index: the index of vertex
         # value: the pointer to identifier of a group of that vertex
-        groups = [c_int(-1) for _ in range(len(get_data_vertices(obj)))]
+        groups = [c_int(-1) for _ in range(len(obj.data.vertices))]
 
-        for edge in get_data_edges(obj):
+        for edge in obj.data.edges:
             a, b = edge.vertices
             aptr, bptr = groups[a], groups[b]
             if aptr.value != -1:
@@ -616,17 +614,19 @@ class CubePolygons(NamedTuple):
             :class:`CubePolygons` should match Minecraft mirrored mapping format
             or not.
         '''
+        # This assert should never raise an exception
+        assert isinstance(cube.data, Mesh), "Object is not a Mesh"
         # 0. Check if mesh has 12 edges
-        if len(get_data_edges(cube)) != 12:
+        if len(cube.data.edges) != 12:
             raise ExporterException(
                 f"Object {cube.name.split('.')[0]} is not a cube. Number of edges != 12."
             )
         # 1. Check if object has 6 quadrilateral faces
-        if len(get_data_polygons(cube)) != 6:
+        if len(cube.data.polygons) != 6:
             raise ExporterException(
                 f"Object {cube.name.split('.')[0]} is not a cube. Number of faces != 6."
             )
-        for polygon in get_data_polygons(cube):
+        for polygon in cube.data.polygons:
             if len(polygon.vertices) != 4:
                 raise ExporterException(
                     f"Object {cube.name.split('.')[0]} is not a cube. Not all faces are "
@@ -649,7 +649,7 @@ class CubePolygons(NamedTuple):
 
         p_options: List[List[str]] =  []
         for vertex_id in range(8):
-            vertex_crds = np.array(get_data_vertices(cube)[vertex_id].co)
+            vertex_crds = np.array(cube.data.vertices[vertex_id].co)
             # Find the closest point of bounding box (key from bb_crds)
             shortest_distance: Optional[float] = None
             for k, v in bb_crds.items():
@@ -664,7 +664,7 @@ class CubePolygons(NamedTuple):
                 elif curr_distance < shortest_distance:
                     shortest_distance = curr_distance
                     p_options[vertex_id] = [k]
-        solver = CubePolygonsSolver(p_options, list(get_data_polygons(cube)))
+        solver = CubePolygonsSolver(p_options, list(cube.data.polygons))
         if not solver.solve():
             raise ExporterException(
                 f'Object "{cube.name}" is not a cube.')
@@ -711,7 +711,8 @@ class CubePolygon(NamedTuple):
         '''
         # The indexing must be a tuple to work with numpy, see issue  #111
         ordered_loop_indices = np.array(self.side.loop_indices)[(self.order,)]
-        crds = np.array([get_data(uv_layer)[i].uv for i in ordered_loop_indices])
+        
+        crds = np.array([uv_layer.data[i].uv for i in ordered_loop_indices])
         return crds
 
     @staticmethod
@@ -787,7 +788,7 @@ class McblendObjectGroup:
         '''
         if self.world_origin is None:
             raise RuntimeError("World origin not defined")
-        return get_matrix_world(self.world_origin)
+        return self.world_origin.matrix_world
 
     def __len__(self):
         return len(self.data)
@@ -820,19 +821,23 @@ class McblendObjectGroup:
 
         :param armature: the armature used as a root of the object group.
         '''
+        # This assertion should never raise an exception
+        assert isinstance(armature.data, Armature), "Object is not an armature"
         # Loop bones
-        for bone in get_data_bones(armature):
+        for bone in armature.data.bones:
             obj_id: ObjectId = ObjectId(armature.name, bone.name)
             parent_bone_id: Optional[ObjectId] = None
-            if bone.parent is not None:  # pyright: ignore[reportUnnecessaryComparison]
+            if bone.parent is not None:
                 parent_bone_id = ObjectId(armature.name, bone.parent.name)
             self.data[obj_id] = McblendObject(
                 thisobj_id=obj_id, thisobj=armature,
                 parentobj_id=parent_bone_id, children_ids=[],
                 mctype=MCObjType.BONE, group=self)
-        for obj in get_children(armature):
+        for obj in armature.children:
             if obj.parent_type != 'BONE':
                 continue  # TODO - maybe a warning here?
+            if obj.parent is None:
+                continue
             parentobj_id = ObjectId(obj.parent.name, obj.parent_bone)
             obj_id = ObjectId(obj.name, "")
             if obj.type  == 'MESH':
@@ -842,7 +847,7 @@ class McblendObjectGroup:
                 self.data[parentobj_id].children_ids.append(obj_id)
                 # Further offspring of the "child" (share same parent in mc
                 # model)
-                offspring: deque[Object] = deque(get_children(obj))
+                offspring: deque[Object] = deque(obj.children)
                 while offspring:
                     child = offspring.pop()
                     child_id: ObjectId = ObjectId(child.name, "")
@@ -854,7 +859,7 @@ class McblendObjectGroup:
                             parentobj_id=parentobj_id, children_ids=[],
                             mctype=MCObjType.CUBE, group=self)
                         self.data[parentobj_id].children_ids.append(child_id)
-                        offspring.extend(get_children(child))
+                        offspring.extend(child.children)
                     elif child.type == 'EMPTY':
                         self.data[child_id] = McblendObject(
                             thisobj_id=child_id, thisobj=child,
@@ -895,16 +900,19 @@ def apply_obj_transform_keep_origin(obj: Object):
     Apply object transformations but keep the origin in place. Resets object
     rotation and scale but keeps location the same.
     '''
+    # This assert should never raise an Exception
+    assert isinstance(obj.data, Mesh), "The object is not a Mesh"
     # Decompose object transformations
-    _, rot, scl = decompose(get_matrix_local(obj))
+    _, rot, scl = obj.matrix_local.decompose()
     # loc_mat = Matrix.Translation(loc)
     rot_mat = rot.to_matrix().to_4x4()
-    scl_mat =  matmul_chain(
-        Matrix.Scale(getitem(scl, 0), 4, Vector([1,0,0])),
-        Matrix.Scale(getitem(scl, 1), 4, Vector([0,1,0])),
-        Matrix.Scale(getitem(scl, 2), 4, Vector([0,0,1])))
-    for vertex in get_data_vertices(obj):
-        set_co(vertex, matmul(matmul(rot_mat, scl_mat), get_co(vertex)))
+    scl_mat =  (
+        Matrix.Scale(scl[0], 4, Vector([1,0,0])) @
+        Matrix.Scale(scl[1], 4, Vector([0,1,0])) @
+        Matrix.Scale(scl[2], 4, Vector([0,0,1]))
+    )
+    for vertex in obj.data.vertices:
+        vertex.co = (rot_mat @ scl_mat) @ vertex.co
 
 def fix_cube_rotation(obj: Object):
     '''
@@ -914,32 +922,34 @@ def fix_cube_rotation(obj: Object):
 
     :param obj: blender object with cuboid mesh.
     '''
+    # This assert should never raise an exception
+    assert isinstance(obj.data, Mesh), "Object is not a Mesh"
     # Get coordinates of 3 points (a,b and c) from any polygon
     # I'm assuming this is a cuboid so I also can assume that
     # vectors u and v are not planar:
     # u = vector(b, a) and v = (b, c)
-    poly = get_data_polygons(obj)[0]
+    poly = obj.data.polygons[0]
 
-    vertices = get_data_vertices(obj)
+    vertices = obj.data.vertices
     a = cast(Vector, vertices[poly.vertices[0]].co)
     b = cast(Vector, vertices[poly.vertices[1]].co)
     c = cast(Vector, vertices[poly.vertices[2]].co)
 
     # Calculate the normal vector of the surface with points
     # a, b and c
-    u: Vector = subtract(a, b).normalized()
-    v: Vector = subtract(c, b).normalized()
+    u: Vector = (a - b).normalized()
+    v: Vector = (c - b).normalized()
 
     # The cross product creates the 3rd vector that defines
     # the rotated space
 
-    w = cross(u, v).normalized()
+    w = u.cross(v).normalized()
     # Recalculate V to make sure that all of the vectors are at
     # the right angle (even though they should be)
-    v = cross(w, u).normalized()
+    v = w.cross(u).normalized()
 
     # Create rotation matrix (unit vectors x, y, z in columns)
-    rotation_matrix = Matrix((w, v, neg(u)))
+    rotation_matrix = Matrix((w, v, -u))
     # (w, v, -u) - this order of normals in rotation matrix is set up in
     # such way that applying the operator to the default cube (without
     # rotations) will not change its rotation and won't flip its scale to -1.
@@ -947,22 +957,22 @@ def fix_cube_rotation(obj: Object):
 
 
     # Rotate the mesh
-    for vertex in get_data_vertices(obj):
-        set_co(vertex, matmul(rotation_matrix, get_co(vertex)))
+    for vertex in obj.data.vertices:
+        vertex.co = rotation_matrix @ vertex.co
 
     # Counter rotate object around its origin
     counter_rotation = rotation_matrix.to_4x4().inverted()
 
-    loc, rot, scl = decompose(get_matrix_local(obj))
+    loc, rot, scl = obj.matrix_local.decompose()
     loc_mat = Matrix.Translation(loc)
     rot_mat = rot.to_matrix().to_4x4()
-    scl_mat =  matmul_chain(  # A @ B @ C
-        Matrix.Scale(getitem(scl, 0),4, Vector([1,0,0])),
-        Matrix.Scale(getitem(scl, 1),4, Vector([0,1,0])),
-        Matrix.Scale(getitem(scl, 2),4, Vector([0,0,1])))
+    scl_mat =  (
+        Matrix.Scale(scl[0],4, Vector([1,0,0])) @
+        Matrix.Scale(scl[1],4, Vector([0,1,0])) @
+        Matrix.Scale(scl[2],4, Vector([0,0,1]))
+    )
 
-    set_matrix_local(obj, matmul_chain(
-        loc_mat, counter_rotation, rot_mat, scl_mat))
+    obj.matrix_local = loc_mat @ counter_rotation @ rot_mat @ scl_mat
 
 def get_vect_json(arr: Iterable[float | int]) -> list[float]:
     '''

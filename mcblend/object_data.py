@@ -14,7 +14,7 @@ from bpy.props import (
 
 
 from .operator_func.common import MeshType, AnimationLoopType, ModelOriginType
-from .operator_func.typed_bpy_access import get_scene_mcblend_events
+from .operator_func.typed_bpy_access import get_mcblend_events
 from .common_data import MCBLEND_JustName
 
 # Animation properties
@@ -70,7 +70,7 @@ def get_unused_event_name(base_name: str, i=1):
     This function assumes there is an active event and active animation. It
     will throw errors without asserting these conditions.
     '''
-    events = get_scene_mcblend_events(bpy.context)
+    events = get_mcblend_events(bpy.context.scene)
     name = base_name
     while name in events.keys():
         name = f'{base_name}.{i:04}'
@@ -82,7 +82,7 @@ def _update_event_name(event, new_name: str):
 
 
 def _set_event_name(self: 'MCBLEND_EventProperties', value: str):
-    events = get_scene_mcblend_events(bpy.context)
+    events = get_mcblend_events(bpy.context.scene)
     # Empty name is no allowed
     if value == '':
         return
