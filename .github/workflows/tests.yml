@@ -45,7 +45,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        sudo snap install blender --channel=3.3lts/stable --classic
+        sudo snap install blender --channel=4.2lts/stable --classic
         cd $GITHUB_WORKSPACE
         pip install pyright pytest numpy ./fake_bpy_modules
     - name: Build and install the addon
