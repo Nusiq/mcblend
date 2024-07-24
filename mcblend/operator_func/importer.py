@@ -1506,8 +1506,11 @@ class ImportGeometry:
                         MeshType.POLY_MESH.value)
 
                     # 4. Set mesh normals and UVs
-                    mesh.create_normals_split()
-                    mesh.use_auto_smooth = True
+                    # TODO -verify this code:
+                    # Removed for Blender 4.1. May cause issues.
+                    # https://developer.blender.org/docs/release_notes/4.1/python_api/#breaking-changes
+                    # mesh.create_normals_split()
+                    # mesh.use_auto_smooth = True
                     mesh.normals_split_custom_set(
                         blender_normals)  # type: ignore
 
