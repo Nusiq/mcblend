@@ -1,14 +1,16 @@
 '''
 Everything related to creating materials for the model.
 '''
-from typing import Deque, Optional, List, Tuple, cast
+from typing import Deque, Optional, List, Tuple, cast, reveal_type
 from collections import deque
 
 from bpy.types import (
     Image, Material, Node, NodeTree, NodeGroupInput, ShaderNodeMath,
     ShaderNodeValue, ShaderNodeRGB, ShaderNodeVectorMath, NodeGroupInput,
     NodeGroupOutput, ShaderNodeGroup, ShaderNodeMath, ShaderNodeMixRGB,
-    ShaderNodeRGB, ShaderNodeTexImage, ShaderNodeValue, ShaderNodeVectorMath)
+    ShaderNodeRGB, ShaderNodeTexImage, ShaderNodeValue, ShaderNodeVectorMath,
+    NodeSocketColor, NodeSocketFloat,
+)
 import bpy
 
 PADDING = 300
@@ -56,7 +58,8 @@ def create_entity_alphatest_node_group(material: Material, is_first: bool) -> No
     # RGB (black) -> Out: Emission
     rgb_node = group.nodes.new("ShaderNodeRGB")
     rgb_node = cast(ShaderNodeRGB, rgb_node)
-    rgb_node.outputs['Color'].default_value = [0, 0, 0, 1]  # black
+    cast(NodeSocketColor, rgb_node.outputs['Color']).default_value = [
+        0, 0, 0, 1]  # black
     rgb_node.location = [2*PADDING, -2*PADDING]
     group.links.new(outputs.inputs[2], rgb_node.outputs[0])
 
@@ -90,7 +93,8 @@ def create_entity_alphatest_one_sided_node_group(
     # RGB (black) -> Out: Emission
     rgb_node = group.nodes.new("ShaderNodeRGB")
     rgb_node = cast(ShaderNodeRGB, rgb_node)
-    rgb_node.outputs['Color'].default_value = [0, 0, 0, 1]  # black
+    cast(NodeSocketColor, rgb_node.outputs['Color']).default_value = [
+        0, 0, 0, 1]  # black
     rgb_node.location = [2*PADDING, -2*PADDING]
     group.links.new(outputs.inputs[2], rgb_node.outputs[0])
 
@@ -118,13 +122,14 @@ def create_entity_node_group(material: Material, is_first: bool) -> NodeTree:
     # Value (1.0) -> Out: Alpha
     value_node = group.nodes.new("ShaderNodeValue")
     value_node = cast(ShaderNodeValue, value_node)
-    value_node.outputs['Value'].default_value = 1.0
+    cast(NodeSocketFloat, value_node.outputs['Value']).default_value = 1.0
     value_node.location = [2*PADDING, -1*PADDING]
     group.links.new(outputs.inputs[1], value_node.outputs[0])
     # RGB (black) -> Out: Emission
     rgb_node = group.nodes.new("ShaderNodeRGB")
     rgb_node = cast(ShaderNodeRGB, rgb_node)
-    rgb_node.outputs['Color'].default_value = [0, 0, 0, 1]  # black
+    cast(NodeSocketColor, rgb_node.outputs['Color']).default_value = [
+        0, 0, 0, 1]  # black
     rgb_node.location = [2*PADDING, -2*PADDING]
     group.links.new(outputs.inputs[2], rgb_node.outputs[0])
 
@@ -151,7 +156,8 @@ def create_entity_alphablend_node_group(material: Material, is_first: bool) -> N
     # RGB (black) -> Out: Emission
     rgb_node = group.nodes.new("ShaderNodeRGB")
     rgb_node = cast(ShaderNodeRGB, rgb_node)
-    rgb_node.outputs['Color'].default_value = [0, 0, 0, 1]  # black
+    cast(NodeSocketColor, rgb_node.outputs['Color']).default_value = [
+        0, 0, 0, 1]  # black
     rgb_node.location = [1*PADDING, -1*PADDING]
     group.links.new(outputs.inputs[2], rgb_node.outputs[0])
 
@@ -179,7 +185,7 @@ def create_entity_emissive_node_group(material: Material, is_first: bool) -> Nod
     # Value (1.0) -> Out: Alpha
     value_node = group.nodes.new("ShaderNodeValue")
     value_node = cast(ShaderNodeValue, value_node)
-    value_node.outputs['Value'].default_value =  1.0
+    cast(NodeSocketFloat, value_node.outputs['Value']).default_value =  1.0
     value_node.location = [2*PADDING, -1*PADDING]
     group.links.new(outputs.inputs[1], value_node.outputs[0])
     # In: Color -> ... -> ... -> Vector[MULTIPLY][0] -> Out: Emission
@@ -506,17 +512,27 @@ def create_bone_material(
     node_tree = material.node_tree
     output_node = node_tree.nodes['Material Output']
     bsdf_node = node_tree.nodes["Principled BSDF"]
-    bsdf_node.inputs['Specular IOR Level'].default_value = 0
-    bsdf_node.inputs['Sheen Tint'].default_value = (0, 0, 0, 0)
-    bsdf_node.inputs['Roughness'].default_value = 1
+    cast(
+        NodeSocketFloat,
+        bsdf_node.inputs['Specular IOR Level']).default_value = 0
+    cast(
+        NodeSocketColor,
+        bsdf_node.inputs['Sheen Tint']).default_value = (0, 0, 0, 0)
+    cast(
+        NodeSocketFloat,
+        bsdf_node.inputs['Roughness']).default_value = 1
 
     # This emmision configuration allows enabling emissin using only
     # Emission Color property (like in older Blender versions when the
     # emissin color and strength were only one input). We're setting color
     # to bloack and strength to 1.0. Black color means that there is no
     # emission.
-    bsdf_node.inputs['Emission Color'].default_value = (0, 0, 0, 0)
-    bsdf_node.inputs['Emission Strength'].default_value = 1.0
+    cast(
+        NodeSocketColor,
+        bsdf_node.inputs['Emission Color']).default_value = (0, 0, 0, 0)
+    cast(
+        NodeSocketFloat,
+        bsdf_node.inputs['Emission Strength']).default_value = 1.0
 
     node_groups: Deque[Node] = deque()
     # Test for opaque materials, if you don't find eny enter second loop

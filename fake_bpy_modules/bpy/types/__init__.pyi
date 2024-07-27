@@ -123817,7 +123817,8 @@ class ShaderNodeTexImage(ShaderNode, NodeInternal, Node, bpy_struct):
     :type: str
     """
 
-    image: Image
+    # image: Image
+    image: Image | None  # Mcblend
     """ 
 
     :type: Image
