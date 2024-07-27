@@ -849,10 +849,15 @@ class Matrix:
         """
         ...
 
-    def to_euler(
+    # def to_euler(
+    #     self,
+    #     order: str | None,
+    #     euler_compat: Euler | collections.abc.Sequence[float] | None,
+    # ) -> Euler:
+    def to_euler(  # Mcblend
         self,
-        order: str | None,
-        euler_compat: Euler | collections.abc.Sequence[float] | None,
+        order: str | None = ...,
+        euler_compat: Euler | collections.abc.Sequence[float] | None = ...,
     ) -> Euler:
         """Return an Euler representation of the rotation matrix
         (3x3 or 4x4 matrix only).
@@ -1012,32 +1017,38 @@ class Matrix:
         """
         ...
 
+    # @typing.overload
+    # def __matmul__(self, other: Vector | collections.abc.Sequence[float]) -> Vector:
+    #     """
+
+    #     :param other:
+    #     :type other: Vector | collections.abc.Sequence[float]
+    #     :return:
+    #     :rtype: Vector
+    #     """
+    #     ...
+
+    # def __matmul__(
+    #     self,
+    #     other: Matrix
+    #     | Vector
+    #     | collections.abc.Sequence[collections.abc.Sequence[float]]
+    #     | collections.abc.Sequence[float],
+    # ) -> Matrix | Vector:
+    #     """
+
+    #     :param other:
+    #     :type other: Matrix | Vector | collections.abc.Sequence[collections.abc.Sequence[float]] | collections.abc.Sequence[float]
+    #     :return:
+    #     :rtype: Matrix | Vector
+    #     """
+    #     ...
+
     @typing.overload
-    def __matmul__(self, other: Vector | collections.abc.Sequence[float]) -> Vector:
-        """
+    def __matmul__(self, other: 'Matrix') -> 'Matrix': ...  # Mcblend
 
-        :param other:
-        :type other: Vector | collections.abc.Sequence[float]
-        :return:
-        :rtype: Vector
-        """
-        ...
-
-    def __matmul__(
-        self,
-        other: Matrix
-        | Vector
-        | collections.abc.Sequence[collections.abc.Sequence[float]]
-        | collections.abc.Sequence[float],
-    ) -> Matrix | Vector:
-        """
-
-        :param other:
-        :type other: Matrix | Vector | collections.abc.Sequence[collections.abc.Sequence[float]] | collections.abc.Sequence[float]
-        :return:
-        :rtype: Matrix | Vector
-        """
-        ...
+    @typing.overload
+    def __matmul__(self, other: 'Vector') -> 'Vector': ...  # Mcblend
 
     def __radd__(
         self, other: Matrix | collections.abc.Sequence[collections.abc.Sequence[float]]
@@ -1286,11 +1297,12 @@ class Quaternion:
         """
         ...
 
-    def to_euler(
-        self,
-        order: str | None,
-        euler_compat: Euler | collections.abc.Sequence[float] | None,
-    ) -> Euler:
+    # def to_euler(
+    #     self,
+    #     order: str | None,
+    #     euler_compat: Euler | collections.abc.Sequence[float] | None,
+    # ) -> Euler:
+    def to_euler(self, order: str=..., euler_compat: Euler=..., /) -> Euler:  # Mcblend
         """Return Euler representation of the quaternion.
 
                 :param order: Optional rotation order argument in
@@ -2954,6 +2966,8 @@ class Vector:
         """
         ...
 
+    def __contains__(self, other: typing.Any) -> bool: ...  # Mcblend
+
     def __sub__(self, other: Vector | collections.abc.Sequence[float]) -> Vector:
         """
 
@@ -2995,34 +3009,36 @@ class Vector:
         """
         ...
 
-    @typing.overload
-    def __matmul__(
-        self, other: Matrix | collections.abc.Sequence[collections.abc.Sequence[float]]
-    ) -> Vector:
-        """
+    # @typing.overload
+    # def __matmul__(
+    #     self, other: Matrix | collections.abc.Sequence[collections.abc.Sequence[float]]
+    # ) -> Vector:
+    #     """
 
-        :param other:
-        :type other: Matrix | collections.abc.Sequence[collections.abc.Sequence[float]]
-        :return:
-        :rtype: Vector
-        """
-        ...
+    #     :param other:
+    #     :type other: Matrix | collections.abc.Sequence[collections.abc.Sequence[float]]
+    #     :return:
+    #     :rtype: Vector
+    #     """
+    #     ...
 
-    def __matmul__(
-        self,
-        other: Matrix
-        | Vector
-        | collections.abc.Sequence[collections.abc.Sequence[float]]
-        | collections.abc.Sequence[float],
-    ) -> Vector | float:
-        """
+    # def __matmul__(
+    #     self,
+    #     other: Matrix
+    #     | Vector
+    #     | collections.abc.Sequence[collections.abc.Sequence[float]]
+    #     | collections.abc.Sequence[float],
+    # ) -> Vector | float:
+    #     """
 
-        :param other:
-        :type other: Matrix | Vector | collections.abc.Sequence[collections.abc.Sequence[float]] | collections.abc.Sequence[float]
-        :return:
-        :rtype: Vector | float
-        """
-        ...
+    #     :param other:
+    #     :type other: Matrix | Vector | collections.abc.Sequence[collections.abc.Sequence[float]] | collections.abc.Sequence[float]
+    #     :return:
+    #     :rtype: Vector | float
+    #     """
+    #     ...
+
+    def __matmul__(self, other: 'Matrix') -> 'Vector': ...  # Mcblend
 
     def __radd__(self, other: Vector | collections.abc.Sequence[float]) -> Vector:
         """
@@ -3093,6 +3109,8 @@ class Vector:
         :rtype: Vector
         """
         ...
+
+    def __iter__(self) -> typing.Iterator[float]: ...  # Mcblend
 
     def __itruediv__(self, other: float | int) -> Vector:
         """

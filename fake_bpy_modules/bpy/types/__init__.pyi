@@ -916,7 +916,8 @@ class bpy_prop_collection(typing.Generic[GenericType1]):
         """
         ...
 
-    def __contains__(self, key: str | tuple[str, ...]) -> bool:
+    # def __contains__(self, key: str | tuple[str, ...]) -> bool:
+    def __contains__(self, key: typing.Any) -> bool:  # Mcblend
         """
 
         :param key:
@@ -10316,6 +10317,8 @@ class Constraint(bpy_struct):
     :type: str
     """
 
+    target: Object | None  # Mcblend
+
     type: str
     """ 
 
@@ -10563,12 +10566,6 @@ class Context(bpy_struct):
     """ 
 
     :type: BlendData
-    """
-
-    collection: Collection
-    """ 
-
-    :type: Collection
     """
 
     engine: str
@@ -10848,11 +10845,13 @@ class Context(bpy_struct):
     :type: FreestyleLineStyle
     """
 
-    collection: LayerCollection
-    """ 
+    # Mcblend - fake bpy modules defines this property twice with different
+    # types. This must be a but. This one seems to be the incorrect one.
+    # collection: LayerCollection
+    # """ 
 
-    :type: LayerCollection
-    """
+    # :type: LayerCollection
+    # """
 
     gpencil: GreasePencil
     """ 
@@ -10981,6 +10980,7 @@ class Context(bpy_struct):
     :type: list[Object]
     """
 
+    # Mcblend - this should be read only but pylance is barely able to parse this module
     selected_objects: list[Object]
     """ 
 
@@ -11071,7 +11071,8 @@ class Context(bpy_struct):
     :type: Object | None
     """
 
-    object: Object
+    # object: Object
+    object: Object | None  # Mcblend
     """ 
 
     :type: Object
@@ -20717,6 +20718,8 @@ class ID(bpy_struct):
     :type: int
     """
 
+    uv_layers: ObjectDataUvLayers  # Mcblend
+
     def evaluated_get(self, depsgraph: Depsgraph) -> ID:
         """Get corresponding evaluated ID from the given dependency graph. Note that this does not ensure the dependency graph is fully evaluated, it just returns the result of the last evaluation
 
@@ -25482,8 +25485,10 @@ class MeshPolygon(bpy_struct):
     edge_keys: typing.Any
     """ (readonly)"""
 
-    loop_indices: typing.Any
-    """ (readonly)"""
+    # loop_indices: typing.Any
+    @property
+    def loop_indices(self) -> range:  # Mcblend
+        """ (readonly)"""
 
     def flip(self):
         """Invert winding of this face (flip its normal)"""
@@ -25750,11 +25755,16 @@ class MeshUVLoop(bpy_struct):
     :type: bool
     """
 
-    uv: mathutils.Vector
-    """ 
+    # uv: mathutils.Vector
+    @property
+    def uv(self) -> mathutils.Vector:  # Mcblend
+        """ 
+        :type: mathutils.Vector
+        """
 
-    :type: mathutils.Vector
-    """
+    @uv.setter
+    def uv(self, uv: typing.Collection[float]): ...
+
 
     @classmethod
     def bl_rna_get_subclass(cls, id: str | None, default=None) -> Struct:
@@ -25862,11 +25872,17 @@ class MeshUVLoopLayer(bpy_struct):
 class MeshVertex(bpy_struct):
     """Vertex in a Mesh data-block"""
 
-    co: mathutils.Vector
-    """ 
+    # co: mathutils.Vector
+    @property
+    def co(self) -> 'mathutils.Vector':  # Mcblend
+        """ 
 
-    :type: mathutils.Vector
-    """
+        :type: mathutils.Vector
+        """
+
+    @co.setter
+    def co(self, value: typing.Collection[float]) -> None: ...  # Mcblend
+
 
     groups: bpy_prop_collection[VertexGroupElement]
     """ Weights for the vertex groups this vertex is member of
@@ -31169,6 +31185,18 @@ class OperatorProperties(bpy_struct):
         """
         ...
 
+    # The OperatorProperties allows adding custom undefined properties
+    def __setattr__(  # Mcblend
+        self,
+        name: str,
+        value: bool | int | float | str | list[typing.Any] | dict[typing.Any, typing.Any] | Object
+    ) -> None: ...
+
+    def __getattribute__(  # Mcblend
+        self,
+        name: str
+    ) -> bool | int | float | str | list[typing.Any] | dict[typing.Any, typing.Any] | Object: ...
+
 class PackedFile(bpy_struct):
     """External file packed into the .blend file"""
 
@@ -33407,11 +33435,16 @@ class PoseBone(bpy_struct):
     :type: mathutils.Vector
     """
 
-    head: mathutils.Vector
-    """ Location of head of the channel's bone
+    # head: mathutils.Vector
+    @property
+    def head(self) -> 'mathutils.Vector':  # Mcblend
+        """ Location of head of the channel's bone
 
-    :type: mathutils.Vector
-    """
+        :type: mathutils.Vector
+        """
+    
+    @head.setter
+    def head(self, value: typing.Collection[float]) -> None: ...  # Mcblend
 
     ik_linear_weight: float
     """ Weight of scale constraint for IK
@@ -33551,23 +33584,70 @@ class PoseBone(bpy_struct):
     :type: list[bool]
     """
 
-    matrix: mathutils.Matrix
-    """ Final 4×4 matrix after constraints and drivers are applied, in the armature object space
+    # matrix: mathutils.Matrix
+    @property
+    def matrix(self) -> 'mathutils.Matrix':  # Mcblend
+        """ Final 4×4 matrix after constraints and drivers are applied, in the armature object space
 
-    :type: mathutils.Matrix
-    """
+        :type: mathutils.Matrix
+        """
+    
+    @matrix.setter
+    def matrix(
+        self,
+        value: typing.Union[
+                typing.List[typing.List[float]],
+                typing.Tuple[
+                    typing.Tuple[float, float, float, float],
+                    typing.Tuple[float, float, float, float],
+                    typing.Tuple[float, float, float, float],
+                    typing.Tuple[float, float, float, float]],
+                    'mathutils.Matrix'
+                ]
+    ) -> None: ...
 
-    matrix_basis: mathutils.Matrix
-    """ Alternative access to location/scale/rotation relative to the parent and own rest bone
+    # matrix_basis: mathutils.Matrix
+    @property
+    def matrix_basis(self) -> 'mathutils.Matrix':  # Mcblend
+        """ Alternative access to location/scale/rotation relative to the parent and own rest bone
 
-    :type: mathutils.Matrix
-    """
+        :type: mathutils.Matrix
+        """
+    @matrix_basis.setter
+    def matrix_basis(
+        self,
+        value: typing.Union[
+                typing.List[typing.List[float]],
+                typing.Tuple[
+                    typing.Tuple[float, float, float, float],
+                    typing.Tuple[float, float, float, float],
+                    typing.Tuple[float, float, float, float],
+                    typing.Tuple[float, float, float, float]],
+                    'mathutils.Matrix'
+                ]
+    ) -> None: ...
 
-    matrix_channel: mathutils.Matrix
-    """ 4×4 matrix of the bone's location/rotation/scale channels (including animation and drivers) and the effect of bone constraints
+    # matrix_channel: mathutils.Matrix
+    @property
+    def matrix_channel(self) -> 'mathutils.Matrix':  # Mcblend
+        """ 4×4 matrix of the bone's location/rotation/scale channels (including animation and drivers) and the effect of bone constraints
 
-    :type: mathutils.Matrix
-    """
+        :type: mathutils.Matrix
+        """
+    
+    @matrix_channel.setter
+    def matrix_channel(
+        self,
+        value: typing.Union[
+                typing.List[typing.List[float]],
+                typing.Tuple[
+                    typing.Tuple[float, float, float, float],
+                    typing.Tuple[float, float, float, float],
+                    typing.Tuple[float, float, float, float],
+                    typing.Tuple[float, float, float, float]],
+                    'mathutils.Matrix'
+                ]
+    ) -> None: ...
 
     motion_path: MotionPath
     """ Motion Path for this element
@@ -33593,11 +33673,19 @@ class PoseBone(bpy_struct):
     :type: bpy_prop_array[float]
     """
 
-    rotation_euler: mathutils.Euler
-    """ Rotation in Eulers
+    # rotation_euler: mathutils.Euler
+    @property
+    def rotation_euler(self) -> 'mathutils.Euler':  # Mcblend
+        """ Rotation in Eulers
 
-    :type: mathutils.Euler
-    """
+        :type: mathutils.Euler
+        """
+    
+    @rotation_euler.setter
+    def rotation_euler(
+        self,
+        value: typing.Union[list[float],tuple[float, float, float],mathutils.Euler]
+    ) -> None: ...
 
     rotation_mode: str
     """ 
@@ -33617,11 +33705,16 @@ class PoseBone(bpy_struct):
     :type: mathutils.Vector
     """
 
-    tail: mathutils.Vector
-    """ Location of tail of the channel's bone
+    # tail: mathutils.Vector
+    @property
+    def tail(self) -> 'mathutils.Vector':  # Mcblend
+        """ Location of tail of the channel's bone
 
-    :type: mathutils.Vector
-    """
+        :type: mathutils.Vector
+        """
+
+    @tail.setter
+    def tail(self, value: typing.Collection[float]) -> None: ...  # Mcblend
 
     use_custom_shape_bone_size: bool
     """ Scale the custom object by the bone length
@@ -52261,11 +52354,19 @@ class View3DCursor(bpy_struct):
     :type: bpy_prop_array[float]
     """
 
-    rotation_euler: mathutils.Euler
-    """ 3D rotation
+    # rotation_euler: mathutils.Euler
+    @property
+    def rotation_euler(self) -> 'mathutils.Euler':  # 
+        """ 3D rotation
 
-    :type: mathutils.Euler
-    """
+        :type: mathutils.Euler
+        """
+
+    @rotation_euler.setter
+    def rotation_euler(
+        self,
+        value: typing.Union[list[float],tuple[float, float, float],mathutils.Euler]
+    ) -> None: ...
 
     rotation_mode: str
     """ 
@@ -66400,11 +66501,16 @@ class Image(ID, bpy_struct):
     :type: bpy_prop_collection[ImagePackedFile]
     """
 
-    pixels: float
-    """ Image buffer pixels in floating-point values
+    # pixels: float
+    @property
+    def pixels(self) -> bpy_prop_array[float]:  # Mcblend
+        """ Image buffer pixels in floating-point values
 
-    :type: float
-    """
+        :type: float
+        """
+
+    @pixels.setter
+    def pixels(self, value: typing.Collection[float]) -> None: ... # Mcblend
 
     render_slots: RenderSlots
     """ Render slots of the image
@@ -68547,7 +68653,8 @@ class Object(ID, bpy_struct):
     :type: typing.Any
     """
 
-    data: ID
+    # data: ID
+    data: ID | Armature | Mesh  # Mcblend
     """ Object data
 
     :type: ID
@@ -68800,24 +68907,75 @@ Warning: Assigning to it or its members multiple consecutive times will not work
     :type: mathutils.Matrix
     """
 
-    matrix_local: mathutils.Matrix
-    """ Parent relative transformation matrix.
-Warning: Only takes into account object parenting, so e.g. in case of bone parenting you get a matrix relative to the Armature object, not to the actual parent bone
+    #matrix_local: mathutils.Matrix
+    @property
+    def matrix_local(self) -> mathutils.Matrix: # Mcblend
+        """ Parent relative transformation matrix.
+    Warning: Only takes into account object parenting, so e.g. in case of bone parenting you get a matrix relative to the Armature object, not to the actual parent bone
 
-    :type: mathutils.Matrix
-    """
+        :type: mathutils.Matrix
+        """
+    
+    @matrix_local.setter
+    def matrix_local(  # Mcblend
+        self,
+        value: typing.Union[
+            typing.List[typing.List[float]],
+            typing.Tuple[
+                typing.Tuple[float, float, float, float],
+                typing.Tuple[float, float, float, float],
+                typing.Tuple[float, float, float, float],
+                typing.Tuple[float, float, float, float]
+            ],
+            mathutils.Matrix
+        ] = ...
+    ) -> None: ...
 
-    matrix_parent_inverse: mathutils.Matrix
-    """ Inverse of object's parent matrix at time of parenting
+    # matrix_parent_inverse: mathutils.Matrix
+    @property
+    def matrix_parent_inverse(self) -> mathutils.Matrix: # Mcblend
+        """ Inverse of object's parent matrix at time of parenting
 
-    :type: mathutils.Matrix
-    """
+        :type: mathutils.Matrix
+        """
+    
+    @matrix_parent_inverse.setter
+    def matrix_parent_inverse(  # Mcblend
+        self,
+        value: typing.Union[
+            typing.List[typing.List[float]],
+            typing.Tuple[
+                typing.Tuple[float, float, float, float],
+                typing.Tuple[float, float, float, float],
+                typing.Tuple[float, float, float, float],
+                typing.Tuple[float, float, float, float]
+            ],
+            mathutils.Matrix
+        ] = ...
+    ) -> None: ...
 
-    matrix_world: mathutils.Matrix
-    """ Worldspace transformation matrix
+    # matrix_world: mathutils.Matrix
+    @property
+    def matrix_world(self) -> mathutils.Matrix: # Mcblend
+        """ Worldspace transformation matrix
 
-    :type: mathutils.Matrix
-    """
+        :type: mathutils.Matrix
+        """
+
+    @matrix_world.setter
+    def matrix_world(  # Mcblend
+        self,
+        value: typing.Union[
+            typing.List[typing.List[float]],
+            typing.Tuple[
+                typing.Tuple[float, float, float, float],
+                typing.Tuple[float, float, float, float],
+                typing.Tuple[float, float, float, float],
+                typing.Tuple[float, float, float, float]
+            ],
+            mathutils.Matrix
+        ] = ...
+    ) -> None: ...
 
     mode: str
     """ Object interaction mode
@@ -68837,7 +68995,8 @@ Warning: Only takes into account object parenting, so e.g. in case of bone paren
     :type: MotionPath
     """
 
-    parent: Object
+    # parent: Object
+    parent: Object | None
     """ Parent object
 
     :type: Object
@@ -68897,11 +69056,19 @@ Warning: Only takes into account object parenting, so e.g. in case of bone paren
     :type: bpy_prop_array[float]
     """
 
-    rotation_euler: mathutils.Euler
-    """ Rotation in Eulers
+    # rotation_euler: mathutils.Euler
+    @property
+    def rotation_euler(self) -> mathutils.Euler:  # Mcblend
+        """ Rotation in Eulers
 
-    :type: mathutils.Euler
-    """
+        :type: mathutils.Euler
+        """
+    
+    @rotation_euler.setter
+    def rotation_euler(
+        self,
+        value: typing.Union[list[float],tuple[float, float, float], mathutils.Euler]
+    ) -> None: ...
 
     rotation_mode: str
     """ 
@@ -69624,6 +69791,18 @@ Warning: Only takes into account object parenting, so e.g. in case of bone paren
         :rtype: typing.Any
         """
         ...
+
+class ObjectDataUvLayers(typing.Sized):  # Mcblend
+    '''
+    Fake class defined as a result of:
+    >>> object.data.uv_layers
+    '''
+    active: MeshUVLoopLayer
+    def __getitem__(self, key: MeshUVLoopLayer) -> MeshUVLoopLayer: ...
+    def __iter__(self) -> typing.Iterator[MeshUVLoopLayer]: ...
+    def new(self, name: str="") -> MeshUVLoopLayer: ...
+    def __len__(self) -> int: ...
+
 
 class PaintCurve(ID, bpy_struct):
     @classmethod
