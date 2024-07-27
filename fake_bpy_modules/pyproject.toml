@@ -20,8 +20,6 @@ packages = [
     "bmesh",
     "bpy_extras",
     "bpy_extras.wm_utils",
-    
-    
 ]
 
 [options.packages.find]
