@@ -1,7 +1,7 @@
 # Installation and updating
 
 ## Installation
-1. Download and install Blender 3.3 (the current LTS version) from the official website: [https://www.blender.org/download/releases/3-3/](https://www.blender.org/download/releases/3-3/)
+1. Download and install Blender 4.2 (the current LTS version) from the official website: [https://www.blender.org/download/releases/4-2/](https://www.blender.org/download/releases/4-2/)
 2. Download the latest version of Mcblend from the project page on GitHub: [https://github.com/Nusiq/mcblend/releases](https://github.com/Nusiq/mcblend/releases).
   ```{note}
   If a pre-release version is available, it may include additional features and bug fixes. The pre-release versions are stable but not yet fully documented. The user interface may also differ from the version described in the documentation.
