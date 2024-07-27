@@ -1,509 +1,679 @@
-import sys
+"""
+This module defines properties to extend Blender's internal data. The result of these functions is used to assign properties to classes registered with Blender and can't be used directly.
+
+[NOTE]
+All parameters to these functions must be passed as keywords.
+
+
+--------------------
+
+Custom properties can be added to any subclass of an ID,
+Bone and PoseBone.
+
+These properties can be animated, accessed by the user interface and python
+like Blender's existing properties.
+
+[WARNING]
+Access to these properties might happen in threaded context, on a per-data-block level.
+This has to be carefully considered when using accessors or update callbacks.
+Typically, these callbacks should not affect any other data that the one owned by their data-block.
+When accessing external non-Blender data, thread safety mechanisms should be considered.
+
+```../examples/bpy.props.py```
+
+
+--------------------
+
+A common use of custom properties is for python based Operator
+classes. Test this code by running it in the text editor, or by clicking the
+button in the 3D Viewport's Tools panel. The latter will show the properties
+in the Redo panel and allow you to change them.
+
+```../examples/bpy.props.1.py```
+
+
+--------------------
+
+PropertyGroups can be used for collecting custom settings into one value
+to avoid many individual settings mixed in together.
+
+```../examples/bpy.props.2.py```
+
+
+--------------------
+
+Custom properties can be added to any subclass of an ID,
+Bone and PoseBone.
+
+```../examples/bpy.props.3.py```
+
+
+--------------------
+
+It can be useful to perform an action when a property is changed and can be
+used to update other properties or synchronize with external data.
+
+All properties define update functions except for CollectionProperty.
+
+[WARNING]
+Remember that these callbacks may be executed in threaded context.
+
+[WARNING]
+If the property belongs to an Operator, the update callback's first
+parameter will be an OperatorProperties instance, rather than an instance
+of the operator itself. This means you can't access other internal functions
+of the operator, only its other properties.
+
+```../examples/bpy.props.4.py```
+
+
+--------------------
+
+Getter/setter functions can be used for boolean, int, float, string and enum properties.
+If these callbacks are defined the property will not be stored in the ID properties
+automatically. Instead, the get and set functions will be called when the property
+is respectively read or written from the API.
+
+[WARNING]
+Remember that these callbacks may be executed in threaded context.
+
+```../examples/bpy.props.5.py```
+
+[NOTE]
+Typically this function doesn't need to be accessed directly.
+Instead use del cls.attr
+
+
+
+"""
+
 import typing
-import bpy.types
+import collections.abc
 
-GenericType = typing.TypeVar("GenericType")
-
+GenericType1 = typing.TypeVar("GenericType1")
+GenericType2 = typing.TypeVar("GenericType2")
 
 def BoolProperty(
-        name: typing.Optional[str] = "",
-        description: typing.Optional[str] = "",
-        translation_context: typing.Optional[str] = "*",
-        default=False,
-        options: typing.Optional[typing.Set] = {'ANIMATABLE'},
-        override: typing.Optional[typing.Set] = 'set()',
-        tags: typing.Optional[typing.Set] = 'set()',
-        subtype: typing.Optional[str] = 'NONE',
-        update: typing.Optional[typing.Any] = None,
-        get: typing.Optional[typing.Any] = None,
-        set: typing.Optional[typing.Any] = None) -> 'bpy.types.BoolProperty':
-    ''' Returns a new boolean property definition.
+    *,
+    name: str | None = "",
+    description: str | None = "",
+    translation_context: str | None = "*",
+    default=False,
+    options: set | None = {"ANIMATABLE"},
+    override: set | None = None(),
+    tags: set | None = None(),
+    subtype: str | None = "NONE",
+    update: typing.Any | None = None,
+    get: typing.Any | None = None,
+    set: typing.Any | None = None,
+):
+    """Returns a new boolean property definition.
 
-    :param name: Name used in the user interface.
-    :type name: typing.Optional[str]
-    :param description: Text used for the tooltip and api documentation.
-    :type description: typing.Optional[str]
-    :param translation_context: Text used as context to disambiguate translations.
-    :type translation_context: typing.Optional[str]
-    :param options: `rna_enum_property_flag_items`.
-    :type options: typing.Optional[typing.Set]
-    :param override: `rna_enum_property_override_flag_items`.
-    :type override: typing.Optional[typing.Set]
-    :param tags: Enumerator of tags that are defined by parent class.
-    :type tags: typing.Optional[typing.Set]
-    :param subtype: `rna_enum_property_subtype_number_items`.
-    :type subtype: typing.Optional[str]
-    :param update: Function to be called when this value is modified, This function must take 2 values (self, context) and return None. *Warning* there are no safety checks to avoid infinite recursion.
-    :type update: typing.Optional[typing.Any]
-    :param get: Function to be called when this value is 'read', This function must take 1 value (self) and return the value of the property.
-    :type get: typing.Optional[typing.Any]
-    :param set: Function to be called when this value is 'written', This function must take 2 values (self, value) and return None.
-    :type set: typing.Optional[typing.Any]
-    :rtype: 'bpy.types.BoolProperty'
-    '''
+        :param name: Name used in the user interface.
+        :type name: str | None
+        :param description: Text used for the tooltip and api documentation.
+        :type description: str | None
+        :param translation_context: Text used as context to disambiguate translations.
+        :type translation_context: str | None
+        :param options: Enumerator in `rna_enum_property_flag_items`.
+        :type options: set | None
+        :param override: Enumerator in `rna_enum_property_override_flag_items`.
+        :type override: set | None
+        :param tags: Enumerator of tags that are defined by parent class.
+        :type tags: set | None
+        :param subtype: Enumerator in `rna_enum_property_subtype_number_items`.
+        :type subtype: str | None
+        :param update: Function to be called when this value is modified,
+    This function must take 2 values (self, context) and return None.
+    Warning there are no safety checks to avoid infinite recursion.
+        :type update: typing.Any | None
+        :param get: Function to be called when this value is 'read',
+    This function must take 1 value (self) and return the value of the property.
+        :type get: typing.Any | None
+        :param set: Function to be called when this value is 'written',
+    This function must take 2 values (self, value) and return None.
+        :type set: typing.Any | None
+    """
 
-    pass
-
+    ...
 
 def BoolVectorProperty(
-        name: typing.Optional[str] = "",
-        description: typing.Optional[str] = "",
-        translation_context: typing.Optional[str] = "*",
-        default: typing.Optional[typing.Sequence] = (False, False, False),
-        options: typing.Optional[typing.Set] = {'ANIMATABLE'},
-        override: typing.Optional[typing.Set] = 'set()',
-        tags: typing.Optional[typing.Set] = 'set()',
-        subtype: typing.Optional[str] = 'NONE',
-        size: typing.Optional[typing.Union[int, typing.Sequence[int]]] = 3,
-        update: typing.Optional[typing.Any] = None,
-        get: typing.Optional[typing.Any] = None,
-        set: typing.Optional[typing.Any] = None
-) -> typing.Union[typing.List, 'bpy.types.BoolProperty']:
-    ''' Returns a new vector boolean property definition.
+    *,
+    name: str | None = "",
+    description: str | None = "",
+    translation_context: str | None = "*",
+    default: collections.abc.Sequence | None = (False, False, False),
+    options: set | None = {"ANIMATABLE"},
+    override: set | None = None(),
+    tags: set | None = None(),
+    subtype: str | None = "NONE",
+    size: collections.abc.Sequence[int] | int | None = 3,
+    update: typing.Any | None = None,
+    get: typing.Any | None = None,
+    set: typing.Any | None = None,
+):
+    """Returns a new vector boolean property definition.
 
+        :param name: Name used in the user interface.
+        :type name: str | None
+        :param description: Text used for the tooltip and api documentation.
+        :type description: str | None
+        :param translation_context: Text used as context to disambiguate translations.
+        :type translation_context: str | None
+        :param default: sequence of booleans the length of size.
+        :type default: collections.abc.Sequence | None
+        :param options: Enumerator in `rna_enum_property_flag_items`.
+        :type options: set | None
+        :param override: Enumerator in `rna_enum_property_override_flag_items`.
+        :type override: set | None
+        :param tags: Enumerator of tags that are defined by parent class.
+        :type tags: set | None
+        :param subtype: Enumerator in `rna_enum_property_subtype_number_array_items`.
+        :type subtype: str | None
+        :param size: Vector dimensions in [1, 32]. An int sequence can be used to define multi-dimension arrays.
+        :type size: collections.abc.Sequence[int] | int | None
+        :param update: Function to be called when this value is modified,
+    This function must take 2 values (self, context) and return None.
+    Warning there are no safety checks to avoid infinite recursion.
+        :type update: typing.Any | None
+        :param get: Function to be called when this value is 'read',
+    This function must take 1 value (self) and return the value of the property.
+        :type get: typing.Any | None
+        :param set: Function to be called when this value is 'written',
+    This function must take 2 values (self, value) and return None.
+        :type set: typing.Any | None
+    """
+
+    ...
+
+def CollectionProperty(
+    *,
+    type=None,
+    name: str | None = "",
+    description: str | None = "",
+    translation_context: str | None = "*",
+    options: set | None = {"ANIMATABLE"},
+    override: set | None = None(),
+    tags: set | None = None(),
+):
+    """Returns a new collection property definition.
+
+    :param type: A subclass of `bpy.types.PropertyGroup`.
     :param name: Name used in the user interface.
-    :type name: typing.Optional[str]
+    :type name: str | None
     :param description: Text used for the tooltip and api documentation.
-    :type description: typing.Optional[str]
+    :type description: str | None
     :param translation_context: Text used as context to disambiguate translations.
-    :type translation_context: typing.Optional[str]
-    :param default: sequence of booleans the length of *size*.
-    :type default: typing.Optional[typing.Sequence]
-    :param options: `rna_enum_property_flag_items`.
-    :type options: typing.Optional[typing.Set]
-    :param override: `rna_enum_property_override_flag_items`.
-    :type override: typing.Optional[typing.Set]
+    :type translation_context: str | None
+    :param options: Enumerator in `rna_enum_property_flag_items`.
+    :type options: set | None
+    :param override: Enumerator in `rna_enum_property_override_flag_collection_items`.
+    :type override: set | None
     :param tags: Enumerator of tags that are defined by parent class.
-    :type tags: typing.Optional[typing.Set]
-    :param subtype: `rna_enum_property_subtype_number_array_items`.
-    :type subtype: typing.Optional[str]
-    :param size: Vector dimensions in [1, 32]. An int sequence can be used to define multi-dimension arrays.
-    :type size: typing.Optional[typing.Union[int, typing.Sequence[int]]]
-    :param update: Function to be called when this value is modified, This function must take 2 values (self, context) and return None. *Warning* there are no safety checks to avoid infinite recursion.
-    :type update: typing.Optional[typing.Any]
-    :param get: Function to be called when this value is 'read', This function must take 1 value (self) and return the value of the property.
-    :type get: typing.Optional[typing.Any]
-    :param set: Function to be called when this value is 'written', This function must take 2 values (self, value) and return None.
-    :type set: typing.Optional[typing.Any]
-    :rtype: typing.Union[typing.List, 'bpy.types.BoolProperty']
-    '''
+    :type tags: set | None
+    """
 
-    pass
-
-
-def CollectionProperty(type: typing.Optional[typing.Any] = None,
-                       name: typing.Optional[str] = "",
-                       description: typing.Optional[str] = "",
-                       translation_context: typing.Optional[str] = "*",
-                       options: typing.Optional[typing.Set] = {'ANIMATABLE'},
-                       override: typing.Optional[typing.Set] = 'set()',
-                       tags: typing.Optional[typing.Set] = 'set()'
-                       ) -> 'bpy.types.CollectionProperty':
-    ''' Returns a new collection property definition.
-
-    :param type: `bpy.types.PropertyGroup`.
-    :type type: typing.Optional[typing.Any]
-    :param name: Name used in the user interface.
-    :type name: typing.Optional[str]
-    :param description: Text used for the tooltip and api documentation.
-    :type description: typing.Optional[str]
-    :param translation_context: Text used as context to disambiguate translations.
-    :type translation_context: typing.Optional[str]
-    :param options: `rna_enum_property_flag_items`.
-    :type options: typing.Optional[typing.Set]
-    :param override: `rna_enum_property_override_flag_collection_items`.
-    :type override: typing.Optional[typing.Set]
-    :param tags: Enumerator of tags that are defined by parent class.
-    :type tags: typing.Optional[typing.Set]
-    :rtype: 'bpy.types.CollectionProperty'
-    '''
-
-    pass
-
+    ...
 
 def EnumProperty(
-        items: typing.Optional[typing.Union[typing.Iterable[
-            typing.Iterable[str]], typing.Callable]],
-        name: typing.Optional[str] = "",
-        description: typing.Optional[str] = "",
-        translation_context: typing.Optional[str] = "*",
-        default: typing.Optional[typing.Union[str, typing.Set]] = None,
-        options: typing.Optional[typing.Set] = {'ANIMATABLE'},
-        override: typing.Optional[typing.Set] = 'set()',
-        tags: typing.Optional[typing.Set] = 'set()',
-        update: typing.Optional[typing.Any] = None,
-        get: typing.Optional[typing.Any] = None,
-        set: typing.Optional[typing.Any] = None) -> 'bpy.types.EnumProperty':
-    ''' Returns a new enumerator property definition.
+    *,
+    items: collections.abc.Callable
+    | collections.abc.Iterable[collections.abc.Iterable[str]]
+    | None,
+    name: str | None = "",
+    description: str | None = "",
+    translation_context: str | None = "*",
+    default: int | set | str | None = None,
+    options: set | None = {"ANIMATABLE"},
+    override: set | None = None(),
+    tags: set | None = None(),
+    update: typing.Any | None = None,
+    get: typing.Any | None = None,
+    set: typing.Any | None = None,
+):
+    """Returns a new enumerator property definition.
 
-    :param items: ``[(identifier, name, description, icon, number), ...]``. The first three elements of the tuples are mandatory. :identifier: The identifier is used for Python access. :name: Name for the interface. :description: Used for documentation and tooltips. :icon: An icon string identifier or integer icon value (e.g. returned by `bpy.types.UILayout.icon`) :number: Unique value used as the identifier for this item (stored in file data). Use when the identifier may need to change. If the *ENUM_FLAG* option is used, the values are bit-masks and should be powers of two. When an item only contains 4 items they define ``(identifier, name, description, number)``. Separators may be added using None instead of a tuple. For dynamic values a callback can be passed which returns a list in the same format as the static list. This function must take 2 arguments ``(self, context)``, **context may be None**. .. warning:: There is a known bug with using a callback, Python must keep a reference to the strings returned by the callback or Blender will misbehave or even crash.
-    :type items: typing.Optional[typing.Union[typing.Iterable[typing.Iterable[str]], typing.Callable]]
-    :param name: Name used in the user interface.
-    :type name: typing.Optional[str]
-    :param description: Text used for the tooltip and api documentation.
-    :type description: typing.Optional[str]
-    :param translation_context: Text used as context to disambiguate translations.
-    :type translation_context: typing.Optional[str]
-    :param default: The default value for this enum, a string from the identifiers used in *items*, or integer matching an item number. If the *ENUM_FLAG* option is used this must be a set of such string identifiers instead. WARNING: Strings can not be specified for dynamic enums (i.e. if a callback function is given as *items* parameter).
-    :type default: typing.Optional[typing.Union[str, typing.Set]]
-    :param options: `rna_enum_property_flag_enum_items`.
-    :type options: typing.Optional[typing.Set]
-    :param override: `rna_enum_property_override_flag_items`.
-    :type override: typing.Optional[typing.Set]
-    :param tags: Enumerator of tags that are defined by parent class.
-    :type tags: typing.Optional[typing.Set]
-    :param update: Function to be called when this value is modified, This function must take 2 values (self, context) and return None. *Warning* there are no safety checks to avoid infinite recursion.
-    :type update: typing.Optional[typing.Any]
-    :param get: Function to be called when this value is 'read', This function must take 1 value (self) and return the value of the property.
-    :type get: typing.Optional[typing.Any]
-    :param set: Function to be called when this value is 'written', This function must take 2 values (self, value) and return None.
-    :type set: typing.Optional[typing.Any]
-    :rtype: 'bpy.types.EnumProperty'
-    '''
+        :param items: sequence of enum items formatted:
+    [(identifier, name, description, icon, number), ...].
 
-    pass
+    The first three elements of the tuples are mandatory.
 
+    identifier
+
+    The identifier is used for Python access.
+
+    name
+
+    Name for the interface.
+
+    description
+
+    Used for documentation and tooltips.
+
+    icon
+
+    An icon string identifier or integer icon value
+    (e.g. returned by `bpy.types.UILayout.icon`)
+
+    number
+
+    Unique value used as the identifier for this item (stored in file data).
+    Use when the identifier may need to change. If the ENUM_FLAG option is used,
+    the values are bit-masks and should be powers of two.
+
+    When an item only contains 4 items they define (identifier, name, description, number).
+
+    Separators may be added using None instead of a tuple.
+    For dynamic values a callback can be passed which returns a list in
+    the same format as the static list.
+    This function must take 2 arguments (self, context), context may be None.
+
+    There is a known bug with using a callback,
+    Python must keep a reference to the strings returned by the callback or Blender
+    will misbehave or even crash.
+        :type items: collections.abc.Callable | collections.abc.Iterable[collections.abc.Iterable[str]] | None
+        :param name: Name used in the user interface.
+        :type name: str | None
+        :param description: Text used for the tooltip and api documentation.
+        :type description: str | None
+        :param translation_context: Text used as context to disambiguate translations.
+        :type translation_context: str | None
+        :param default: The default value for this enum, a string from the identifiers used in items, or integer matching an item number.
+    If the ENUM_FLAG option is used this must be a set of such string identifiers instead.
+    WARNING: Strings cannot be specified for dynamic enums
+    (i.e. if a callback function is given as items parameter).
+        :type default: int | set | str | None
+        :param options: Enumerator in `rna_enum_property_flag_enum_items`.
+        :type options: set | None
+        :param override: Enumerator in `rna_enum_property_override_flag_items`.
+        :type override: set | None
+        :param tags: Enumerator of tags that are defined by parent class.
+        :type tags: set | None
+        :param update: Function to be called when this value is modified,
+    This function must take 2 values (self, context) and return None.
+    Warning there are no safety checks to avoid infinite recursion.
+        :type update: typing.Any | None
+        :param get: Function to be called when this value is 'read',
+    This function must take 1 value (self) and return the value of the property.
+        :type get: typing.Any | None
+        :param set: Function to be called when this value is 'written',
+    This function must take 2 values (self, value) and return None.
+        :type set: typing.Any | None
+    """
+
+    ...
 
 def FloatProperty(
-        name: typing.Optional[str] = "",
-        description: typing.Optional[str] = "",
-        translation_context: typing.Optional[str] = "*",
-        default=0.0,
-        min: typing.Optional[float] = -3.402823e+38,
-        max: typing.Optional[float] = 3.402823e+38,
-        soft_min: typing.Optional[float] = -3.402823e+38,
-        soft_max: typing.Optional[float] = 3.402823e+38,
-        step: typing.Optional[int] = 3,
-        precision: typing.Optional[int] = 2,
-        options: typing.Optional[typing.Set] = {'ANIMATABLE'},
-        override: typing.Optional[typing.Set] = 'set()',
-        tags: typing.Optional[typing.Set] = 'set()',
-        subtype: typing.Optional[str] = 'NONE',
-        unit: typing.Optional[str] = 'NONE',
-        update: typing.Optional[typing.Any] = None,
-        get: typing.Optional[typing.Any] = None,
-        set: typing.Optional[typing.Any] = None) -> 'bpy.types.FloatProperty':
-    ''' Returns a new float (single precision) property definition.
+    *,
+    name: str | None = "",
+    description: str | None = "",
+    translation_context: str | None = "*",
+    default=0.0,
+    min: float | None = -3.402823e38,
+    max: float | None = 3.402823e38,
+    soft_min: float | None = -3.402823e38,
+    soft_max: float | None = 3.402823e38,
+    step: int | None = 3,
+    precision: int | None = 2,
+    options: set | None = {"ANIMATABLE"},
+    override: set | None = None(),
+    tags: set | None = None(),
+    subtype: str | None = "NONE",
+    unit: str | None = "NONE",
+    update: typing.Any | None = None,
+    get: typing.Any | None = None,
+    set: typing.Any | None = None,
+):
+    """Returns a new float (single precision) property definition.
 
-    :param name: Name used in the user interface.
-    :type name: typing.Optional[str]
-    :param description: Text used for the tooltip and api documentation.
-    :type description: typing.Optional[str]
-    :param translation_context: Text used as context to disambiguate translations.
-    :type translation_context: typing.Optional[str]
-    :param min: Hard minimum, trying to assign a value below will silently assign this minimum instead.
-    :type min: typing.Optional[float]
-    :param max: Hard maximum, trying to assign a value above will silently assign this maximum instead.
-    :type max: typing.Optional[float]
-    :param soft_min: Soft minimum (>= *min*), user won't be able to drag the widget below this value in the UI.
-    :type soft_min: typing.Optional[float]
-    :param soft_max: Soft maximum (<= *max*), user won't be able to drag the widget above this value in the UI.
-    :type soft_max: typing.Optional[float]
-    :param step: actual value is /100).
-    :type step: typing.Optional[int]
-    :param precision: Maximum number of decimal digits to display, in [0, 6]. Fraction is automatically hidden for exact integer values of fields with unit 'NONE' or 'TIME' (frame count) and step divisible by 100.
-    :type precision: typing.Optional[int]
-    :param options: `rna_enum_property_flag_items`.
-    :type options: typing.Optional[typing.Set]
-    :param override: `rna_enum_property_override_flag_items`.
-    :type override: typing.Optional[typing.Set]
-    :param tags: Enumerator of tags that are defined by parent class.
-    :type tags: typing.Optional[typing.Set]
-    :param subtype: `rna_enum_property_subtype_number_items`.
-    :type subtype: typing.Optional[str]
-    :param unit: `rna_enum_property_unit_items`.
-    :type unit: typing.Optional[str]
-    :param update: Function to be called when this value is modified, This function must take 2 values (self, context) and return None. *Warning* there are no safety checks to avoid infinite recursion.
-    :type update: typing.Optional[typing.Any]
-    :param get: Function to be called when this value is 'read', This function must take 1 value (self) and return the value of the property.
-    :type get: typing.Optional[typing.Any]
-    :param set: Function to be called when this value is 'written', This function must take 2 values (self, value) and return None.
-    :type set: typing.Optional[typing.Any]
-    :rtype: 'bpy.types.FloatProperty'
-    '''
+        :param name: Name used in the user interface.
+        :type name: str | None
+        :param description: Text used for the tooltip and api documentation.
+        :type description: str | None
+        :param translation_context: Text used as context to disambiguate translations.
+        :type translation_context: str | None
+        :param min: Hard minimum, trying to assign a value below will silently assign this minimum instead.
+        :type min: float | None
+        :param max: Hard maximum, trying to assign a value above will silently assign this maximum instead.
+        :type max: float | None
+        :param soft_min: Soft minimum (>= min), user won't be able to drag the widget below this value in the UI.
+        :type soft_min: float | None
+        :param soft_max: Soft maximum (<= max), user won't be able to drag the widget above this value in the UI.
+        :type soft_max: float | None
+        :param step: Step of increment/decrement in UI, in [1, 100], defaults to 3 (WARNING: actual value is /100).
+        :type step: int | None
+        :param precision: Maximum number of decimal digits to display, in [0, 6]. Fraction is automatically hidden for exact integer values of fields with unit 'NONE' or 'TIME' (frame count) and step divisible by 100.
+        :type precision: int | None
+        :param options: Enumerator in `rna_enum_property_flag_items`.
+        :type options: set | None
+        :param override: Enumerator in `rna_enum_property_override_flag_items`.
+        :type override: set | None
+        :param tags: Enumerator of tags that are defined by parent class.
+        :type tags: set | None
+        :param subtype: Enumerator in `rna_enum_property_subtype_number_items`.
+        :type subtype: str | None
+        :param unit: Enumerator in `rna_enum_property_unit_items`.
+        :type unit: str | None
+        :param update: Function to be called when this value is modified,
+    This function must take 2 values (self, context) and return None.
+    Warning there are no safety checks to avoid infinite recursion.
+        :type update: typing.Any | None
+        :param get: Function to be called when this value is 'read',
+    This function must take 1 value (self) and return the value of the property.
+        :type get: typing.Any | None
+        :param set: Function to be called when this value is 'written',
+    This function must take 2 values (self, value) and return None.
+        :type set: typing.Any | None
+    """
 
-    pass
-
+    ...
 
 def FloatVectorProperty(
-        name: typing.Optional[str] = "",
-        description: typing.Optional[str] = "",
-        translation_context: typing.Optional[str] = "*",
-        default: typing.Optional[typing.Sequence] = (0.0, 0.0, 0.0),
-        min: typing.Optional[float] = 'sys.float_info.min',
-        max: typing.Optional[float] = 'sys.float_info.max',
-        soft_min: typing.Optional[float] = 'sys.float_info.min',
-        soft_max: typing.Optional[float] = 'sys.float_info.max',
-        step: typing.Optional[int] = 3,
-        precision: typing.Optional[int] = 2,
-        options: typing.Optional[typing.Set] = {'ANIMATABLE'},
-        override: typing.Optional[typing.Set] = 'set()',
-        tags: typing.Optional[typing.Set] = 'set()',
-        subtype: typing.Optional[str] = 'NONE',
-        unit: typing.Optional[str] = 'NONE',
-        size: typing.Optional[typing.Union[int, typing.Sequence[int]]] = 3,
-        update: typing.Optional[typing.Any] = None,
-        get: typing.Optional[typing.Any] = None,
-        set: typing.Optional[typing.Any] = None
-) -> typing.Union[typing.List, 'bpy.types.FloatProperty']:
-    ''' Returns a new vector float property definition.
+    *,
+    name: str | None = "",
+    description: str | None = "",
+    translation_context: str | None = "*",
+    default: collections.abc.Sequence | None = (0.0, 0.0, 0.0),
+    min: float | None = None,
+    max: float | None = None,
+    soft_min: float | None = None,
+    soft_max: float | None = None,
+    step: int | None = 3,
+    precision: int | None = 2,
+    options: set | None = {"ANIMATABLE"},
+    override: set | None = None(),
+    tags: set | None = None(),
+    subtype: str | None = "NONE",
+    unit: str | None = "NONE",
+    size: collections.abc.Sequence[int] | int | None = 3,
+    update: typing.Any | None = None,
+    get: typing.Any | None = None,
+    set: typing.Any | None = None,
+):
+    """Returns a new vector float property definition.
 
-    :param name: Name used in the user interface.
-    :type name: typing.Optional[str]
-    :param description: Text used for the tooltip and api documentation.
-    :type description: typing.Optional[str]
-    :param translation_context: Text used as context to disambiguate translations.
-    :type translation_context: typing.Optional[str]
-    :param default: sequence of floats the length of *size*.
-    :type default: typing.Optional[typing.Sequence]
-    :param min: Hard minimum, trying to assign a value below will silently assign this minimum instead.
-    :type min: typing.Optional[float]
-    :param max: Hard maximum, trying to assign a value above will silently assign this maximum instead.
-    :type max: typing.Optional[float]
-    :param soft_min: Soft minimum (>= *min*), user won't be able to drag the widget below this value in the UI.
-    :type soft_min: typing.Optional[float]
-    :param soft_max: Soft maximum (<= *max*), user won't be able to drag the widget above this value in the UI.
-    :type soft_max: typing.Optional[float]
-    :param options: `rna_enum_property_flag_items`.
-    :type options: typing.Optional[typing.Set]
-    :param override: `rna_enum_property_override_flag_items`.
-    :type override: typing.Optional[typing.Set]
-    :param tags: Enumerator of tags that are defined by parent class.
-    :type tags: typing.Optional[typing.Set]
-    :param step: actual value is /100).
-    :type step: typing.Optional[int]
-    :param precision: Maximum number of decimal digits to display, in [0, 6]. Fraction is automatically hidden for exact integer values of fields with unit 'NONE' or 'TIME' (frame count) and step divisible by 100.
-    :type precision: typing.Optional[int]
-    :param subtype: `rna_enum_property_subtype_number_array_items`.
-    :type subtype: typing.Optional[str]
-    :param unit: `rna_enum_property_unit_items`.
-    :type unit: typing.Optional[str]
-    :param size: Vector dimensions in [1, 32]. An int sequence can be used to define multi-dimension arrays.
-    :type size: typing.Optional[typing.Union[int, typing.Sequence[int]]]
-    :param update: Function to be called when this value is modified, This function must take 2 values (self, context) and return None. *Warning* there are no safety checks to avoid infinite recursion.
-    :type update: typing.Optional[typing.Any]
-    :param get: Function to be called when this value is 'read', This function must take 1 value (self) and return the value of the property.
-    :type get: typing.Optional[typing.Any]
-    :param set: Function to be called when this value is 'written', This function must take 2 values (self, value) and return None.
-    :type set: typing.Optional[typing.Any]
-    :rtype: typing.Union[typing.List, 'bpy.types.FloatProperty']
-    '''
+        :param name: Name used in the user interface.
+        :type name: str | None
+        :param description: Text used for the tooltip and api documentation.
+        :type description: str | None
+        :param translation_context: Text used as context to disambiguate translations.
+        :type translation_context: str | None
+        :param default: sequence of floats the length of size.
+        :type default: collections.abc.Sequence | None
+        :param min: Hard minimum, trying to assign a value below will silently assign this minimum instead.
+        :type min: float | None
+        :param max: Hard maximum, trying to assign a value above will silently assign this maximum instead.
+        :type max: float | None
+        :param soft_min: Soft minimum (>= min), user won't be able to drag the widget below this value in the UI.
+        :type soft_min: float | None
+        :param soft_max: Soft maximum (<= max), user won't be able to drag the widget above this value in the UI.
+        :type soft_max: float | None
+        :param step: Step of increment/decrement in UI, in [1, 100], defaults to 3 (WARNING: actual value is /100).
+        :type step: int | None
+        :param precision: Maximum number of decimal digits to display, in [0, 6]. Fraction is automatically hidden for exact integer values of fields with unit 'NONE' or 'TIME' (frame count) and step divisible by 100.
+        :type precision: int | None
+        :param options: Enumerator in `rna_enum_property_flag_items`.
+        :type options: set | None
+        :param override: Enumerator in `rna_enum_property_override_flag_items`.
+        :type override: set | None
+        :param tags: Enumerator of tags that are defined by parent class.
+        :type tags: set | None
+        :param subtype: Enumerator in `rna_enum_property_subtype_number_array_items`.
+        :type subtype: str | None
+        :param unit: Enumerator in `rna_enum_property_unit_items`.
+        :type unit: str | None
+        :param size: Vector dimensions in [1, 32]. An int sequence can be used to define multi-dimension arrays.
+        :type size: collections.abc.Sequence[int] | int | None
+        :param update: Function to be called when this value is modified,
+    This function must take 2 values (self, context) and return None.
+    Warning there are no safety checks to avoid infinite recursion.
+        :type update: typing.Any | None
+        :param get: Function to be called when this value is 'read',
+    This function must take 1 value (self) and return the value of the property.
+        :type get: typing.Any | None
+        :param set: Function to be called when this value is 'written',
+    This function must take 2 values (self, value) and return None.
+        :type set: typing.Any | None
+    """
 
-    pass
-
+    ...
 
 def IntProperty(
-        name: typing.Optional[str] = "",
-        description: typing.Optional[str] = "",
-        translation_context: typing.Optional[str] = "*",
-        default=0,
-        min: typing.Optional[int] = -2**31,
-        max: typing.Optional[int] = 2**31 - 1,
-        soft_min: typing.Optional[int] = -2**31,
-        soft_max: typing.Optional[int] = 2**31 - 1,
-        step: typing.Optional[int] = 1,
-        options: typing.Optional[typing.Set] = {'ANIMATABLE'},
-        override: typing.Optional[typing.Set] = 'set()',
-        tags: typing.Optional[typing.Set] = 'set()',
-        subtype: typing.Optional[str] = 'NONE',
-        update: typing.Optional[typing.Any] = None,
-        get: typing.Optional[typing.Any] = None,
-        set: typing.Optional[typing.Any] = None) -> 'bpy.types.IntProperty':
-    ''' Returns a new int property definition.
+    *,
+    name: str | None = "",
+    description: str | None = "",
+    translation_context: str | None = "*",
+    default=0,
+    min: int | None = None,
+    max: int | None = None,
+    soft_min: int | None = None,
+    soft_max: int | None = None,
+    step: int | None = 1,
+    options: set | None = {"ANIMATABLE"},
+    override: set | None = None(),
+    tags: set | None = None(),
+    subtype: str | None = "NONE",
+    update: typing.Any | None = None,
+    get: typing.Any | None = None,
+    set: typing.Any | None = None,
+):
+    """Returns a new int property definition.
 
-    :param name: Name used in the user interface.
-    :type name: typing.Optional[str]
-    :param description: Text used for the tooltip and api documentation.
-    :type description: typing.Optional[str]
-    :param translation_context: Text used as context to disambiguate translations.
-    :type translation_context: typing.Optional[str]
-    :param min: Hard minimum, trying to assign a value below will silently assign this minimum instead.
-    :type min: typing.Optional[int]
-    :param max: Hard maximum, trying to assign a value above will silently assign this maximum instead.
-    :type max: typing.Optional[int]
-    :param soft_min: Soft minimum (>= *min*), user won't be able to drag the widget below this value in the UI.
-    :type soft_min: typing.Optional[int]
-    :param soft_max: Soft maximum (<= *max*), user won't be able to drag the widget above this value in the UI.
-    :type soft_max: typing.Optional[int]
-    :param step: unused currently!).
-    :type step: typing.Optional[int]
-    :param options: `rna_enum_property_flag_items`.
-    :type options: typing.Optional[typing.Set]
-    :param override: `rna_enum_property_override_flag_items`.
-    :type override: typing.Optional[typing.Set]
-    :param tags: Enumerator of tags that are defined by parent class.
-    :type tags: typing.Optional[typing.Set]
-    :param subtype: `rna_enum_property_subtype_number_items`.
-    :type subtype: typing.Optional[str]
-    :param update: Function to be called when this value is modified, This function must take 2 values (self, context) and return None. *Warning* there are no safety checks to avoid infinite recursion.
-    :type update: typing.Optional[typing.Any]
-    :param get: Function to be called when this value is 'read', This function must take 1 value (self) and return the value of the property.
-    :type get: typing.Optional[typing.Any]
-    :param set: Function to be called when this value is 'written', This function must take 2 values (self, value) and return None.
-    :type set: typing.Optional[typing.Any]
-    :rtype: 'bpy.types.IntProperty'
-    '''
+        :param name: Name used in the user interface.
+        :type name: str | None
+        :param description: Text used for the tooltip and api documentation.
+        :type description: str | None
+        :param translation_context: Text used as context to disambiguate translations.
+        :type translation_context: str | None
+        :param min: Hard minimum, trying to assign a value below will silently assign this minimum instead.
+        :type min: int | None
+        :param max: Hard maximum, trying to assign a value above will silently assign this maximum instead.
+        :type max: int | None
+        :param soft_min: Soft minimum (>= min), user won't be able to drag the widget below this value in the UI.
+        :type soft_min: int | None
+        :param soft_max: Soft maximum (<= max), user won't be able to drag the widget above this value in the UI.
+        :type soft_max: int | None
+        :param step: Step of increment/decrement in UI, in [1, 100], defaults to 1 (WARNING: unused currently!).
+        :type step: int | None
+        :param options: Enumerator in `rna_enum_property_flag_items`.
+        :type options: set | None
+        :param override: Enumerator in `rna_enum_property_override_flag_items`.
+        :type override: set | None
+        :param tags: Enumerator of tags that are defined by parent class.
+        :type tags: set | None
+        :param subtype: Enumerator in `rna_enum_property_subtype_number_items`.
+        :type subtype: str | None
+        :param update: Function to be called when this value is modified,
+    This function must take 2 values (self, context) and return None.
+    Warning there are no safety checks to avoid infinite recursion.
+        :type update: typing.Any | None
+        :param get: Function to be called when this value is 'read',
+    This function must take 1 value (self) and return the value of the property.
+        :type get: typing.Any | None
+        :param set: Function to be called when this value is 'written',
+    This function must take 2 values (self, value) and return None.
+        :type set: typing.Any | None
+    """
 
-    pass
-
+    ...
 
 def IntVectorProperty(
-        name: typing.Optional[str] = "",
-        description: typing.Optional[str] = "",
-        translation_context: typing.Optional[str] = "*",
-        default: typing.Optional[typing.Sequence] = (0, 0, 0),
-        min: typing.Optional[int] = -2**31,
-        max: typing.Optional[int] = 2**31 - 1,
-        soft_min: typing.Optional[int] = -2**31,
-        soft_max: typing.Optional[int] = 2**31 - 1,
-        step: typing.Optional[int] = 1,
-        options: typing.Optional[typing.Set] = {'ANIMATABLE'},
-        override: typing.Optional[typing.Set] = 'set()',
-        tags: typing.Optional[typing.Set] = 'set()',
-        subtype: typing.Optional[str] = 'NONE',
-        size: typing.Optional[typing.Union[int, typing.Sequence[int]]] = 3,
-        update: typing.Optional[typing.Any] = None,
-        get: typing.Optional[typing.Any] = None,
-        set: typing.Optional[typing.Any] = None
-) -> typing.Union[typing.List, 'bpy.types.IntProperty']:
-    ''' Returns a new vector int property definition.
+    *,
+    name: str | None = "",
+    description: str | None = "",
+    translation_context: str | None = "*",
+    default: collections.abc.Sequence | None = (0, 0, 0),
+    min: int | None = None,
+    max: int | None = None,
+    soft_min: int | None = None,
+    soft_max: int | None = None,
+    step: int | None = 1,
+    options: set | None = {"ANIMATABLE"},
+    override: set | None = None(),
+    tags: set | None = None(),
+    subtype: str | None = "NONE",
+    size: collections.abc.Sequence[int] | int | None = 3,
+    update: typing.Any | None = None,
+    get: typing.Any | None = None,
+    set: typing.Any | None = None,
+):
+    """Returns a new vector int property definition.
 
-    :param name: Name used in the user interface.
-    :type name: typing.Optional[str]
-    :param description: Text used for the tooltip and api documentation.
-    :type description: typing.Optional[str]
-    :param translation_context: Text used as context to disambiguate translations.
-    :type translation_context: typing.Optional[str]
-    :param default: sequence of ints the length of *size*.
-    :type default: typing.Optional[typing.Sequence]
-    :param min: Hard minimum, trying to assign a value below will silently assign this minimum instead.
-    :type min: typing.Optional[int]
-    :param max: Hard maximum, trying to assign a value above will silently assign this maximum instead.
-    :type max: typing.Optional[int]
-    :param soft_min: Soft minimum (>= *min*), user won't be able to drag the widget below this value in the UI.
-    :type soft_min: typing.Optional[int]
-    :param soft_max: Soft maximum (<= *max*), user won't be able to drag the widget above this value in the UI.
-    :type soft_max: typing.Optional[int]
-    :param step: unused currently!).
-    :type step: typing.Optional[int]
-    :param options: `rna_enum_property_flag_items`.
-    :type options: typing.Optional[typing.Set]
-    :param override: `rna_enum_property_override_flag_items`.
-    :type override: typing.Optional[typing.Set]
-    :param tags: Enumerator of tags that are defined by parent class.
-    :type tags: typing.Optional[typing.Set]
-    :param subtype: `rna_enum_property_subtype_number_array_items`.
-    :type subtype: typing.Optional[str]
-    :param size: Vector dimensions in [1, 32]. An int sequence can be used to define multi-dimension arrays.
-    :type size: typing.Optional[typing.Union[int, typing.Sequence[int]]]
-    :param update: Function to be called when this value is modified, This function must take 2 values (self, context) and return None. *Warning* there are no safety checks to avoid infinite recursion.
-    :type update: typing.Optional[typing.Any]
-    :param get: Function to be called when this value is 'read', This function must take 1 value (self) and return the value of the property.
-    :type get: typing.Optional[typing.Any]
-    :param set: Function to be called when this value is 'written', This function must take 2 values (self, value) and return None.
-    :type set: typing.Optional[typing.Any]
-    :rtype: typing.Union[typing.List, 'bpy.types.IntProperty']
-    '''
+        :param name: Name used in the user interface.
+        :type name: str | None
+        :param description: Text used for the tooltip and api documentation.
+        :type description: str | None
+        :param translation_context: Text used as context to disambiguate translations.
+        :type translation_context: str | None
+        :param default: sequence of ints the length of size.
+        :type default: collections.abc.Sequence | None
+        :param min: Hard minimum, trying to assign a value below will silently assign this minimum instead.
+        :type min: int | None
+        :param max: Hard maximum, trying to assign a value above will silently assign this maximum instead.
+        :type max: int | None
+        :param soft_min: Soft minimum (>= min), user won't be able to drag the widget below this value in the UI.
+        :type soft_min: int | None
+        :param soft_max: Soft maximum (<= max), user won't be able to drag the widget above this value in the UI.
+        :type soft_max: int | None
+        :param step: Step of increment/decrement in UI, in [1, 100], defaults to 1 (WARNING: unused currently!).
+        :type step: int | None
+        :param options: Enumerator in `rna_enum_property_flag_items`.
+        :type options: set | None
+        :param override: Enumerator in `rna_enum_property_override_flag_items`.
+        :type override: set | None
+        :param tags: Enumerator of tags that are defined by parent class.
+        :type tags: set | None
+        :param subtype: Enumerator in `rna_enum_property_subtype_number_array_items`.
+        :type subtype: str | None
+        :param size: Vector dimensions in [1, 32]. An int sequence can be used to define multi-dimension arrays.
+        :type size: collections.abc.Sequence[int] | int | None
+        :param update: Function to be called when this value is modified,
+    This function must take 2 values (self, context) and return None.
+    Warning there are no safety checks to avoid infinite recursion.
+        :type update: typing.Any | None
+        :param get: Function to be called when this value is 'read',
+    This function must take 1 value (self) and return the value of the property.
+        :type get: typing.Any | None
+        :param set: Function to be called when this value is 'written',
+    This function must take 2 values (self, value) and return None.
+        :type set: typing.Any | None
+    """
 
-    pass
+    ...
 
+def PointerProperty(
+    *,
+    type=None,
+    name: str | None = "",
+    description: str | None = "",
+    translation_context: str | None = "*",
+    options: set | None = {"ANIMATABLE"},
+    override: set | None = None(),
+    tags: set | None = None(),
+    poll: typing.Any | None = None,
+    update: typing.Any | None = None,
+):
+    """Returns a new pointer property definition.
 
-def PointerProperty(type: typing.Optional[typing.Any] = None,
-                    name: typing.Optional[str] = "",
-                    description: typing.Optional[str] = "",
-                    translation_context: typing.Optional[str] = "*",
-                    options: typing.Optional[typing.Set] = {'ANIMATABLE'},
-                    override: typing.Optional[typing.Set] = 'set()',
-                    tags: typing.Optional[typing.Set] = 'set()',
-                    poll: typing.Optional[typing.Any] = None,
-                    update: typing.Optional[typing.Any] = None
-                    ) -> 'bpy.types.PointerProperty':
-    ''' Returns a new pointer property definition.
+        :param type: A subclass of `bpy.types.PropertyGroup` or `bpy.types.ID`.
+        :param name: Name used in the user interface.
+        :type name: str | None
+        :param description: Text used for the tooltip and api documentation.
+        :type description: str | None
+        :param translation_context: Text used as context to disambiguate translations.
+        :type translation_context: str | None
+        :param options: Enumerator in `rna_enum_property_flag_items`.
+        :type options: set | None
+        :param override: Enumerator in `rna_enum_property_override_flag_items`.
+        :type override: set | None
+        :param tags: Enumerator of tags that are defined by parent class.
+        :type tags: set | None
+        :param poll: function to be called to determine whether an item is valid for this property.
+    The function must take 2 values (self, object) and return Bool.
+        :type poll: typing.Any | None
+        :param update: Function to be called when this value is modified,
+    This function must take 2 values (self, context) and return None.
+    Warning there are no safety checks to avoid infinite recursion.
+        :type update: typing.Any | None
+    """
 
-    :param type: `bpy.types.ID`.
-    :type type: typing.Optional[typing.Any]
-    :param name: Name used in the user interface.
-    :type name: typing.Optional[str]
-    :param description: Text used for the tooltip and api documentation.
-    :type description: typing.Optional[str]
-    :param translation_context: Text used as context to disambiguate translations.
-    :type translation_context: typing.Optional[str]
-    :param options: `rna_enum_property_flag_items`.
-    :type options: typing.Optional[typing.Set]
-    :param override: `rna_enum_property_override_flag_items`.
-    :type override: typing.Optional[typing.Set]
-    :param tags: Enumerator of tags that are defined by parent class.
-    :type tags: typing.Optional[typing.Set]
-    :param poll: function to be called to determine whether an item is valid for this property. The function must take 2 values (self, object) and return Bool.
-    :type poll: typing.Optional[typing.Any]
-    :param update: Function to be called when this value is modified, This function must take 2 values (self, context) and return None. *Warning* there are no safety checks to avoid infinite recursion.
-    :type update: typing.Optional[typing.Any]
-    :rtype: 'bpy.types.PointerProperty'
-    '''
+    ...
 
-    pass
-
-
-def RemoveProperty(cls: typing.Optional[typing.Any],
-                   attr: typing.Optional[str]):
-    ''' Removes a dynamically defined property.
+def RemoveProperty(*, cls: typing.Any | None, attr: str | None):
+    """Removes a dynamically defined property.
 
     :param cls: The class containing the property (must be a positional argument).
-    :type cls: typing.Optional[typing.Any]
+    :type cls: typing.Any | None
     :param attr: Property name (must be passed as a keyword).
-    :type attr: typing.Optional[str]
-    '''
+    :type attr: str | None
+    """
 
-    pass
+    ...
 
+def StringProperty(
+    *,
+    name: str | None = "",
+    description: str | None = "",
+    translation_context: str | None = "*",
+    default: str | None = "",
+    maxlen: int | None = 0,
+    options: set | None = {"ANIMATABLE"},
+    override: set | None = None(),
+    tags: set | None = None(),
+    subtype: str | None = "NONE",
+    update: typing.Any | None = None,
+    get: typing.Any | None = None,
+    set: typing.Any | None = None,
+    search: typing.Any | None = None,
+    search_options: set | None = {"SUGGESTION"},
+):
+    """Returns a new string property definition.
 
-def StringProperty(name: typing.Optional[str] = "",
-                   description: typing.Optional[str] = "",
-                   translation_context: typing.Optional[str] = "*",
-                   default: typing.Optional[str] = "",
-                   maxlen: typing.Optional[int] = 0,
-                   options: typing.Optional[typing.Set] = {'ANIMATABLE'},
-                   override: typing.Optional[typing.Set] = 'set()',
-                   tags: typing.Optional[typing.Set] = 'set()',
-                   subtype: typing.Optional[str] = 'NONE',
-                   update: typing.Optional[typing.Any] = None,
-                   get: typing.Optional[typing.Any] = None,
-                   set: typing.Optional[typing.Any] = None,
-                   search: typing.Optional[typing.Any] = None,
-                   search_options: typing.Optional[typing.Set] = {
-                       'SUGGESTION'
-                   }) -> 'bpy.types.StringProperty':
-    ''' Returns a new string property definition.
+        :param name: Name used in the user interface.
+        :type name: str | None
+        :param description: Text used for the tooltip and api documentation.
+        :type description: str | None
+        :param translation_context: Text used as context to disambiguate translations.
+        :type translation_context: str | None
+        :param default: initializer string.
+        :type default: str | None
+        :param maxlen: maximum length of the string.
+        :type maxlen: int | None
+        :param options: Enumerator in `rna_enum_property_flag_items`.
+        :type options: set | None
+        :param override: Enumerator in `rna_enum_property_override_flag_items`.
+        :type override: set | None
+        :param tags: Enumerator of tags that are defined by parent class.
+        :type tags: set | None
+        :param subtype: Enumerator in `rna_enum_property_subtype_string_items`.
+        :type subtype: str | None
+        :param update: Function to be called when this value is modified,
+    This function must take 2 values (self, context) and return None.
+    Warning there are no safety checks to avoid infinite recursion.
+        :type update: typing.Any | None
+        :param get: Function to be called when this value is 'read',
+    This function must take 1 value (self) and return the value of the property.
+        :type get: typing.Any | None
+        :param set: Function to be called when this value is 'written',
+    This function must take 2 values (self, value) and return None.
+        :type set: typing.Any | None
+        :param search: Function to be called to show candidates for this string (shown in the UI).
+    This function must take 3 values (self, context, edit_text)
+    and return a sequence, iterator or generator where each item must be:
 
-    :param name: Name used in the user interface.
-    :type name: typing.Optional[str]
-    :param description: Text used for the tooltip and api documentation.
-    :type description: typing.Optional[str]
-    :param translation_context: Text used as context to disambiguate translations.
-    :type translation_context: typing.Optional[str]
-    :param default: initializer string.
-    :type default: typing.Optional[str]
-    :param maxlen: maximum length of the string.
-    :type maxlen: typing.Optional[int]
-    :param options: `rna_enum_property_flag_items`.
-    :type options: typing.Optional[typing.Set]
-    :param override: `rna_enum_property_override_flag_items`.
-    :type override: typing.Optional[typing.Set]
-    :param tags: Enumerator of tags that are defined by parent class.
-    :type tags: typing.Optional[typing.Set]
-    :param subtype: `rna_enum_property_subtype_string_items`.
-    :type subtype: typing.Optional[str]
-    :param update: Function to be called when this value is modified, This function must take 2 values (self, context) and return None. *Warning* there are no safety checks to avoid infinite recursion.
-    :type update: typing.Optional[typing.Any]
-    :param get: Function to be called when this value is 'read', This function must take 1 value (self) and return the value of the property.
-    :type get: typing.Optional[typing.Any]
-    :param set: Function to be called when this value is 'written', This function must take 2 values (self, value) and return None.
-    :type set: typing.Optional[typing.Any]
-    :param search: Function to be called to show candidates for this string (shown in the UI). This function must take 3 values (self, context, edit_text) and return a sequence, iterator or generator where each item must be: - A single string (representing a candidate to display). - A tuple-pair of strings, where the first is a candidate and the second is additional information about the candidate.
-    :type search: typing.Optional[typing.Any]
-    :param search_options: - 'SORT' sorts the resulting items. - 'SUGGESTION' lets the user enter values not found in search candidates. **WARNING** disabling this flag causes the search callback to run on redraw, so only disable this flag if it's not likely to cause performance issues.
-    :type search_options: typing.Optional[typing.Set]
-    :rtype: 'bpy.types.StringProperty'
-    '''
+    A single string (representing a candidate to display).
 
-    pass
+    A tuple-pair of strings, where the first is a candidate and the second
+    is additional information about the candidate.
+        :type search: typing.Any | None
+        :param search_options: Set of strings in:
+
+    'SORT' sorts the resulting items.
+
+    'SUGGESTION' lets the user enter values not found in search candidates.
+    WARNING disabling this flag causes the search callback to run on redraw,
+    so only disable this flag if it's not likely to cause performance issues.
+        :type search_options: set | None
+    """
+
+    ...

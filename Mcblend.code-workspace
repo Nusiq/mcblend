@@ -1,0 +1,24 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "mcblend"
+		},
+		{
+			"path": "fake_bpy_modules"
+		}
+	],
+	"extensions": {
+		"recommendations": [
+			"JacquesLucke.blender-development",
+			"ms-python.python",
+			"ms-python.vscode-pylance"
+		]
+	},
+	"settings": {
+		// PyLance Configuration
+		"python.analysis.typeCheckingMode": "basic"
+	}
+}

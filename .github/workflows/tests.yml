@@ -36,16 +36,16 @@ jobs:
     - name: Pull lfs data, if not cached
       run: git lfs pull
 
-    # Python 3.10 for mypy testing
-    - name: Set up Python 3.10
+    # Python 3.11 for mypy testing
+    - name: Set up Python 3.11
       uses: actions/setup-python@v4
       with:
-        python-version: '3.10'
+        python-version: '3.11'
 
 
     - name: Install dependencies
       run: |
-        sudo snap install blender --channel=3.3lts/stable --classic
+        sudo snap install blender --channel=4.2lts/stable --classic
         cd $GITHUB_WORKSPACE
         pip install pyright pytest numpy ./fake_bpy_modules
     - name: Build and install the addon

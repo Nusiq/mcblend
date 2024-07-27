@@ -1,5 +1,6 @@
-import sys
 import typing
+import collections.abc
 from . import progress_report
 
-GenericType = typing.TypeVar("GenericType")
+GenericType1 = typing.TypeVar("GenericType1")
+GenericType2 = typing.TypeVar("GenericType2")

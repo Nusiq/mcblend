@@ -202,7 +202,10 @@ class BoneExport:
                     continue
                 self.cubes.append(cube)
             elif cubeprop.mesh_type is MeshType.POLY_MESH:
-                cubeprop.obj_data.calc_normals_split()
+                # TODO -verify this code:
+                # Removed for Blender 4.1. May cause issues.
+                # https://developer.blender.org/docs/release_notes/4.1/python_api/#breaking-changes
+                # cubeprop.obj_data.calc_normals_split()
                 polygons = cubeprop.obj_data.polygons  # loop ids and vertices
                 vertices = cubeprop.obj_data.vertices  # crds
                 loops = cubeprop.obj_data.loops  # normals

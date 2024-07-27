@@ -908,6 +908,8 @@ class MCBLEND_PT_BonePanel(Panel):
         obj_data = context.object.data
         if not isinstance(obj_data, Armature):
             return False
+        if obj_data.bones.active is None:
+            return False
         try:
             pose_bone = context.object.pose.bones[
                 obj_data.bones.active.name]
@@ -920,6 +922,8 @@ class MCBLEND_PT_BonePanel(Panel):
             return
         obj_data = context.object.data
         if not isinstance(obj_data, Armature):
+            return
+        if obj_data.bones.active is None:
             return
         try:
             pose_bone = context.object.pose.bones[obj_data.bones.active.name]

@@ -2,12 +2,10 @@
 '''
 Extra types used only in the PYI files.
 '''
-from typing import Any, Iterator, Literal, TypeVar, Generic, Sized, Optional
+from typing import Any, Iterator, TypeVar, Generic, Sized
 from bpy.types import (
-    Object, Mesh, Image, Material, Bone, EditBone, MeshUVLoopLayer, PoseBone,
-    MeshUVLoop, MeshVertex, MeshEdge, MeshPolygon, TimelineMarker,
-    Keyframe, NlaTrack, NlaStrip, Node, NodeSocket, NodeLink, NodeTree,
-    NodeSocketInterface)
+    Mesh, Image, Material, Bone, PoseBone,
+    MeshUVLoop, MeshEdge, MeshPolygon)
 
 T = TypeVar("T")
 

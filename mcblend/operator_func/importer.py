@@ -1443,6 +1443,11 @@ class ImportGeometry:
                 # break it because bound_box is not getting updated properly
                 # before the end of running of the opperator.
                 get_mcblend(cube_obj).mirror = cube.mirror
+
+                # This should never happen, primitive_cube_add should always
+                # add UV layer to the object
+                if cube_obj.data.uv_layers.active is None:
+                    raise ImporterException('No UV layer found in the cube!')
                 _set_uv(
                     self.uv_converter,
                     CubePolygons.build(cube_obj, cube.mirror),
@@ -1506,14 +1511,18 @@ class ImportGeometry:
                         MeshType.POLY_MESH.value)
 
                     # 4. Set mesh normals and UVs
-                    mesh.create_normals_split()
-                    mesh.use_auto_smooth = True
+                    # TODO -verify this code:
+                    # Removed for Blender 4.1. May cause issues.
+                    # https://developer.blender.org/docs/release_notes/4.1/python_api/#breaking-changes
+                    # mesh.create_normals_split()
+                    # mesh.use_auto_smooth = True
                     mesh.normals_split_custom_set(
                         blender_normals)  # type: ignore
 
-                    if mesh.uv_layers.active is None:  # pyright: ignore[reportUnnecessaryComparison]
-                        mesh.uv_layers.new()
-                    uv_layer = mesh.uv_layers.active.data
+                    if mesh.uv_layers.active is None:
+                        uv_layer = mesh.uv_layers.new().data
+                    else:
+                        uv_layer = mesh.uv_layers.active.data
                     for i, uv in enumerate(blender_uvs):
                         uv_layer[i].uv = cast(list[float],uv)
                 else:

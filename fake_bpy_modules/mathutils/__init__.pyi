@@ -1,875 +1,1048 @@
-import sys
+"""
+This module provides access to math operations.
+
+[NOTE]
+Classes, methods and attributes that accept vectors also accept other numeric sequences,
+such as tuples, lists.
+
+The mathutils module provides the following classes:
+
+* Color,
+* Euler,
+* Matrix,
+* Quaternion,
+* Vector,
+
+mathutils.geometry.rst
+mathutils.bvhtree.rst
+mathutils.kdtree.rst
+mathutils.interpolate.rst
+mathutils.noise.rst
+
+:maxdepth: 1
+:caption: Submodules
+
+```../examples/mathutils.py```
+
+"""
+
 import typing
+import collections.abc
+from . import bvhtree
 from . import geometry
 from . import interpolate
-from . import noise
 from . import kdtree
-from . import bvhtree
+from . import noise
 
-GenericType = typing.TypeVar("GenericType")
-
+GenericType1 = typing.TypeVar("GenericType1")
+GenericType2 = typing.TypeVar("GenericType2")
 
 class Color:
-    ''' This object gives access to Colors in Blender. Most colors returned by Blender APIs are in scene linear color space, as defined by the OpenColorIO configuration. The notable exception is user interface theming colors, which are in sRGB color space. :arg rgb: (r, g, b) color values :type rgb: 3d vector
-    '''
+    """This object gives access to Colors in Blender.Most colors returned by Blender APIs are in scene linear color space, as defined by    the OpenColorIO configuration. The notable exception is user interface theming colors,    which are in sRGB color space."""
 
-    b: float = None
-    ''' Blue color channel.
-
-    :type: float
-    '''
-
-    g: float = None
-    ''' Green color channel.
+    b: float
+    """ Blue color channel.
 
     :type: float
-    '''
+    """
 
-    h: float = None
-    ''' HSV Hue component in [0, 1].
+    g: float
+    """ Green color channel.
 
     :type: float
-    '''
+    """
 
-    hsv: typing.Union[typing.Sequence[float], 'Vector'] = None
-    ''' HSV Values in [0, 1].
+    h: float
+    """ HSV Hue component in [0, 1].
 
-    :type: typing.Union[typing.Sequence[float], 'Vector']
-    '''
+    :type: float
+    """
 
-    is_frozen: bool = None
-    ''' True when this object has been frozen (read-only).
+    hsv: Vector | collections.abc.Sequence[float]
+    """ HSV Values in [0, 1].
+
+    :type: Vector | collections.abc.Sequence[float]
+    """
+
+    is_frozen: bool
+    """ True when this object has been frozen (read-only).
 
     :type: bool
-    '''
+    """
 
-    is_valid: bool = None
-    ''' True when the owner of this data is valid.
-
-    :type: bool
-    '''
-
-    is_wrapped: bool = None
-    ''' True when this object wraps external data (read-only).
+    is_valid: bool
+    """ True when the owner of this data is valid.
 
     :type: bool
-    '''
+    """
 
-    owner = None
-    ''' The item this is wrapping or None (read-only).'''
+    is_wrapped: bool
+    """ True when this object wraps external data (read-only).
 
-    r: float = None
-    ''' Red color channel.
+    :type: bool
+    """
 
-    :type: float
-    '''
+    owner: typing.Any
+    """ The item this is wrapping or None  (read-only)."""
 
-    s: float = None
-    ''' HSV Saturation component in [0, 1].
-
-    :type: float
-    '''
-
-    v: float = None
-    ''' HSV Value component in [0, 1].
+    r: float
+    """ Red color channel.
 
     :type: float
-    '''
+    """
 
-    @staticmethod
-    def copy() -> 'Color':
-        ''' Returns a copy of this color.
+    s: float
+    """ HSV Saturation component in [0, 1].
 
-        :rtype: 'Color'
+    :type: float
+    """
+
+    v: float
+    """ HSV Value component in [0, 1].
+
+    :type: float
+    """
+
+    def copy(self) -> Color:
+        """Returns a copy of this color.
+
         :return: A copy of the color.
-        '''
-        pass
+        :rtype: Color
+        """
+        ...
 
-    @staticmethod
-    def freeze() -> 'Color':
-        ''' Make this object immutable. After this the object can be hashed, used in dictionaries & sets.
+    def freeze(self) -> Color:
+        """Make this object immutable.After this the object can be hashed, used in dictionaries & sets.
 
-        :rtype: 'Color'
         :return: An instance of this object.
-        '''
-        pass
+        :rtype: Color
+        """
+        ...
 
-    @staticmethod
-    def from_aces_to_scene_linear() -> 'Color':
-        ''' Convert from ACES2065-1 linear to scene linear color space.
+    def from_aces_to_scene_linear(self) -> Color:
+        """Convert from ACES2065-1 linear to scene linear color space.
 
-        :rtype: 'Color'
         :return: A color in scene linear color space.
-        '''
-        pass
+        :rtype: Color
+        """
+        ...
 
-    @staticmethod
-    def from_rec709_linear_to_scene_linear() -> 'Color':
-        ''' Convert from Rec.709 linear color space to scene linear color space.
+    def from_rec709_linear_to_scene_linear(self) -> Color:
+        """Convert from Rec.709 linear color space to scene linear color space.
 
-        :rtype: 'Color'
         :return: A color in scene linear color space.
-        '''
-        pass
+        :rtype: Color
+        """
+        ...
 
-    @staticmethod
-    def from_scene_linear_to_aces() -> 'Color':
-        ''' Convert from scene linear to ACES2065-1 linear color space.
+    def from_scene_linear_to_aces(self) -> Color:
+        """Convert from scene linear to ACES2065-1 linear color space.
 
-        :rtype: 'Color'
         :return: A color in ACES2065-1 linear color space.
-        '''
-        pass
+        :rtype: Color
+        """
+        ...
 
-    @staticmethod
-    def from_scene_linear_to_rec709_linear() -> 'Color':
-        ''' Convert from scene linear to Rec.709 linear color space.
+    def from_scene_linear_to_rec709_linear(self) -> Color:
+        """Convert from scene linear to Rec.709 linear color space.
 
-        :rtype: 'Color'
         :return: A color in Rec.709 linear color space.
-        '''
-        pass
+        :rtype: Color
+        """
+        ...
 
-    @staticmethod
-    def from_scene_linear_to_srgb() -> 'Color':
-        ''' Convert from scene linear to sRGB color space.
+    def from_scene_linear_to_srgb(self) -> Color:
+        """Convert from scene linear to sRGB color space.
 
-        :rtype: 'Color'
         :return: A color in sRGB color space.
-        '''
-        pass
+        :rtype: Color
+        """
+        ...
 
-    @staticmethod
-    def from_scene_linear_to_xyz_d65() -> 'Color':
-        ''' Convert from scene linear to CIE XYZ (Illuminant D65) color space.
+    def from_scene_linear_to_xyz_d65(self) -> Color:
+        """Convert from scene linear to CIE XYZ (Illuminant D65) color space.
 
-        :rtype: 'Color'
         :return: A color in XYZ color space.
-        '''
-        pass
+        :rtype: Color
+        """
+        ...
 
-    @staticmethod
-    def from_srgb_to_scene_linear() -> 'Color':
-        ''' Convert from sRGB to scene linear color space.
+    def from_srgb_to_scene_linear(self) -> Color:
+        """Convert from sRGB to scene linear color space.
 
-        :rtype: 'Color'
         :return: A color in scene linear color space.
-        '''
-        pass
+        :rtype: Color
+        """
+        ...
 
-    @staticmethod
-    def from_xyz_d65_to_scene_linear() -> 'Color':
-        ''' Convert from CIE XYZ (Illuminant D65) to scene linear color space.
+    def from_xyz_d65_to_scene_linear(self) -> Color:
+        """Convert from CIE XYZ (Illuminant D65) to scene linear color space.
 
-        :rtype: 'Color'
         :return: A color in scene linear color space.
-        '''
-        pass
+        :rtype: Color
+        """
+        ...
 
-    def __init__(self, rgb=(0.0, 0.0, 0.0)) -> typing.Any:
-        ''' 
+    def __init__(self, rgb=(0.0, 0.0, 0.0)):
+        """
 
-        :rtype: typing.Any
-        '''
-        pass
+        :param rgb:
+        """
+        ...
 
-    def __add__(self, other: typing.Union[typing.Sequence[float], 'Color']
-                ) -> 'Color':
-        ''' 
+    def __get__(self, instance, owner) -> Color:
+        """
 
-        :param other: 
-        :type other: typing.Union[typing.Sequence[float], 'Color']
-        :rtype: 'Color'
-        '''
-        pass
+        :param instance:
+        :param owner:
+        :return:
+        :rtype: Color
+        """
+        ...
 
-    def __sub__(self, other: typing.Union[typing.Sequence[float], 'Color']
-                ) -> 'Color':
-        ''' 
+    def __set__(self, instance, value: Color | collections.abc.Sequence[float]):
+        """
 
-        :param other: 
-        :type other: typing.Union[typing.Sequence[float], 'Color']
-        :rtype: 'Color'
-        '''
-        pass
+        :param instance:
+        :param value:
+        :type value: Color | collections.abc.Sequence[float]
+        """
+        ...
 
-    def __mul__(self, other: typing.Union[int, float]) -> 'Color':
-        ''' 
+    def __add__(self, other: Color | collections.abc.Sequence[float]) -> Color:
+        """
 
-        :param other: 
-        :type other: typing.Union[int, float]
-        :rtype: 'Color'
-        '''
-        pass
+        :param other:
+        :type other: Color | collections.abc.Sequence[float]
+        :return:
+        :rtype: Color
+        """
+        ...
 
-    def __truediv__(self, other: typing.Union[int, float]) -> 'Color':
-        ''' 
+    def __sub__(self, other: Color | collections.abc.Sequence[float]) -> Color:
+        """
 
-        :param other: 
-        :type other: typing.Union[int, float]
-        :rtype: 'Color'
-        '''
-        pass
+        :param other:
+        :type other: Color | collections.abc.Sequence[float]
+        :return:
+        :rtype: Color
+        """
+        ...
 
-    def __radd__(self, other: typing.Union[typing.Sequence[float], 'Color']
-                 ) -> 'Color':
-        ''' 
+    def __mul__(self, other: float | int) -> Color:
+        """
 
-        :param other: 
-        :type other: typing.Union[typing.Sequence[float], 'Color']
-        :rtype: 'Color'
-        '''
-        pass
+        :param other:
+        :type other: float | int
+        :return:
+        :rtype: Color
+        """
+        ...
 
-    def __rsub__(self, other: typing.Union[typing.Sequence[float], 'Color']
-                 ) -> 'Color':
-        ''' 
+    def __truediv__(self, other: float | int) -> Color:
+        """
 
-        :param other: 
-        :type other: typing.Union[typing.Sequence[float], 'Color']
-        :rtype: 'Color'
-        '''
-        pass
+        :param other:
+        :type other: float | int
+        :return:
+        :rtype: Color
+        """
+        ...
 
-    def __rmul__(self, other: typing.Union[int, float]) -> 'Color':
-        ''' 
+    def __radd__(self, other: Color | collections.abc.Sequence[float]) -> Color:
+        """
 
-        :param other: 
-        :type other: typing.Union[int, float]
-        :rtype: 'Color'
-        '''
-        pass
+        :param other:
+        :type other: Color | collections.abc.Sequence[float]
+        :return:
+        :rtype: Color
+        """
+        ...
 
-    def __rtruediv__(self, other: typing.Union[int, float]) -> 'Color':
-        ''' 
+    def __rsub__(self, other: Color | collections.abc.Sequence[float]) -> Color:
+        """
 
-        :param other: 
-        :type other: typing.Union[int, float]
-        :rtype: 'Color'
-        '''
-        pass
+        :param other:
+        :type other: Color | collections.abc.Sequence[float]
+        :return:
+        :rtype: Color
+        """
+        ...
 
-    def __iadd__(self, other: typing.Union[typing.Sequence[float], 'Color']
-                 ) -> 'Color':
-        ''' 
+    def __rmul__(self, other: float | int) -> Color:
+        """
 
-        :param other: 
-        :type other: typing.Union[typing.Sequence[float], 'Color']
-        :rtype: 'Color'
-        '''
-        pass
+        :param other:
+        :type other: float | int
+        :return:
+        :rtype: Color
+        """
+        ...
 
-    def __isub__(self, other: typing.Union[typing.Sequence[float], 'Color']
-                 ) -> 'Color':
-        ''' 
+    def __rtruediv__(self, other: float | int) -> Color:
+        """
 
-        :param other: 
-        :type other: typing.Union[typing.Sequence[float], 'Color']
-        :rtype: 'Color'
-        '''
-        pass
+        :param other:
+        :type other: float | int
+        :return:
+        :rtype: Color
+        """
+        ...
 
-    def __imul__(self, other: typing.Union[int, float]) -> 'Color':
-        ''' 
+    def __iadd__(self, other: Color | collections.abc.Sequence[float]) -> Color:
+        """
 
-        :param other: 
-        :type other: typing.Union[int, float]
-        :rtype: 'Color'
-        '''
-        pass
+        :param other:
+        :type other: Color | collections.abc.Sequence[float]
+        :return:
+        :rtype: Color
+        """
+        ...
 
-    def __itruediv__(self, other: typing.Union[int, float]) -> 'Color':
-        ''' 
+    def __isub__(self, other: Color | collections.abc.Sequence[float]) -> Color:
+        """
 
-        :param other: 
-        :type other: typing.Union[int, float]
-        :rtype: 'Color'
-        '''
-        pass
+        :param other:
+        :type other: Color | collections.abc.Sequence[float]
+        :return:
+        :rtype: Color
+        """
+        ...
 
+    def __imul__(self, other: float | int) -> Color:
+        """
+
+        :param other:
+        :type other: float | int
+        :return:
+        :rtype: Color
+        """
+        ...
+
+    def __itruediv__(self, other: float | int) -> Color:
+        """
+
+        :param other:
+        :type other: float | int
+        :return:
+        :rtype: Color
+        """
+        ...
+
+    def __getitem__(self, key: int) -> float:
+        """
+
+        :param key:
+        :type key: int
+        :return:
+        :rtype: float
+        """
+        ...
 
 class Euler:
-    ''' This object gives access to Eulers in Blender. :arg angles: Three angles, in radians. :type angles: 3d vector :arg order: Optional order of the angles, a permutation of ``XYZ``. :type order: str
-    '''
+    """This object gives access to Eulers in Blender.`Euler angles <https://en.wikipedia.org/wiki/Euler_angles>`__ on Wikipedia."""
 
-    is_frozen: bool = None
-    ''' True when this object has been frozen (read-only).
-
-    :type: bool
-    '''
-
-    is_valid: bool = None
-    ''' True when the owner of this data is valid.
+    is_frozen: bool
+    """ True when this object has been frozen (read-only).
 
     :type: bool
-    '''
+    """
 
-    is_wrapped: bool = None
-    ''' True when this object wraps external data (read-only).
+    is_valid: bool
+    """ True when the owner of this data is valid.
 
     :type: bool
-    '''
+    """
 
-    order: str = None
-    ''' Euler rotation order.
+    is_wrapped: bool
+    """ True when this object wraps external data (read-only).
 
-    :type: str
-    '''
+    :type: bool
+    """
 
-    owner = None
-    ''' The item this is wrapping or None (read-only).'''
+    order: typing.Any
+    """ Euler rotation order."""
 
-    x: float = None
-    ''' Euler axis angle in radians.
+    owner: typing.Any
+    """ The item this is wrapping or None  (read-only)."""
 
-    :type: float
-    '''
-
-    y: float = None
-    ''' Euler axis angle in radians.
+    x: float
+    """ Euler axis angle in radians.
 
     :type: float
-    '''
+    """
 
-    z: float = None
-    ''' Euler axis angle in radians.
+    y: float
+    """ Euler axis angle in radians.
 
     :type: float
-    '''
+    """
 
-    @staticmethod
-    def copy() -> 'Euler':
-        ''' Returns a copy of this euler.
+    z: float
+    """ Euler axis angle in radians.
 
-        :rtype: 'Euler'
+    :type: float
+    """
+
+    def copy(self) -> Euler:
+        """Returns a copy of this euler.
+
         :return: A copy of the euler.
-        '''
-        pass
+        :rtype: Euler
+        """
+        ...
 
-    @staticmethod
-    def freeze() -> 'Euler':
-        ''' Make this object immutable. After this the object can be hashed, used in dictionaries & sets.
+    def freeze(self) -> Euler:
+        """Make this object immutable.After this the object can be hashed, used in dictionaries & sets.
 
-        :rtype: 'Euler'
         :return: An instance of this object.
-        '''
-        pass
+        :rtype: Euler
+        """
+        ...
 
     def make_compatible(self, other):
-        ''' Make this euler compatible with another, so interpolating between them works as intended.
+        """Make this euler compatible with another,
+        so interpolating between them works as intended.
 
-        '''
-        pass
+                :param other:
+        """
+        ...
 
-    def rotate(self,
-               other: typing.Union[typing.Sequence[float], 'Euler', typing.
-                                   Sequence[float], 'Quaternion', typing.
-                                   Sequence[float], 'Matrix']):
-        ''' Rotates the euler by another mathutils value.
+    def rotate(
+        self,
+        other: Euler
+        | Matrix
+        | Quaternion
+        | collections.abc.Sequence[collections.abc.Sequence[float]]
+        | collections.abc.Sequence[float],
+    ):
+        """Rotates the euler by another mathutils value.
 
         :param other: rotation component of mathutils value
-        :type other: typing.Union[typing.Sequence[float], 'Euler', typing.Sequence[float], 'Quaternion', typing.Sequence[float], 'Matrix']
-        '''
-        pass
+        :type other: Euler | Matrix | Quaternion | collections.abc.Sequence[collections.abc.Sequence[float]] | collections.abc.Sequence[float]
+        """
+        ...
 
     def rotate_axis(self, axis: str, angle: float):
-        ''' Rotates the euler a certain amount and returning a unique euler rotation (no 720 degree pitches).
+        """Rotates the euler a certain amount and returning a unique euler rotation
+        (no 720 degree pitches).
 
-        :param axis: single character in ['X, 'Y', 'Z'].
-        :type axis: str
-        :param angle: angle in radians.
-        :type angle: float
-        '''
-        pass
+                :param axis: single character in ['X, 'Y', 'Z'].
+                :type axis: str
+                :param angle: angle in radians.
+                :type angle: float
+        """
+        ...
 
-    def to_matrix(self) -> 'Matrix':
-        ''' Return a matrix representation of the euler.
+    def to_matrix(self) -> Matrix:
+        """Return a matrix representation of the euler.
 
-        :rtype: 'Matrix'
         :return: A 3x3 rotation matrix representation of the euler.
-        '''
-        pass
+        :rtype: Matrix
+        """
+        ...
 
-    def to_quaternion(self) -> 'Quaternion':
-        ''' Return a quaternion representation of the euler.
+    def to_quaternion(self) -> Quaternion:
+        """Return a quaternion representation of the euler.
 
-        :rtype: 'Quaternion'
         :return: Quaternion representation of the euler.
-        '''
-        pass
+        :rtype: Quaternion
+        """
+        ...
 
     def zero(self):
-        ''' Set all values to zero.
+        """Set all values to zero."""
+        ...
 
-        '''
-        pass
+    def __init__(self, angles=(0.0, 0.0, 0.0), order="XYZ"):
+        """
 
-    def __init__(self, angles=(0.0, 0.0, 0.0), order='XYZ') -> typing.Any:
-        ''' 
+        :param angles:
+        :param order:
+        """
+        ...
 
-        :rtype: typing.Any
-        '''
-        pass
+    def __get__(self, instance, owner) -> Euler:
+        """
 
+        :param instance:
+        :param owner:
+        :return:
+        :rtype: Euler
+        """
+        ...
+
+    def __set__(self, instance, value: Euler | collections.abc.Sequence[float]):
+        """
+
+        :param instance:
+        :param value:
+        :type value: Euler | collections.abc.Sequence[float]
+        """
+        ...
+
+    def __getitem__(self, key: int) -> float:
+        """
+
+        :param key:
+        :type key: int
+        :return:
+        :rtype: float
+        """
+        ...
 
 class Matrix:
-    ''' This object gives access to Matrices in Blender, supporting square and rectangular matrices from 2x2 up to 4x4. :arg rows: Sequence of rows. When omitted, a 4x4 identity matrix is constructed. :type rows: 2d number sequence
-    '''
+    """This object gives access to Matrices in Blender, supporting square and rectangular
+    matrices from 2x2 up to 4x4.
+    """
 
-    col: 'Matrix' = None
-    ''' Access the matrix by columns, 3x3 and 4x4 only, (read-only).
+    col: typing.Any
+    """ Access the matrix by columns, 3x3 and 4x4 only, (read-only)."""
 
-    :type: 'Matrix'
-    '''
-
-    is_frozen: bool = None
-    ''' True when this object has been frozen (read-only).
+    is_frozen: bool
+    """ True when this object has been frozen (read-only).
 
     :type: bool
-    '''
+    """
 
-    is_identity: bool = None
-    ''' True if this is an identity matrix (read-only).
-
-    :type: bool
-    '''
-
-    is_negative: bool = None
-    ''' True if this matrix results in a negative scale, 3x3 and 4x4 only, (read-only).
+    is_identity: bool
+    """ True if this is an identity matrix (read-only).
 
     :type: bool
-    '''
+    """
 
-    is_orthogonal: bool = None
-    ''' True if this matrix is orthogonal, 3x3 and 4x4 only, (read-only).
-
-    :type: bool
-    '''
-
-    is_orthogonal_axis_vectors: bool = None
-    ''' True if this matrix has got orthogonal axis vectors, 3x3 and 4x4 only, (read-only).
+    is_negative: bool
+    """ True if this matrix results in a negative scale, 3x3 and 4x4 only, (read-only).
 
     :type: bool
-    '''
+    """
 
-    is_valid: bool = None
-    ''' True when the owner of this data is valid.
-
-    :type: bool
-    '''
-
-    is_wrapped: bool = None
-    ''' True when this object wraps external data (read-only).
+    is_orthogonal: bool
+    """ True if this matrix is orthogonal, 3x3 and 4x4 only, (read-only).
 
     :type: bool
-    '''
+    """
 
-    median_scale: float = None
-    ''' The average scale applied to each axis (read-only).
+    is_orthogonal_axis_vectors: bool
+    """ True if this matrix has got orthogonal axis vectors, 3x3 and 4x4 only, (read-only).
+
+    :type: bool
+    """
+
+    is_valid: bool
+    """ True when the owner of this data is valid.
+
+    :type: bool
+    """
+
+    is_wrapped: bool
+    """ True when this object wraps external data (read-only).
+
+    :type: bool
+    """
+
+    median_scale: float
+    """ The average scale applied to each axis (read-only).
 
     :type: float
-    '''
+    """
 
-    owner = None
-    ''' The item this is wrapping or None (read-only).'''
+    owner: typing.Any
+    """ The item this is wrapping or None  (read-only)."""
 
-    row: 'Matrix' = None
-    ''' Access the matrix by rows (default), (read-only).
+    row: typing.Any
+    """ Access the matrix by rows (default), (read-only)."""
 
-    :type: 'Matrix'
-    '''
+    translation: Vector
+    """ The translation component of the matrix.
 
-    translation: 'Vector' = None
-    ''' The translation component of the matrix.
-
-    :type: 'Vector'
-    '''
+    :type: Vector
+    """
 
     @classmethod
-    def Diagonal(cls, vector: typing.Union[typing.Sequence[float], 'Vector']
-                 ) -> 'Matrix':
-        ''' Create a diagonal (scaling) matrix using the values from the vector.
+    def Diagonal(cls, vector: Vector | collections.abc.Sequence[float]) -> Matrix:
+        """Create a diagonal (scaling) matrix using the values from the vector.
 
         :param vector: The vector of values for the diagonal.
-        :type vector: typing.Union[typing.Sequence[float], 'Vector']
-        :rtype: 'Matrix'
+        :type vector: Vector | collections.abc.Sequence[float]
         :return: A diagonal matrix.
-        '''
-        pass
+        :rtype: Matrix
+        """
+        ...
 
     @classmethod
-    def Identity(cls, size: int) -> 'Matrix':
-        ''' Create an identity matrix.
+    def Identity(cls, size: int) -> Matrix:
+        """Create an identity matrix.
 
         :param size: The size of the identity matrix to construct [2, 4].
         :type size: int
-        :rtype: 'Matrix'
         :return: A new identity matrix.
-        '''
-        pass
+        :rtype: Matrix
+        """
+        ...
 
     @classmethod
     def LocRotScale(
-            cls, location: typing.Optional['Vector'], rotation: typing.
-            Optional[typing.Union[typing.Sequence[float], 'Quaternion', typing.
-                                  Sequence[float], 'Euler']],
-            scale: typing.Optional['Vector']) -> 'Matrix':
-        ''' Create a matrix combining translation, rotation and scale, acting as the inverse of the decompose() method. Any of the inputs may be replaced with None if not needed.
+        cls,
+        location: Vector | collections.abc.Sequence[float] | None,
+        rotation: Euler | Quaternion | collections.abc.Sequence[float] | None,
+        scale: Vector | collections.abc.Sequence[float] | None,
+    ) -> Matrix:
+        """Create a matrix combining translation, rotation and scale,
+        acting as the inverse of the decompose() method.Any of the inputs may be replaced with None if not needed.
 
-        :param location: The translation component.
-        :type location: typing.Optional['Vector']
-        :param rotation: The rotation component.
-        :type rotation: typing.Optional[typing.Union[typing.Sequence[float], 'Quaternion', typing.Sequence[float], 'Euler']]
-        :param scale: The scale component.
-        :type scale: typing.Optional['Vector']
-        :rtype: 'Matrix'
-        :return: Combined transformation matrix.
-        '''
-        pass
+                :param location: The translation component.
+                :type location: Vector | collections.abc.Sequence[float] | None
+                :param rotation: The rotation component.
+                :type rotation: Euler | Quaternion | collections.abc.Sequence[float] | None
+                :param scale: The scale component.
+                :type scale: Vector | collections.abc.Sequence[float] | None
+                :return: Combined transformation matrix.
+                :rtype: Matrix
+        """
+        ...
 
     @classmethod
     def OrthoProjection(
-            cls, axis: typing.Union[str, typing.Sequence[float], 'Vector'],
-            size: int) -> 'Matrix':
-        ''' Create a matrix to represent an orthographic projection.
+        cls, axis: Vector | collections.abc.Sequence[float] | str, size: int
+    ) -> Matrix:
+        """Create a matrix to represent an orthographic projection.
 
-        :param axis: ['X', 'Y', 'XY', 'XZ', 'YZ'], where a single axis is for a 2D matrix. Or a vector for an arbitrary axis
-        :type axis: typing.Union[str, typing.Sequence[float], 'Vector']
-        :param size: The size of the projection matrix to construct [2, 4].
-        :type size: int
-        :rtype: 'Matrix'
-        :return: A new projection matrix.
-        '''
-        pass
+                :param axis: Can be any of the following: ['X', 'Y', 'XY', 'XZ', 'YZ'],
+        where a single axis is for a 2D matrix.
+        Or a vector for an arbitrary axis
+                :type axis: Vector | collections.abc.Sequence[float] | str
+                :param size: The size of the projection matrix to construct [2, 4].
+                :type size: int
+                :return: A new projection matrix.
+                :rtype: Matrix
+        """
+        ...
 
     @classmethod
-    def Rotation(cls, angle: float, size: int,
-                 axis: typing.Union[str, typing.Sequence[float], 'Vector']
-                 ) -> 'Matrix':
-        ''' Create a matrix representing a rotation.
+    def Rotation(
+        cls,
+        angle: float,
+        size: int,
+        axis: Vector | collections.abc.Sequence[float] | str | None,
+    ) -> Matrix:
+        """Create a matrix representing a rotation.
 
-        :param angle: The angle of rotation desired, in radians.
-        :type angle: float
-        :param size: The size of the rotation matrix to construct [2, 4].
-        :type size: int
-        :param axis: a string in ['X', 'Y', 'Z'] or a 3D Vector Object (optional when size is 2).
-        :type axis: typing.Union[str, typing.Sequence[float], 'Vector']
-        :rtype: 'Matrix'
-        :return: A new rotation matrix.
-        '''
-        pass
+                :param angle: The angle of rotation desired, in radians.
+                :type angle: float
+                :param size: The size of the rotation matrix to construct [2, 4].
+                :type size: int
+                :param axis: a string in ['X', 'Y', 'Z'] or a 3D Vector Object
+        (optional when size is 2).
+                :type axis: Vector | collections.abc.Sequence[float] | str | None
+                :return: A new rotation matrix.
+                :rtype: Matrix
+        """
+        ...
 
     @classmethod
     def Scale(
-            cls, factor: float, size: int,
-            axis: typing.Union[typing.Sequence[float], 'Vector']) -> 'Matrix':
-        ''' Create a matrix representing a scaling.
+        cls,
+        factor: float,
+        size: int,
+        axis: Vector | collections.abc.Sequence[float] | None,
+    ) -> Matrix:
+        """Create a matrix representing a scaling.
 
         :param factor: The factor of scaling to apply.
         :type factor: float
         :param size: The size of the scale matrix to construct [2, 4].
         :type size: int
         :param axis: Direction to influence scale. (optional).
-        :type axis: typing.Union[typing.Sequence[float], 'Vector']
-        :rtype: 'Matrix'
+        :type axis: Vector | collections.abc.Sequence[float] | None
         :return: A new scale matrix.
-        '''
-        pass
+        :rtype: Matrix
+        """
+        ...
 
     @classmethod
-    def Shear(cls, plane: str, size: int, factor: float) -> 'Matrix':
-        ''' Create a matrix to represent an shear transformation.
+    def Shear(cls, plane: str, size: int, factor: float) -> Matrix:
+        """Create a matrix to represent an shear transformation.
 
-        :param plane: ['X', 'Y', 'XY', 'XZ', 'YZ'], where a single axis is for a 2D matrix only.
-        :type plane: str
-        :param size: The size of the shear matrix to construct [2, 4].
-        :type size: int
-        :param factor: The factor of shear to apply. For a 3 or 4 *size* matrix pass a pair of floats corresponding with the *plane* axis.
-        :type factor: float
-        :rtype: 'Matrix'
-        :return: A new shear matrix.
-        '''
-        pass
+                :param plane: Can be any of the following: ['X', 'Y', 'XY', 'XZ', 'YZ'],
+        where a single axis is for a 2D matrix only.
+                :type plane: str
+                :param size: The size of the shear matrix to construct [2, 4].
+                :type size: int
+                :param factor: The factor of shear to apply. For a 3 or 4 size matrix
+        pass a pair of floats corresponding with the plane axis.
+                :type factor: float
+                :return: A new shear matrix.
+                :rtype: Matrix
+        """
+        ...
 
     @classmethod
-    def Translation(cls, vector: typing.Union[typing.Sequence[float], 'Vector']
-                    ) -> 'Matrix':
-        ''' Create a matrix representing a translation.
+    def Translation(cls, vector: Vector | collections.abc.Sequence[float]) -> Matrix:
+        """Create a matrix representing a translation.
 
         :param vector: The translation vector.
-        :type vector: typing.Union[typing.Sequence[float], 'Vector']
-        :rtype: 'Matrix'
+        :type vector: Vector | collections.abc.Sequence[float]
         :return: An identity matrix with a translation.
-        '''
-        pass
+        :rtype: Matrix
+        """
+        ...
 
     def adjugate(self):
-        ''' Set the matrix to its adjugate. :raises ValueError: if the matrix cannot be adjugate.
+        """Set the matrix to its adjugate.`Adjugate matrix <https://en.wikipedia.org/wiki/Adjugate_matrix>`__ on Wikipedia."""
+        ...
 
-        '''
-        pass
+    def adjugated(self) -> Matrix:
+        """Return an adjugated copy of the matrix.
 
-    def adjugated(self) -> 'Matrix':
-        ''' Return an adjugated copy of the matrix. :raises ValueError: if the matrix cannot be adjugated
-
-        :rtype: 'Matrix'
         :return: the adjugated matrix.
-        '''
-        pass
+        :rtype: Matrix
+        """
+        ...
 
-    def copy(self) -> 'Matrix':
-        ''' Returns a copy of this matrix.
+    def copy(self) -> Matrix:
+        """Returns a copy of this matrix.
 
-        :rtype: 'Matrix'
         :return: an instance of itself
-        '''
-        pass
+        :rtype: Matrix
+        """
+        ...
 
-    def decompose(self) -> tuple['Vector', 'Quaternion', 'Vector']:  # Mcblend
-        ''' Return the translation, rotation, and scale components of this matrix.
+    def decompose(self) -> tuple[Vector, Quaternion, Vector]:
+        """Return the translation, rotation, and scale components of this matrix.
 
-        :rtype: 'Quaternion'
         :return: tuple of translation, rotation, and scale
-        '''
-        pass
+        :rtype: tuple[Vector, Quaternion, Vector]
+        """
+        ...
 
     def determinant(self) -> float:
-        ''' Return the determinant of a matrix.
+        """Return the determinant of a matrix.`Determinant <https://en.wikipedia.org/wiki/Determinant>`__ on Wikipedia.
 
-        :rtype: float
         :return: Return the determinant of a matrix.
-        '''
-        pass
+        :rtype: float
+        """
+        ...
 
-    @staticmethod
-    def freeze() -> 'Matrix':
-        ''' Make this object immutable. After this the object can be hashed, used in dictionaries & sets.
+    def freeze(self) -> Matrix:
+        """Make this object immutable.After this the object can be hashed, used in dictionaries & sets.
 
-        :rtype: 'Matrix'
         :return: An instance of this object.
-        '''
-        pass
+        :rtype: Matrix
+        """
+        ...
 
     def identity(self):
-        ''' Set the matrix to the identity matrix.
-
-        '''
-        pass
+        """Set the matrix to the identity matrix.`Identity matrix <https://en.wikipedia.org/wiki/Identity_matrix>`__ on Wikipedia."""
+        ...
 
     def invert(
-            self,
-            fallback: typing.Union[typing.Sequence[float], 'Matrix'] = None):
-        ''' Set the matrix to its inverse.
+        self,
+        fallback: Matrix
+        | collections.abc.Sequence[collections.abc.Sequence[float]] = None,
+    ):
+        """Set the matrix to its inverse.`Inverse matrix <https://en.wikipedia.org/wiki/Inverse_matrix>`__ on Wikipedia.
 
-        :param fallback: Set the matrix to this value when the inverse cannot be calculated (instead of raising a :exc:`ValueError` exception).
-        :type fallback: typing.Union[typing.Sequence[float], 'Matrix']
-        '''
-        pass
+                :param fallback: Set the matrix to this value when the inverse cannot be calculated
+        (instead of raising a `ValueError` exception).
+                :type fallback: Matrix | collections.abc.Sequence[collections.abc.Sequence[float]]
+        """
+        ...
 
     def invert_safe(self):
-        ''' Set the matrix to its inverse, will never error. If degenerated (e.g. zero scale on an axis), add some epsilon to its diagonal, to get an invertible one. If tweaked matrix is still degenerated, set to the identity matrix instead.
+        """Set the matrix to its inverse, will never error.
+        If degenerated (e.g. zero scale on an axis), add some epsilon to its diagonal, to get an invertible one.
+        If tweaked matrix is still degenerated, set to the identity matrix instead.`Inverse Matrix <https://en.wikipedia.org/wiki/Inverse_matrix>`__ on Wikipedia.
 
-        '''
-        pass
+        """
+        ...
 
-    def inverted(self, fallback: typing.Any = None) -> 'Matrix':
-        ''' Return an inverted copy of the matrix.
+    def inverted(self, fallback: typing.Any = None) -> Matrix:
+        """Return an inverted copy of the matrix.
 
-        :param fallback: return this when the inverse can't be calculated (instead of raising a :exc:`ValueError`).
-        :type fallback: typing.Any
-        :rtype: 'Matrix'
-        :return: the inverted matrix or fallback when given.
-        '''
-        pass
+                :param fallback: return this when the inverse can't be calculated
+        (instead of raising a `ValueError`).
+                :type fallback: typing.Any
+                :return: the inverted matrix or fallback when given.
+                :rtype: Matrix
+        """
+        ...
 
-    def inverted_safe(self) -> 'Matrix':
-        ''' Return an inverted copy of the matrix, will never error. If degenerated (e.g. zero scale on an axis), add some epsilon to its diagonal, to get an invertible one. If tweaked matrix is still degenerated, return the identity matrix instead.
+    def inverted_safe(self) -> Matrix:
+        """Return an inverted copy of the matrix, will never error.
+        If degenerated (e.g. zero scale on an axis), add some epsilon to its diagonal, to get an invertible one.
+        If tweaked matrix is still degenerated, return the identity matrix instead.
 
-        :rtype: 'Matrix'
-        :return: the inverted matrix.
-        '''
-        pass
+                :return: the inverted matrix.
+                :rtype: Matrix
+        """
+        ...
 
-    @staticmethod
-    def lerp(other: typing.Union[typing.Sequence[float], 'Matrix'],
-             factor: float) -> 'Matrix':
-        ''' Returns the interpolation of two matrices. Uses polar decomposition, see "Matrix Animation and Polar Decomposition", Shoemake and Duff, 1992.
+    def lerp(
+        self,
+        other: Matrix | collections.abc.Sequence[collections.abc.Sequence[float]],
+        factor: float,
+    ) -> Matrix:
+        """Returns the interpolation of two matrices. Uses polar decomposition, see   "Matrix Animation and Polar Decomposition", Shoemake and Duff, 1992.
 
         :param other: value to interpolate with.
-        :type other: typing.Union[typing.Sequence[float], 'Matrix']
+        :type other: Matrix | collections.abc.Sequence[collections.abc.Sequence[float]]
         :param factor: The interpolation value in [0.0, 1.0].
         :type factor: float
-        :rtype: 'Matrix'
         :return: The interpolated matrix.
-        '''
-        pass
+        :rtype: Matrix
+        """
+        ...
 
     def normalize(self):
-        ''' Normalize each of the matrix columns.
+        """Normalize each of the matrix columns."""
+        ...
 
-        '''
-        pass
+    def normalized(self) -> Matrix:
+        """Return a column normalized matrix
 
-    def normalized(self) -> 'Matrix':
-        ''' Return a column normalized matrix
-
-        :rtype: 'Matrix'
         :return: a column normalized matrix
-        '''
-        pass
+        :rtype: Matrix
+        """
+        ...
 
     def resize_4x4(self):
-        ''' Resize the matrix to 4x4.
+        """Resize the matrix to 4x4."""
+        ...
 
-        '''
-        pass
-
-    def rotate(self,
-               other: typing.Union[typing.Sequence[float], 'Euler', typing.
-                                   Sequence[float], 'Quaternion', typing.
-                                   Sequence[float], 'Matrix']):
-        ''' Rotates the matrix by another mathutils value.
+    def rotate(
+        self,
+        other: Euler
+        | Matrix
+        | Quaternion
+        | collections.abc.Sequence[collections.abc.Sequence[float]]
+        | collections.abc.Sequence[float],
+    ):
+        """Rotates the matrix by another mathutils value.
 
         :param other: rotation component of mathutils value
-        :type other: typing.Union[typing.Sequence[float], 'Euler', typing.Sequence[float], 'Quaternion', typing.Sequence[float], 'Matrix']
-        '''
-        pass
+        :type other: Euler | Matrix | Quaternion | collections.abc.Sequence[collections.abc.Sequence[float]] | collections.abc.Sequence[float]
+        """
+        ...
 
-    def to_2x2(self) -> 'Matrix':
-        ''' Return a 2x2 copy of this matrix.
+    def to_2x2(self) -> Matrix:
+        """Return a 2x2 copy of this matrix.
 
-        :rtype: 'Matrix'
         :return: a new matrix.
-        '''
-        pass
+        :rtype: Matrix
+        """
+        ...
 
-    def to_3x3(self) -> 'Matrix':
-        ''' Return a 3x3 copy of this matrix.
+    def to_3x3(self) -> Matrix:
+        """Return a 3x3 copy of this matrix.
 
-        :rtype: 'Matrix'
         :return: a new matrix.
-        '''
-        pass
+        :rtype: Matrix
+        """
+        ...
 
-    def to_4x4(self) -> 'Matrix':
-        ''' Return a 4x4 copy of this matrix.
+    def to_4x4(self) -> Matrix:
+        """Return a 4x4 copy of this matrix.
 
-        :rtype: 'Matrix'
         :return: a new matrix.
-        '''
-        pass
+        :rtype: Matrix
+        """
+        ...
 
-    def to_euler(self, order: str=..., euler_compat: 'Euler'=..., /) -> 'Euler':
-        ''' Return an Euler representation of the rotation matrix (3x3 or 4x4 matrix only).
+    # def to_euler(
+    #     self,
+    #     order: str | None,
+    #     euler_compat: Euler | collections.abc.Sequence[float] | None,
+    # ) -> Euler:
+    def to_euler(  # Mcblend
+        self,
+        order: str | None = ...,
+        euler_compat: Euler | collections.abc.Sequence[float] | None = ...,
+    ) -> Euler:
+        """Return an Euler representation of the rotation matrix
+        (3x3 or 4x4 matrix only).
 
-        :param order: Optional rotation order argument in ['XYZ', 'XZY', 'YXZ', 'YZX', 'ZXY', 'ZYX'].
-        :type order: str
-        :param euler_compat: Optional euler argument the new euler will be made compatible with (no axis flipping between them). Useful for converting a series of matrices to animation curves.
-        :type euler_compat: typing.Union[typing.Sequence[float], 'Euler']
-        :rtype: 'Euler'
-        :return: Euler representation of the matrix.
-        '''
-        pass
+                :param order: Optional rotation order argument in
+        ['XYZ', 'XZY', 'YXZ', 'YZX', 'ZXY', 'ZYX'].
+                :type order: str | None
+                :param euler_compat: Optional euler argument the new euler will be made
+        compatible with (no axis flipping between them).
+        Useful for converting a series of matrices to animation curves.
+                :type euler_compat: Euler | collections.abc.Sequence[float] | None
+                :return: Euler representation of the matrix.
+                :rtype: Euler
+        """
+        ...
 
-    def to_quaternion(self) -> 'Quaternion':
-        ''' Return a quaternion representation of the rotation matrix.
+    def to_quaternion(self) -> Quaternion:
+        """Return a quaternion representation of the rotation matrix.
 
-        :rtype: 'Quaternion'
         :return: Quaternion representation of the rotation matrix.
-        '''
-        pass
+        :rtype: Quaternion
+        """
+        ...
 
-    def to_scale(self) -> 'Vector':
-        ''' Return the scale part of a 3x3 or 4x4 matrix.
+    def to_scale(self) -> Vector:
+        """Return the scale part of a 3x3 or 4x4 matrix.
 
-        :rtype: 'Vector'
         :return: Return the scale of a matrix.
-        '''
-        pass
+        :rtype: Vector
+        """
+        ...
 
-    def to_translation(self) -> 'Vector':
-        ''' Return the translation part of a 4 row matrix.
+    def to_translation(self) -> Vector:
+        """Return the translation part of a 4 row matrix.
 
-        :rtype: 'Vector'
         :return: Return the translation of a matrix.
-        '''
-        pass
+        :rtype: Vector
+        """
+        ...
 
     def transpose(self):
-        ''' Set the matrix to its transpose.
+        """Set the matrix to its transpose.`Transpose <https://en.wikipedia.org/wiki/Transpose>`__ on Wikipedia."""
+        ...
 
-        '''
-        pass
+    def transposed(self) -> Matrix:
+        """Return a new, transposed matrix.
 
-    def transposed(self) -> 'Matrix':
-        ''' Return a new, transposed matrix.
-
-        :rtype: 'Matrix'
         :return: a transposed matrix
-        '''
-        pass
+        :rtype: Matrix
+        """
+        ...
 
-    def zero(self) -> 'Matrix':
-        ''' Set all the matrix values to zero.
+    def zero(self):
+        """Set all the matrix values to zero."""
+        ...
 
-        :rtype: 'Matrix'
-        '''
-        pass
+    def __init__(
+        self,
+        rows=(
+            (1.0, 0.0, 0.0, 0.0),
+            (0.0, 1.0, 0.0, 0.0),
+            (0.0, 0.0, 1.0, 0.0),
+            (0.0, 0.0, 0.0, 1.0),
+        ),
+    ):
+        """
 
-    def __init__(self,
-                 rows=((1.0, 0.0, 0.0, 0.0), (0.0, 1.0, 0.0, 0.0),
-                       (0.0, 0.0, 1.0, 0.0), (0.0, 0.0, 0.0,
-                                              1.0))) -> typing.Any:
-        ''' 
+        :param rows:
+        """
+        ...
 
-        :rtype: typing.Any
-        '''
-        pass
+    def __get__(self, instance, owner) -> Matrix:
+        """
 
-    def __getitem__(self, key: int) -> 'Vector':
-        ''' 
+        :param instance:
+        :param owner:
+        :return:
+        :rtype: Matrix
+        """
+        ...
 
-        :param key: 
+    def __set__(
+        self,
+        instance,
+        value: Matrix | collections.abc.Sequence[collections.abc.Sequence[float]],
+    ):
+        """
+
+        :param instance:
+        :param value:
+        :type value: Matrix | collections.abc.Sequence[collections.abc.Sequence[float]]
+        """
+        ...
+
+    def __getitem__(self, key: int) -> Vector:
+        """
+
+        :param key:
         :type key: int
-        :rtype: 'Vector'
-        '''
-        pass
+        :return:
+        :rtype: Vector
+        """
+        ...
 
     def __len__(self) -> int:
-        ''' 
+        """
 
+        :return:
         :rtype: int
-        '''
-        pass
+        """
+        ...
 
-    def __add__(self, other: typing.Union[typing.Sequence[float], 'Matrix']
-                ) -> 'Matrix':
-        ''' 
+    def __add__(
+        self, other: Matrix | collections.abc.Sequence[collections.abc.Sequence[float]]
+    ) -> Matrix:
+        """
 
-        :param other: 
-        :type other: typing.Union[typing.Sequence[float], 'Matrix']
-        :rtype: 'Matrix'
-        '''
-        pass
+        :param other:
+        :type other: Matrix | collections.abc.Sequence[collections.abc.Sequence[float]]
+        :return:
+        :rtype: Matrix
+        """
+        ...
 
-    def __sub__(self, other: typing.Union[typing.Sequence[float], 'Matrix']
-                ) -> 'Matrix':
-        ''' 
+    def __sub__(
+        self, other: Matrix | collections.abc.Sequence[collections.abc.Sequence[float]]
+    ) -> Matrix:
+        """
 
-        :param other: 
-        :type other: typing.Union[typing.Sequence[float], 'Matrix']
-        :rtype: 'Matrix'
-        '''
-        pass
+        :param other:
+        :type other: Matrix | collections.abc.Sequence[collections.abc.Sequence[float]]
+        :return:
+        :rtype: Matrix
+        """
+        ...
 
-    def __mul__(self, other: typing.Union[int, float]) -> 'Matrix':
-        ''' 
+    def __mul__(self, other: float | int) -> Matrix:
+        """
 
-        :param other: 
-        :type other: typing.Union[int, float]
-        :rtype: 'Matrix'
-        '''
-        pass
+        :param other:
+        :type other: float | int
+        :return:
+        :rtype: Matrix
+        """
+        ...
+
+    @typing.overload
+    def __matmul__(
+        self, other: Matrix | collections.abc.Sequence[collections.abc.Sequence[float]]
+    ) -> Matrix:
+        """
+
+        :param other:
+        :type other: Matrix | collections.abc.Sequence[collections.abc.Sequence[float]]
+        :return:
+        :rtype: Matrix
+        """
+        ...
+
+    # @typing.overload
+    # def __matmul__(self, other: Vector | collections.abc.Sequence[float]) -> Vector:
+    #     """
+
+    #     :param other:
+    #     :type other: Vector | collections.abc.Sequence[float]
+    #     :return:
+    #     :rtype: Vector
+    #     """
+    #     ...
+
+    # def __matmul__(
+    #     self,
+    #     other: Matrix
+    #     | Vector
+    #     | collections.abc.Sequence[collections.abc.Sequence[float]]
+    #     | collections.abc.Sequence[float],
+    # ) -> Matrix | Vector:
+    #     """
+
+    #     :param other:
+    #     :type other: Matrix | Vector | collections.abc.Sequence[collections.abc.Sequence[float]] | collections.abc.Sequence[float]
+    #     :return:
+    #     :rtype: Matrix | Vector
+    #     """
+    #     ...
 
     @typing.overload
     def __matmul__(self, other: 'Matrix') -> 'Matrix': ...  # Mcblend
@@ -877,1552 +1050,1563 @@ class Matrix:
     @typing.overload
     def __matmul__(self, other: 'Vector') -> 'Vector': ...  # Mcblend
 
-    def __radd__(self, other: typing.Union[typing.Sequence[float], 'Matrix']
-                 ) -> 'Matrix':
-        ''' 
+    def __radd__(
+        self, other: Matrix | collections.abc.Sequence[collections.abc.Sequence[float]]
+    ) -> Matrix:
+        """
 
-        :param other: 
-        :type other: typing.Union[typing.Sequence[float], 'Matrix']
-        :rtype: 'Matrix'
-        '''
-        pass
+        :param other:
+        :type other: Matrix | collections.abc.Sequence[collections.abc.Sequence[float]]
+        :return:
+        :rtype: Matrix
+        """
+        ...
 
-    def __rsub__(self, other: typing.Union[typing.Sequence[float], 'Matrix']
-                 ) -> 'Matrix':
-        ''' 
+    def __rsub__(
+        self, other: Matrix | collections.abc.Sequence[collections.abc.Sequence[float]]
+    ) -> Matrix:
+        """
 
-        :param other: 
-        :type other: typing.Union[typing.Sequence[float], 'Matrix']
-        :rtype: 'Matrix'
-        '''
-        pass
+        :param other:
+        :type other: Matrix | collections.abc.Sequence[collections.abc.Sequence[float]]
+        :return:
+        :rtype: Matrix
+        """
+        ...
 
-    def __rmul__(self, other: typing.Union[int, float]) -> 'Matrix':
-        ''' 
+    def __rmul__(self, other: float | int) -> Matrix:
+        """
 
-        :param other: 
-        :type other: typing.Union[int, float]
-        :rtype: 'Matrix'
-        '''
-        pass
+        :param other:
+        :type other: float | int
+        :return:
+        :rtype: Matrix
+        """
+        ...
 
-    def __rmatmul__(self, other: typing.Union[typing.Sequence[float], 'Matrix']
-                    ) -> 'Matrix':
-        ''' 
+    def __imul__(self, other: float | int) -> Matrix:
+        """
 
-        :param other: 
-        :type other: typing.Union[typing.Sequence[float], 'Matrix']
-        :rtype: 'Matrix'
-        '''
-        pass
-
-    def __imul__(self, other: typing.Union[int, float]) -> 'Matrix':
-        ''' 
-
-        :param other: 
-        :type other: typing.Union[int, float]
-        :rtype: 'Matrix'
-        '''
-        pass
-
-    def __imatmul__(self, other: typing.Union[typing.Sequence[float], 'Matrix']
-                    ) -> 'Matrix':
-        ''' 
-
-        :param other: 
-        :type other: typing.Union[typing.Sequence[float], 'Matrix']
-        :rtype: 'Matrix'
-        '''
-        pass
-
+        :param other:
+        :type other: float | int
+        :return:
+        :rtype: Matrix
+        """
+        ...
 
 class Quaternion:
-    ''' This object gives access to Quaternions in Blender. :arg seq: size 3 or 4 :type seq: `Vector` :arg angle: rotation angle, in radians :type angle: float The constructor takes arguments in various forms: (), *no args* Create an identity quaternion (*wxyz*) Create a quaternion from a ``(w, x, y, z)`` vector. (*exponential_map*) Create a quaternion from a 3d exponential map vector. .. seealso:: :meth:`to_exponential_map` (*axis, angle*) Create a quaternion representing a rotation of *angle* radians over *axis*. .. seealso:: :meth:`to_axis_angle`
-    '''
+    """This object gives access to Quaternions in Blender.The constructor takes arguments in various forms:"""
 
-    angle: float = None
-    ''' Angle of the quaternion.
+    angle: float
+    """ Angle of the quaternion.
 
     :type: float
-    '''
+    """
 
-    axis: typing.Union[typing.Sequence[float], 'Vector'] = None
-    ''' Quaternion axis as a vector.
+    axis: Vector
+    """ Quaternion axis as a vector.
 
-    :type: typing.Union[typing.Sequence[float], 'Vector']
-    '''
+    :type: Vector
+    """
 
-    is_frozen: bool = None
-    ''' True when this object has been frozen (read-only).
+    is_frozen: bool
+    """ True when this object has been frozen (read-only).
 
     :type: bool
-    '''
+    """
 
-    is_valid: bool = None
-    ''' True when the owner of this data is valid.
-
-    :type: bool
-    '''
-
-    is_wrapped: bool = None
-    ''' True when this object wraps external data (read-only).
+    is_valid: bool
+    """ True when the owner of this data is valid.
 
     :type: bool
-    '''
+    """
 
-    magnitude: float = None
-    ''' Size of the quaternion (read-only).
+    is_wrapped: bool
+    """ True when this object wraps external data (read-only).
 
-    :type: float
-    '''
+    :type: bool
+    """
 
-    owner = None
-    ''' The item this is wrapping or None (read-only).'''
-
-    w: float = None
-    ''' Quaternion axis value.
+    magnitude: float
+    """ Size of the quaternion (read-only).
 
     :type: float
-    '''
+    """
 
-    x: float = None
-    ''' Quaternion axis value.
+    owner: typing.Any
+    """ The item this is wrapping or None  (read-only)."""
 
-    :type: float
-    '''
-
-    y: float = None
-    ''' Quaternion axis value.
+    w: float
+    """ Quaternion axis value.
 
     :type: float
-    '''
+    """
 
-    z: float = None
-    ''' Quaternion axis value.
+    x: float
+    """ Quaternion axis value.
 
     :type: float
-    '''
+    """
 
-    @staticmethod
-    def conjugate():
-        ''' Set the quaternion to its conjugate (negate x, y, z).
+    y: float
+    """ Quaternion axis value.
 
-        '''
-        pass
+    :type: float
+    """
 
-    @staticmethod
-    def conjugated() -> 'Quaternion':
-        ''' Return a new conjugated quaternion.
+    z: float
+    """ Quaternion axis value.
 
-        :rtype: 'Quaternion'
+    :type: float
+    """
+
+    def conjugate(self):
+        """Set the quaternion to its conjugate (negate x, y, z)."""
+        ...
+
+    def conjugated(self) -> Quaternion:
+        """Return a new conjugated quaternion.
+
         :return: a new quaternion.
-        '''
-        pass
+        :rtype: Quaternion
+        """
+        ...
 
-    @staticmethod
-    def copy() -> 'Quaternion':
-        ''' Returns a copy of this quaternion.
+    def copy(self) -> Quaternion:
+        """Returns a copy of this quaternion.
 
-        :rtype: 'Quaternion'
         :return: A copy of the quaternion.
-        '''
-        pass
+        :rtype: Quaternion
+        """
+        ...
 
-    def cross(self, other: typing.Union[typing.Sequence[float], 'Quaternion']
-              ) -> 'Quaternion':
-        ''' Return the cross product of this quaternion and another.
+    def cross(self, other: Quaternion | collections.abc.Sequence[float]) -> Quaternion:
+        """Return the cross product of this quaternion and another.
 
         :param other: The other quaternion to perform the cross product with.
-        :type other: typing.Union[typing.Sequence[float], 'Quaternion']
-        :rtype: 'Quaternion'
+        :type other: Quaternion | collections.abc.Sequence[float]
         :return: The cross product.
-        '''
-        pass
+        :rtype: Quaternion
+        """
+        ...
 
-    def dot(self, other: typing.Union[typing.Sequence[float], 'Quaternion']
-            ) -> float:
-        ''' Return the dot product of this quaternion and another.
+    def dot(self, other: Quaternion | collections.abc.Sequence[float]) -> float:
+        """Return the dot product of this quaternion and another.
 
         :param other: The other quaternion to perform the dot product with.
-        :type other: typing.Union[typing.Sequence[float], 'Quaternion']
-        :rtype: float
+        :type other: Quaternion | collections.abc.Sequence[float]
         :return: The dot product.
-        '''
-        pass
+        :rtype: float
+        """
+        ...
 
-    @staticmethod
-    def freeze() -> 'Quaternion':
-        ''' Make this object immutable. After this the object can be hashed, used in dictionaries & sets.
+    def freeze(self) -> Quaternion:
+        """Make this object immutable.After this the object can be hashed, used in dictionaries & sets.
 
-        :rtype: 'Quaternion'
         :return: An instance of this object.
-        '''
-        pass
+        :rtype: Quaternion
+        """
+        ...
 
-    @staticmethod
-    def identity() -> 'Quaternion':
-        ''' Set the quaternion to an identity quaternion.
+    def identity(self):
+        """Set the quaternion to an identity quaternion."""
+        ...
 
-        :rtype: 'Quaternion'
-        '''
-        pass
+    def invert(self):
+        """Set the quaternion to its inverse."""
+        ...
 
-    @staticmethod
-    def invert():
-        ''' Set the quaternion to its inverse.
+    def inverted(self) -> Quaternion:
+        """Return a new, inverted quaternion.
 
-        '''
-        pass
-
-    @staticmethod
-    def inverted() -> 'Quaternion':
-        ''' Return a new, inverted quaternion.
-
-        :rtype: 'Quaternion'
         :return: the inverted value.
-        '''
-        pass
+        :rtype: Quaternion
+        """
+        ...
 
     def make_compatible(self, other):
-        ''' Make this quaternion compatible with another, so interpolating between them works as intended.
+        """Make this quaternion compatible with another,
+        so interpolating between them works as intended.
 
-        '''
-        pass
+                :param other:
+        """
+        ...
 
-    @staticmethod
-    def negate() -> 'Quaternion':
-        ''' Set the quaternion to its negative.
+    def negate(self):
+        """Set the quaternion to its negative."""
+        ...
 
-        :rtype: 'Quaternion'
-        '''
-        pass
+    def normalize(self):
+        """Normalize the quaternion."""
+        ...
 
-    @staticmethod
-    def normalize():
-        ''' Normalize the quaternion.
+    def normalized(self) -> Quaternion:
+        """Return a new normalized quaternion.
 
-        '''
-        pass
-
-    @staticmethod
-    def normalized() -> 'Quaternion':
-        ''' Return a new normalized quaternion.
-
-        :rtype: 'Quaternion'
         :return: a normalized copy.
-        '''
-        pass
+        :rtype: Quaternion
+        """
+        ...
 
-    def rotate(self,
-               other: typing.Union[typing.Sequence[float], 'Euler', typing.
-                                   Sequence[float], 'Quaternion', typing.
-                                   Sequence[float], 'Matrix']):
-        ''' Rotates the quaternion by another mathutils value.
+    def rotate(
+        self,
+        other: Euler
+        | Matrix
+        | Quaternion
+        | collections.abc.Sequence[collections.abc.Sequence[float]]
+        | collections.abc.Sequence[float],
+    ):
+        """Rotates the quaternion by another mathutils value.
 
         :param other: rotation component of mathutils value
-        :type other: typing.Union[typing.Sequence[float], 'Euler', typing.Sequence[float], 'Quaternion', typing.Sequence[float], 'Matrix']
-        '''
-        pass
+        :type other: Euler | Matrix | Quaternion | collections.abc.Sequence[collections.abc.Sequence[float]] | collections.abc.Sequence[float]
+        """
+        ...
 
-    @staticmethod
     def rotation_difference(
-            other: typing.Union[typing.Sequence[float], 'Quaternion']
-    ) -> 'Quaternion':
-        ''' Returns a quaternion representing the rotational difference.
+        self, other: Quaternion | collections.abc.Sequence[float]
+    ) -> Quaternion:
+        """Returns a quaternion representing the rotational difference.
 
         :param other: second quaternion.
-        :type other: typing.Union[typing.Sequence[float], 'Quaternion']
-        :rtype: 'Quaternion'
+        :type other: Quaternion | collections.abc.Sequence[float]
         :return: the rotational difference between the two quat rotations.
-        '''
-        pass
+        :rtype: Quaternion
+        """
+        ...
 
-    @staticmethod
-    def slerp(other: typing.Union[typing.Sequence[float], 'Quaternion'],
-              factor: float) -> 'Quaternion':
-        ''' Returns the interpolation of two quaternions.
+    def slerp(
+        self, other: Quaternion | collections.abc.Sequence[float], factor: float
+    ) -> Quaternion:
+        """Returns the interpolation of two quaternions.
 
         :param other: value to interpolate with.
-        :type other: typing.Union[typing.Sequence[float], 'Quaternion']
+        :type other: Quaternion | collections.abc.Sequence[float]
         :param factor: The interpolation value in [0.0, 1.0].
         :type factor: float
-        :rtype: 'Quaternion'
         :return: The interpolated rotation.
-        '''
-        pass
+        :rtype: Quaternion
+        """
+        ...
 
-    def to_axis_angle(self) -> typing.Tuple['Vector', 'float']:
-        ''' Return the axis, angle representation of the quaternion.
+    def to_axis_angle(self) -> tuple[Vector, float]:
+        """Return the axis, angle representation of the quaternion.
 
-        :rtype: typing.Tuple['Vector', 'float']
         :return: axis, angle.
-        '''
-        pass
+        :rtype: tuple[Vector, float]
+        """
+        ...
 
-    def to_euler(self, order: str=..., euler_compat: 'Euler'=..., /) -> 'Euler':  # Mcblend
-        ''' Return Euler representation of the quaternion.
+    # def to_euler(
+    #     self,
+    #     order: str | None,
+    #     euler_compat: Euler | collections.abc.Sequence[float] | None,
+    # ) -> Euler:
+    def to_euler(self, order: str=..., euler_compat: Euler=..., /) -> Euler:  # Mcblend
+        """Return Euler representation of the quaternion.
 
-        :param order: Optional rotation order argument in ['XYZ', 'XZY', 'YXZ', 'YZX', 'ZXY', 'ZYX'].
-        :type order: str
-        :param euler_compat: Optional euler argument the new euler will be made compatible with (no axis flipping between them). Useful for converting a series of matrices to animation curves.
-        :type euler_compat: typing.Union[typing.Sequence[float], 'Euler']
-        :rtype: 'Euler'
-        :return: Euler representation of the quaternion.
-        '''
-        pass
+                :param order: Optional rotation order argument in
+        ['XYZ', 'XZY', 'YXZ', 'YZX', 'ZXY', 'ZYX'].
+                :type order: str | None
+                :param euler_compat: Optional euler argument the new euler will be made
+        compatible with (no axis flipping between them).
+        Useful for converting a series of matrices to animation curves.
+                :type euler_compat: Euler | collections.abc.Sequence[float] | None
+                :return: Euler representation of the quaternion.
+                :rtype: Euler
+        """
+        ...
 
-    def to_exponential_map(self) -> 'Vector':
-        ''' Return the exponential map representation of the quaternion. This representation consist of the rotation axis multiplied by the rotation angle. Such a representation is useful for interpolation between multiple orientations. To convert back to a quaternion, pass it to the `Quaternion` constructor.
+    def to_exponential_map(self):
+        """Return the exponential map representation of the quaternion.This representation consist of the rotation axis multiplied by the rotation angle.
+        Such a representation is useful for interpolation between multiple orientations.To convert back to a quaternion, pass it to the `Quaternion` constructor.
 
-        :rtype: 'Vector'
-        :return: exponential map.
-        '''
-        pass
+                :return: exponential map.
+        """
+        ...
 
-    def to_matrix(self) -> 'Matrix':
-        ''' Return a matrix representation of the quaternion.
+    def to_matrix(self) -> Matrix:
+        """Return a matrix representation of the quaternion.
 
-        :rtype: 'Matrix'
         :return: A 3x3 rotation matrix representation of the quaternion.
-        '''
-        pass
+        :rtype: Matrix
+        """
+        ...
 
-    def to_swing_twist(
-            self, axis: typing.Any) -> typing.Tuple['Quaternion', 'float']:
-        ''' Split the rotation into a swing quaternion with the specified axis fixed at zero, and the remaining twist rotation angle.
+    def to_swing_twist(self, axis) -> tuple[Quaternion, float]:
+        """Split the rotation into a swing quaternion with the specified
+        axis fixed at zero, and the remaining twist rotation angle.
 
-        :param axis:  twist axis as a string in ['X', 'Y', 'Z']
-        :type axis: typing.Any
-        :rtype: typing.Tuple['Quaternion', 'float']
-        :return: swing, twist angle.
-        '''
-        pass
+                :param axis: twist axis as a string in ['X', 'Y', 'Z']
+                :return: swing, twist angle.
+                :rtype: tuple[Quaternion, float]
+        """
+        ...
 
-    def __init__(self, seq=(1.0, 0.0, 0.0, 0.0)) -> None:
-        ''' 
+    def __init__(self, seq=(1.0, 0.0, 0.0, 0.0)):
+        """
 
-        :rtype: typing.Any
-        '''
-        pass
+        :param seq:
+        """
+        ...
+
+    def __get__(self, instance, owner) -> Quaternion:
+        """
+
+        :param instance:
+        :param owner:
+        :return:
+        :rtype: Quaternion
+        """
+        ...
+
+    def __set__(self, instance, value: Quaternion | collections.abc.Sequence[float]):
+        """
+
+        :param instance:
+        :param value:
+        :type value: Quaternion | collections.abc.Sequence[float]
+        """
+        ...
 
     def __len__(self) -> int:
-        ''' 
+        """
 
+        :return:
         :rtype: int
-        '''
-        pass
+        """
+        ...
 
     def __getitem__(self, key: int) -> float:
-        ''' 
+        """
 
-        :param key: 
+        :param key:
         :type key: int
+        :return:
         :rtype: float
-        '''
-        pass
+        """
+        ...
 
     def __setitem__(self, key: int, value: float) -> float:
-        ''' 
+        """
 
-        :param key: 
+        :param key:
         :type key: int
-        :param value: 
+        :param value:
         :type value: float
+        :return:
         :rtype: float
-        '''
-        pass
+        """
+        ...
 
-    def __add__(self, other: typing.Union[typing.Sequence[float], 'Quaternion']
-                ) -> 'Quaternion':
-        ''' 
+    def __add__(
+        self, other: Quaternion | collections.abc.Sequence[float]
+    ) -> Quaternion:
+        """
 
-        :param other: 
-        :type other: typing.Union[typing.Sequence[float], 'Quaternion']
-        :rtype: 'Quaternion'
-        '''
-        pass
+        :param other:
+        :type other: Quaternion | collections.abc.Sequence[float]
+        :return:
+        :rtype: Quaternion
+        """
+        ...
 
-    def __sub__(self, other: typing.Union[typing.Sequence[float], 'Quaternion']
-                ) -> 'Quaternion':
-        ''' 
+    def __sub__(
+        self, other: Quaternion | collections.abc.Sequence[float]
+    ) -> Quaternion:
+        """
 
-        :param other: 
-        :type other: typing.Union[typing.Sequence[float], 'Quaternion']
-        :rtype: 'Quaternion'
-        '''
-        pass
+        :param other:
+        :type other: Quaternion | collections.abc.Sequence[float]
+        :return:
+        :rtype: Quaternion
+        """
+        ...
 
-    def __mul__(self, other: typing.Union[int, float, typing.
-                                          Sequence[float], 'Quaternion']
-                ) -> 'Quaternion':
-        ''' 
+    def __mul__(
+        self, other: Quaternion | collections.abc.Sequence[float] | float | int
+    ) -> Quaternion:
+        """
 
-        :param other: 
-        :type other: typing.Union[int, float, typing.Sequence[float], 'Quaternion']
-        :rtype: 'Quaternion'
-        '''
-        pass
+        :param other:
+        :type other: Quaternion | collections.abc.Sequence[float] | float | int
+        :return:
+        :rtype: Quaternion
+        """
+        ...
 
     @typing.overload
-    def __matmul__(self, other: 'Vector') -> 'Vector': ...
+    def __matmul__(
+        self, other: Quaternion | collections.abc.Sequence[float]
+    ) -> Quaternion:
+        """
+
+        :param other:
+        :type other: Quaternion | collections.abc.Sequence[float]
+        :return:
+        :rtype: Quaternion
+        """
+        ...
 
     @typing.overload
-    def __matmul__(self, other: 'Quaternion') -> 'Quaternion': ...
+    def __matmul__(self, other: Vector | collections.abc.Sequence[float]) -> Vector:
+        """
 
-    def __radd__(self,
-                 other: typing.Union[typing.Sequence[float], 'Quaternion']
-                 ) -> 'Quaternion':
-        ''' 
+        :param other:
+        :type other: Vector | collections.abc.Sequence[float]
+        :return:
+        :rtype: Vector
+        """
+        ...
 
-        :param other: 
-        :type other: typing.Union[typing.Sequence[float], 'Quaternion']
-        :rtype: 'Quaternion'
-        '''
-        pass
+    def __matmul__(
+        self, other: Quaternion | Vector | collections.abc.Sequence[float]
+    ) -> Quaternion | Vector:
+        """
 
-    def __rsub__(self,
-                 other: typing.Union[typing.Sequence[float], 'Quaternion']
-                 ) -> 'Quaternion':
-        ''' 
+        :param other:
+        :type other: Quaternion | Vector | collections.abc.Sequence[float]
+        :return:
+        :rtype: Quaternion | Vector
+        """
+        ...
 
-        :param other: 
-        :type other: typing.Union[typing.Sequence[float], 'Quaternion']
-        :rtype: 'Quaternion'
-        '''
-        pass
+    def __radd__(
+        self, other: Quaternion | collections.abc.Sequence[float]
+    ) -> Quaternion:
+        """
 
-    def __rmul__(self, other: typing.Union[int, float, typing.
-                                           Sequence[float], 'Quaternion']
-                 ) -> 'Quaternion':
-        ''' 
+        :param other:
+        :type other: Quaternion | collections.abc.Sequence[float]
+        :return:
+        :rtype: Quaternion
+        """
+        ...
 
-        :param other: 
-        :type other: typing.Union[int, float, typing.Sequence[float], 'Quaternion']
-        :rtype: 'Quaternion'
-        '''
-        pass
+    def __rsub__(
+        self, other: Quaternion | collections.abc.Sequence[float]
+    ) -> Quaternion:
+        """
 
-    def __rmatmul__(self, other: typing.Union[typing.Sequence[float], 'Vector']
-                    ) -> 'Vector':
-        ''' 
+        :param other:
+        :type other: Quaternion | collections.abc.Sequence[float]
+        :return:
+        :rtype: Quaternion
+        """
+        ...
 
-        :param other: 
-        :type other: typing.Union[typing.Sequence[float], 'Vector']
-        :rtype: 'Vector'
-        '''
-        pass
+    def __rmul__(
+        self, other: Quaternion | collections.abc.Sequence[float] | float | int
+    ) -> Quaternion:
+        """
 
-    def __imul__(self, other: typing.Union[int, float, typing.
-                                           Sequence[float], 'Quaternion']
-                 ) -> 'Quaternion':
-        ''' 
+        :param other:
+        :type other: Quaternion | collections.abc.Sequence[float] | float | int
+        :return:
+        :rtype: Quaternion
+        """
+        ...
 
-        :param other: 
-        :type other: typing.Union[int, float, typing.Sequence[float], 'Quaternion']
-        :rtype: 'Quaternion'
-        '''
-        pass
+    def __imul__(
+        self, other: Quaternion | collections.abc.Sequence[float] | float | int
+    ) -> Quaternion:
+        """
 
-    def __imatmul__(self, other: typing.Union[typing.Sequence[float], 'Vector']
-                    ) -> 'Vector':
-        ''' 
-
-        :param other: 
-        :type other: typing.Union[typing.Sequence[float], 'Vector']
-        :rtype: 'Vector'
-        '''
-        pass
-
+        :param other:
+        :type other: Quaternion | collections.abc.Sequence[float] | float | int
+        :return:
+        :rtype: Quaternion
+        """
+        ...
 
 class Vector:
-    ''' This object gives access to Vectors in Blender. :arg seq: Components of the vector, must be a sequence of at least two :type seq: sequence of numbers
-    '''
+    """This object gives access to Vectors in Blender."""
 
-    is_frozen: bool = None
-    ''' True when this object has been frozen (read-only).
-
-    :type: bool
-    '''
-
-    is_valid: bool = None
-    ''' True when the owner of this data is valid.
+    is_frozen: bool
+    """ True when this object has been frozen (read-only).
 
     :type: bool
-    '''
+    """
 
-    is_wrapped: bool = None
-    ''' True when this object wraps external data (read-only).
+    is_valid: bool
+    """ True when the owner of this data is valid.
 
     :type: bool
-    '''
+    """
 
-    length: float = None
-    ''' Vector Length.
+    is_wrapped: bool
+    """ True when this object wraps external data (read-only).
 
-    :type: float
-    '''
+    :type: bool
+    """
 
-    length_squared: float = None
-    ''' Vector length squared (v.dot(v)).
-
-    :type: float
-    '''
-
-    magnitude: float = None
-    ''' Vector Length.
+    length: float
+    """ Vector Length.
 
     :type: float
-    '''
+    """
 
-    owner = None
-    ''' The item this is wrapping or None (read-only).'''
-
-    w: float = None
-    ''' Vector W axis (4D Vectors only).
+    length_squared: float
+    """ Vector length squared (v.dot(v)).
 
     :type: float
-    '''
+    """
 
-    ww: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    www: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wwww: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wwwx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wwwy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wwwz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wwx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wwxw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wwxx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wwxy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wwxz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wwy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wwyw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wwyx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wwyy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wwyz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wwz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wwzw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wwzx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wwzy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wwzz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wxw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wxww: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wxwx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wxwy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wxwz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wxx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wxxw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wxxx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wxxy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wxxz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wxy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wxyw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wxyx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wxyy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wxyz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wxz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wxzw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wxzx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wxzy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wxzz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wyw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wyww: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wywx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wywy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wywz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wyx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wyxw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wyxx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wyxy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wyxz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wyy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wyyw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wyyx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wyyy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wyyz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wyz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wyzw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wyzx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wyzy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wyzz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wzw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wzww: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wzwx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wzwy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wzwz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wzx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wzxw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wzxx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wzxy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wzxz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wzy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wzyw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wzyx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wzyy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wzyz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wzz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wzzw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wzzx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wzzy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    wzzz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    x: float = None
-    ''' Vector X axis.
+    magnitude: float
+    """ Vector Length.
 
     :type: float
-    '''
+    """
 
-    xw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    owner: typing.Any
+    """ The item this is wrapping or None  (read-only)."""
 
-    xww: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xwww: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xwwx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xwwy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xwwz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xwx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xwxw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xwxx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xwxy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xwxz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xwy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xwyw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xwyx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xwyy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xwyz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xwz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xwzw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xwzx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xwzy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xwzz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xxw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xxww: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xxwx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xxwy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xxwz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xxx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xxxw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xxxx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xxxy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xxxz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xxy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xxyw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xxyx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xxyy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xxyz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xxz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xxzw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xxzx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xxzy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xxzz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xyw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xyww: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xywx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xywy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xywz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xyx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xyxw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xyxx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xyxy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xyxz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xyy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xyyw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xyyx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xyyy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xyyz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xyz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xyzw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xyzx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xyzy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xyzz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xzw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xzww: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xzwx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xzwy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xzwz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xzx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xzxw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xzxx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xzxy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xzxz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xzy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xzyw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xzyx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xzyy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xzyz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xzz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xzzw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xzzx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xzzy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    xzzz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
-
-    y: float = None
-    ''' Vector Y axis.
+    w: float
+    """ Vector W axis (4D Vectors only).
 
     :type: float
-    '''
+    """
 
-    yw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    ww: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yww: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    www: typing.Any
+    """ Undocumented, consider contributing."""
 
-    ywww: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wwww: typing.Any
+    """ Undocumented, consider contributing."""
 
-    ywwx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wwwx: typing.Any
+    """ Undocumented, consider contributing."""
 
-    ywwy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wwwy: typing.Any
+    """ Undocumented, consider contributing."""
 
-    ywwz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wwwz: typing.Any
+    """ Undocumented, consider contributing."""
 
-    ywx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wwx: typing.Any
+    """ Undocumented, consider contributing."""
 
-    ywxw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wwxw: typing.Any
+    """ Undocumented, consider contributing."""
 
-    ywxx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wwxx: typing.Any
+    """ Undocumented, consider contributing."""
 
-    ywxy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wwxy: typing.Any
+    """ Undocumented, consider contributing."""
 
-    ywxz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wwxz: typing.Any
+    """ Undocumented, consider contributing."""
 
-    ywy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wwy: typing.Any
+    """ Undocumented, consider contributing."""
 
-    ywyw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wwyw: typing.Any
+    """ Undocumented, consider contributing."""
 
-    ywyx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wwyx: typing.Any
+    """ Undocumented, consider contributing."""
 
-    ywyy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wwyy: typing.Any
+    """ Undocumented, consider contributing."""
 
-    ywyz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wwyz: typing.Any
+    """ Undocumented, consider contributing."""
 
-    ywz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wwz: typing.Any
+    """ Undocumented, consider contributing."""
 
-    ywzw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wwzw: typing.Any
+    """ Undocumented, consider contributing."""
 
-    ywzx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wwzx: typing.Any
+    """ Undocumented, consider contributing."""
 
-    ywzy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wwzy: typing.Any
+    """ Undocumented, consider contributing."""
 
-    ywzz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wwzz: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wx: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yxw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wxw: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yxww: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wxww: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yxwx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wxwx: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yxwy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wxwy: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yxwz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wxwz: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yxx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wxx: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yxxw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wxxw: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yxxx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wxxx: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yxxy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wxxy: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yxxz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wxxz: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yxy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wxy: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yxyw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wxyw: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yxyx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wxyx: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yxyy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wxyy: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yxyz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wxyz: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yxz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wxz: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yxzw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wxzw: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yxzx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wxzx: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yxzy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wxzy: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yxzz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wxzz: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wy: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yyw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wyw: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yyww: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wyww: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yywx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wywx: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yywy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wywy: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yywz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wywz: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yyx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wyx: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yyxw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wyxw: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yyxx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wyxx: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yyxy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wyxy: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yyxz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wyxz: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yyy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wyy: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yyyw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wyyw: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yyyx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wyyx: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yyyy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wyyy: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yyyz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wyyz: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yyz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wyz: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yyzw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wyzw: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yyzx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wyzx: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yyzy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wyzy: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yyzz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wyzz: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wz: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yzw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wzw: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yzww: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wzww: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yzwx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wzwx: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yzwy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wzwy: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yzwz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wzwz: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yzx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wzx: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yzxw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wzxw: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yzxx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wzxx: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yzxy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wzxy: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yzxz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wzxz: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yzy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wzy: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yzyw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wzyw: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yzyx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wzyx: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yzyy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wzyy: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yzyz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wzyz: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yzz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wzz: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yzzw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wzzw: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yzzx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wzzx: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yzzy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wzzy: typing.Any
+    """ Undocumented, consider contributing."""
 
-    yzzz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    wzzz: typing.Any
+    """ Undocumented, consider contributing."""
 
-    z: float = None
-    ''' Vector Z axis (3D Vectors only).
+    x: float
+    """ Vector X axis.
 
     :type: float
-    '''
+    """
 
-    zw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xw: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zww: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xww: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zwww: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xwww: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zwwx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xwwx: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zwwy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xwwy: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zwwz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xwwz: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zwx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xwx: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zwxw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xwxw: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zwxx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xwxx: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zwxy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xwxy: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zwxz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xwxz: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zwy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xwy: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zwyw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xwyw: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zwyx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xwyx: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zwyy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xwyy: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zwyz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xwyz: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zwz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xwz: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zwzw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xwzw: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zwzx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xwzx: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zwzy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xwzy: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zwzz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xwzz: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xx: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zxw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xxw: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zxww: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xxww: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zxwx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xxwx: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zxwy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xxwy: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zxwz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xxwz: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zxx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xxx: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zxxw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xxxw: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zxxx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xxxx: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zxxy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xxxy: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zxxz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xxxz: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zxy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xxy: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zxyw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xxyw: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zxyx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xxyx: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zxyy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xxyy: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zxyz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xxyz: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zxz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xxz: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zxzw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xxzw: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zxzx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xxzx: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zxzy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xxzy: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zxzz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xxzz: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xy: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zyw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xyw: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zyww: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xyww: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zywx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xywx: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zywy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xywy: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zywz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xywz: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zyx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xyx: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zyxw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xyxw: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zyxx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xyxx: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zyxy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xyxy: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zyxz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xyxz: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zyy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xyy: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zyyw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xyyw: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zyyx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xyyx: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zyyy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xyyy: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zyyz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xyyz: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zyz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xyz: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zyzw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xyzw: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zyzx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xyzx: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zyzy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xyzy: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zyzz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xyzz: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xz: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zzw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xzw: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zzww: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xzww: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zzwx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xzwx: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zzwy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xzwy: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zzwz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xzwz: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zzx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xzx: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zzxw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xzxw: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zzxx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xzxx: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zzxy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xzxy: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zzxz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xzxz: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zzy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xzy: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zzyw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xzyw: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zzyx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xzyx: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zzyy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xzyy: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zzyz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xzyz: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zzz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xzz: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zzzw: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xzzw: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zzzx: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xzzx: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zzzy: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xzzy: typing.Any
+    """ Undocumented, consider contributing."""
 
-    zzzz: Vector
-    ''' Undocumented, consider `contributing <https://developer.blender.org/>`__.'''
+    xzzz: typing.Any
+    """ Undocumented, consider contributing."""
+
+    y: float
+    """ Vector Y axis.
+
+    :type: float
+    """
+
+    yw: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yww: typing.Any
+    """ Undocumented, consider contributing."""
+
+    ywww: typing.Any
+    """ Undocumented, consider contributing."""
+
+    ywwx: typing.Any
+    """ Undocumented, consider contributing."""
+
+    ywwy: typing.Any
+    """ Undocumented, consider contributing."""
+
+    ywwz: typing.Any
+    """ Undocumented, consider contributing."""
+
+    ywx: typing.Any
+    """ Undocumented, consider contributing."""
+
+    ywxw: typing.Any
+    """ Undocumented, consider contributing."""
+
+    ywxx: typing.Any
+    """ Undocumented, consider contributing."""
+
+    ywxy: typing.Any
+    """ Undocumented, consider contributing."""
+
+    ywxz: typing.Any
+    """ Undocumented, consider contributing."""
+
+    ywy: typing.Any
+    """ Undocumented, consider contributing."""
+
+    ywyw: typing.Any
+    """ Undocumented, consider contributing."""
+
+    ywyx: typing.Any
+    """ Undocumented, consider contributing."""
+
+    ywyy: typing.Any
+    """ Undocumented, consider contributing."""
+
+    ywyz: typing.Any
+    """ Undocumented, consider contributing."""
+
+    ywz: typing.Any
+    """ Undocumented, consider contributing."""
+
+    ywzw: typing.Any
+    """ Undocumented, consider contributing."""
+
+    ywzx: typing.Any
+    """ Undocumented, consider contributing."""
+
+    ywzy: typing.Any
+    """ Undocumented, consider contributing."""
+
+    ywzz: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yx: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yxw: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yxww: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yxwx: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yxwy: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yxwz: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yxx: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yxxw: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yxxx: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yxxy: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yxxz: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yxy: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yxyw: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yxyx: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yxyy: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yxyz: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yxz: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yxzw: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yxzx: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yxzy: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yxzz: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yy: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yyw: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yyww: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yywx: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yywy: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yywz: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yyx: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yyxw: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yyxx: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yyxy: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yyxz: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yyy: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yyyw: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yyyx: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yyyy: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yyyz: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yyz: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yyzw: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yyzx: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yyzy: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yyzz: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yz: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yzw: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yzww: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yzwx: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yzwy: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yzwz: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yzx: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yzxw: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yzxx: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yzxy: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yzxz: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yzy: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yzyw: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yzyx: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yzyy: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yzyz: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yzz: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yzzw: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yzzx: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yzzy: typing.Any
+    """ Undocumented, consider contributing."""
+
+    yzzz: typing.Any
+    """ Undocumented, consider contributing."""
+
+    z: float
+    """ Vector Z axis (3D Vectors only).
+
+    :type: float
+    """
+
+    zw: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zww: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zwww: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zwwx: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zwwy: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zwwz: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zwx: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zwxw: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zwxx: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zwxy: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zwxz: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zwy: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zwyw: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zwyx: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zwyy: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zwyz: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zwz: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zwzw: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zwzx: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zwzy: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zwzz: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zx: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zxw: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zxww: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zxwx: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zxwy: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zxwz: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zxx: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zxxw: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zxxx: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zxxy: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zxxz: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zxy: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zxyw: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zxyx: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zxyy: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zxyz: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zxz: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zxzw: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zxzx: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zxzy: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zxzz: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zy: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zyw: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zyww: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zywx: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zywy: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zywz: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zyx: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zyxw: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zyxx: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zyxy: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zyxz: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zyy: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zyyw: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zyyx: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zyyy: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zyyz: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zyz: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zyzw: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zyzx: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zyzy: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zyzz: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zz: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zzw: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zzww: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zzwx: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zzwy: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zzwz: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zzx: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zzxw: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zzxx: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zzxy: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zzxz: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zzy: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zzyw: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zzyx: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zzyy: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zzyz: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zzz: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zzzw: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zzzx: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zzzy: typing.Any
+    """ Undocumented, consider contributing."""
+
+    zzzz: typing.Any
+    """ Undocumented, consider contributing."""
 
     @classmethod
     def Fill(cls, size: int, fill: float = 0.0):
-        ''' Create a vector of length size with all values set to fill.
+        """Create a vector of length size with all values set to fill.
 
         :param size: The length of the vector to be created.
         :type size: int
         :param fill: The value used to fill the vector.
         :type fill: float
-        '''
-        pass
+        """
+        ...
 
     @classmethod
     def Linspace(cls, start: int, stop: int, size: int):
-        ''' Create a vector of the specified size which is filled with linearly spaced values between start and stop values.
+        """Create a vector of the specified size which is filled with linearly spaced values between start and stop values.
 
         :param start: The start of the range used to fill the vector.
         :type start: int
@@ -2430,12 +2614,12 @@ class Vector:
         :type stop: int
         :param size: The size of the vector to be created.
         :type size: int
-        '''
-        pass
+        """
+        ...
 
     @classmethod
     def Range(cls, start: int, stop: int, step: int = 1):
-        ''' Create a filled with a range of values.
+        """Create a filled with a range of values.
 
         :param start: The start of the range used to fill the vector.
         :type start: int
@@ -2443,455 +2627,497 @@ class Vector:
         :type stop: int
         :param step: The step between successive values in the vector.
         :type step: int
-        '''
-        pass
+        """
+        ...
 
     @classmethod
     def Repeat(cls, vector, size: int):
-        ''' Create a vector by repeating the values in vector until the required size is reached.
+        """Create a vector by repeating the values in vector until the required size is reached.
 
-        :param tuple: The vector to draw values from.
-        :type tuple: typing.Union[typing.Sequence[float], 'Vector']
+        :param vector:
         :param size: The size of the vector to be created.
         :type size: int
-        '''
-        pass
+        """
+        ...
 
-    @staticmethod
-    def angle(other: typing.Union[typing.Sequence[float], 'Vector'],
-              fallback: typing.Any = None) -> float:
-        ''' Return the angle between two vectors.
+    def angle(
+        self,
+        other: Vector | collections.abc.Sequence[float],
+        fallback: typing.Any = None,
+    ) -> float:
+        """Return the angle between two vectors.
 
-        :param other: another vector to compare the angle with
-        :type other: typing.Union[typing.Sequence[float], 'Vector']
-        :param fallback: return this when the angle can't be calculated (zero length vector), (instead of raising a :exc:`ValueError`).
-        :type fallback: typing.Any
-        :rtype: float
-        :return: angle in radians or fallback when given
-        '''
-        pass
+                :param other: another vector to compare the angle with
+                :type other: Vector | collections.abc.Sequence[float]
+                :param fallback: return this when the angle can't be calculated (zero length vector),
+        (instead of raising a `ValueError`).
+                :type fallback: typing.Any
+                :return: angle in radians or fallback when given
+                :rtype: float
+        """
+        ...
 
-    @staticmethod
-    def angle_signed(other: typing.Union[typing.Sequence[float], 'Vector'],
-                     fallback: typing.Any) -> float:
-        ''' Return the signed angle between two 2D vectors (clockwise is positive).
+    def angle_signed(
+        self, other: Vector | collections.abc.Sequence[float], fallback: typing.Any
+    ) -> float:
+        """Return the signed angle between two 2D vectors (clockwise is positive).
 
-        :param other: another vector to compare the angle with
-        :type other: typing.Union[typing.Sequence[float], 'Vector']
-        :param fallback: return this when the angle can't be calculated (zero length vector), (instead of raising a :exc:`ValueError`).
-        :type fallback: typing.Any
-        :rtype: float
-        :return: angle in radians or fallback when given
-        '''
-        pass
+                :param other: another vector to compare the angle with
+                :type other: Vector | collections.abc.Sequence[float]
+                :param fallback: return this when the angle can't be calculated (zero length vector),
+        (instead of raising a `ValueError`).
+                :type fallback: typing.Any
+                :return: angle in radians or fallback when given
+                :rtype: float
+        """
+        ...
 
-    @staticmethod
-    def copy() -> 'Vector':
-        ''' Returns a copy of this vector.
+    def copy(self) -> Vector:
+        """Returns a copy of this vector.
 
-        :rtype: 'Vector'
         :return: A copy of the vector.
-        '''
-        pass
+        :rtype: Vector
+        """
+        ...
 
-    def cross(self, other: typing.Union[typing.Sequence[float], 'Vector']
-              ) -> 'Vector':
-        ''' Return the cross product of this vector and another.
+    def cross(self, other: Vector | collections.abc.Sequence[float]) -> Vector:
+        """Return the cross product of this vector and another.
 
         :param other: The other vector to perform the cross product with.
-        :type other: typing.Union[typing.Sequence[float], 'Vector']
-        :rtype: 'Vector'
+        :type other: Vector | collections.abc.Sequence[float]
         :return: The cross product.
-        '''
-        pass
+        :rtype: Vector
+        """
+        ...
 
-    def dot(self,
-            other: typing.Union[typing.Sequence[float], 'Vector']) -> float:
-        ''' Return the dot product of this vector and another.
+    def dot(self, other: Vector | collections.abc.Sequence[float]) -> float:
+        """Return the dot product of this vector and another.
 
         :param other: The other vector to perform the dot product with.
-        :type other: typing.Union[typing.Sequence[float], 'Vector']
-        :rtype: float
+        :type other: Vector | collections.abc.Sequence[float]
         :return: The dot product.
-        '''
-        pass
+        :rtype: float
+        """
+        ...
 
-    @staticmethod
-    def freeze() -> 'Vector':
-        ''' Make this object immutable. After this the object can be hashed, used in dictionaries & sets.
+    def freeze(self) -> Vector:
+        """Make this object immutable.After this the object can be hashed, used in dictionaries & sets.
 
-        :rtype: 'Vector'
         :return: An instance of this object.
-        '''
-        pass
+        :rtype: Vector
+        """
+        ...
 
-    @staticmethod
-    def lerp(other: typing.Union[typing.Sequence[float], 'Vector'],
-             factor: float) -> 'Vector':
-        ''' Returns the interpolation of two vectors.
+    def lerp(
+        self, other: Vector | collections.abc.Sequence[float], factor: float
+    ) -> Vector:
+        """Returns the interpolation of two vectors.
 
         :param other: value to interpolate with.
-        :type other: typing.Union[typing.Sequence[float], 'Vector']
+        :type other: Vector | collections.abc.Sequence[float]
         :param factor: The interpolation value in [0.0, 1.0].
         :type factor: float
-        :rtype: 'Vector'
         :return: The interpolated vector.
-        '''
-        pass
+        :rtype: Vector
+        """
+        ...
 
     def negate(self):
-        ''' Set all values to their negative.
-
-        '''
-        pass
+        """Set all values to their negative."""
+        ...
 
     def normalize(self):
-        ''' Normalize the vector, making the length of the vector always 1.0.
+        """Normalize the vector, making the length of the vector always 1.0."""
+        ...
 
-        '''
-        pass
+    def normalized(self) -> Vector:
+        """Return a new, normalized vector.
 
-    def normalized(self) -> 'Vector':
-        ''' Return a new, normalized vector.
-
-        :rtype: 'Vector'
         :return: a normalized copy of the vector
-        '''
-        pass
+        :rtype: Vector
+        """
+        ...
 
-    def orthogonal(self) -> 'Vector':
-        ''' Return a perpendicular vector.
+    def orthogonal(self) -> Vector:
+        """Return a perpendicular vector.
 
-        :rtype: 'Vector'
         :return: a new vector 90 degrees from this vector.
-        '''
-        pass
+        :rtype: Vector
+        """
+        ...
 
-    @staticmethod
-    def project(
-            other: typing.Union[typing.Sequence[float], 'Vector']) -> 'Vector':
-        ''' Return the projection of this vector onto the *other*.
+    def project(self, other: Vector | collections.abc.Sequence[float]) -> Vector:
+        """Return the projection of this vector onto the other.
 
         :param other: second vector.
-        :type other: typing.Union[typing.Sequence[float], 'Vector']
-        :rtype: 'Vector'
+        :type other: Vector | collections.abc.Sequence[float]
         :return: the parallel projection vector
-        '''
-        pass
+        :rtype: Vector
+        """
+        ...
 
-    def reflect(self, mirror: typing.Union[typing.Sequence[float], 'Vector']
-                ) -> 'Vector':
-        ''' Return the reflection vector from the *mirror* argument.
+    def reflect(self, mirror: Vector | collections.abc.Sequence[float]) -> Vector:
+        """Return the reflection vector from the mirror argument.
 
         :param mirror: This vector could be a normal from the reflecting surface.
-        :type mirror: typing.Union[typing.Sequence[float], 'Vector']
-        :rtype: 'Vector'
+        :type mirror: Vector | collections.abc.Sequence[float]
         :return: The reflected vector matching the size of this vector.
-        '''
-        pass
+        :rtype: Vector
+        """
+        ...
 
     def resize(self, size=3):
-        ''' Resize the vector to have size number of elements.
+        """Resize the vector to have size number of elements.
 
-        '''
-        pass
+        :param size:
+        """
+        ...
 
     def resize_2d(self):
-        ''' Resize the vector to 2D (x, y).
-
-        '''
-        pass
+        """Resize the vector to 2D  (x, y)."""
+        ...
 
     def resize_3d(self):
-        ''' Resize the vector to 3D (x, y, z).
-
-        '''
-        pass
+        """Resize the vector to 3D  (x, y, z)."""
+        ...
 
     def resize_4d(self):
-        ''' Resize the vector to 4D (x, y, z, w).
+        """Resize the vector to 4D (x, y, z, w)."""
+        ...
 
-        '''
-        pass
+    def resized(self, size=3) -> Vector:
+        """Return a resized copy of the vector with size number of elements.
 
-    def resized(self, size=3) -> 'Vector':
-        ''' Return a resized copy of the vector with size number of elements.
-
-        :rtype: 'Vector'
+        :param size:
         :return: a new vector
-        '''
-        pass
+        :rtype: Vector
+        """
+        ...
 
-    @staticmethod
-    def rotate(other: typing.Union[typing.Sequence[float], 'Euler', typing.
-                                   Sequence[float], 'Quaternion', typing.
-                                   Sequence[float], 'Matrix']):
-        ''' Rotate the vector by a rotation value.
+    def rotate(
+        self,
+        other: Euler
+        | Matrix
+        | Quaternion
+        | collections.abc.Sequence[collections.abc.Sequence[float]]
+        | collections.abc.Sequence[float],
+    ):
+        """Rotate the vector by a rotation value.
 
         :param other: rotation component of mathutils value
-        :type other: typing.Union[typing.Sequence[float], 'Euler', typing.Sequence[float], 'Quaternion', typing.Sequence[float], 'Matrix']
-        '''
-        pass
+        :type other: Euler | Matrix | Quaternion | collections.abc.Sequence[collections.abc.Sequence[float]] | collections.abc.Sequence[float]
+        """
+        ...
 
-    @staticmethod
     def rotation_difference(
-            other: typing.Union[typing.Sequence[float], 'Vector']
-    ) -> 'Quaternion':
-        ''' Returns a quaternion representing the rotational difference between this vector and another.
+        self, other: Vector | collections.abc.Sequence[float]
+    ) -> Quaternion:
+        """Returns a quaternion representing the rotational difference between this
+        vector and another.
 
-        :param other: second vector.
-        :type other: typing.Union[typing.Sequence[float], 'Vector']
-        :rtype: 'Quaternion'
-        :return: the rotational difference between the two vectors.
-        '''
-        pass
+                :param other: second vector.
+                :type other: Vector | collections.abc.Sequence[float]
+                :return: the rotational difference between the two vectors.
+                :rtype: Quaternion
+        """
+        ...
 
-    @staticmethod
-    def slerp(other: typing.Union[typing.Sequence[float], 'Vector'],
-              factor: float,
-              fallback: typing.Any = None) -> 'Vector':
-        ''' Returns the interpolation of two non-zero vectors (spherical coordinates).
+    def slerp(
+        self,
+        other: Vector | collections.abc.Sequence[float],
+        factor: float,
+        fallback: typing.Any = None,
+    ) -> Vector:
+        """Returns the interpolation of two non-zero vectors (spherical coordinates).
 
-        :param other: value to interpolate with.
-        :type other: typing.Union[typing.Sequence[float], 'Vector']
-        :param factor: The interpolation value typically in [0.0, 1.0].
-        :type factor: float
-        :param fallback: return this when the vector can't be calculated (zero length vector or direct opposites), (instead of raising a :exc:`ValueError`).
-        :type fallback: typing.Any
-        :rtype: 'Vector'
-        :return: The interpolated vector.
-        '''
-        pass
+                :param other: value to interpolate with.
+                :type other: Vector | collections.abc.Sequence[float]
+                :param factor: The interpolation value typically in [0.0, 1.0].
+                :type factor: float
+                :param fallback: return this when the vector can't be calculated (zero length vector or direct opposites),
+        (instead of raising a `ValueError`).
+                :type fallback: typing.Any
+                :return: The interpolated vector.
+                :rtype: Vector
+        """
+        ...
 
-    def to_2d(self) -> 'Vector':
-        ''' Return a 2d copy of the vector.
+    def to_2d(self) -> Vector:
+        """Return a 2d copy of the vector.
 
-        :rtype: 'Vector'
         :return: a new vector
-        '''
-        pass
+        :rtype: Vector
+        """
+        ...
 
-    def to_3d(self) -> 'Vector':
-        ''' Return a 3d copy of the vector.
+    def to_3d(self) -> Vector:
+        """Return a 3d copy of the vector.
 
-        :rtype: 'Vector'
         :return: a new vector
-        '''
-        pass
+        :rtype: Vector
+        """
+        ...
 
-    def to_4d(self) -> 'Vector':
-        ''' Return a 4d copy of the vector.
+    def to_4d(self) -> Vector:
+        """Return a 4d copy of the vector.
 
-        :rtype: 'Vector'
         :return: a new vector
-        '''
-        pass
+        :rtype: Vector
+        """
+        ...
 
-    def to_track_quat(self, track: str, up: str) -> 'Quaternion':
-        ''' Return a quaternion rotation from the vector and the track and up axis.
+    def to_track_quat(self, track: str, up: str) -> Quaternion:
+        """Return a quaternion rotation from the vector and the track and up axis.
 
         :param track: Track axis in ['X', 'Y', 'Z', '-X', '-Y', '-Z'].
         :type track: str
         :param up: Up axis in ['X', 'Y', 'Z'].
         :type up: str
-        :rtype: 'Quaternion'
         :return: rotation from the vector and the track and up axis.
-        '''
-        pass
+        :rtype: Quaternion
+        """
+        ...
 
-    def to_tuple(self, precision: int = -1) -> typing.Tuple:
-        ''' Return this vector as a tuple with.
+    def to_tuple(self, precision: int = -1) -> tuple:
+        """Return this vector as a tuple with.
 
         :param precision: The number to round the value to in [-1, 21].
         :type precision: int
-        :rtype: typing.Tuple
-        :return: the values of the vector rounded by *precision*
-        '''
-        pass
+        :return: the values of the vector rounded by precision
+        :rtype: tuple
+        """
+        ...
 
     def zero(self):
-        ''' Set all values to zero.
+        """Set all values to zero."""
+        ...
 
-        '''
-        pass
+    def __init__(self, seq=(0.0, 0.0, 0.0)):
+        """
 
-    def __init__(self, seq=(0.0, 0.0, 0.0)) -> None:
-        ''' 
+        :param seq:
+        """
+        ...
 
-        :rtype: typing.Any
-        '''
-        pass
+    def __get__(self, instance, owner) -> Vector:
+        """
+
+        :param instance:
+        :param owner:
+        :return:
+        :rtype: Vector
+        """
+        ...
+
+    def __set__(self, instance, value: Vector | collections.abc.Sequence[float]):
+        """
+
+        :param instance:
+        :param value:
+        :type value: Vector | collections.abc.Sequence[float]
+        """
+        ...
 
     def __len__(self) -> int:
-        ''' 
+        """
 
+        :return:
         :rtype: int
-        '''
-        pass
+        """
+        ...
 
     def __getitem__(self, key: int) -> float:
-        ''' 
+        """
 
-        :param key: 
+        :param key:
         :type key: int
+        :return:
         :rtype: float
-        '''
-        pass
+        """
+        ...
 
     def __setitem__(self, key: int, value: float) -> float:
-        ''' 
+        """
 
-        :param key: 
+        :param key:
         :type key: int
-        :param value: 
+        :param value:
         :type value: float
+        :return:
         :rtype: float
-        '''
-        pass
+        """
+        ...
 
-    def __neg__(self) -> 'Vector':
-        ''' 
+    def __neg__(self) -> Vector:
+        """
 
-        :rtype: 'Vector'
-        '''
-        pass
+        :return:
+        :rtype: Vector
+        """
+        ...
 
-    def __add__(self, other: typing.Union[typing.Sequence[float], 'Vector']
-                ) -> 'Vector':
-        ''' 
+    def __add__(self, other: Vector | collections.abc.Sequence[float]) -> Vector:
+        """
 
-        :param other: 
-        :type other: typing.Union[typing.Sequence[float], 'Vector']
-        :rtype: 'Vector'
-        '''
-        pass
+        :param other:
+        :type other: Vector | collections.abc.Sequence[float]
+        :return:
+        :rtype: Vector
+        """
+        ...
 
     def __contains__(self, other: typing.Any) -> bool: ...  # Mcblend
 
-    def __sub__(self, other: typing.Union[typing.Sequence[float], 'Vector']
-                ) -> 'Vector':
-        ''' 
+    def __sub__(self, other: Vector | collections.abc.Sequence[float]) -> Vector:
+        """
 
-        :param other: 
-        :type other: typing.Union[typing.Sequence[float], 'Vector']
-        :rtype: 'Vector'
-        '''
-        pass
+        :param other:
+        :type other: Vector | collections.abc.Sequence[float]
+        :return:
+        :rtype: Vector
+        """
+        ...
 
-    def __mul__(self, other: typing.Union[int, float]) -> 'Vector':
-        ''' 
+    def __mul__(self, other: float | int) -> Vector:
+        """
 
-        :param other: 
-        :type other: typing.Union[int, float]
-        :rtype: 'Vector'
-        '''
-        pass
+        :param other:
+        :type other: float | int
+        :return:
+        :rtype: Vector
+        """
+        ...
 
-    def __truediv__(self, other: typing.Union[int, float]) -> 'Vector':
-        ''' 
+    def __truediv__(self, other: float | int) -> Vector:
+        """
 
-        :param other: 
-        :type other: typing.Union[int, float]
-        :rtype: 'Vector'
-        '''
-        pass
+        :param other:
+        :type other: float | int
+        :return:
+        :rtype: Vector
+        """
+        ...
+
+    @typing.overload
+    def __matmul__(self, other: Vector | collections.abc.Sequence[float]) -> float:
+        """
+
+        :param other:
+        :type other: Vector | collections.abc.Sequence[float]
+        :return:
+        :rtype: float
+        """
+        ...
+
+    # @typing.overload
+    # def __matmul__(
+    #     self, other: Matrix | collections.abc.Sequence[collections.abc.Sequence[float]]
+    # ) -> Vector:
+    #     """
+
+    #     :param other:
+    #     :type other: Matrix | collections.abc.Sequence[collections.abc.Sequence[float]]
+    #     :return:
+    #     :rtype: Vector
+    #     """
+    #     ...
+
+    # def __matmul__(
+    #     self,
+    #     other: Matrix
+    #     | Vector
+    #     | collections.abc.Sequence[collections.abc.Sequence[float]]
+    #     | collections.abc.Sequence[float],
+    # ) -> Vector | float:
+    #     """
+
+    #     :param other:
+    #     :type other: Matrix | Vector | collections.abc.Sequence[collections.abc.Sequence[float]] | collections.abc.Sequence[float]
+    #     :return:
+    #     :rtype: Vector | float
+    #     """
+    #     ...
 
     def __matmul__(self, other: 'Matrix') -> 'Vector': ...  # Mcblend
 
-    def __radd__(self, other: typing.Union[typing.Sequence[float], 'Vector']
-                 ) -> 'Vector':
-        ''' 
+    def __radd__(self, other: Vector | collections.abc.Sequence[float]) -> Vector:
+        """
 
-        :param other: 
-        :type other: typing.Union[typing.Sequence[float], 'Vector']
-        :rtype: 'Vector'
-        '''
-        pass
+        :param other:
+        :type other: Vector | collections.abc.Sequence[float]
+        :return:
+        :rtype: Vector
+        """
+        ...
 
-    def __rsub__(self, other: typing.Union[typing.Sequence[float], 'Vector']
-                 ) -> 'Vector':
-        ''' 
+    def __rsub__(self, other: Vector | collections.abc.Sequence[float]) -> Vector:
+        """
 
-        :param other: 
-        :type other: typing.Union[typing.Sequence[float], 'Vector']
-        :rtype: 'Vector'
-        '''
-        pass
+        :param other:
+        :type other: Vector | collections.abc.Sequence[float]
+        :return:
+        :rtype: Vector
+        """
+        ...
 
-    def __rmul__(self, other: typing.Union[int, float]) -> 'Vector':
-        ''' 
+    def __rmul__(self, other: float | int) -> Vector:
+        """
 
-        :param other: 
-        :type other: typing.Union[int, float]
-        :rtype: 'Vector'
-        '''
-        pass
+        :param other:
+        :type other: float | int
+        :return:
+        :rtype: Vector
+        """
+        ...
 
-    def __rtruediv__(self, other: typing.Union[int, float]) -> 'Vector':
-        ''' 
+    def __rtruediv__(self, other: float | int) -> Vector:
+        """
 
-        :param other: 
-        :type other: typing.Union[int, float]
-        :rtype: 'Vector'
-        '''
-        pass
+        :param other:
+        :type other: float | int
+        :return:
+        :rtype: Vector
+        """
+        ...
 
-    def __rmatmul__(self, other: typing.Union[typing.Sequence[float], 'Matrix']
-                    ) -> 'Vector':
-        ''' 
+    def __iadd__(self, other: Vector | collections.abc.Sequence[float]) -> Vector:
+        """
 
-        :param other: 
-        :type other: typing.Union[typing.Sequence[float], 'Matrix']
-        :rtype: 'Vector'
-        '''
-        pass
+        :param other:
+        :type other: Vector | collections.abc.Sequence[float]
+        :return:
+        :rtype: Vector
+        """
+        ...
 
-    def __iadd__(self, other: typing.Union[typing.Sequence[float], 'Vector']
-                 ) -> 'Vector':
-        ''' 
+    def __isub__(self, other: Vector | collections.abc.Sequence[float]) -> Vector:
+        """
 
-        :param other: 
-        :type other: typing.Union[typing.Sequence[float], 'Vector']
-        :rtype: 'Vector'
-        '''
-        pass
+        :param other:
+        :type other: Vector | collections.abc.Sequence[float]
+        :return:
+        :rtype: Vector
+        """
+        ...
 
-    def __isub__(self, other: typing.Union[typing.Sequence[float], 'Vector']
-                 ) -> 'Vector':
-        ''' 
+    def __imul__(self, other: float | int) -> Vector:
+        """
 
-        :param other: 
-        :type other: typing.Union[typing.Sequence[float], 'Vector']
-        :rtype: 'Vector'
-        '''
-        pass
-
-    def __imul__(self, other: typing.Union[int, float]) -> 'Vector':
-        ''' 
-
-        :param other: 
-        :type other: typing.Union[int, float]
-        :rtype: 'Vector'
-        '''
-        pass
+        :param other:
+        :type other: float | int
+        :return:
+        :rtype: Vector
+        """
+        ...
 
     def __iter__(self) -> typing.Iterator[float]: ...  # Mcblend
 
-    def __itruediv__(self, other: typing.Union[int, float]) -> 'Vector':
-        ''' 
+    def __itruediv__(self, other: float | int) -> Vector:
+        """
 
-        :param other: 
-        :type other: typing.Union[int, float]
-        :rtype: 'Vector'
-        '''
-        pass
-
-    def __imatmul__(self, other: typing.Union[typing.Sequence[float], 'Matrix']
-                    ) -> 'Vector':
-        ''' 
-
-        :param other: 
-        :type other: typing.Union[typing.Sequence[float], 'Matrix']
-        :rtype: 'Vector'
-        '''
-        pass
+        :param other:
+        :type other: float | int
+        :return:
+        :rtype: Vector
+        """
+        ...

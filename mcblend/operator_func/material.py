@@ -1,10 +1,16 @@
 '''
 Everything related to creating materials for the model.
 '''
-from typing import Deque, Optional, List, Tuple
+from typing import Deque, Optional, List, Tuple, cast, reveal_type
 from collections import deque
 
-from bpy.types import Image, Material, Node, NodeTree
+from bpy.types import (
+    Image, Material, Node, NodeTree, NodeGroupInput, ShaderNodeMath,
+    ShaderNodeValue, ShaderNodeRGB, ShaderNodeVectorMath, NodeGroupInput,
+    NodeGroupOutput, ShaderNodeGroup, ShaderNodeMath, ShaderNodeMixRGB,
+    ShaderNodeRGB, ShaderNodeTexImage, ShaderNodeValue, ShaderNodeVectorMath,
+    NodeSocketColor, NodeSocketFloat,
+)
 import bpy
 
 PADDING = 300
@@ -13,17 +19,19 @@ def _create_node_group_defaults(name: str) -> Tuple[NodeTree, Node, Node]:
     group: NodeTree = bpy.data.node_groups.new(name, 'ShaderNodeTree')
 
     # create group inputs
-    inputs: Node = group.nodes.new('NodeGroupInput')
+    inputs = group.nodes.new('NodeGroupInput')
+    inputs = cast(NodeGroupInput, inputs)
     inputs.location = [0, 0]
-    group.inputs.new('NodeSocketColor','Color')
-    group.inputs.new('NodeSocketFloat','Alpha')
+    group.interface.new_socket('Color', socket_type='NodeSocketColor', in_out='INPUT')
+    group.interface.new_socket('Alpha', socket_type='NodeSocketFloat', in_out='INPUT')
 
     # create group outputs
-    outputs: Node = group.nodes.new('NodeGroupOutput')
+    outputs = group.nodes.new('NodeGroupOutput')
+    outputs = cast(NodeGroupOutput, outputs)
     outputs.location = [4*PADDING, 0]
-    group.outputs.new('NodeSocketColor','Color')
-    group.outputs.new('NodeSocketFloat','Alpha')
-    group.outputs.new('NodeSocketColor','Emission')
+    group.interface.new_socket('Color', socket_type='NodeSocketColor', in_out='OUTPUT')
+    group.interface.new_socket('Alpha', socket_type='NodeSocketFloat', in_out='OUTPUT')
+    group.interface.new_socket('Emission', socket_type='NodeSocketColor', in_out='OUTPUT')
 
     return group, inputs, outputs
 
@@ -34,23 +42,24 @@ def create_entity_alphatest_node_group(material: Material, is_first: bool) -> No
     '''
     if is_first:
         material.blend_method = 'CLIP'
-    try:
+    if 'entity_alphatest' in bpy.data.node_groups:
         return bpy.data.node_groups['entity_alphatest']
-    except:  # pylint: disable=bare-except
-        pass
     group, inputs, outputs = _create_node_group_defaults('entity_alphatest')
 
     # In: Color-> Out: Color
     group.links.new(outputs.inputs[0], inputs.outputs[0])
     # In: Alpha -> Math[ADD] -> Math[FLOOR] -> Out: Alpha
     math_node = group.nodes.new('ShaderNodeMath')
+    math_node = cast(ShaderNodeMath, math_node)
     math_node.operation = 'GREATER_THAN'
     math_node.location = [1*PADDING, -1*PADDING]
     group.links.new(math_node.inputs[0], inputs.outputs[1])
     group.links.new(outputs.inputs[1], math_node.outputs[0])
     # RGB (black) -> Out: Emission
     rgb_node = group.nodes.new("ShaderNodeRGB")
-    rgb_node.outputs['Color'].default_value = [0, 0, 0, 1]  # black
+    rgb_node = cast(ShaderNodeRGB, rgb_node)
+    cast(NodeSocketColor, rgb_node.outputs['Color']).default_value = [
+        0, 0, 0, 1]  # black
     rgb_node.location = [2*PADDING, -2*PADDING]
     group.links.new(outputs.inputs[2], rgb_node.outputs[0])
 
@@ -76,13 +85,16 @@ def create_entity_alphatest_one_sided_node_group(
     group.links.new(outputs.inputs[0], inputs.outputs[0])
     # In: Alpha -> Math[ADD] -> Math[FLOOR] -> Out: Alpha
     math_node = group.nodes.new('ShaderNodeMath')
+    math_node = cast(ShaderNodeMath, math_node)
     math_node.operation = 'GREATER_THAN'
     math_node.location = [1*PADDING, -1*PADDING]
     group.links.new(math_node.inputs[0], inputs.outputs[1])
     group.links.new(outputs.inputs[1], math_node.outputs[0])
     # RGB (black) -> Out: Emission
     rgb_node = group.nodes.new("ShaderNodeRGB")
-    rgb_node.outputs['Color'].default_value = [0, 0, 0, 1]  # black
+    rgb_node = cast(ShaderNodeRGB, rgb_node)
+    cast(NodeSocketColor, rgb_node.outputs['Color']).default_value = [
+        0, 0, 0, 1]  # black
     rgb_node.location = [2*PADDING, -2*PADDING]
     group.links.new(outputs.inputs[2], rgb_node.outputs[0])
 
@@ -109,12 +121,15 @@ def create_entity_node_group(material: Material, is_first: bool) -> NodeTree:
     group.links.new(outputs.inputs[0], inputs.outputs[0])
     # Value (1.0) -> Out: Alpha
     value_node = group.nodes.new("ShaderNodeValue")
-    value_node.outputs['Value'].default_value = 1.0
+    value_node = cast(ShaderNodeValue, value_node)
+    cast(NodeSocketFloat, value_node.outputs['Value']).default_value = 1.0
     value_node.location = [2*PADDING, -1*PADDING]
     group.links.new(outputs.inputs[1], value_node.outputs[0])
     # RGB (black) -> Out: Emission
     rgb_node = group.nodes.new("ShaderNodeRGB")
-    rgb_node.outputs['Color'].default_value = [0, 0, 0, 1]  # black
+    rgb_node = cast(ShaderNodeRGB, rgb_node)
+    cast(NodeSocketColor, rgb_node.outputs['Color']).default_value = [
+        0, 0, 0, 1]  # black
     rgb_node.location = [2*PADDING, -2*PADDING]
     group.links.new(outputs.inputs[2], rgb_node.outputs[0])
 
@@ -140,7 +155,9 @@ def create_entity_alphablend_node_group(material: Material, is_first: bool) -> N
     group.links.new(outputs.inputs[1], inputs.outputs[1])
     # RGB (black) -> Out: Emission
     rgb_node = group.nodes.new("ShaderNodeRGB")
-    rgb_node.outputs['Color'].default_value = [0, 0, 0, 1]  # black
+    rgb_node = cast(ShaderNodeRGB, rgb_node)
+    cast(NodeSocketColor, rgb_node.outputs['Color']).default_value = [
+        0, 0, 0, 1]  # black
     rgb_node.location = [1*PADDING, -1*PADDING]
     group.links.new(outputs.inputs[2], rgb_node.outputs[0])
 
@@ -167,20 +184,24 @@ def create_entity_emissive_node_group(material: Material, is_first: bool) -> Nod
     group.links.new(outputs.inputs[0], inputs.outputs[0])
     # Value (1.0) -> Out: Alpha
     value_node = group.nodes.new("ShaderNodeValue")
-    value_node.outputs['Value'].default_value =  1.0
+    value_node = cast(ShaderNodeValue, value_node)
+    cast(NodeSocketFloat, value_node.outputs['Value']).default_value =  1.0
     value_node.location = [2*PADDING, -1*PADDING]
     group.links.new(outputs.inputs[1], value_node.outputs[0])
     # In: Color -> ... -> ... -> Vector[MULTIPLY][0] -> Out: Emission
     vector_node = group.nodes.new('ShaderNodeVectorMath')
+    vector_node = cast(ShaderNodeVectorMath, vector_node)
     vector_node.operation = 'MULTIPLY'
     vector_node.location = [3*PADDING, -2*PADDING]
     group.links.new(vector_node.inputs[0], inputs.outputs[0])
     group.links.new(outputs.inputs[2], vector_node.outputs[0])
     # In: Alpha -> Math[MULTIPLY] -> Math[SUBTRACT][1] -> Vector[MULTIPLY][1]
     math_1_node = group.nodes.new('ShaderNodeMath')
+    math_1_node = cast(ShaderNodeMath, math_1_node)
     math_1_node.operation = 'MULTIPLY'
     math_1_node.location = [1*PADDING, -2*PADDING]
     math_2_node = group.nodes.new('ShaderNodeMath')
+    math_2_node = cast(ShaderNodeMath, math_2_node)
     math_2_node.operation = 'SUBTRACT'
     math_2_node.use_clamp = True
     math_2_node.location = [2*PADDING, -2*PADDING]
@@ -207,21 +228,25 @@ def create_entity_emissive_alpha_node_group(material: Material, is_first: bool) 
     group.links.new(outputs.inputs[0], inputs.outputs[0])
     #  In: Alpha -> MATH[CEIL] -> Out: Alpha
     math_3_node = group.nodes.new('ShaderNodeMath')
+    math_3_node = cast(ShaderNodeMath, math_3_node)
     math_3_node.operation = 'CEIL'
     math_3_node.location = [2*PADDING, -1*PADDING]
     group.links.new(math_3_node.inputs[0], inputs.outputs[1])
     group.links.new(outputs.inputs[1], math_3_node.outputs[0])
     # In: Color -> ... -> ... -> Vector[MULTIPLY][0] -> Out: Emission
     vector_node = group.nodes.new('ShaderNodeVectorMath')
+    vector_node = cast(ShaderNodeVectorMath, vector_node)
     vector_node.operation = 'MULTIPLY'
     vector_node.location = [3*PADDING, -2*PADDING]
     group.links.new(vector_node.inputs[0], inputs.outputs[0])
     group.links.new(outputs.inputs[2], vector_node.outputs[0])
     # In: Alpha -> Math[MULTIPLY] -> Math[SUBTRACT][1] -> Vector[MULTIPLY][1]
     math_1_node = group.nodes.new('ShaderNodeMath')
+    math_1_node = cast(ShaderNodeMath, math_1_node)
     math_1_node.operation = 'MULTIPLY'
     math_1_node.location = [1*PADDING, -2*PADDING]
     math_2_node = group.nodes.new('ShaderNodeMath')
+    math_2_node = cast(ShaderNodeMath, math_2_node)
     math_2_node.operation = 'SUBTRACT'
     math_2_node.use_clamp = True
     math_2_node.location = [2*PADDING, -2*PADDING]
@@ -243,23 +268,35 @@ def create_material_mix_node_group() -> NodeTree:
     group = bpy.data.node_groups.new('material_mix', 'ShaderNodeTree')
     # create group inputs
     inputs = group.nodes.new('NodeGroupInput')
+    inputs = cast(NodeGroupInput, inputs)
     inputs.location = [0, 0]
-    group.inputs.new('NodeSocketColor','Color1')
-    group.inputs.new('NodeSocketColor','Color2')
-    group.inputs.new('NodeSocketFloat','Alpha1')
-    group.inputs.new('NodeSocketFloat','Alpha2')
-    group.inputs.new('NodeSocketFloat','Emission1')
-    group.inputs.new('NodeSocketFloat','Emission2')
+    group.interface.new_socket(
+        'Color1', socket_type='NodeSocketColor', in_out='INPUT')
+    group.interface.new_socket(
+        'Color2', socket_type='NodeSocketColor', in_out='INPUT')
+    group.interface.new_socket(
+        'Alpha1', socket_type='NodeSocketFloat', in_out='INPUT')
+    group.interface.new_socket(
+        'Alpha2', socket_type='NodeSocketFloat', in_out='INPUT')
+    group.interface.new_socket(
+        'Emission1', socket_type='NodeSocketFloat', in_out='INPUT')
+    group.interface.new_socket(
+        'Emission2', socket_type='NodeSocketFloat', in_out='INPUT')
 
     # create group outputs
     outputs = group.nodes.new('NodeGroupOutput')
+    outputs = cast(NodeGroupOutput, outputs)
     outputs.location = [2*PADDING, 0]
-    group.outputs.new('NodeSocketColor','Color')
-    group.outputs.new('NodeSocketFloat','Alpha')
-    group.outputs.new('NodeSocketColor','Emission')
+    group.interface.new_socket(
+        'Color', socket_type='NodeSocketColor', in_out='OUTPUT')
+    group.interface.new_socket(
+        'Alpha', socket_type='NodeSocketFloat', in_out='OUTPUT')
+    group.interface.new_socket(
+        'Emission', socket_type='NodeSocketColor', in_out='OUTPUT')
 
     # Mix colors (Color mix node)
     mix_colors_node = group.nodes.new('ShaderNodeMixRGB')
+    mix_colors_node = cast(ShaderNodeMixRGB, mix_colors_node)
     mix_colors_node.location = [1*PADDING, 1*PADDING]
     group.links.new(mix_colors_node.inputs['Color1'], inputs.outputs['Color1'])
     group.links.new(mix_colors_node.inputs['Color2'], inputs.outputs['Color2'])
@@ -268,6 +305,7 @@ def create_material_mix_node_group() -> NodeTree:
 
     # Mix alpha (Add and clamp aplha)
     math_node = group.nodes.new('ShaderNodeMath')
+    math_node = cast(ShaderNodeMath, math_node)
     math_node.operation = 'MAXIMUM'
     math_node.location = [1*PADDING, 0]
     # math_node.use_clamp = True
@@ -277,6 +315,7 @@ def create_material_mix_node_group() -> NodeTree:
 
     # Mix emissions (Color mix node)
     mix_emissions_node = group.nodes.new('ShaderNodeMixRGB')
+    mix_emissions_node = cast(ShaderNodeMixRGB, mix_emissions_node)
     mix_emissions_node.location = [1*PADDING, -1*PADDING]
     group.links.new(mix_emissions_node.inputs['Color1'], inputs.outputs['Emission1'])
     group.links.new(mix_emissions_node.inputs['Color2'], inputs.outputs['Emission2'])
@@ -473,9 +512,27 @@ def create_bone_material(
     node_tree = material.node_tree
     output_node = node_tree.nodes['Material Output']
     bsdf_node = node_tree.nodes["Principled BSDF"]
-    bsdf_node.inputs['Specular'].default_value = 0
-    bsdf_node.inputs['Sheen Tint'].default_value = 0
-    bsdf_node.inputs['Roughness'].default_value = 1
+    cast(
+        NodeSocketFloat,
+        bsdf_node.inputs['Specular IOR Level']).default_value = 0
+    cast(
+        NodeSocketColor,
+        bsdf_node.inputs['Sheen Tint']).default_value = (0, 0, 0, 0)
+    cast(
+        NodeSocketFloat,
+        bsdf_node.inputs['Roughness']).default_value = 1
+
+    # This emmision configuration allows enabling emissin using only
+    # Emission Color property (like in older Blender versions when the
+    # emissin color and strength were only one input). We're setting color
+    # to bloack and strength to 1.0. Black color means that there is no
+    # emission.
+    cast(
+        NodeSocketColor,
+        bsdf_node.inputs['Emission Color']).default_value = (0, 0, 0, 0)
+    cast(
+        NodeSocketFloat,
+        bsdf_node.inputs['Emission Strength']).default_value = 1.0
 
     node_groups: Deque[Node] = deque()
     # Test for opaque materials, if you don't find eny enter second loop
@@ -491,10 +548,12 @@ def create_bone_material(
             continue
         # Reach this code only with OPAQUE_MATERIALS (executed onece)
         node_group_data = MATERIALS_MAP[true_material_name](material, i == 0)
-        node_group: Node = node_tree.nodes.new('ShaderNodeGroup')
+        node_group = node_tree.nodes.new('ShaderNodeGroup')
+        node_group = cast(ShaderNodeGroup, node_group)
         node_group.node_tree = node_group_data
         node_group.location = [-3*PADDING, -i*PADDING]
         image_node = node_tree.nodes.new('ShaderNodeTexImage')
+        image_node = cast(ShaderNodeTexImage, image_node)
         image_node.interpolation = 'Closest'
         image_node.image = img
         image_node.location = [-4*PADDING, -i*PADDING]
@@ -517,9 +576,11 @@ def create_bone_material(
                 true_material_name = 'entity_alphatest'  # default
             node_group_data = MATERIALS_MAP[true_material_name](material, i == 0)
             node_group = node_tree.nodes.new('ShaderNodeGroup')
+            node_group = cast(ShaderNodeGroup, node_group)
             node_group.node_tree = node_group_data
             node_group.location = [-3*PADDING, -i*PADDING]
             image_node = node_tree.nodes.new('ShaderNodeTexImage')
+            image_node = cast(ShaderNodeTexImage, image_node)
             image_node.interpolation = 'Closest'
             image_node.image = img
             image_node.location = [-4*PADDING, -i*PADDING]
@@ -536,6 +597,7 @@ def create_bone_material(
     while True:
         if len(node_groups) > 1:
             connection = node_tree.nodes.new('ShaderNodeGroup')
+            connection = cast(ShaderNodeGroup, connection)
             connection.node_tree = create_material_mix_node_group()
             connection.location = [(i-2)*PADDING, -i*PADDING]
             bottom = node_groups.popleft()
@@ -569,7 +631,7 @@ def create_bone_material(
                 bsdf_node.inputs['Alpha'],
                 final_node.outputs['Alpha'])
             node_tree.links.new(
-                bsdf_node.inputs['Emission'],
+                bsdf_node.inputs['Emission Color'],
                 final_node.outputs['Emission'])
             break
         else:  # shouldn't happen if bone uses any materials
