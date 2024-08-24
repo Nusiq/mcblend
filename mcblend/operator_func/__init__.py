@@ -98,14 +98,15 @@ def export_animation(
     # Check and create object properties
     object_properties = McblendObjectGroup(armature, world_origin)
 
+    effective_fps = context.scene.render.fps/context.scene.render.fps_base
     animation = AnimationExport(
         name=anim_data.name,
-        length=(context.scene.frame_end-1)/context.scene.render.fps,
+        length=(context.scene.frame_end-1)/effective_fps,
         loop_animation=anim_data.loop,
         single_frame=anim_data.single_frame,
         anim_time_update=anim_data.anim_time_update,
         override_previous_animation=anim_data.override_previous_animation,
-        fps=context.scene.render.fps,
+        fps=effective_fps,
         effect_events={
             event.name: event.get_effects_dict()
             for event in get_mcblend_events(context.scene)
