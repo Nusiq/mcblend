@@ -302,7 +302,13 @@ class McblendObject:
         if normalize:
             p_matrix.normalize()
             c_matrix.normalize()
-        return p_matrix.inverted() @ c_matrix
+        # The inver_safe() function is used to avoid errors when the parent
+        # matrix is scaled to zero on some axis (which makes it non-invertible)
+        # It's not perfect becuase the child transformations will be incorrect
+        # but it prevents crashes and in theory the child transformations on
+        # that axis shouldn't be visible anyway (they are during interpolation
+        # between keyframes).
+        return p_matrix.inverted_safe() @ c_matrix
 
     def get_mcrotation(
             self, other: Optional[McblendObject] = None
@@ -323,7 +329,7 @@ class McblendObject:
             Returns Euler rotation of a child matrix in relation to parent matrix
             '''
             child_q = child_matrix.normalized().to_quaternion()
-            parent_q = parent_matrix.inverted().normalized().to_quaternion()
+            parent_q = parent_matrix.inverted_safe().normalized().to_quaternion()
             return (parent_q @ child_q).to_euler('XZY')
 
         if other is not None:
