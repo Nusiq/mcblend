@@ -45,13 +45,17 @@ def make_comparison_files(scene: str) -> tp.Tuple[tp.Dict, tp.Dict]:
 
 # PYTEST FUNCTIONS
 SCENES = [
+    # Incorrect object positioning when parent scale is not 1
     'issue62',
 
     # This model was exported using 'ArmatureAnimation' scene, but the
     # 'ArmatureAnimation_ArmatureOrigin' scene uses the same model but with
     # armature transormations. The origin mode is set to ARMATURE, so the
     # transformations should be irrelevant.
-    'ArmatureAnimation_ArmatureOrigin'
+    'ArmatureAnimation_ArmatureOrigin',
+
+    # Issue 116 - incorrect normals export for polymesh models
+    'issue116',
 ]
 
 

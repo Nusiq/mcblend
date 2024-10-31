@@ -1489,8 +1489,8 @@ class ImportGeometry:
                         blender_normals.append(
                             mathutils.Vector((
                                 curr_normal[0],
-                                curr_normal[2],
-                                curr_normal[1])
+                                -curr_normal[1],
+                                curr_normal[2])
                             ).normalized()
                         )
                         blender_uvs.append(bone.poly_mesh.uvs[uv_id])

@@ -231,7 +231,7 @@ class BoneExport:
                 for loop in loops:
                     # pylint: disable=assignment-from-no-return
                     transformed_normal = mathutils.Vector(
-                            np.array(loop.normal)[[0, 2, 1]]
+                        (loop.normal[0], -loop.normal[1], loop.normal[2])
                     ).normalized()
                     normals.append(
                         cast(
