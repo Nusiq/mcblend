@@ -143,6 +143,8 @@ def _get_keyframes(context: Context, prec: int=1) -> List[float]:
         for strip in nla_track.strips:
             if strip.type != 'CLIP':
                 continue
+            if strip.action is None:
+                continue
             strip_action_keyframes = get_action_keyframes(strip.action)
             # Scale/strip the action data with the strip
             # transformations

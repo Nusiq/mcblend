@@ -28096,7 +28096,7 @@ class MovieTrackingTracks(bpy_prop_collection[MovieTrackingTrack], bpy_struct):
 class NlaStrip(bpy_struct):
     """A container referencing an existing Action"""
 
-    action: Action
+    action: Action | None
     """ Action referenced by this strip
 
     :type: Action
