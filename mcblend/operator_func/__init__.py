@@ -112,7 +112,7 @@ def export_animation(
             for event in get_mcblend_events(context.scene)
         }
     )
-    animation.load_poses(object_properties, context)
+    animation.load_poses_and_bone_states(object_properties, context)
     return animation.json(
         old_json=old_dict, skip_rest_poses=anim_data.skip_rest_poses)
 
