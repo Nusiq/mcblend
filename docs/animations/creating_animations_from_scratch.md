@@ -26,6 +26,11 @@ In this section, you will learn how to create animations in Mcblend from scratch
 
 ![](/img/animations/creating_animation_ready_move_animation.png)
 
+11. You can experiment with different interpolation modes. By default, Blender uses the Bézier interpolation. Mcblend does its best to export the animation correctly, however, Blender's Bézier interpolation is more powerful than Minecraft's smooth interpolation. If the result looks strange, try changing the interpolation mode to linear. This gives the most predictable results in Minecraft. You can access the interpolation mode menu by selecting a keyframe you want to change and right clicking in the `Dope Sheet` editor.
+
+![](/img/animations/creating_animation_changing_interpolation.png)
+
+
 ## Managing animations using the NLA editor
 
 In this section, we will learn how to use the NLA editor to manage animations in Mcblend. This includes the ability to combine multiple actions into a single animation.

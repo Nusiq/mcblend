@@ -62,7 +62,9 @@ We can simply add the `Scale` keyframes to the root bone. It doesn't matter that
 
 ![](/img/animations/physics_simulation_ravager_scale_keyframes.png)
 
-8. [Export the animation](/animations/exporting_animations) using the knowledge from previous tutorials.
+8. For better results, before exporting select all the keyframes and change the interpolation mode to `Linear`. You can access the interpolation mode menu by right clicking in the `Dope Sheet` editor.
+
+9. [Export the animation](/animations/exporting_animations) using the knowledge from previous tutorials.
 
 ![](/img/animations/physics_simulation_export_animation.png)
 

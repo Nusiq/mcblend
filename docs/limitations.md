@@ -143,3 +143,6 @@ However, the quaternion number system has only one unique representation for eac
 </details>
 <br/>
 
+## Molang
+
+Mcblend does not support Molang, the scripting language used in Minecraft to animate models. This means that you cannot use Molang to animate your models in Blender. Only keyframe animations are supported.
