@@ -50,9 +50,9 @@ SCENES = [
     # Exactly the same as 'ArmatureAnimation' but with different name, the
     # ArmatureAnimation_ArmatureOrigin scene uses transformed armature and
     # ARMATURE origin mode (so result should be the same).
-    'ArmatureAnimation_ArmatureOrigin'
+    'ArmatureAnimation_ArmatureOrigin',
 
-    # 'BattleMech'
+    'animation_interpolation'
 ]
 
 def setup_module(module):
