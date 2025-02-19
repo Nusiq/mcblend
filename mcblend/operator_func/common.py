@@ -340,7 +340,7 @@ class McblendObject:
             result_euler = self.obj_matrix_world.to_euler('XZY')
         result: NumpyTable = np.array(result_euler)[[0, 2, 1]]
         result = result * np.array([1, -1, 1])
-        result = result * 180/math.pi  # math.degrees() for array
+        result = result * 180/math.pi  # type: ignore
         return result
 
     def cube_polygons(self) -> CubePolygons:

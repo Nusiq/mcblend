@@ -1037,7 +1037,7 @@ class ModelLoader:
         ).reshape(
             -1, group_size, 3
         ).tolist()
-        return result
+        return result  # type: ignore
 
     def _load_uv(
             self, uv: Any, uv_path: List[str | int],
