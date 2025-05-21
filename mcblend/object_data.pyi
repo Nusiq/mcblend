@@ -48,6 +48,7 @@ class MCBLEND_AnimationProperties(PropertyGroup):
     skip_rest_poses: bool
     override_previous_animation: bool
     anim_time_update: str
+    interpolation_mode: str
     loop: str
     frame_start: int
     frame_current: int

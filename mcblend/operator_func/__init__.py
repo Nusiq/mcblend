@@ -21,7 +21,7 @@ from .typed_bpy_access import (
 
 from .sqlite_bedrock_packs.better_json_tools import load_jsonc
 
-from .animation import AnimationExport
+from .animation import AnimationExport, InterpolationMode
 from .common import (
     MINECRAFT_SCALE_FACTOR, CubePolygon, McblendObject, McblendObjectGroup, MeshType,
     apply_obj_transform_keep_origin, fix_cube_rotation, star_pattern_match,
@@ -84,14 +84,13 @@ def export_animation(
     if armature is None or armature.type != 'ARMATURE':
         # Should never happen (checked in the operator)
         raise ValueError("Selected object is not an armature")
-    anim_data = get_mcblend(armature).animations[
-        get_mcblend(armature).active_animation]
+    model_properties = get_mcblend(armature)
+    anim_id = model_properties.active_animation
+    anim_data = model_properties.animations[anim_id]
 
-    # TODO - write this code nicer, passing world_origin as a string isn't
-    # a perfect solution
     world_origin = None
-    use_armature_origin: bool = get_mcblend(
-        armature).model_origin == ModelOriginType.ARMATURE.value
+    use_armature_origin: bool = model_properties.model_origin == (
+        ModelOriginType.ARMATURE.value)
     if use_armature_origin:
         world_origin = armature
 
@@ -99,6 +98,15 @@ def export_animation(
     object_properties = McblendObjectGroup(armature, world_origin)
 
     effective_fps = context.scene.render.fps/context.scene.render.fps_base
+    # Create forced interpolation mode from string
+    forced_interpolation = InterpolationMode.AUTO
+    if anim_data.interpolation_mode == 'LINEAR':
+        forced_interpolation = InterpolationMode.LINEAR
+    elif anim_data.interpolation_mode == 'SMOOTH':
+        forced_interpolation = InterpolationMode.SMOOTH
+    elif anim_data.interpolation_mode == 'STEP':
+        forced_interpolation = InterpolationMode.STEP
+
     animation = AnimationExport(
         name=anim_data.name,
         length=(context.scene.frame_end-1)/effective_fps,
@@ -110,7 +118,8 @@ def export_animation(
         effect_events={
             event.name: event.get_effects_dict()
             for event in get_mcblend_events(context.scene)
-        }
+        },
+        forced_interpolation=forced_interpolation
     )
     animation.load_poses_and_bone_states(object_properties, context)
     return animation.json(

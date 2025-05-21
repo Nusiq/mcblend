@@ -735,6 +735,10 @@ class MCBLEND_PT_AnimationPropertiesPanel(Panel):
                     "anim_time_update",
                     text="Anim Time Update")
                 col.prop(
+                    active_anim,  # type: ignore
+                    "interpolation_mode",
+                    text="Interpolation Mode")
+                col.prop(
                     bpy.context.scene,  # type: ignore
                     "frame_start", text="Frame start")
                 col.prop(

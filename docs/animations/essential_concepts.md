@@ -30,6 +30,10 @@ Let's say that in the image above, `bone_2` uses constant interpolation on frame
 
 This behavior can cause unexpected results when using stepped or smooth interpolation. To ensure predictable animations, it's generally best to use linear interpolation unless a different mode is necessary.
 
+```{note}
+If you want to force all keyframes to use a specific interpolation mode, you can use the `Interpolation mode` field in [Mcblend: Animation](mcblend-object-properties-animations).
+```
+
 ```{warning}
 Bézier interpolation in Blender does not exactly match smooth frames in Minecraft, which use a Catmull-Rom spline. For a similar effect in Blender's preview, use Bézier interpolation with "automatic" handle types.
 

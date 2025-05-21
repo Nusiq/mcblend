@@ -199,6 +199,17 @@ class MCBLEND_AnimationProperties(PropertyGroup):
         default="",
         maxlen=1024
     )
+    interpolation_mode: EnumProperty(
+        items=(
+            ('AUTO', 'Auto', 'Use the interpolation mode detected from Blender keyframes'),
+            ('LINEAR', 'Linear', 'Force all keyframes to use linear interpolation'),
+            ('SMOOTH', 'Smooth', 'Force all keyframes to use smooth interpolation'),
+            ('STEP', 'Step', 'Force all keyframes to use step interpolation')
+        ),
+        name='Interpolation Mode',
+        description='Control how keyframes are interpolated',
+        default='AUTO'
+    )
     loop: EnumProperty(
         items=(
             (

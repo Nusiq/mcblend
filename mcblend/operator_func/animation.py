@@ -30,6 +30,7 @@ class InterpolationMode(Enum):
     STEP = 0
     LINEAR = 1
     SMOOTH = 2
+    AUTO = 3  # Use the interpolation mode detected from Blender keyframes
 
     # Must be comparable for bisect
     def __lt__(self, other: InterpolationMode) -> bool:
@@ -165,9 +166,12 @@ TimeNameTypeInterpolation = Tuple[
     float, None | Tuple[str, TransformationType, InterpolationMode]]
 
 class ObjectKeyframesInfo:
-    def __init__(self, obj: Object | None):
+    def __init__(
+            self, obj: Object | None, 
+            forced_interpolation: InterpolationMode = InterpolationMode.AUTO):
         self.keyframes: set[float] = set()
         self.timelines: Dict[tuple[str, TransformationType], Timeline] = {}
+        self.forced_interpolation = forced_interpolation
         if obj is None:
             return
         self._init_keyframes_and_timelines(obj)
@@ -183,6 +187,10 @@ class ObjectKeyframesInfo:
         :param timestamp: the timestamp of the keyframe.
         :returns: the interpolation mode of the bone state.
         '''
+        # Return forced interpolation if not AUTO
+        if self.forced_interpolation != InterpolationMode.AUTO:
+            return self.forced_interpolation
+            
         timelines_key = (bone_name, transformation_type)
         if timelines_key not in self.timelines:
             return InterpolationMode.LINEAR
@@ -399,6 +407,9 @@ class AnimationExport:
     :param poses: Optional - poses of the animation (keyframes) keyed by the
         number of the frame. This dictionary is empty by default after the
         creation and it gets populated on loading the poses.
+    :param forced_interpolation: Optional - force all keyframes to use a specific
+        interpolation mode: InterpolationMode.LINEAR, InterpolationMode.SMOOTH,
+        InterpolationMode.STEP, or InterpolationMode.AUTO (default).
     '''
     name: str
     length: float
@@ -412,6 +423,8 @@ class AnimationExport:
     poses: Dict[float, Pose] = field(default_factory=dict)
     sound_effects: Dict[int, List[Dict[Any, Any]]] = field(default_factory=dict)
     particle_effects: Dict[int, List[Dict[Any, Any]]] = field(default_factory=dict)
+    forced_interpolation: InterpolationMode = field(
+        default=InterpolationMode.AUTO)
 
     def load_poses_and_bone_states(
             self, object_properties: McblendObjectGroup,
@@ -437,7 +450,9 @@ class AnimationExport:
                 # The frame value in the dictionary key doesn't really matter
                 self.poses[keyframe] = pose
             else:
-                bone_states = ObjectKeyframesInfo(context.object)
+                bone_states = ObjectKeyframesInfo(
+                    context.object, forced_interpolation=self.forced_interpolation
+                )
                 for keyframe in sorted(bone_states.keyframes):
                     if (
                         keyframe < context.scene.frame_start or

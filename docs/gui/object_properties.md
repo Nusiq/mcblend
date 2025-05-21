@@ -47,6 +47,7 @@ The Materials panel allows you to quickly create materials that are similar to t
 
 Once you've set up your render controller, you can use the `Apply materials` button to automatically create the materials for preview in Blender. This will help you get a better sense of how your model will look in Minecraft.
 
+(mcblend-object-properties-animations)=
 ### Mcblend: Animations
 
 ![](/img/gui/object_properties_armature_animations.png)
@@ -62,6 +63,7 @@ The `Mcblend: Animations panel` allows you to easily switch between animations i
 - The `Override previous animation` field directly translates to the override_previous_animation property of the Minecraft animation. It doesn't affect how the animation is rendered in Blender.
 - The `Loop` field directly translates to the loop property of the Minecraft animation file. There are three options: `true`, `false`, and `hold_on_last_frame`.
 - The `Anim Time Update` field directly translates to the anim_time_update property of the Minecraft animation file. You should either leave it empty (if you don't want to have anim_time_update in your animation) or put a Molang expression in it. It doesn't affect the animation in Mcblend because Mcblend doesn't support Molang.
+- The `Interpolation mode` field directly translates to the interpolation mode of the Minecraft animation file. There are four options: `linear`, `smooth`, `step`, and `auto`.
 - The `Frame start` field indicates the first frame of the animation. It tells Mcblend where the animation starts.
 - The `Frame end` field indicates the last frame of the animation. It tells Mcblend where the animation ends.
 
