@@ -319,8 +319,10 @@ class ObjectKeyframesInfo:
                         interpolation = InterpolationMode.STEP
                     elif keyframe_point.interpolation == 'BEZIER':
                         interpolation = InterpolationMode.SMOOTH
+                    # Create a properly structured tuple that matches TimeNameTypeInterpolation
+                    bone_name, transform_type = keyframe_owner_bone
                     result.append(
-                        (keyframe_point.co[0], (*keyframe_owner_bone, interpolation)))
+                        (keyframe_point.co[0], (bone_name, transform_type, interpolation)))
                 else:
                     result.append((keyframe_point.co[0], None))
         return result

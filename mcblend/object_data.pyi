@@ -55,6 +55,8 @@ class MCBLEND_AnimationProperties(PropertyGroup):
     frame_end: int
     timeline_markers: CollectionProperty[MCBLEND_TimelineMarkerProperties]
     nla_tracks: CollectionProperty[MCBLEND_JustName]
+    optimize_animation: bool
+    optimization_error: float
 
 # Material properties
 def list_mesh_types_as_blender_enum(

@@ -117,7 +117,7 @@ class AnimationOptimizer:
     """
     Class for optimizing animations by removing redundant keyframes.
     """
-    def __init__(self, error_margin: float = 0.05, animation_name: str = None):
+    def __init__(self, error_margin: float = 0.05, animation_name: Optional[str] = None):
         """
         Initialize the AnimationOptimizer with a specified error margin.
 
