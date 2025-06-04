@@ -248,6 +248,20 @@ class MCBLEND_AnimationProperties(PropertyGroup):
     timeline_markers: CollectionProperty(
         type=MCBLEND_TimelineMarkerProperties,
     )
+    optimize_animation: BoolProperty(
+        name="Optimize Animation",
+        description="Remove redundant keyframes to optimize the animation file size",
+        default=False,
+    )
+    optimization_error: FloatProperty(
+        name="Error Margin (%)",
+        description=(
+            "Maximum allowed error margin for optimization (higher "
+            "values mean more optimization but less accuracy)"),
+        default=5.0,
+        min=0.0,
+        max=100.0,
+    )
     nla_tracks: CollectionProperty(
         type=MCBLEND_JustName
     )

@@ -744,6 +744,20 @@ class MCBLEND_PT_AnimationPropertiesPanel(Panel):
                 col.prop(
                     bpy.context.scene,  # type: ignore
                     "frame_end", text="Frame end")
+                
+                # Animation optimization options
+                box = col.box()
+                box.label(text="Animation Optimization")
+                box.prop(
+                    active_anim,  # type: ignore
+                    "optimize_animation", text="Optimize Animation")
+                
+                # Only show error margin if optimization is enabled
+                if active_anim.optimize_animation:
+                    row = box.row()
+                    row.prop(
+                        active_anim,  # type: ignore
+                        "optimization_error", text="Error Margin (%)")
 
 # "Other" operators panel
 class MCBLEND_PT_OperatorsPanel(Panel):

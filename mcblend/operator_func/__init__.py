@@ -33,6 +33,7 @@ from .model import ModelExport
 from .uv import CoordinatesConverter, UvMapper, UvModelMerger
 from .db_handler import get_db_handler
 from .rp_importer import PksForModelImport
+from .animation_optimization import AnimationOptimizer
 
 def export_model(
         context: Context) -> Tuple[Dict[str, Any], Iterable[str]]:
@@ -122,8 +123,18 @@ def export_animation(
         forced_interpolation=forced_interpolation
     )
     animation.load_poses_and_bone_states(object_properties, context)
-    return animation.json(
+    animation_dict = animation.json(
         old_json=old_dict, skip_rest_poses=anim_data.skip_rest_poses)
+    
+    # Apply animation optimization if enabled
+    if anim_data.optimize_animation:
+        optimizer = AnimationOptimizer(
+            error_margin=anim_data.optimization_error / 100.0,
+            animation_name=anim_data.name
+        )
+        animation_dict = optimizer.optimize_animation(animation_dict)
+        
+    return animation_dict
 
 def set_uvs(context: Context):
     '''
