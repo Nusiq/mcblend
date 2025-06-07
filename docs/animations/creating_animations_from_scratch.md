@@ -1,3 +1,4 @@
+(creating-animations-from-scratch)=
 # Creating animations from scratch
 
 In this section, you will learn how to create animations in Mcblend from scratch. It is assumed that the reader already knows how to make and export models in Mcblend. We will start with a simple model that has a single bone and a single cube connected to it.

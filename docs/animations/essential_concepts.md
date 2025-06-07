@@ -14,6 +14,7 @@ The editor on the left side of the screen is the `Nonlinear Animation` editor. T
 
 During the export process, the exported data for animations is not solely based on the NLA tracks. Mcblend exports the same animation that is visible in the 3D viewport during the preview, which can be affected by various factors such as constraints, inverse kinematics, and physics. This means that some bones in the model may not be animated in the NLA tracks, but they will be animated in the exported animation due to the influence of other factors that affect their movement. The keyframe times for the animations are based on the keyframe times in the NLA tracks, but not at the bone level. Essentially, if there is any keyframe at a certain time, Mcblend compares the pose of the entire model at that time to the pose of the model at the previous keyframe. If the pose is different for a given bone, Mcblend will add a keyframe for that bone to the exported animation. Any pose changes that occur between keyframes are not checked, which can lead to unexpected results, particularly when using physics, which often generates complex movement that requires many keyframes to be animated correctly.
 
+(stepped-linear-smooth-animations)=
 ## Stepped, Linear, and Smooth Interpolation
 
 Minecraft supports three types of frames: stepped, linear, and smooth. Blender offers corresponding interpolation modes: constant, linear, and Bézier.

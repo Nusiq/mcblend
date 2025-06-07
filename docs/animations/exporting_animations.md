@@ -1,3 +1,4 @@
+(exporting-animations)=
 # Exporting Animations
 
 This section explains how to export animations from Mcblend and mentions some additional settings that can be configured before exporting.
@@ -8,4 +9,6 @@ Before exporting the animation, you can configure some additional settings in th
 
 The `Override previous animation`, `Loop`, and `Anim Time update` settings are properties of Minecraft animations and are directly exported to the file. They have no effect on Mcblend. The `Frame start` and `Frame end` settings determine the range of frames that will be exported to the animation.
 
-Exporting the animation is similar to exporting a model, as explained in the ["Creating animations from scratch"](/animations/creating_animations_from_scratch) documentation page. Simply go to `File > Export > Export Bedrock Animation` and select the export path.
+The `Optimize Animation` checkbox allows you to apply **lossy** optimization to the animation during export. This option also lets you configure the error acceptable margin for the optimization. More details in {ref}`Optimizing animations<optimizing-animations>` section.
+
+Exporting the animation is similar to exporting a model, as explained in the {ref}`Creating animations from scratch<creating-animations-from-scratch>` documentation page. Simply go to `File > Export > Export Bedrock Animation` and select the export path.

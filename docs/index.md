@@ -39,6 +39,7 @@ Fix invalid UV mapping<texturing_and_uv_mapping/fixing_invalid_uv_mapping>
 Essential concepts for creating animations in Mcblend <animations/essential_concepts>
 Creating animations from scratch <animations/creating_animations_from_scratch>
 Exporting animations <animations/exporting_animations>
+Optimizing animations <animations/optimizing_animations>
 Animating sound and particle effects <animations/animating_sound_and_particle_effects>
 Physics simluation <animations/physics_simulation>
 ```
