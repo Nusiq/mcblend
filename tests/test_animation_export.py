@@ -52,7 +52,8 @@ SCENES = [
     # ARMATURE origin mode (so result should be the same).
     'ArmatureAnimation_ArmatureOrigin',
 
-    'animation_interpolation'
+    'animation_interpolation',
+    'animation_optimization'
 ]
 
 def setup_module(module):
