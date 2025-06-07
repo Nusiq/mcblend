@@ -66,6 +66,8 @@ The `Mcblend: Animations panel` allows you to easily switch between animations i
 - The `Interpolation mode` field directly translates to the interpolation mode of the Minecraft animation file. There are four options: `linear`, `smooth`, `step`, and `auto`.
 - The `Frame start` field indicates the first frame of the animation. It tells Mcblend where the animation starts.
 - The `Frame end` field indicates the last frame of the animation. It tells Mcblend where the animation ends.
+- The `Optimize Animation` checkbox enables {ref}`animation export optimization<optimizing-animations>`.
+- The `Error margin` field defines how much error is allowed when optimizing the exported animation.
 
 ## Object properties (bone of armature)
 
