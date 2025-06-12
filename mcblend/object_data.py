@@ -253,6 +253,11 @@ class MCBLEND_AnimationProperties(PropertyGroup):
         description="Remove redundant keyframes to optimize the animation file size",
         default=False,
     )
+    exclude_from_batch_exports: BoolProperty(
+        name="Exclude from batch exports",
+        description="Skip this animation when using the Batch Export operator",
+        default=False,
+    )
     optimization_error: FloatProperty(
         name="Error Margin (%)",
         description=(

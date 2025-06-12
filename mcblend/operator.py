@@ -259,6 +259,9 @@ class MCBLEND_OT_BatchExportAnimation(  # pyright: ignore[reportIncompatibleMeth
 
         # Export each animation
         for i, animation in enumerate(animations):
+            # Skip animations excluded from batch exports
+            if animation.exclude_from_batch_exports:
+                continue
             # Set the current animation as active
             mcblend_data.active_animation = i
             

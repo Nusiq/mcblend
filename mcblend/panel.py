@@ -718,6 +718,11 @@ class MCBLEND_PT_AnimationPropertiesPanel(Panel):
             row.prop(
                 active_anim,  # type: ignore
                 "single_frame", text="Export as pose")
+            row = col.row()
+            row.prop(
+                active_anim,  # type: ignore
+                "exclude_from_batch_exports",
+                text="Exclude from batch exports")
             col.prop(
                 active_anim,  # type: ignore
                 "override_previous_animation",

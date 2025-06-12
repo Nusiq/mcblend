@@ -56,6 +56,7 @@ class MCBLEND_AnimationProperties(PropertyGroup):
     timeline_markers: CollectionProperty[MCBLEND_TimelineMarkerProperties]
     nla_tracks: CollectionProperty[MCBLEND_JustName]
     optimize_animation: bool
+    exclude_from_batch_exports: bool
     optimization_error: float
 
 # Material properties
