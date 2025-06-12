@@ -14,6 +14,10 @@ After selecting the file, the model will be imported into your Blender scene. Th
 
 ![](/img/modeling/import_model.png)
 
+If the model file contains multiple models, you should specify the name of the model you want to import. You may omit the `geometry.` prefix. Otherwise, the first model in the list will be imported.
+
+![](/img/modeling/import_model_dialog.png)
+
 ## Importing and applying the texture to the model
 
 To import the texture and apply it to your model, you'll need to use the Render controllers feature in Mcblend. These work in a similar way to the render controllers in Minecraft, defining which textures should be used by the model, which cubes they should be applied to, and the properties of the material of each cube.

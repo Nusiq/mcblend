@@ -281,40 +281,45 @@ class ModelLoader:
         :param geometry_name: The name of geometry
         :param data: Root object of the JSON.
         '''
+        full_geometry_name = geometry_name  # Not needed, makes pyright happy
         if self.parser_version in ('1.16.0', '1.12.0'):
             result = None
             geometries = data['minecraft:geometry']
             path: List[str | int] = ['minecraft:geometry']
             self._assert_type(
                 'geometries', geometries, (list,), path)  # type: ignore
-            for i, geometry in enumerate(geometries):
-                path = ['minecraft:geometry', i]
-                if not self._assert_type(
-                        'geometry', geometry, (dict,), path,  # type: ignore
-                        ErrorLevel.WARNING):
-                    continue
-                if not self._assert_required_keys(
-                        'geometry', set(geometry.keys()),
-                        {'description', 'bones'}, path, ErrorLevel.WARNING):
-                    continue
-                self._assert_acceptable_keys(
-                    'geometry', set(geometry.keys()), {'description', 'bones'},
-                    path, ErrorLevel.WARNING)
-                desc = geometry['description']
-                if 'identifier' not in desc:
-                    self.append_warning(
-                        "description is missing identifier", path)
-                    continue
-                identifier = desc['identifier']
-                if geometry_name  == '' and result is None:
-                    result = geometry, path
-                elif geometry_name == identifier:
-                    result = geometry, path
-            # Return from 1.16.0 or 1.12.0
-            if result is not None:
-                return result
+
+            # Check both the names with and without the geometry prefix
+            for full_geometry_name in [geometry_name, f'geometry.{geometry_name}']:
+                for i, geometry in enumerate(geometries):
+                    path = ['minecraft:geometry', i]
+                    if not self._assert_type(
+                            'geometry', geometry, (dict,), path,  # type: ignore
+                            ErrorLevel.WARNING):
+                        continue
+                    if not self._assert_required_keys(
+                            'geometry', set(geometry.keys()),
+                            {'description', 'bones'}, path, ErrorLevel.WARNING):
+                        continue
+                    self._assert_acceptable_keys(
+                        'geometry', set(geometry.keys()), {'description', 'bones'},
+                        path, ErrorLevel.WARNING)
+                    desc = geometry['description']
+                    if 'identifier' not in desc:
+                        self.append_warning(
+                            "description is missing identifier", path)
+                        continue
+                    identifier = desc['identifier']
+                    if full_geometry_name  == '' and result is None:
+                        result = geometry, path
+                    elif full_geometry_name == identifier:
+                        result = geometry, path
+                # Return from 1.16.0 or 1.12.0
+                if result is not None:
+                    return result
             raise ImporterException(
-                f'Unable to find geometry called geometry.{geometry_name}')
+                # Sometimes Python's variable scope is really nice <3
+                f'Unable to find geometry called {full_geometry_name}')
 
         if self.parser_version == '1.8.0':
             result = None
@@ -322,31 +327,33 @@ class ModelLoader:
             path = []
             self._assert_type(
                 'geometries', geometries, (dict,), path)  # type: ignore
-            for k, geometry in geometries.items():
-                if k in ('format_version', 'debug'):
-                    continue
-                path = [k]
-                if not self._assert_type(
-                        'geometry', geometry, (dict,), # type: ignore
-                        path, ErrorLevel.WARNING):
-                    continue
-                self._assert_acceptable_keys(
-                    'geometry', set(geometry.keys()),
-                    {
-                        "debug", "visible_bounds_width",
-                        "visible_bounds_height", "visible_bounds_offset",
-                        "texturewidth", "textureheight", "cape", "bones"
-                    }, path, ErrorLevel.WARNING)
-                identifier = k
-                if geometry_name  == '' and result is None:
-                    result = geometry, path
-                elif geometry_name == identifier:
-                    result = geometry, path
-            # Return from 1.8.0
-            if result is not None:
-                return result
+            # Check both the names with and without the geometry prefix
+            for full_geometry_name in [geometry_name, f'geometry.{geometry_name}']:
+                for k, geometry in geometries.items():
+                    if k in ('format_version', 'debug'):
+                        continue
+                    path = [k]
+                    if not self._assert_type(
+                            'geometry', geometry, (dict,), # type: ignore
+                            path, ErrorLevel.WARNING):
+                        continue
+                    self._assert_acceptable_keys(
+                        'geometry', set(geometry.keys()),
+                        {
+                            "debug", "visible_bounds_width",
+                            "visible_bounds_height", "visible_bounds_offset",
+                            "texturewidth", "textureheight", "cape", "bones"
+                        }, path, ErrorLevel.WARNING)
+                    identifier = k
+                    if full_geometry_name  == '' and result is None:
+                        result = geometry, path
+                    elif full_geometry_name == identifier:
+                        result = geometry, path
+                # Return from 1.8.0
+                if result is not None:
+                    return result
             raise ImporterException(
-                f'Unable to find geometry called geometry.{geometry_name}')
+                f'Unable to find geometry called {full_geometry_name}')
         raise ImporterException(
             f'Unsupported format version: {self.format_version}')
 
