@@ -753,7 +753,9 @@ class CubePolygon(NamedTuple):
         ).all():
             return False, False, False
 
-        lb, rb, rt, lt = crds
+        # Casting to list of tuples becaause numpy doesn't let you annotate
+        # dimensions which makes the liter come to wrong conclusions
+        lb, rb, rt, lt = cast(List[Tuple[np.float64, np.float64]], crds)
         # Left to left, right to right, bottom to bottom, top to top
         if (
                 not np.isclose(lb[0], lt[0]) or

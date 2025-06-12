@@ -227,7 +227,7 @@ class BoneExport:
                         np.array(transformed_vertex) * MINECRAFT_SCALE_FACTOR *
                         np.array(thisobj.obj_matrix_world.to_scale())
                     )[[0, 2, 1]] + self.pivot
-                    positions.append(list(transformed_vertex))
+                    positions.append(list(transformed_vertex))  # type: ignore
                 for loop in loops:
                     # pylint: disable=assignment-from-no-return
                     transformed_normal = mathutils.Vector(
