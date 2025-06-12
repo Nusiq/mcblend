@@ -3,6 +3,7 @@ This module contains all of the operators.
 '''
 # don't import future annotations Blender needs that
 import json
+import os
 from pathlib import Path
 from json.decoder import JSONDecodeError
 from typing import List, Optional, Dict, Any, Set, TYPE_CHECKING, cast
@@ -182,6 +183,111 @@ def menu_func_mcblend_export_animation(self: Any, context: Context):
     '''Used to register the operator in the file export menu.'''
     # pylint: disable=unused-argument
     self.layout.operator(MCBLEND_OT_ExportAnimation.bl_idname)
+
+
+# Batch Animation exporter
+class MCBLEND_OT_BatchExportAnimation(  # pyright: ignore[reportIncompatibleMethodOverride]
+        Operator, ExportHelper):
+    '''Operator used for exporting all Minecraft animations of an armature.'''
+    # pylint: disable=unused-argument, no-member
+    bl_idname = "mcblend.batch_export_animation"
+    bl_label = "Batch Export Bedrock Animations"
+    bl_options = {'REGISTER'}
+    bl_description = (
+        "Export all animations of the selected armature as Minecraft Bedrock "
+        "Edition animations")
+
+    filename_ext = '.json'
+
+    filter_glob: StringProperty(  # type: ignore
+        default='*.json',
+        options={'HIDDEN'},
+        maxlen=1000
+    )
+
+    if TYPE_CHECKING:
+        filepath: str
+
+    @classmethod
+    def poll(cls, context: Context) -> bool:
+        if context.mode != 'OBJECT':
+            return False
+        obj = context.object
+        if obj is None:
+            return False
+        if obj.type != 'ARMATURE':
+            return False
+        animations = get_mcblend(obj).animations
+        if len(animations) == 0:
+            return False
+        return True
+
+    def execute(self, context: Context):
+        obj = context.object
+        if obj is None or obj.type != 'ARMATURE':
+            self.report({'ERROR'}, "No armature selected")
+            return {'CANCELLED'}
+
+        mcblend_data = get_mcblend(obj)
+        animations = mcblend_data.animations
+
+        if len(animations) == 0:
+            self.report({'ERROR'}, "No animations to export")
+            return {'CANCELLED'}
+
+        # Remember the originally active animation to restore it later
+        original_animation_id = mcblend_data.active_animation
+        
+        # Save the currently open animation, just in case.
+        if 0 <= original_animation_id < len(animations):
+            save_animation_properties(animations[original_animation_id], context)
+
+        # Read and validate old animation file if it exists
+        old_dict: Optional[Dict[str, Any]] = None
+        filepath: str = self.filepath
+        try:
+            with open(filepath, 'r', encoding='utf8') as f:
+                old_dict = json.load(f, cls=JSONCDecoder)
+        except (json.JSONDecodeError, OSError):
+            pass
+
+        # Initialize the animation dictionary if it doesn't exist
+        if old_dict is None:
+            old_dict = {}
+
+        exported_count = 0
+
+        # Export each animation
+        for i, animation in enumerate(animations):
+            # Set the current animation as active
+            mcblend_data.active_animation = i
+            
+            # Load the animation properties to properly switch the active animation
+            load_animation_properties(animation, context)
+
+            # Export the animation and merge with existing data
+            old_dict = export_animation(context, old_dict)
+
+            exported_count += 1
+
+        # Restore the original active animation
+        mcblend_data.active_animation = original_animation_id
+        load_animation_properties(animations[original_animation_id], context)
+
+        # Save the final file with all animations
+        with open(filepath, 'w', encoding='utf8') as f:
+            json.dump(old_dict, f, cls=CompactEncoder)
+
+        self.report(
+            {'INFO'},
+            f'Successfully exported {exported_count} animations to {filepath}.'
+        )
+        return {'FINISHED'}
+
+def menu_func_mcblend_batch_export_animation(self: Any, context: Context):
+    '''Used to register the batch export animation operator in the file export menu.'''
+    # pylint: disable=unused-argument
+    self.layout.operator(MCBLEND_OT_BatchExportAnimation.bl_idname)
 
 # UV mapper
 class MCBLEND_OT_MapUv(Operator):
@@ -505,7 +611,7 @@ def save_animation_properties(
         anim_timeline_marker.name = timeline_marker.name
         anim_timeline_marker.frame = timeline_marker.frame
     animation.nla_tracks.clear()
-    
+
     obj = context.object
     if obj is None:  # TODO - should this be an error?
         return
