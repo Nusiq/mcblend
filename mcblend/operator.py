@@ -3,7 +3,6 @@ This module contains all of the operators.
 '''
 # don't import future annotations Blender needs that
 import json
-import os
 from pathlib import Path
 from json.decoder import JSONDecodeError
 from typing import List, Optional, Dict, Any, Set, TYPE_CHECKING, cast
@@ -236,14 +235,15 @@ class MCBLEND_OT_BatchExportAnimation(  # pyright: ignore[reportIncompatibleMeth
             self.report({'ERROR'}, "No animations to export")
             return {'CANCELLED'}
 
-        # Remember the originally active animation to restore it later
+        # Remember which animation was originally opened
         original_animation_id = mcblend_data.active_animation
         
-        # Save the currently open animation, just in case.
+        # Save current animation before closing it
         if 0 <= original_animation_id < len(animations):
-            save_animation_properties(animations[original_animation_id], context)
+            save_animation_properties(
+                animations[original_animation_id], context)
 
-        # Read and validate old animation file if it exists
+        # If original file exists we will try to append to it
         old_dict: Optional[Dict[str, Any]] = None
         filepath: str = self.filepath
         try:
@@ -251,8 +251,6 @@ class MCBLEND_OT_BatchExportAnimation(  # pyright: ignore[reportIncompatibleMeth
                 old_dict = json.load(f, cls=JSONCDecoder)
         except (json.JSONDecodeError, OSError):
             pass
-
-        # Initialize the animation dictionary if it doesn't exist
         if old_dict is None:
             old_dict = {}
 
@@ -263,22 +261,17 @@ class MCBLEND_OT_BatchExportAnimation(  # pyright: ignore[reportIncompatibleMeth
             # Skip animations excluded from batch exports
             if animation.exclude_from_batch_exports:
                 continue
-            # Set the current animation as active
+            # Load and append animation to dict
             mcblend_data.active_animation = i
-            
-            # Load the animation properties to properly switch the active animation
             load_animation_properties(animation, context)
-
-            # Export the animation and merge with existing data
             old_dict = export_animation(context, old_dict)
-
             exported_count += 1
 
-        # Restore the original active animation
+        # Open the originally opened animation
         mcblend_data.active_animation = original_animation_id
         load_animation_properties(animations[original_animation_id], context)
 
-        # Save the final file with all animations
+        # Save file
         with open(filepath, 'w', encoding='utf8') as f:
             json.dump(old_dict, f, cls=CompactEncoder)
 
@@ -294,7 +287,9 @@ class MCBLEND_OT_BatchExportAnimation(  # pyright: ignore[reportIncompatibleMeth
         return super().invoke(context, event)  # Parent shows file explorer
 
     def draw(self, context: Context):
-        """Draw checkboxes for each animation in the file browser side panel."""
+        """
+        Draw checkboxes for each animation in the file browser side panel.
+        """
         layout = self.layout
         obj = context.object
         if obj is None or obj.type != 'ARMATURE':
@@ -337,7 +332,10 @@ class MCBLEND_OT_BatchExportAnimation(  # pyright: ignore[reportIncompatibleMeth
                 invert_checkbox=True)
 
 def menu_func_mcblend_batch_export_animation(self: Any, context: Context):
-    '''Used to register the batch export animation operator in the file export menu.'''
+    '''
+    Used to register the batch export animation operator in the file export
+    menu.
+    '''
     # pylint: disable=unused-argument
     self.layout.operator(MCBLEND_OT_BatchExportAnimation.bl_idname)
 
