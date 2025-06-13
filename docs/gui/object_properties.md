@@ -60,6 +60,7 @@ The `Mcblend: Animations panel` allows you to easily switch between animations i
 - The `Name` field sets the name of the animation.
 - The `Skip rest poses` checkbox enables animation export optimization. If enabled, the keyframes that don't affect the armature (because they are the rest poses) are skipped in the exported file. In most cases, it's recommended to enable this option.
 - The `Export as pose` checkbox, if enabled, causes the exported animation to contain only one looped frame.
+- The `Exclude from batch exports` checkbox, if enabled, causes the animation to be skipped when using the `Batch Export Bedrock Animations` operator. Alternatively, you can select which animations to export during the export process.
 - The `Override previous animation` field directly translates to the override_previous_animation property of the Minecraft animation. It doesn't affect how the animation is rendered in Blender.
 - The `Loop` field directly translates to the loop property of the Minecraft animation file. There are three options: `true`, `false`, and `hold_on_last_frame`.
 - The `Anim Time Update` field directly translates to the anim_time_update property of the Minecraft animation file. You should either leave it empty (if you don't want to have anim_time_update in your animation) or put a Molang expression in it. It doesn't affect the animation in Mcblend because Mcblend doesn't support Molang.
