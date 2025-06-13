@@ -1,0 +1,14 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"animation.my_custom_animation": {
+			"animation_length": 2,
+			"loop": true,
+			"bones": {
+				"Bone": {
+					"rotation": [0, "q.anim_time * 180", 0]
+				}
+			}
+		}
+	}
+}

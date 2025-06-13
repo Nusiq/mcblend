@@ -1,0 +1,166 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"animation.my_custom_animation": {
+			"animation_length": 2,
+			"loop": true,
+			"bones": {
+				"Bone": {
+					"rotation": [0, "q.anim_time * 180", 0]
+				}
+			}
+		},
+		"animation.animation1": {
+			"animation_length": 2.0,
+			"bones": {
+				"Bone": {
+					"position": {
+						"0": [0, 0, 0],
+						"0.4": [17.48, 96.139, 158.094],
+						"0.8": [29.381, -107.215, -65.643],
+						"1.2": [-96.081, 82.74, -115.551],
+						"1.6": [11.392, 43.112, 78.941],
+						"2": [0, 0, 0]
+					}
+				}
+			},
+			"loop": "hold_on_last_frame"
+		},
+		"animation.animation2": {
+			"animation_length": 2.0,
+			"bones": {
+				"Bone": {
+					"position": {
+						"0": [0, 0, 0],
+						"0.4": {
+							"post": [0, 24, 0],
+							"lerp_mode": "catmullrom"
+						},
+						"0.8": {
+							"post": [0, 48, 0],
+							"lerp_mode": "catmullrom"
+						},
+						"1.2": {
+							"post": [0, 35.556, 0],
+							"lerp_mode": "catmullrom"
+						},
+						"1.4": {
+							"post": [0, 24, 0],
+							"lerp_mode": "catmullrom"
+						},
+						"1.6": {
+							"post": [0, 12.444, 0],
+							"lerp_mode": "catmullrom"
+						},
+						"1.8": {
+							"post": [0, 3.556, 0],
+							"lerp_mode": "catmullrom"
+						},
+						"2": [0, 0, 0]
+					},
+					"rotation": {
+						"0": [0, 0, 0],
+						"0.4": [3.033, 0, 0],
+						"0.8": {
+							"pre": [3.033, 0, 0],
+							"post": [25.843, 0, 0]
+						},
+						"1.2": {
+							"pre": [25.843, 0, 0],
+							"post": [90, 0, 0]
+						},
+						"1.4": {
+							"pre": [90, 0, 0],
+							"post": [180, 0, 0]
+						},
+						"1.6": {
+							"pre": [180, 0, 0],
+							"post": [270, 0, 0]
+						},
+						"1.8": {
+							"pre": [270, 0, 0],
+							"post": [360, 0, 0]
+						},
+						"2": [360, 0, 0]
+					},
+					"scale": {
+						"0": [1, 1, 1],
+						"0.4": {
+							"post": [2, 2, 2],
+							"lerp_mode": "catmullrom"
+						},
+						"2": [2, 2, 2]
+					}
+				}
+			},
+			"loop": true
+		},
+		"animation.animation3": {
+			"animation_length": 1.36,
+			"bones": {
+				"Bone": {
+					"position": {
+						"0": [0, 0, 0],
+						"0.4": [-152.684, 0, 0],
+						"0.8": [160.163, 0, 0],
+						"1.36": [0, 0, 0]
+					}
+				}
+			},
+			"loop": true
+		},
+		"animation.animation4": {
+			"bones": {
+				"Bone": {
+					"position": [-65.514, 68.754, -63.577],
+					"rotation": [57.927, -13.576, -32.855],
+					"scale": [1.462, 1.462, 1.462]
+				}
+			},
+			"loop": true,
+			"override_previous_animation": true
+		},
+		"animation.animation16": {
+			"animation_length": 1.36,
+			"bones": {
+				"Bone": {
+					"position": {
+						"0": [0, 0, 0],
+						"0.76": [0, -80, 0],
+						"1.36": [0, 0, 0]
+					},
+					"rotation": {
+						"0": [0, 0, 0],
+						"1.36": [0, 0, 0]
+					},
+					"scale": {
+						"0": [1, 1, 1],
+						"1.36": [1, 1, 1]
+					}
+				}
+			},
+			"loop": true
+		},
+		"animation.animation17": {
+			"animation_length": 1.36,
+			"bones": {
+				"Bone": {
+					"position": {
+						"0": [0, 0, 0],
+						"0.76": [0, -80, 0],
+						"1.36": [0, 0, 0]
+					},
+					"rotation": {
+						"0": [0, 0, 0],
+						"1.36": [0, 0, 0]
+					},
+					"scale": {
+						"0": [1, 1, 1],
+						"1.36": [1, 1, 1]
+					}
+				}
+			},
+			"loop": true
+		}
+	}
+}
