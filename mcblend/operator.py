@@ -26,7 +26,8 @@ from .operator_func.typed_bpy_access import (
     set_mcblend_active_event,
     get_mcblend_uv_groups,
     set_mcblend_active_uv_group, get_mcblend_active_uv_group,
-    get_mcblend_active_uv_groups_side)
+    get_mcblend_active_uv_groups_side,
+    get_mcblend_animation_page, set_mcblend_animation_page)
 from .uv_data import get_unused_uv_group_name
 from .operator_func.material import MATERIALS_MAP
 
@@ -286,6 +287,54 @@ class MCBLEND_OT_BatchExportAnimation(  # pyright: ignore[reportIncompatibleMeth
             f'Successfully exported {exported_count} animations to {filepath}.'
         )
         return {'FINISHED'}
+
+    def invoke(self, context: Context, event: Event):
+        """Initialize checkboxes with default values then open file selector."""
+        set_mcblend_animation_page(context.scene, 0)
+        return super().invoke(context, event)  # Parent shows file explorer
+
+    def draw(self, context: Context):
+        """Draw checkboxes for each animation in the file browser side panel."""
+        layout = self.layout
+        obj = context.object
+        if obj is None or obj.type != 'ARMATURE':
+            return
+        animations = get_mcblend(obj).animations
+        total_pages = (len(animations) + 15) // 16
+        page = get_mcblend_animation_page(context.scene)
+        start = page * 16
+        end = min(start + 16, len(animations))
+
+        layout.label(text="Animations to export:")
+
+        # Buttons and page counter label only visible if there are pages
+        if total_pages > 1:
+            nav_row = layout.row(align=True)
+            if page > 0:
+                prev = nav_row.operator(
+                    "wm.context_set_int", text="", icon='TRIA_LEFT')
+                prev.data_path = "scene.mcblend_batch_export_animation_page"
+                prev.value = page - 1
+            else:
+                # Empty space to keep alignment
+                nav_row.label(text="", icon='BLANK1')
+
+            nav_row.label(text=f"Page {page + 1}/{total_pages}")
+
+            if page < total_pages - 1:
+                nxt = nav_row.operator(
+                    "wm.context_set_int", text="", icon='TRIA_RIGHT')
+                nxt.data_path = "scene.mcblend_batch_export_animation_page"
+                nxt.value = page + 1
+            else:
+                nav_row.label(text="", icon='BLANK1')
+
+        # Checkboxes
+        col = layout.column()
+        for anim in animations[start:end]:
+            col.prop(
+                anim, "exclude_from_batch_exports", text=anim.name,
+                invert_checkbox=True)
 
 def menu_func_mcblend_batch_export_animation(self: Any, context: Context):
     '''Used to register the batch export animation operator in the file export menu.'''

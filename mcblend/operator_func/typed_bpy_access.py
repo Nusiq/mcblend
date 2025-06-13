@@ -65,6 +65,10 @@ def get_mcblend_uv_groups(scene):
     '''
     return scene.mcblend_uv_groups
 
+def get_mcblend_animation_page(scene):
+    '''Returns the active animation page for batch export.'''
+    return scene.mcblend_batch_export_animation_page
+
 def set_mcblend_active_event(scene, value):
     '''
     Sets the active event id in scene
@@ -81,3 +85,7 @@ def set_mcblend_active_uv_group(scene, value):
     >>> scene.mcblend_active_uv_group = value
     '''
     scene.mcblend_active_uv_group = value
+
+def set_mcblend_animation_page(scene, value):
+    '''Sets the active animation page for batch export.'''
+    scene.mcblend_batch_export_animation_page = value

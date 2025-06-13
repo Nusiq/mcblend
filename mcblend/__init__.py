@@ -253,6 +253,10 @@ def register():
     bpy.types.Scene.mcblend_active_uv_groups_side = EnumProperty(  # type: ignore
         items=sides, name="Face")
 
+    # Batch export animation page
+    bpy.types.Scene.mcblend_batch_export_animation_page = IntProperty(  # type: ignore
+        default=0)
+
     # Object properties
     bpy.types.Object.mcblend = PointerProperty(  # type: ignore
         type=MCBLEND_ObjectProperties)
