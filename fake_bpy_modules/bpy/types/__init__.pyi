@@ -63342,7 +63342,7 @@ class Action(ID, bpy_struct):
     :type: mathutils.Vector
     """
 
-    fcurves: ActionFCurves
+    fcurves: ActionFCurves | None
     """ The individual F-Curves that make up the action
 
     :type: ActionFCurves

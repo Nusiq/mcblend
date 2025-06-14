@@ -261,7 +261,8 @@ class ObjectKeyframesInfo:
                 cycle_length = limit_up - limit_down
                 scaled_cycle_length = cycle_length * scale
                 repeat =  strip.repeat
-                for (keyframe, bone_state) in sorted(strip_action_keyframes):
+                for (keyframe, bone_state) in sorted(
+                        strip_action_keyframes, key=lambda x: x[0]):
                     if keyframe < limit_down or keyframe > limit_up:
                         continue
                     transformed_keyframe_base = keyframe * scale
@@ -294,7 +295,7 @@ class ObjectKeyframesInfo:
         pattern = re.compile(
             r'pose\.bones\[(?:\'|")([^\]]+)(?:\'|")\]\.([a-zA-Z0-9_]+)')
         if action.fcurves is None:  # type: ignore
-            return set()
+            return []
         result: List[TimeNameTypeInterpolation] = []
         for fcurve in action.fcurves:
             if fcurve.keyframe_points is None:  # type: ignore
