@@ -3,7 +3,7 @@ Functions related to exporting animations.
 '''
 from __future__ import annotations
 
-from typing import NamedTuple, Dict, Optional, List, Tuple, Set, cast, Any, Literal
+from typing import NamedTuple, Dict, Optional, List, Tuple, cast, Any, Iterable
 import math # pyright: ignore[reportShadowedImports]
 import re
 import bisect
@@ -18,6 +18,7 @@ from bpy.types import Action, Context, Object
 import numpy as np
 
 from .json_tools import get_vect_json
+from .frame_range import get_frames_from_frame_ranges
 from .common import (
     AnimationLoopType, MINECRAFT_SCALE_FACTOR, MCObjType, McblendObjectGroup,
     ANIMATION_TIMESTAMP_PRECISION, NumpyTable
@@ -428,6 +429,8 @@ class AnimationExport:
     particle_effects: Dict[int, List[Dict[Any, Any]]] = field(default_factory=dict)
     forced_interpolation: InterpolationMode = field(
         default=InterpolationMode.AUTO)
+    warnings: List[str] = field(default_factory=list)
+    frame_slice_pattern: str = field(default="")
 
     def load_poses_and_bone_states(
             self, object_properties: McblendObjectGroup,
@@ -456,10 +459,25 @@ class AnimationExport:
                 bone_states = ObjectKeyframesInfo(
                     context.object, forced_interpolation=self.forced_interpolation
                 )
+                # Add frames from frame slice pattern
+                frame_start = context.scene.frame_start
+                frame_end = context.scene.frame_end
+                if self.frame_slice_pattern:
+                    slice_frames, range_counts = get_frames_from_frame_ranges(
+                        self.frame_slice_pattern, frame_start, frame_end)
+                    for frame in slice_frames:
+                        bone_states.keyframes.add(float(frame))
+                    for range_str, count in range_counts.items():
+                        if count == 0:
+                            self.warnings.append(
+                                f"Frame range '{range_str}' did not add any "
+                                "frames to the animation."
+                            )
+
                 for keyframe in sorted(bone_states.keyframes):
                     if (
-                        keyframe < context.scene.frame_start or
-                        keyframe > context.scene.frame_end
+                        keyframe < frame_start or
+                        keyframe > frame_end
                     ):
                         continue  # skip frames out of range
 
@@ -718,3 +736,9 @@ class AnimationExport:
                         "lerp_mode": "catmullrom"
                     }
             return current_value
+
+    def yield_warnings(self) -> Iterable[str]:
+        '''
+        Yields warnings collected during the animation export process.
+        '''
+        yield from self.warnings

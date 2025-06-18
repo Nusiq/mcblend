@@ -58,6 +58,7 @@ class MCBLEND_AnimationProperties(PropertyGroup):
     optimize_animation: bool
     exclude_from_batch_exports: bool
     optimization_error: float
+    frame_slice_pattern: str
 
 # Material properties
 def list_mesh_types_as_blender_enum(

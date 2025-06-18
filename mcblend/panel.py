@@ -743,13 +743,13 @@ class MCBLEND_PT_AnimationPropertiesPanel(Panel):
                     active_anim,  # type: ignore
                     "interpolation_mode",
                     text="Interpolation Mode")
+                col.prop(active_anim, "frame_slice_pattern")
                 col.prop(
                     bpy.context.scene,  # type: ignore
                     "frame_start", text="Frame start")
                 col.prop(
                     bpy.context.scene,  # type: ignore
                     "frame_end", text="Frame end")
-                
                 # Animation optimization options
                 box = col.box()
                 box.label(text="Animation Optimization")

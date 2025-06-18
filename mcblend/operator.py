@@ -172,11 +172,27 @@ class MCBLEND_OT_ExportAnimation(  # pyright: ignore[reportIncompatibleMethodOve
                 old_dict = json.load(f, cls=JSONCDecoder)
         except (json.JSONDecodeError, OSError):
             pass
-        animation_dict = export_animation(context, old_dict)
+        animation_dict, warnings_generator = export_animation(context, old_dict)
+        warnings_counter = 0
+        for warning in warnings_generator:
+            self.report({'WARNING'}, warning)
+            warnings_counter += 1
+
         # Save file and finish
         with open(filepath, 'w', encoding='utf8') as f:  # type: ignore
             json.dump(animation_dict, f, cls=CompactEncoder)
-        self.report({'INFO'}, f'Animation saved in {filepath}.')
+        if warnings_counter > 1:
+            self.report(
+                {'WARNING'},
+                f"Animation saved in {filepath} after exporting with "
+                f"{warnings_counter} warnings. See logs for more details.")
+        elif warnings_counter == 1:
+            self.report(
+                {'WARNING'},
+                f"Animation saved in {filepath} after exporting with 1 "
+                "warning. See logs for more details.")
+        else:
+            self.report({'INFO'}, f'Animation saved in {filepath}.')
         return {'FINISHED'}
 
 def menu_func_mcblend_export_animation(self: Any, context: Context):
@@ -257,6 +273,7 @@ class MCBLEND_OT_BatchExportAnimation(  # pyright: ignore[reportIncompatibleMeth
         exported_count = 0
 
         # Export each animation
+        total_warnings_counter = 0
         for i, animation in enumerate(animations):
             # Skip animations excluded from batch exports
             if animation.exclude_from_batch_exports:
@@ -264,7 +281,11 @@ class MCBLEND_OT_BatchExportAnimation(  # pyright: ignore[reportIncompatibleMeth
             # Load and append animation to dict
             mcblend_data.active_animation = i
             load_animation_properties(animation, context)
-            old_dict = export_animation(context, old_dict)
+            animation_dict, warnings_generator = export_animation(context, old_dict)
+            old_dict = animation_dict
+            for warning in warnings_generator:
+                self.report({'WARNING'}, f'Animation "{animation.name}": {warning}')
+                total_warnings_counter += 1
             exported_count += 1
 
         # Open the originally opened animation
@@ -272,13 +293,29 @@ class MCBLEND_OT_BatchExportAnimation(  # pyright: ignore[reportIncompatibleMeth
         load_animation_properties(animations[original_animation_id], context)
 
         # Save file
-        with open(filepath, 'w', encoding='utf8') as f:
-            json.dump(old_dict, f, cls=CompactEncoder)
-
-        self.report(
-            {'INFO'},
-            f'Successfully exported {exported_count} animations to {filepath}.'
-        )
+        if exported_count > 0:
+            with open(filepath, 'w', encoding='utf8') as f:
+                json.dump(old_dict, f, cls=CompactEncoder)
+            
+            if total_warnings_counter > 1:
+                self.report(
+                    {'WARNING'},
+                    f'Successfully exported {exported_count} animations to '
+                    f'{filepath} with a total of {total_warnings_counter} '
+                    'warnings. See logs for more details.')
+            elif total_warnings_counter == 1:
+                self.report(
+                    {'WARNING'},
+                    f'Successfully exported {exported_count} animations to '
+                    f'{filepath} with 1 warning. See logs for more details.')
+            else:
+                self.report(
+                    {'INFO'},
+                    f'Successfully exported {exported_count} animations to '
+                    f'{filepath}.'
+                )
+        else:
+            self.report({'WARNING'}, 'No animations to export.')
         return {'FINISHED'}
 
     def invoke(self, context: Context, event: Event):

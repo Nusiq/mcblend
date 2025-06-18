@@ -250,7 +250,8 @@ class MCBLEND_AnimationProperties(PropertyGroup):
     )
     optimize_animation: BoolProperty(
         name="Optimize Animation",
-        description="Remove redundant keyframes to optimize the animation file size",
+        description=(
+            "Remove redundant keyframes to optimize the animation file size"),
         default=False,
     )
     exclude_from_batch_exports: BoolProperty(
@@ -269,6 +270,30 @@ class MCBLEND_AnimationProperties(PropertyGroup):
     )
     nla_tracks: CollectionProperty(
         type=MCBLEND_JustName
+    )
+    frame_slice_pattern: StringProperty(
+        name="Extra frames",
+        description=(
+            'A pattern to specify extra frames or frame ranges to include in '
+            'the animation, supplementing the standard keyframes. Uses a '
+            'colon-separated format:\n\n'
+            '- START:END - Includes all integer frames from START to END '
+            '(inclusive). Example: "1:10" adds frames 1, 2, 3, 4, 5, 6, 7, '
+            '8, 9, 10.\n'
+            '- START:STEP:END - Includes frames from START to END, '
+            'incrementing by STEP. Example: "1:2:10" adds frames 1, 3, 5, 7, '
+            '9.\n'
+            '- FRAME - Includes a single frame. Example: "1" adds frame 1.\n'
+            '- START: - All frames from START to the end of the animation.\n'
+            '- START:STEP: - All frames from START to the end of the '
+            'animation, incrementing by STEP. Example: "1:2:" adds frames 1, '
+            '3, 5, 7, 9...\n\n'
+            'You can define multiple patterns by separating them with commas. '
+            'For instance, "1:5, 10:2:20, 25, 27" would include frames 1 '
+            'through 5, then 10, 12, ..., 20, and finally frames 25 and 27'
+        ),
+        default="",
+        maxlen=1024
     )
 
 # Material properties

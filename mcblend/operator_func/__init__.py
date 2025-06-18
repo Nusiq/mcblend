@@ -13,7 +13,6 @@ import bpy
 from bpy.types import Image, Material, Context, Object, Armature, Mesh
 import numpy as np
 
-from .common import ModelOriginType
 from .typed_bpy_access import (
     get_mcblend_project,
     get_mcblend_events,
@@ -23,7 +22,7 @@ from .sqlite_bedrock_packs.better_json_tools import load_jsonc
 
 from .animation import AnimationExport, InterpolationMode
 from .common import (
-    MINECRAFT_SCALE_FACTOR, CubePolygon, McblendObject, McblendObjectGroup, MeshType,
+    ModelOriginType, MINECRAFT_SCALE_FACTOR, CubePolygon, McblendObject, McblendObjectGroup, MeshType,
     apply_obj_transform_keep_origin, fix_cube_rotation, star_pattern_match,
     MCObjType)
 from .extra_types import Vector2di
@@ -73,7 +72,7 @@ def export_model(
 
 def export_animation(
         context: Context, old_dict: Optional[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+    ) -> Tuple[Dict[str, Any], Iterable[str]]:
     '''
     Creates a Minecraft animation (dictionary) from selected objects.
 
@@ -120,7 +119,8 @@ def export_animation(
             event.name: event.get_effects_dict()
             for event in get_mcblend_events(context.scene)
         },
-        forced_interpolation=forced_interpolation
+        forced_interpolation=forced_interpolation,
+        frame_slice_pattern=anim_data.frame_slice_pattern
     )
     animation.load_poses_and_bone_states(object_properties, context)
     animation_dict = animation.json(
@@ -134,7 +134,7 @@ def export_animation(
         )
         animation_dict = optimizer.optimize_animation(animation_dict)
         
-    return animation_dict
+    return animation_dict, animation.yield_warnings()
 
 def set_uvs(context: Context):
     '''
