@@ -53,7 +53,8 @@ SCENES = [
     'ArmatureAnimation_ArmatureOrigin',
 
     'animation_interpolation',
-    'animation_optimization'
+    'animation_optimization',
+    'extra_frames'
 ]
 
 def setup_module(module):
