@@ -169,13 +169,18 @@ TimeNameTypeInterpolation = Tuple[
 class ObjectKeyframesInfo:
     def __init__(
             self, obj: Object | None, 
-            forced_interpolation: InterpolationMode = InterpolationMode.AUTO):
+            forced_interpolation: InterpolationMode = InterpolationMode.AUTO,
+            extra_frames: set[int] | None=None):
         self.keyframes: set[float] = set()
+        self.extra_keyframes: set[int] = extra_frames or set()
         self.timelines: Dict[tuple[str, TransformationType], Timeline] = {}
         self.forced_interpolation = forced_interpolation
         if obj is None:
             return
         self._init_keyframes_and_timelines(obj)
+        # The extra keyframes should also be added to the keyframes set
+        for frame in self.extra_keyframes:
+            self.keyframes.add(frame)
 
     def get_bone_state(
             self, bone_name: str, transformation_type: TransformationType,
@@ -192,12 +197,46 @@ class ObjectKeyframesInfo:
         if self.forced_interpolation != InterpolationMode.AUTO:
             return self.forced_interpolation
             
+        # If key doesn't exist always use the default - LINEAR interpolation
         timelines_key = (bone_name, transformation_type)
         if timelines_key not in self.timelines:
             return InterpolationMode.LINEAR
+        
+        # Additional keyframes always use the LINEAR interpolation
+        # It's safe to test if float is in set[int] in Python
+        if timestamp in self.extra_keyframes:
+            return InterpolationMode.LINEAR
         return self.timelines[timelines_key].get_state(timestamp)
 
-    def _init_keyframes_and_timelines(self, obj: Object, prec: int=1):
+    def add_keyframe_data(
+            self, keyframe: float,
+            bone_state:
+                None | Tuple[str, TransformationType, InterpolationMode]=None,
+            prec: int=1):
+        '''
+        Adds a data point about about a keyframe to this keyframe info. The
+        keyframe can contain just a timestamp, or additional information
+        about specific bone transformation and its interpolation mode.
+
+        :param keyframe: the keyframe number.
+        :param bone_state: optional information that tells that matches a
+            specific bone transformation and its interpolation mode at that
+            keyframe.
+        :param prec: the precision for rounding the keyframe number.
+        '''
+        # Add keyframe with limited precision
+        rounded_keyframe = round(keyframe, prec)
+        self.keyframes.add(rounded_keyframe)
+
+        # If there is bone state, add it to the timeline
+        if bone_state is None:
+            return
+        bone_name, transformation_type, interpolation = bone_state
+        timelines_key = (bone_name, transformation_type)
+        timeline = self.timelines.setdefault(timelines_key, Timeline())
+        timeline.add_keyframe(rounded_keyframe, interpolation)
+
+    def _init_keyframes_and_timelines(self, obj: Object):
         '''
         Lists keyframe numbers of the animation from keyframes of NLA tracks and
         actions of the active object. The results are returned as float (allowing
@@ -218,29 +257,13 @@ class ObjectKeyframesInfo:
         :returns: the list of the keyframes for the animation.
         '''
         # pylint: disable=too-many-nested-blocks
-        def _add_keyframe_data(
-                keyframe: float,
-                bone_state:
-                    None | Tuple[str, TransformationType, InterpolationMode]):
-            # Add keyframe with limited precision
-            rounded_keyframe = round(keyframe, prec)
-            self.keyframes.add(rounded_keyframe)
-
-            # If there is bone state, add it to the timeline
-            if bone_state is None:
-                return
-            bone_name, transformation_type, interpolation = bone_state
-            timelines_key = (bone_name, transformation_type)
-            timeline = self.timelines.setdefault(timelines_key, Timeline())
-            timeline.add_keyframe(rounded_keyframe, interpolation)
-
         if obj.animation_data is None:  # type: ignore
             return
         if obj.animation_data.action is not None:  # type: ignore
             keyframes_and_bone_states = self._get_keyframes_and_bone_states(
                 obj.animation_data.action)
             for keyframe, bone_data in keyframes_and_bone_states:
-                _add_keyframe_data(keyframe, bone_data)
+                self.add_keyframe_data(keyframe, bone_data)
         if obj.animation_data.nla_tracks is None:  # type: ignore
             return
         for nla_track in obj.animation_data.nla_tracks:
@@ -278,7 +301,7 @@ class ObjectKeyframesInfo:
                             break
                         transformed_keyframe = min(
                             transformed_keyframe + offset, strip.frame_end)
-                        _add_keyframe_data(transformed_keyframe, bone_state)
+                        self.add_keyframe_data(transformed_keyframe, bone_state)
 
     def _get_keyframes_and_bone_states(
             self, action: Action) -> List[TimeNameTypeInterpolation]:
@@ -293,6 +316,8 @@ class ObjectKeyframesInfo:
         The floats used as keys are rounded so there shouldn't be any
         issues with keys that are very close to each other.
         '''
+        # Pattern to extract bone names and the purpose of the fcurve from
+        # its name.
         pattern = re.compile(
             r'pose\.bones\[(?:\'|")([^\]]+)(?:\'|")\]\.([a-zA-Z0-9_]+)')
         if action.fcurves is None:  # type: ignore
@@ -456,24 +481,24 @@ class AnimationExport:
                 # The frame value in the dictionary key doesn't really matter
                 self.poses[keyframe] = pose
             else:
-                bone_states = ObjectKeyframesInfo(
-                    context.object, forced_interpolation=self.forced_interpolation
-                )
                 # Add frames from frame slice pattern
                 frame_start = context.scene.frame_start
                 frame_end = context.scene.frame_end
-                if self.frame_slice_pattern:
-                    slice_frames, range_counts = get_frames_from_frame_ranges(
+                extra_frames: set[int] = set()
+                if self.frame_slice_pattern != "":
+                    extra_frames, range_counts = get_frames_from_frame_ranges(
                         self.frame_slice_pattern, frame_start, frame_end)
-                    for frame in slice_frames:
-                        bone_states.keyframes.add(float(frame))
                     for range_str, count in range_counts.items():
                         if count == 0:
                             self.warnings.append(
                                 f"Frame range '{range_str}' did not add any "
                                 "frames to the animation."
                             )
-
+                bone_states = ObjectKeyframesInfo(
+                    context.object,
+                    forced_interpolation=self.forced_interpolation,
+                    extra_frames=extra_frames
+                )
                 for keyframe in sorted(bone_states.keyframes):
                     if (
                         keyframe < frame_start or

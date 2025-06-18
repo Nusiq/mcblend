@@ -55,7 +55,7 @@ def get_frames_from_frame_range(
 
 
 def get_frames_from_frame_ranges(
-        slice_str: str, anim_start: int, anim_end: int) -> tuple[list[int], dict[str, int]]:
+        slice_str: str, anim_start: int, anim_end: int) -> tuple[set[int], dict[str, int]]:
     """
     Splits a string by commas assuming that each part is a frame range
     string and evaluates these ranges using get_frames_from_frame_range to
@@ -69,7 +69,7 @@ def get_frames_from_frame_ranges(
         dictionary that maps each range to the number of frames it produced.
     """
     if slice_str == "":
-        return [], {}
+        return set(), {}
     all_frames: set[int] = set()
 
     # Split by whitespaces, eliminate duplicated ranges to avoid unnecessary
@@ -83,4 +83,4 @@ def get_frames_from_frame_ranges(
         frames = get_frames_from_frame_range(range_str, anim_start, anim_end)
         all_frames.update(frames)
         frame_counts[range_str] = len(frames)
-    return sorted(list(all_frames)), frame_counts
+    return all_frames, frame_counts
