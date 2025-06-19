@@ -16,6 +16,7 @@ The `Optimize Animation` checkbox allows you to apply **lossy** optimization to 
 
 Exporting a single animation is similar to exporting a model, as explained in the {ref}`Creating animations from scratch<creating-animations-from-scratch>` documentation page. Go to `File > Export > Export Bedrock Animation` and select the export path. If the file already exists and is a valid animation file, the exported animation will be appended/updated.
 
+(batch-exporting-multiple-animations)=
 ## Batch exporting multiple animations
 
 If your armature contains several animations you can export **all of them at once** using the *Batch Export Bedrock Animations* operator:

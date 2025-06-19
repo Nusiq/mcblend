@@ -54,21 +54,22 @@ Once you've set up your render controller, you can use the `Apply materials` but
 
 The `Mcblend: Animations panel` allows you to easily switch between animations in your project. These animations are represented as NLA tracks on the armature, with additional data attached to them. Selecting a different animation in the panel will also switch the active NLA track.
 
-- The `New animation` button creates a new animation. You can't use this operator while editing an action of the armature. If you want to create a new action, you need to stash the other action first.
-- The `Remove animation` button removes the currently active animation.
-- The `Select animation` dropdown list lets you select the animation to edit.
-- The `Name` field sets the name of the animation.
-- The `Skip rest poses` checkbox enables animation export optimization. If enabled, the keyframes that don't affect the armature (because they are the rest poses) are skipped in the exported file. In most cases, it's recommended to enable this option.
-- The `Export as pose` checkbox, if enabled, causes the exported animation to contain only one looped frame.
-- The `Exclude from batch exports` checkbox, if enabled, causes the animation to be skipped when using the `Batch Export Bedrock Animations` operator. Alternatively, you can select which animations to export during the export process.
-- The `Override previous animation` field directly translates to the override_previous_animation property of the Minecraft animation. It doesn't affect how the animation is rendered in Blender.
-- The `Loop` field directly translates to the loop property of the Minecraft animation file. There are three options: `true`, `false`, and `hold_on_last_frame`.
-- The `Anim Time Update` field directly translates to the anim_time_update property of the Minecraft animation file. You should either leave it empty (if you don't want to have anim_time_update in your animation) or put a Molang expression in it. It doesn't affect the animation in Mcblend because Mcblend doesn't support Molang.
-- The `Interpolation mode` field directly translates to the interpolation mode of the Minecraft animation file. There are four options: `linear`, `smooth`, `step`, and `auto`.
-- The `Frame start` field indicates the first frame of the animation. It tells Mcblend where the animation starts.
-- The `Frame end` field indicates the last frame of the animation. It tells Mcblend where the animation ends.
-- The `Optimize Animation` checkbox enables {ref}`animation export optimization<optimizing-animations>`.
-- The `Error margin` field defines how much error is allowed when optimizing the exported animation.
+- `New animation` - Creates a new animation. This operator cannot be used while editing an action of the armature; you must stash the current action first.
+- `Remove animation` - Deletes the currently active animation.
+- `Select animation` - A dropdown list to choose which animation to edit.
+- `Name` - Sets the name of the animation.
+- `Skip rest poses` - Enables animation export optimization. When enabled, keyframes that represent rest poses (and thus don't affect the armature) are skipped in the exported file. Enabling this option is generally recommended.
+- `Export as pose` - If enabled, the exported animation will contain only a single looped frame.
+- `Exclude from batch exports` - If enabled, this animation will be skipped when using the {ref}`Batch Export Bedrock Animations<batch-exporting-multiple-animations>` operator. Alternatively, you can select animations to export during the export process.
+- `Override previous animation` - Directly translates to the `override_previous_animation` property in the Minecraft animation file. This setting does not affect how the animation is rendered in Blender.
+- `Loop` - Directly translates to the `loop` property of the Minecraft animation file, with options: `true`, `false`, and `hold_on_last_frame`.
+- `Anim Time Update` - Directly translates to the `anim_time_update` property of the Minecraft animation file. Leave this empty if not needed, or provide a Molang expression. Note that Mcblend does not support Molang, so this setting does not affect the animation within Mcblend.
+- `Interpolation mode` - Directly translates to the interpolation mode of the Minecraft animation file, with options: `linear`, `smooth`, `step`, and `auto`. The `auto` option uses the interpolation based on the interpolation modes used for each keyframe.
+- `Extra frames` - Allows you to specify additional frames or frame ranges to be included in the exported animation. Refer to the dedicated {ref}`Extra Keyframes<extra-keyframes>` page for details on patterns and usage.
+- `Frame start` - Indicates the first frame of the animation, defining its starting point in Mcblend.
+- `Frame end` - Indicates the last frame of the animation, defining its end point in Mcblend.
+- `Optimize Animation` - Enables {ref}`animation optimization<optimizing-animations>` during export.
+- `Error margin` - Defines how much error is allowed when optimizing the exported animation.
 
 ## Object properties (bone of armature)
 

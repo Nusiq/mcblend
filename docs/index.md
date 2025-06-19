@@ -40,6 +40,7 @@ Essential concepts for creating animations in Mcblend <animations/essential_conc
 Creating animations from scratch <animations/creating_animations_from_scratch>
 Exporting animations <animations/exporting_animations>
 Optimizing animations <animations/optimizing_animations>
+Extra keyframes <animations/extra_keyframes>
 Animating sound and particle effects <animations/animating_sound_and_particle_effects>
 Physics simluation <animations/physics_simulation>
 ```
