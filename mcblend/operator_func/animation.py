@@ -13,7 +13,7 @@ from itertools import tee, islice  # pyright: ignore[reportShadowedImports]
 from decimal import Decimal
 
 import bpy
-from bpy.types import Action, Context, Object
+from bpy.types import Action, ActionSlot, Context, Object
 
 import numpy as np
 
@@ -23,6 +23,7 @@ from .common import (
     AnimationLoopType, MINECRAFT_SCALE_FACTOR, MCObjType, McblendObjectGroup,
     ANIMATION_TIMESTAMP_PRECISION, NumpyTable
 )
+from bpy_extras import anim_utils
 
 class InterpolationMode(Enum):
     '''
@@ -257,11 +258,11 @@ class ObjectKeyframesInfo:
         :returns: the list of the keyframes for the animation.
         '''
         # pylint: disable=too-many-nested-blocks
-        if obj.animation_data is None:  # type: ignore
+        if obj.animation_data is None:
             return
         if obj.animation_data.action is not None:  # type: ignore
             keyframes_and_bone_states = self._get_keyframes_and_bone_states(
-                obj.animation_data.action)
+                obj.animation_data.action, obj.animation_data.action_slot)
             for keyframe, bone_data in keyframes_and_bone_states:
                 self.add_keyframe_data(keyframe, bone_data)
         if obj.animation_data.nla_tracks is None:  # type: ignore
@@ -275,7 +276,7 @@ class ObjectKeyframesInfo:
                 if strip.action is None:
                     continue
                 strip_action_keyframes = self._get_keyframes_and_bone_states(
-                    strip.action)
+                    strip.action, strip.action_slot)
                 # Scale/strip the action data with the strip
                 # transformations
                 offset =  strip.frame_start
@@ -304,7 +305,10 @@ class ObjectKeyframesInfo:
                         self.add_keyframe_data(transformed_keyframe, bone_state)
 
     def _get_keyframes_and_bone_states(
-            self, action: Action) -> List[TimeNameTypeInterpolation]:
+            self,
+            action: Action,
+            slot: ActionSlot
+    ) -> List[TimeNameTypeInterpolation]:
         '''
         Helper function for _get_keyframes(). Gets set of keyframes and bone
         states from an action.
@@ -318,12 +322,11 @@ class ObjectKeyframesInfo:
         '''
         # Pattern to extract bone names and the purpose of the fcurve from
         # its name.
+        channelbag = anim_utils.action_get_channelbag_for_slot(action, slot)
         pattern = re.compile(
             r'pose\.bones\[(?:\'|")([^\]]+)(?:\'|")\]\.([a-zA-Z0-9_]+)')
-        if action.fcurves is None:  # type: ignore
-            return []
         result: List[TimeNameTypeInterpolation] = []
-        for fcurve in action.fcurves:
+        for fcurve in channelbag.fcurves:
             if fcurve.keyframe_points is None:  # type: ignore
                 continue
             keyframe_owner_bone: tuple[str, TransformationType] | None = None

@@ -1825,6 +1825,9 @@ class AnimData(bpy_struct):
     :type: Action
     """
 
+    # Mcblend - added in Blender 4.4.0
+    action_slot: ActionSlot
+
     action_blend_type: str
     """ Method used for combining Active Action's result with result of NLA stack
 
@@ -28227,6 +28230,9 @@ class NlaStrip(bpy_struct):
 
     :type: bool
     """
+
+    # Mcblend - added in Blender 4.4.0
+    action_slot: ActionSlot
 
     strip_time: float
     """ Frame of referenced Action to evaluate
@@ -63396,6 +63402,12 @@ class Action(ID, bpy_struct):
     :type: bool
     """
 
+    # Mcblend - added in Blender 4.4.0
+    layers: ActionLayers
+
+    # Mcblend - added in Blender 4.4.0
+    slots: ActionSlots
+
     def flip_with_pose(self, object: Object):
         """Flip the action around the X axis using a pose
 
@@ -63427,6 +63439,45 @@ class Action(ID, bpy_struct):
         :rtype: typing.Any
         """
         ...
+# Mcblend - new type added in Blender 4.4.0
+class ActionChannelbagFCurves(bpy_prop_collection[FCurve], bpy_struct):
+    pass
+
+# Mcblend - new type added in Blender 4.4.0
+class ActionChannelbag(ID, bpy_struct):
+    fcurves: ActionChannelbagFcurves
+
+# Mcblend - new type added in Blender 4.4.0
+class ActionChannelbags(bpy_prop_collection[ActionChannelbag], bpy_struct):
+    pass
+
+# Mcblend - new type added in Blender 4.4.0
+class ActionStrip(ID, bpy_struct):
+    # Warning: in the actual API this property belong to ActionKeyframeStrip,
+    # which extends ActionStrip. But from my tests it looks like the abstract
+    # ActionStrip class isn't actually used so it's easier to annotate this 
+    # like that.
+    channelbags: ActionChannelbags
+
+# Mcblend - new type added in Blender 4.4.0
+class ActionStrips(bpy_prop_collection[ActionStrip], bpy_struct):
+    pass
+
+# Mcblend - new type added in Blender 4.4.0
+class ActionLayer(ID, bpy_struct):
+    strips: ActionStrips
+
+# Mcblend - new type added in Blender 4.4.0
+class ActionLayers(bpy_prop_collection[ActionLayer], bpy_struct):
+    pass
+
+# Mcblend - new type added in Blender 4.4.0
+class ActionSlot(ID, bpy_struct):
+    pass
+
+# Mcblend - new type added in Blender 4.4.0
+class ActionSlots(bpy_prop_collection[ActionSlot], bpy_struct):
+    pass
 
 class Armature(ID, bpy_struct):
     """Armature data-block containing a hierarchy of bones, usually used for rigging characters"""
@@ -68607,7 +68658,8 @@ class Object(ID, bpy_struct):
     :type: bool
     """
 
-    animation_data: AnimData
+    # Mcblend - made value optional
+    animation_data: AnimData | None
     """ Animation data for this data-block
 
     :type: AnimData
