@@ -4,7 +4,9 @@ This page covers essential concepts to consider when creating animations using M
 
 ## Recomended workspace layout
 
-Animations in Mcblend are based on Non Linear Animation (NLA) tracks. A single animation can contain multiple NLA tracks running at the same time, each track containing action strips. While working with animations in Mcblend, you'll be using the NLA tracks and action editor frequently. It is recommended to set up a workspace layout like the one shown in the image below for working with animations in Mcblend.
+In previous versions of Mcblend, animations were always based on Non Linear Animation (NLA) tracks, where a single animation can contain multiple NLA tracks running at the same time, each track containing action strips. Now, using NLA tracks is not required - animations can be kept in the active action. However, working with NLA tracks remains a useful workflow, especially for organizing complex animations. 
+
+It is still recommended to set up a workspace layout like the one shown below for working with animations in Mcblend, as it makes managing both active actions and NLA tracks easier.
 
 The editor on the left side of the screen is the `Nonlinear Animation` editor. The editor at the bottom is the `Dope Sheet` editor set to the `Action editor` mode.
 

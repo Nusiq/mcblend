@@ -54,7 +54,7 @@ Once you've set up your render controller, you can use the `Apply materials` but
 
 The `Mcblend: Animations panel` allows you to easily switch between animations in your project. These animations are represented as NLA tracks on the armature, with additional data attached to them. Selecting a different animation in the panel will also switch the active NLA track.
 
-- `New animation` - Creates a new animation. This operator cannot be used while editing an action of the armature; you must stash the current action first.
+- `New animation` - Creates a new Mcblend animation. This is not the same as creating a new action in the `Action Editor` and it doesn't affect currently active action or NLA tracks in any way. Mcblend animations are connected to actions, but they are not the same. Mcblend animations just remember which action should be active when you switch between them.
 - `Remove animation` - Deletes the currently active animation.
 - `Select animation` - A dropdown list to choose which animation to edit.
 - `Name` - Sets the name of the animation.

@@ -16,7 +16,7 @@ In this section, you will learn how to create animations in Mcblend from scratch
 
 ![](/img/animations/creating_animation_animation_configuration.png)
 
-6. Add a keyframe to location, rotation, and scale at frame 0. This will be the rest pose of the animation. The keyframe should be added in Pose mode. You should add the keyframe to all bones in the armature. In this case, we only have one bone. Select all of the bones by pressing `A` while in `Pose mode` and hovering over the 3D viewport. Then, press `I` to add the keyframe and select the `Location, Rotation & Scale` option.
+6. Add a keyframe to location, rotation, and scale at frame 0. This will be the rest pose of the animation. The keyframe should be added in Pose mode. You should add the keyframe to all bones in the armature. In this case, we only have one bone. Select all of the bones by pressing `A` while in `Pose mode` and hovering over the 3D viewport. Then, press `K` to add the keyframe and select the `Location, Rotation & Scale` option (or just press `I` which should automatically add a keyframe to all of the animation channels).
 
 ![](/img/animations/creating_animation_new_adding_keyframe.png)
 
@@ -36,14 +36,18 @@ In this section, you will learn how to create animations in Mcblend from scratch
 
 In this section, we will learn how to use the NLA editor to manage animations in Mcblend. This includes the ability to combine multiple actions into a single animation.
 
-To create a new animation, return to Object mode and press the `New Animation` button. If you try to create a new animation while an active action is present, you will receive a warning to either "Stash or Push Down" the active action.
-
-![](/img/animations/creating_animation_stash_or_push_down_warning.png)
-
-1. In the `Action Editor`, press the `Push Down` button to add the animation to the NLA track and activate it. The Stash button does not activate the animation.
-
+1. To create a new animation, return to Object mode and in the `Action Editor`, press the `Push Down` button to add the animation to the NLA track and activate it. After that you can press the `New Animation` button.
 
 ![](/img/animations/creating_animation_push_down_button.png)
+
+```{note}
+If you press `New Animation` before pushing down the animation, the animation will not be added to the NLA track. Doing that is still a valid workflow, and switching between Mcblend animations would still be able to restore the correct state, but this tutorial shows the NLA editor workflow.
+```
+
+```{note}
+The UI may look slightly different. In Blender 4.5, the `Stash` and `Push Down` buttons were moved into the "Action" menu, and a new field for Action Slots was added in that newly freed space.
+```
+
 
 2. To create a new animation, repeat the steps from the previous section, naming it `my_cube.scale` and creating a new action for it. Note that the action from the previous animation is still active in the NLA editor. You can disable it to prevent it from affecting the new animation.
 
@@ -74,3 +78,5 @@ To export animations in Mcblend, follow these steps:
 4. Repeat these steps to export any additional animations. Note that exporting multiple animations to the same file will not overwrite the previous animation - both will be included in the same file.
 
 ![](/img/animations/creating_animation_animation_export_animation.png)
+
+Alternatively you can use the {ref}`Batch Export <batch-exporting-multiple-animations>` feature to export multiple animations at once.

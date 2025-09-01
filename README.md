@@ -1,7 +1,7 @@
 # Mcblend
 [![Tests](https://github.com/Nusiq/mcblend/actions/workflows/tests.yml/badge.svg)](https://github.com/Nusiq/mcblend/actions/workflows/tests.yml)
 
-Mcblend is a Blender 4.2 plugin that allows creators to design and animate Minecraft Bedrock Edition models using Blender's powerful 3D modeling and animation tools.
+Mcblend is a Blender 4.5 plugin that allows creators to design and animate Minecraft Bedrock Edition models using Blender's powerful 3D modeling and animation tools.
 
 ## 🔧 Features
 - Exporting and importing models for Minecraft Bedrock Edition.

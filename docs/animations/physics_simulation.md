@@ -58,13 +58,9 @@ The `Bone Parents` group never needs to be adjusted.
 
 Fortunately, you do not need to manually add all 50 keyframes. Mcblend can automate this process during animation export. Simply {ref}`create a new empty Mcblend animation<creating-animations-from-scratch>` and utilize the {ref}`Extra Keyframes<extra-keyframes>` feature to add keyframes starting from frame 1 (define the range as `1:`).
 
-```{warning}
-If a warning prompts you to "Stash or push down" before adding a new animation when pressing the `New Animation` button, select `Push down` in the `Action Editor` tab. This action moves the current animation to the `Nonlinear Animation` editor while keeping it active.
-```
+Before exporting, make sure that the model at frame 0 is in the rest pose and that all bone transformations at that frame are keyframed.
 
-Before exporting, make sure that frame 0 is a rest pose and that all bone transformations at that frame are keyframed.
-
-To reduce animation size with a minimal impact on quality, consider using the `{ref}Animation Optimization<optimizing-animations>` feature.
+To reduce animation size with a minimal impact on quality, consider using the {ref}`Animation Optimization<optimizing-animations>` feature.
 
 ![](/img/animations/physics_simulation_export_animation.png)
 
