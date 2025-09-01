@@ -306,8 +306,8 @@ class ObjectKeyframesInfo:
 
     def _get_keyframes_and_bone_states(
             self,
-            action: Action,
-            slot: ActionSlot
+            action: Action | None,
+            slot: ActionSlot | None
     ) -> List[TimeNameTypeInterpolation]:
         '''
         Helper function for _get_keyframes(). Gets set of keyframes and bone
@@ -322,10 +322,12 @@ class ObjectKeyframesInfo:
         '''
         # Pattern to extract bone names and the purpose of the fcurve from
         # its name.
-        channelbag = anim_utils.action_get_channelbag_for_slot(action, slot)
         pattern = re.compile(
             r'pose\.bones\[(?:\'|")([^\]]+)(?:\'|")\]\.([a-zA-Z0-9_]+)')
         result: List[TimeNameTypeInterpolation] = []
+        channelbag = anim_utils.action_get_channelbag_for_slot(action, slot)
+        if channelbag is None:
+            return result
         for fcurve in channelbag.fcurves:
             if fcurve.keyframe_points is None:  # type: ignore
                 continue

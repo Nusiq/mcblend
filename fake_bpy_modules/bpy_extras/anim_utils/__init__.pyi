@@ -185,9 +185,9 @@ def bake_action_objects_iter(object_action_pairs, bake_options):
 
 # Mcblend - A new function added in Blender 4.4.0
 def action_get_channelbag_for_slot(
-    action: bpy.types.Action,
-    slot: bpy.types.ActionSlot
-) -> bpy.types.ActionChannelbag:
+    action: bpy.types.Action | None,
+    slot: bpy.types.ActionSlot | None,
+) -> bpy.types.ActionChannelbag | None:
     '''
     Returns the first channelbag found for the slot.
     In case there are multiple layers or strips they are iterated until a

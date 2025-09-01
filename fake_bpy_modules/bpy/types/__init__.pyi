@@ -1819,14 +1819,15 @@ class Addons(bpy_prop_collection[Addon], bpy_struct):
 class AnimData(bpy_struct):
     """Animation data for data-block"""
 
-    action: Action
+    # Mcblend - made the type nullable
+    action: Action | None
     """ Active Action for this data-block
 
     :type: Action
     """
 
     # Mcblend - added in Blender 4.4.0
-    action_slot: ActionSlot
+    action_slot: ActionSlot | None
 
     action_blend_type: str
     """ Method used for combining Active Action's result with result of NLA stack
@@ -63473,7 +63474,7 @@ class ActionLayers(bpy_prop_collection[ActionLayer], bpy_struct):
 
 # Mcblend - new type added in Blender 4.4.0
 class ActionSlot(ID, bpy_struct):
-    pass
+    handle: int
 
 # Mcblend - new type added in Blender 4.4.0
 class ActionSlots(bpy_prop_collection[ActionSlot], bpy_struct):
