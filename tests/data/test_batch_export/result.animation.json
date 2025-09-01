@@ -161,6 +161,54 @@
 				}
 			},
 			"loop": true
+		},
+		"animation.action_animation_1_slot1": {
+			"animation_length": 1.36,
+			"bones": {
+				"Bone": {
+					"position": {
+						"0": [0, 0, 0],
+						"0.76": {
+							"post": [48, 0, 0],
+							"lerp_mode": "catmullrom"
+						},
+						"1.36": [0, 0, 0]
+					}
+				}
+			},
+			"loop": true
+		},
+		"animation.action_animation_1_slot2": {
+			"animation_length": 1.36,
+			"bones": {
+				"Bone": {
+					"position": {
+						"0": [0, 0, 0],
+						"1.16": {
+							"post": [0, 48, 0],
+							"lerp_mode": "catmullrom"
+						},
+						"1.36": [0, 0, 0]
+					}
+				}
+			},
+			"loop": true
+		},
+		"animation.action_animation_2": {
+			"animation_length": 1.36,
+			"bones": {
+				"Bone": {
+					"rotation": {
+						"0": [0, 0, 0],
+						"1.16": {
+							"post": [90, 0, 0],
+							"lerp_mode": "catmullrom"
+						},
+						"1.36": [0, 0, 0]
+					}
+				}
+			},
+			"loop": true
 		}
 	}
 }
