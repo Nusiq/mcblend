@@ -676,12 +676,12 @@ class MCBLEND_OT_ImportModel(  # pyright: ignore[reportIncompatibleMethodOverrid
             )
         return {'FINISHED'}
 
-# Animation (GUI)
 def menu_func_mcblend_import_model(self: Any, context: Context):
     '''Used to register the operator in the file import menu.'''
     # pylint: disable=unused-argument
     self.layout.operator(MCBLEND_OT_ImportModel.bl_idname)
 
+# Animation (GUI)
 def save_animation_properties(
         animation: MCBLEND_AnimationProperties, context: Context):
     '''
@@ -698,15 +698,23 @@ def save_animation_properties(
         anim_timeline_marker.name = timeline_marker.name
         anim_timeline_marker.frame = timeline_marker.frame
     animation.nla_tracks.clear()
+    animation.action = ""
+    animation.action_slot = 0
 
     obj = context.object
     if obj is None:  # TODO - should this be an error?
         return
-    if obj.animation_data is not None:
-        for nla_track in obj.animation_data.nla_tracks:
-            if not nla_track.mute:
-                cached_nla_track = animation.nla_tracks.add()
-                cached_nla_track.name = nla_track.name
+    if obj.animation_data is None:
+        return
+    for nla_track in obj.animation_data.nla_tracks:
+        if not nla_track.mute:
+            cached_nla_track = animation.nla_tracks.add()
+            cached_nla_track.name = nla_track.name
+    if obj.animation_data.action is not None:
+        animation.action = obj.animation_data.action.name
+        # Slot without action doesn't make sense
+        if obj.animation_data.action_slot is not None:
+            animation.action_slot = obj.animation_data.action_slot.handle
 
 def load_animation_properties(animation: MCBLEND_AnimationProperties, context: Context):
     '''
@@ -726,13 +734,27 @@ def load_animation_properties(animation: MCBLEND_AnimationProperties, context: C
     if obj is None:
         return
     anim_data = obj.animation_data
-    if anim_data is not None:
-        object_nla_tracks = anim_data.nla_tracks
-        for nla_track in object_nla_tracks:
-            nla_track.mute = True
-        for cached_nla_track in animation.nla_tracks:
-            if cached_nla_track.name in object_nla_tracks:
-                object_nla_tracks[cached_nla_track.name].mute = False
+    if anim_data is None:
+        return
+    object_nla_tracks = anim_data.nla_tracks
+    for nla_track in object_nla_tracks:
+        nla_track.mute = True
+    for cached_nla_track in animation.nla_tracks:
+        if cached_nla_track.name in object_nla_tracks:
+            object_nla_tracks[cached_nla_track.name].mute = False
+    if animation.action != "":
+        anim_data.action = bpy.data.actions[animation.action]
+        # Slot without action doesn't make sense
+        if animation.action_slot != 0:
+            try:
+                anim_data.action_slot = next((
+                    s for s in anim_data.action.slots
+                    if s.handle == animation.action_slot
+                ))
+            except StopIteration:
+                anim_data.action_slot = None
+    else:
+        anim_data.action = None
 
 class MCBLEND_OT_ListAnimations(Operator):
     '''
@@ -777,14 +799,7 @@ class MCBLEND_OT_ListAnimations(Operator):
         anim_data = obj.animation_data
         if anim_data is None:
             return {'CANCELLED'}
-        if anim_data.action is not None:  # type: ignore
-            # TODO - stash action and activate the action strip for current
-            # animation if a new aniamtion has been selected
-            self.report(
-                {'WARNING'},
-                "Stash, push down or delete the active action before "
-                "selecting new animation")
-            return {'CANCELLED'}
+
         # If OK than save old animation state
         len_anims = len(get_mcblend(obj).animations)
         curr_anim_id = get_mcblend(obj).active_animation
@@ -821,17 +836,7 @@ class MCBLEND_OT_AddAnimation(Operator):
         obj = context.object
         if obj is None:
             return {'CANCELLED'}
-        anim_data = obj.animation_data
-        if (
-                anim_data is not None and
-                anim_data.action is not None):  # type: ignore
-            # TODO - stash action if mcblend animation already exists or
-            # don't do anything if that's the first mcblend aniamtion
-            self.report(
-                {'WARNING'},
-                "Stash, push down or delete the active action before "
-                "adding new animation")
-            return {'CANCELLED'}
+
         # If OK save old animation
         len_anims = len(get_mcblend(obj).animations)
         curr_anim_id = get_mcblend(obj).active_animation
@@ -876,16 +881,6 @@ class MCBLEND_OT_RemoveAnimation(Operator):
         # Cancel operation if there is an action being edited
         obj = context.object
         if obj is None:
-            return {'CANCELLED'}
-        anim_data = obj.animation_data
-        if (
-                anim_data is not None and
-                anim_data.action is not None):  # type: ignore
-            # TODO - automatically remove the active animation instead of pringint a warning
-            self.report(
-                {'WARNING'},
-                "Stash, push down or delete the active action before "
-                "removing new animation")
             return {'CANCELLED'}
 
         # Remove animation

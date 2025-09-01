@@ -295,6 +295,19 @@ class MCBLEND_AnimationProperties(PropertyGroup):
         default="",
         maxlen=1024
     )
+    action: StringProperty(
+        name="Action",
+        description="The action active when using this animation.",
+        default="",
+        maxlen=1024
+    )
+    action_slot: IntProperty(
+        name="Action slot",
+        description=(
+            "The handle to the action slot active when using this animation."),
+        default=0,
+    )
+
 
 # Material properties
 def list_mesh_types_as_blender_enum(self, context):
