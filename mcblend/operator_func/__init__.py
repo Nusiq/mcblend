@@ -11,6 +11,7 @@ from collections import defaultdict
 
 import bpy
 from bpy.types import Image, Material, Context, Object, Armature, Mesh
+from mathutils import Matrix
 import numpy as np
 
 from .typed_bpy_access import (
@@ -343,9 +344,20 @@ def separate_mesh_cubes(context: Context):
     for obj in context.selected_objects:
         if obj.type != 'MESH':
             continue
+        # Remember the original world matrices of children
+        child_matrices: Dict[str, Matrix] = {}
+        for child in obj.children:
+            child_matrices[child.name] = child.matrix_world.copy()
+        # Apply all transformations
         apply_obj_transform_keep_origin(obj)
         bpy.context.view_layer.update()
         fix_cube_rotation(obj)
+
+        # Restore the original world matrices of children
+        for child in obj.children:
+            bpy.context.view_layer.update()
+            child.matrix_world = child_matrices[child.name]
+            bpy.context.view_layer.update()
     return edited_objects
 
 def inflate_objects(

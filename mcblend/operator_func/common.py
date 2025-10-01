@@ -911,16 +911,20 @@ def apply_obj_transform_keep_origin(obj: Object):
     # This assert should never raise an Exception
     assert isinstance(obj.data, Mesh), "The object is not a Mesh"
     # Decompose object transformations
-    _, rot, scl = obj.matrix_local.decompose()
-    # loc_mat = Matrix.Translation(loc)
+    loc, rot, scl = obj.matrix_local.decompose()
+    loc_mat = Matrix.Translation(loc)
     rot_mat = rot.to_matrix().to_4x4()
     scl_mat =  (
         Matrix.Scale(scl[0], 4, Vector([1,0,0])) @
         Matrix.Scale(scl[1], 4, Vector([0,1,0])) @
         Matrix.Scale(scl[2], 4, Vector([0,0,1]))
     )
+    # Edit the matrix_local to only have the location
+    obj.matrix_local = loc_mat
+    # Apply the rotation and scale to individual vertices, since now
+    # the matrix_local is only the location
     for vertex in obj.data.vertices:
-        vertex.co = (rot_mat @ scl_mat) @ vertex.co
+        vertex.co = rot_mat @ scl_mat @ vertex.co
 
 def fix_cube_rotation(obj: Object):
     '''
