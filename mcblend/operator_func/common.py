@@ -328,9 +328,27 @@ class McblendObject:
             '''
             Returns Euler rotation of a child matrix in relation to parent matrix
             '''
-            child_q = child_matrix.normalized().to_quaternion()
-            parent_q = parent_matrix.inverted_safe().normalized().to_quaternion()
-            return (parent_q @ child_q).to_euler('XZY')
+            # The transformations with 0 scale return better results when
+            # calculated differently. This is an ugly patch that fixes the
+            # test cases. I don't know if it actually makes things better
+            # in every situation, but at the same time I don't really know why
+            # these two solutions aren't equivalent.
+            child_scale = child_matrix.to_scale()
+            parent_scale = parent_matrix.to_scale()
+            epsilon = 0.00001
+            is_near_zero_scale = (
+                abs(child_scale.x) < epsilon or
+                abs(child_scale.y) < epsilon or
+                abs(child_scale.z) < epsilon or
+                abs(parent_scale.x) < epsilon or
+                abs(parent_scale.y) < epsilon or
+                abs(parent_scale.z) < epsilon
+            )
+            if is_near_zero_scale:
+                child_q = child_matrix.to_quaternion()
+                parent_q = parent_matrix.inverted_safe().to_quaternion()
+                return (parent_q @ child_q).to_euler('XZY')
+            return (parent_matrix.inverted_safe() @ child_matrix).to_euler('XZY')
 
         if other is not None:
             result_euler = local_rotation(

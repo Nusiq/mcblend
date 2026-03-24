@@ -54,7 +54,9 @@ SCENES = [
 
     'animation_interpolation',
     'animation_optimization',
-    'extra_frames'
+    'extra_frames',
+
+    'issue130',
 ]
 
 def setup_module(module):

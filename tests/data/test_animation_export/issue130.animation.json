@@ -1,0 +1,14 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"animation.issue130": {
+			"bones": {
+				"parent": {
+					"rotation": [2.557, -56.924, 33.194],
+					"scale": [1, 0.526, 1]
+				}
+			},
+			"loop": true
+		}
+	}
+}
