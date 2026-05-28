@@ -10,12 +10,14 @@ from bpy.props import (
 
 from .operator import (
     MCBLEND_OT_ExportModel, MCBLEND_OT_ExportAnimation,
+    MCBLEND_OT_ExportCameraAnimation,
     MCBLEND_OT_BatchExportAnimation,
     MCBLEND_OT_MapUv, MCBLEND_OT_UvGroup,
     MCBLEND_OT_FixUv,
     MCBLEND_OT_ClearUvGroup,
     MCBLEND_OT_SetInflate,
     menu_func_mcblend_export_model, menu_func_mcblend_export_animation,
+    menu_func_mcblend_export_camera_animation,
     menu_func_mcblend_batch_export_animation,
     MCBLEND_OT_SeparateMeshCubes,
     MCBLEND_OT_ImportModel, menu_func_mcblend_import_model,
@@ -139,6 +141,7 @@ classes = (
     MCBLEND_PT_ArmatureRenderControllersPanel,
     MCBLEND_OT_ExportModel,
     MCBLEND_OT_ExportAnimation,
+    MCBLEND_OT_ExportCameraAnimation,
     MCBLEND_OT_BatchExportAnimation,
     MCBLEND_PT_AnimationPropertiesPanel,
     MCBLEND_OT_MapUv,
@@ -273,6 +276,9 @@ def register():
         menu_func_mcblend_export_animation
     )
     bpy.types.TOPBAR_MT_file_export.append(  # type: ignore
+        menu_func_mcblend_export_camera_animation
+    )
+    bpy.types.TOPBAR_MT_file_export.append(  # type: ignore
         menu_func_mcblend_batch_export_animation
     )
     bpy.types.TOPBAR_MT_file_import.append(  # type: ignore
@@ -290,6 +296,9 @@ def unregister():
     )
     bpy.types.TOPBAR_MT_file_export.remove(  # type: ignore
         menu_func_mcblend_export_animation
+    )
+    bpy.types.TOPBAR_MT_file_export.remove(  # type: ignore
+        menu_func_mcblend_export_camera_animation
     )
     bpy.types.TOPBAR_MT_file_export.remove(  # type: ignore
         menu_func_mcblend_batch_export_animation

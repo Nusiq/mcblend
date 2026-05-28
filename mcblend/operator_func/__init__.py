@@ -3,6 +3,7 @@ Functions used directly by the blender operators.
 '''
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import (
     Dict, Iterable, List, Literal, Optional, Tuple, cast, Callable, Any)
@@ -21,11 +22,13 @@ from .typed_bpy_access import (
 
 from .sqlite_bedrock_packs.better_json_tools import load_jsonc
 
-from .animation import AnimationExport, InterpolationMode
+from .camera_animation import CameraAnimationExport
+from .animation import AnimationExport
+from .animation_utils import InterpolationMode
 from .common import (
     ModelOriginType, MINECRAFT_SCALE_FACTOR, CubePolygon, McblendObject, McblendObjectGroup, MeshType,
     apply_obj_transform_keep_origin, fix_cube_rotation, star_pattern_match,
-    MCObjType)
+    MCObjType, ObjectId)
 from .extra_types import Vector2di
 from .importer import ImportGeometry, ModelLoader
 from .material import create_bone_material
@@ -134,6 +137,52 @@ def export_animation(
             animation_name=anim_data.name
         )
         animation_dict = optimizer.optimize_animation(animation_dict)
+        
+    return animation_dict, animation.yield_warnings()
+
+def export_camera_animation(
+        context: Context,
+    ) -> Tuple[str, Iterable[str]]:
+    '''
+    Creates a Minecraft camera animation script for active object.
+
+    :param context: the context of running the operator.
+    :returns: Text for a camera animation script.
+    '''
+    camera = context.object  # an armature
+    if camera is None or camera.type != 'CAMERA':
+        # Should never happen (checked in the operator)
+        raise ValueError("Selected object is not a camera.")
+
+
+
+    # Check and create object properties
+    mcblend_object = McblendObject(
+            thisobj_id=ObjectId(camera.name, ""),
+            thisobj=camera,
+            parentobj_id=None, children_ids=[],
+            mctype=MCObjType.CAMERA, group=None)
+    # raise NotImplementedError("Not implemented")
+
+    effective_fps = context.scene.render.fps/context.scene.render.fps_base
+    # Create forced interpolation mode from string
+    animation = CameraAnimationExport(
+        length=(context.scene.frame_end-1)/effective_fps,
+        fps=effective_fps,
+        object_properties=mcblend_object,
+        context=context
+    )
+    animation_dict = animation.get_script_text()
+    
+    
+    # Apply animation optimization if enabled
+    # TODO: If optimization is enabled...
+    # if anim_data.optimize_animation:
+    #     optimizer = AnimationOptimizer(
+    #         error_margin=anim_data.optimization_error / 100.0,
+    #         animation_name=anim_data.name
+    #     )
+    #     animation_dict = optimizer.optimize_animation(animation_dict)
         
     return animation_dict, animation.yield_warnings()
 
