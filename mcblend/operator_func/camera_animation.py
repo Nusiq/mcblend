@@ -466,61 +466,7 @@ class CameraAnimationExport:
 
     def get_script_text(self) -> str:
         animation_data = self._get_mc_api_data()
-        script = '''
-        import {
-            system,
-            LinearSpline,
-            Vector3,
-            ProgressKeyFrame,
-            RotationKeyFrame,
-            Player,
-        } from "@minecraft/server";
-
-        interface CameraAnimationData {
-            totalTimeSeconds: number;
-            controlPoints: Vector3[];
-            progressKeyFrames: ProgressKeyFrame[];
-            rotationKeyFrames: RotationKeyFrame[];
-        }
-
-        export function playCameraAnimation(
-            player: Player,
-            location: Vector3,
-            cameraData: CameraAnimationData
-        ) {
-            const { x, y, z } = location;
-            const splines = new LinearSpline();
-            splines.controlPoints = cameraData.controlPoints.map(({ x: xx, y: yy, z: zz }) => ({
-                x: x + xx,
-                y: y + yy,
-                z: z + zz,
-            }));
-            // const totalTimeSeconds = 10;
-            const totalTimeSeconds = cameraData.totalTimeSeconds;
-            player.camera.setCamera("minecraft:free", {
-                location: splines.controlPoints[splines.controlPoints.length - 1],
-            });
-            player.camera.playAnimation(splines, {
-                totalTimeSeconds,
-                animation: {
-                    progressKeyFrames: cameraData.progressKeyFrames,
-                    rotationKeyFrames: cameraData.rotationKeyFrames,
-                },
-            });
-            // Use real time to stop the event, not tick rate based time
-            const endTime = Date.now() + totalTimeSeconds * 1000;
-            const runId = system.runInterval(() => {
-                if (endTime > Date.now()) {
-                    return;
-                }
-                system.clearRun(runId);
-                player.camera.clear();
-            });
-        }
-
-        export const cameraData: CameraAnimationData = '''
-        script = textwrap.dedent(script).lstrip("\n")
-        script += json.dumps(animation_data) + ";\n"
+        script = f"export default {json.dumps(animation_data)};\n"
         return script
 
     def yield_warnings(self) -> Iterable[str]:

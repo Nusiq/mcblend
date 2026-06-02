@@ -201,7 +201,7 @@ def menu_func_mcblend_export_animation(self: Any, context: Context):
     self.layout.operator(MCBLEND_OT_ExportAnimation.bl_idname)
 
 # Camera exporter
-class MCBLEND_OT_ExportCameraAnimation(Operator):
+class MCBLEND_OT_ExportCameraAnimation(Operator, ExportHelper):
     '''Operator used for exporting Minecraft animations from blender.'''
     # pylint: disable=unused-argument, no-member
     bl_idname = "mcblend.export_camera_animation"
@@ -210,6 +210,14 @@ class MCBLEND_OT_ExportCameraAnimation(Operator):
     bl_description = (
         "Export the camera animation script for Minecraft Bedrock Edition "
         "based on the currently active camera.")
+
+    filename_ext = '.js'
+
+    filter_glob: StringProperty(  # type: ignore
+        default='*.js',
+        options={'HIDDEN'},
+        maxlen=1000
+    )
 
     @classmethod
     def poll(cls, context: Context) -> bool:
@@ -230,37 +238,22 @@ class MCBLEND_OT_ExportCameraAnimation(Operator):
             self.report({'WARNING'}, warning)
             warnings_counter += 1
 
-        # Add the file the text editor
-        file_name = "CameraAnimation.ts"
-        text = bpy.data.texts.get(file_name) or bpy.data.texts.new(file_name)
-        text.clear()
-        text.write(script_text)
-
-        # Focus the new text editor file
-        for area in bpy.context.screen.areas:
-            if area.type == 'TEXT_EDITOR':
-                area.spaces.active.text = text  # type: ignore
-                break
-
+        # Save file and finish
+        filepath: str = self.filepath  # type: ignore
+        with open(filepath, 'w', encoding='utf8') as f:  # type: ignore
+            f.write(script_text)
         if warnings_counter > 1:
             self.report(
                 {'WARNING'},
-                "Camera animation is available in Blender's Text Editor as "
-                '"CameraAnimation.ts" after exporting with '
-                f"{warnings_counter} warnings. See logs for more details."
-            )
+                f"Camera animation saved in {filepath} after exporting with "
+                f"{warnings_counter} warnings. See logs for more details.")
         elif warnings_counter == 1:
             self.report(
                 {'WARNING'},
-                "Camera animation is available in Blender's Text Editor as "
-                '"CameraAnimation.ts" after exporting with 1 warning. '
-                "See logs for more details.")
+                f"Camera animation saved in {filepath} after exporting with 1 "
+                "warning. See logs for more details.")
         else:
-            self.report(
-                {'INFO'},
-                "Camera animation is available in Blender's Text Editor as "
-                '"CameraAnimation.ts".'
-            )
+            self.report({'INFO'}, f'Camera animation saved in {filepath}.')
         return {'FINISHED'}
 
 def menu_func_mcblend_export_camera_animation(self: Any, context: Context):
