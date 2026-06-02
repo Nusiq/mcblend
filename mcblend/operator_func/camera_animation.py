@@ -251,15 +251,13 @@ class CameraTransformation(NamedTuple):
         rotation_interpolation_mode = InterpolationMode.LINEAR
         scale_interpolation_mode = InterpolationMode.LINEAR
 
-        # TODO: Unlock this later when you figure out howw to pass
-        # interpolation modes to the export
-        # if keyframe_info is not None:
-        #     location_interpolation_mode = keyframe_info.get_interpolation_mode(
-        #         TransformationType.LOCATION, keyframe)
-        #     rotation_interpolation_mode = keyframe_info.get_interpolation_mode(
-        #         TransformationType.ROTATION, keyframe)
-        #     scale_interpolation_mode = keyframe_info.get_interpolation_mode(
-        #         TransformationType.SCALE, keyframe)
+        if keyframe_info is not None:
+            location_interpolation_mode = keyframe_info.get_interpolation_mode(
+                TransformationType.LOCATION, keyframe)
+            rotation_interpolation_mode = keyframe_info.get_interpolation_mode(
+                TransformationType.ROTATION, keyframe)
+            scale_interpolation_mode = keyframe_info.get_interpolation_mode(
+                TransformationType.SCALE, keyframe)
         return CameraTransformation(
             name=objprop.obj_name, location=location, scale=scale,
             rotation=rotation,
@@ -286,6 +284,15 @@ class McApiCameraAnimationData(TypedDict):
     controlPoints: list[McApiVector3]
     progressKeyFrames: list[McApiProgressKeyFrame]
     rotationKeyFrames: list[McApiRotationKeyFrame]
+
+
+
+class _TransformData(NamedTuple):
+    time: float
+    location: List[float]
+    rotation: List[float]
+    location_interpolation: InterpolationMode
+    rotation_interpolation: InterpolationMode
 
 class CameraAnimationExport:
     '''
@@ -367,23 +374,12 @@ class CameraAnimationExport:
         finally:
             context.scene.frame_set(original_frame)
 
-    def _get_mc_api_data(self) -> McApiCameraAnimationData:
-        '''
-        Returns optimized JSON dict with an animation of single bone.
 
-        :param bone_name: the name of the bone.
-        :returns: the part of animation with animation of a single bone.
+    def _get_transform_data(self) -> List[_TransformData]:
         '''
-        # Slightly modified CameraTransformation useful in this context.
-        class _TransformData(NamedTuple):
-            time: float
-            location: List[float]
-            scale: List[float]
-            rotation: List[float]
-            location_interpolation: InterpolationMode
-            rotation_interpolation: InterpolationMode
-            scale_interpolation: InterpolationMode
-
+        Returns keyframe transforms relative to the base pose, with interpolation
+        modes preserved for detecting stepped (non-continuous) segments.
+        '''
         transforms: List[_TransformData] = []
         prev_transform_rotation = np.zeros(3)
 
@@ -395,7 +391,6 @@ class CameraAnimationExport:
             # Relative transformations to the original transform
             location = transform.location - original_transform.location
             rotation = transform.rotation - original_transform.rotation
-            scale = transform.scale / original_transform.scale
 
             # Magic
             location = location * original_parent_transform_scale
@@ -405,17 +400,92 @@ class CameraAnimationExport:
                 _TransformData(
                     time=round((key_frame-1) / self.fps, 2),
                     location=get_vect_json(location),
-                    scale=get_vect_json(scale),
                     rotation=get_vect_json(rotation),
                     location_interpolation=transform.location_interpolation,
                     rotation_interpolation=transform.rotation_interpolation,
-                    scale_interpolation=transform.scale_interpolation,
                 )
             )
             # Update prev pose
             prev_transform_rotation = rotation
+        return transforms
 
-        result: McApiCameraAnimationData = {  # dictionary populated with 0 timestamp frame
+    @staticmethod
+    def _split_transforms_at_steps(
+            transforms: List[_TransformData],
+    ) -> List[List[_TransformData]]:
+        '''
+        Splits transforms into continuous segments. A new segment starts at a
+        keyframe that follows a stepped hold on location or rotation (same rule
+        as animation.py _get_keyframe_json when previous_interpolation is STEP).
+        '''
+        if len(transforms) == 0:
+            return []
+        segment_starts = [0]
+        for index in range(1, len(transforms)):
+            previous = transforms[index - 1]
+            if (
+                previous.location_interpolation == InterpolationMode.STEP or
+                previous.rotation_interpolation == InterpolationMode.STEP
+            ):
+                segment_starts.append(index)
+        segments: List[List[_TransformData]] = []
+        for segment_index, start in enumerate(segment_starts):
+            end = (
+                segment_starts[segment_index + 1]
+                if segment_index + 1 < len(segment_starts)
+                else len(transforms)
+            )
+            segments.append(transforms[start:end])
+        return segments
+
+
+    @staticmethod
+    def _fix_control_points(
+            control_points: list[McApiVector3],
+    ) -> list[McApiVector3]:
+        '''
+        Minecraft's API xrequires at least three control points for
+        LinearSpline. This methods adds additional control points without
+        significantly changing the spline to make the Minecraft API happy.
+        '''
+        if len(control_points) == 0:
+            # Hopefully shouldn't happen in normal animations
+            return control_points
+        if len(control_points) == 2:
+            first, second = control_points
+            return [
+                first,
+                {
+                    'x': (first['x'] + second['x']) / 2,
+                    'y': (first['y'] + second['y']) / 2,
+                    'z': (first['z'] + second['z']) / 2,
+                },
+                second,
+            ]
+        if len(control_points) >= 3:
+            # Normal case
+            return control_points
+
+        # control_points == 1 add middle frame with small offset
+        point = control_points[0]
+        return [
+            point, {
+                'x': point['x'],
+                'y': point['y'] + 0.0001,
+                'z': point['z'],
+            },
+            point
+        ]
+
+    @staticmethod
+    def _transforms_to_mc_api_data(
+            transforms: List[_TransformData],
+    ) -> McApiCameraAnimationData:
+        '''
+        Builds a single CameraAnimationData dict from a continuous segment of
+        transforms. Times are relative to the first keyframe in the segment.
+        '''
+        result: McApiCameraAnimationData = {
             'totalTimeSeconds': 0,
             'controlPoints': [],
             'progressKeyFrames': [],
@@ -424,11 +494,13 @@ class CameraAnimationExport:
         # No data export
         if len(transforms) == 0:  # If empty return empty animation
             return result
-        time = 0
+
+        time_offset = transforms[0].time
         prev_location = transforms[0].location
-        spline_distance = 0
+        spline_distance = 0.0
+        time = 0.0
         for i, t in enumerate(transforms):
-            time = t.time
+            time = t.time - time_offset
             delta_spline_distance = math.sqrt(
                 (prev_location[0]-t.location[0])**2 +
                 (prev_location[1]-t.location[1])**2 +
@@ -461,11 +533,19 @@ class CameraAnimationExport:
             else:
                 p['alpha'] = 0.0
 
+        result['controlPoints'] = CameraAnimationExport._fix_control_points(
+            result['controlPoints'])
+
         result['totalTimeSeconds'] = time
         return result
 
     def get_script_text(self) -> str:
-        animation_data = self._get_mc_api_data()
+        transforms = self._get_transform_data()
+        segments = self._split_transforms_at_steps(transforms)
+        animation_data = [
+            self._transforms_to_mc_api_data(segment)
+            for segment in segments
+        ]
         script = f"export default {json.dumps(animation_data)};\n"
         return script
 
