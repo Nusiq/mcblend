@@ -3,32 +3,19 @@ Functions related to exporting animations.
 '''
 from __future__ import annotations
 
-from typing import NamedTuple, Dict, Optional, List, Tuple, cast, Any, Iterable, TypedDict
+from typing import (
+    NamedTuple, Dict, List, Tuple, cast, Iterable, TypedDict, Literal)
 import json
-import textwrap
 import math # pyright: ignore[reportShadowedImports]
-import re
-import bisect
-from enum import Enum
-from dataclasses import dataclass, field
-from itertools import tee, islice  # pyright: ignore[reportShadowedImports]
-from decimal import Decimal
-
 import bpy
-from bpy.types import Action, ActionSlot, Context, Object
+from bpy.types import Action, ActionSlot, Context, Object, Camera
 
 import numpy as np
 
 from .json_tools import get_vect_json
-from .sqlite_bedrock_packs.better_json_tools import CompactEncoder
-from .frame_range import get_frames_from_frame_ranges
-from .common import (
-    AnimationLoopType, MINECRAFT_SCALE_FACTOR, MCObjType, McblendObjectGroup,
-    ANIMATION_TIMESTAMP_PRECISION, NumpyTable, McblendObject
-)
+from .common import NumpyTable, McblendObject
 from .animation_utils import (
     InterpolationMode, TransformationType, Timeline, pick_closest_rotation,
-    frame_to_t
 )
 from bpy_extras import anim_utils
 
@@ -42,20 +29,14 @@ TimeNameTypeInterpolation = Tuple[
     float, None | Tuple[TransformationType, InterpolationMode]]
 
 class ObjectKeyframesInfo:
-    def __init__(
-            self, obj: Object | None, 
-            forced_interpolation: InterpolationMode = InterpolationMode.AUTO,
-            extra_frames: set[int] | None=None):
+    def __init__(self, obj: Object | None):
         self.keyframes: set[float] = set()
-        self.extra_keyframes: set[int] = extra_frames or set()
+        self.fov_keyframes: set[float] = set()
         self.timelines: Dict[TransformationType, Timeline] = {}
-        self.forced_interpolation = forced_interpolation
         if obj is None:
             return
         self._init_keyframes_and_timelines(obj)
-        # The extra keyframes should also be added to the keyframes set
-        for frame in self.extra_keyframes:
-            self.keyframes.add(frame)
+        self._init_fov_keyframes(obj)
 
     def get_interpolation_mode(
             self, transformation_type: TransformationType,
@@ -68,18 +49,9 @@ class ObjectKeyframesInfo:
         :param timestamp: the timestamp of the keyframe.
         :returns: the interpolation mode
         '''
-        # Return forced interpolation if not AUTO
-        if self.forced_interpolation != InterpolationMode.AUTO:
-            return self.forced_interpolation
-            
         # If key doesn't exist always use the default - LINEAR interpolation
         timelines_key = transformation_type
         if timelines_key not in self.timelines:
-            return InterpolationMode.LINEAR
-        
-        # Additional keyframes always use the LINEAR interpolation
-        # It's safe to test if float is in set[int] in Python
-        if timestamp in self.extra_keyframes:
             return InterpolationMode.LINEAR
         return self.timelines[timelines_key].get_state(timestamp)
 
@@ -176,6 +148,69 @@ class ObjectKeyframesInfo:
                             transformed_keyframe + offset, strip.frame_end)
                         self.add_keyframe_data(transformed_keyframe, bone_state)
 
+    def add_fov_keyframe_data(
+            self, keyframe: float, interpolation: InterpolationMode,
+            prec: int = 1):
+        '''
+        Analogous to add_keyframe_data() but for FOV change keyframes.
+        '''
+        rounded_keyframe = round(keyframe, prec)
+        self.fov_keyframes.add(rounded_keyframe)
+        timeline = self.timelines.setdefault(TransformationType.FOV, Timeline())
+        timeline.add_keyframe(rounded_keyframe, interpolation)
+
+    def _init_fov_keyframes(self, obj: Object):
+        '''
+        Analogous to _init_keyframes_and_timelines() but for FOV keyframes.
+        '''
+        camera_data = cast(Camera, obj.data)
+        if camera_data.animation_data is None:
+            return
+        animation_data = camera_data.animation_data
+        if animation_data.action is not None:
+            for keyframe, fov_state in self._get_keyframes_and_interpolations(
+                    animation_data.action, animation_data.action_slot):
+                if fov_state is None or fov_state[0] != TransformationType.FOV:
+                    continue
+                self.add_fov_keyframe_data(keyframe, fov_state[1])
+        if animation_data.nla_tracks is None:
+            return
+        for nla_track in animation_data.nla_tracks:
+            if nla_track.mute:
+                continue
+            for strip in nla_track.strips:
+                if strip.type != 'CLIP':
+                    continue
+                if strip.action is None:
+                    continue
+                strip_action_keyframes = self._get_keyframes_and_interpolations(
+                    strip.action, strip.action_slot)
+                offset = strip.frame_start
+                limit_down = strip.action_frame_start
+                limit_up = strip.action_frame_end
+                scale = strip.scale
+                cycle_length = limit_up - limit_down
+                scaled_cycle_length = cycle_length * scale
+                repeat = strip.repeat
+                for keyframe, fov_state in sorted(
+                        strip_action_keyframes, key=lambda item: item[0]):
+                    if fov_state is None or fov_state[0] != TransformationType.FOV:
+                        continue
+                    if keyframe < limit_down or keyframe > limit_up:
+                        continue
+                    transformed_keyframe_base = keyframe * scale
+                    for repeat_index in range(math.ceil(repeat)):
+                        transformed_keyframe = (
+                            (repeat_index * scaled_cycle_length) +
+                            transformed_keyframe_base
+                        )
+                        if transformed_keyframe / scaled_cycle_length > repeat:
+                            break
+                        transformed_keyframe = min(
+                            transformed_keyframe + offset, strip.frame_end)
+                        self.add_fov_keyframe_data(
+                            transformed_keyframe, fov_state[1])
+
     def _get_keyframes_and_interpolations(
             self,
             action: Action | None,
@@ -200,6 +235,8 @@ class ObjectKeyframesInfo:
                 transformation_type = TransformationType.ROTATION
             elif purpose == 'scale':
                 transformation_type = TransformationType.SCALE
+            elif purpose == 'lens':
+                transformation_type = TransformationType.FOV
             for keyframe_point in fcurve.keyframe_points:
                 # keyframe_point.interpolation can be: 'LINEAR' 'BEZIER' or
                 # 'CONSTANT'
@@ -285,7 +322,15 @@ class McApiCameraAnimationData(TypedDict):
     progressKeyFrames: list[McApiProgressKeyFrame]
     rotationKeyFrames: list[McApiRotationKeyFrame]
 
+class McApiFovKeyFrame(TypedDict):
+    timeSeconds: float
+    fov: float
+    interpolation: Literal["smooth", "step", "linear"]
 
+class McApiCameraAnimationExport(TypedDict):
+    totalTimeSeconds: float
+    fov: list[McApiFovKeyFrame]
+    movement: list[McApiCameraAnimationData]
 
 class _TransformData(NamedTuple):
     time: float
@@ -308,8 +353,9 @@ class CameraAnimationExport:
     length: float
     fps: float
     original_transformation: CameraTransformation
-    transformations: Dict[float, CameraTransformation] = field(default_factory=dict)
-    warnings: List[str] = field(default_factory=list)
+    transformations: Dict[float, CameraTransformation]
+    fov_keyframes: Dict[float, Tuple[float, InterpolationMode]]
+    warnings: List[str]
 
     def __init__(
             self,
@@ -321,6 +367,7 @@ class CameraAnimationExport:
         self.length = length
         self.fps = fps
         self.transformations = {}
+        self.fov_keyframes = {}
         self.warnings = []
         self._load_camera_transformations(object_properties, context)
 
@@ -337,21 +384,16 @@ class CameraAnimationExport:
         original_frame = context.scene.frame_current
         bpy.ops.screen.animation_cancel()  # pyright: ignore[reportUnknownMemberType]
         try:
+            # LOAD MOVEMENT ANIMATION
             context.scene.frame_set(0)
             self.original_transformation = CameraTransformation.from_object_and_keyframe_data(
                 object_properties)
             # Add frames from frame slice pattern
             frame_start = context.scene.frame_start
             frame_end = context.scene.frame_end
+            obj = context.object
 
-            # TODO: Add option to add extra keyframes
-            extra_frames: set[int] = set()
-            bone_states = ObjectKeyframesInfo(
-                context.object,
-                # TODO: Add option to choose forced interpolation
-                forced_interpolation=InterpolationMode.AUTO,
-                extra_frames=extra_frames
-            )
+            bone_states = ObjectKeyframesInfo(obj)
             for keyframe in sorted(bone_states.keyframes):
                 if (
                     keyframe < frame_start or
@@ -371,9 +413,42 @@ class CameraAnimationExport:
                     CameraTransformation.from_object_and_keyframe_data(
                         object_properties, bone_states, keyframe)
                 )
+            # LOAD FOV ANIMATION
+            fov_frames = sorted(bone_states.fov_keyframes)
+            if obj == None:
+                return  # Shouldn't happen
+            camera_data = cast(Camera, obj.data)
+
+            for keyframe in fov_frames:
+                if keyframe < frame_start or keyframe > frame_end:
+                    continue
+                float_keyframe = float(keyframe)
+                frame, subframe = divmod(float_keyframe, 1)
+                context.scene.frame_set(int(frame), subframe=subframe)
+                fov_degrees = math.degrees(camera_data.angle)
+                # Clamp the fov to the limits allowed in Minecraft
+                if fov_degrees < 30:
+                    fov_degrees = 30
+                    self.warnings.append(
+                        f"The FOV at frame {keyframe} is below the minimum "
+                        "value (30 degrees) and has been changed to be "
+                        "within the limit."
+                    )
+                elif fov_degrees > 110:
+                    fov_degrees = 110
+                    self.warnings.append(
+                        f"The FOV at frame {keyframe} is above the maximum "
+                        "value (110 degrees) and has been changed to be "
+                        "within the limit."
+                    )
+                fov_degrees = round(fov_degrees, 2)
+                self.fov_keyframes[keyframe] = (
+                    fov_degrees,
+                    bone_states.get_interpolation_mode(
+                        TransformationType.FOV, keyframe)
+                )
         finally:
             context.scene.frame_set(original_frame)
-
 
     def _get_transform_data(self) -> List[_TransformData]:
         '''
@@ -437,7 +512,6 @@ class CameraAnimationExport:
             )
             segments.append(transforms[start:end])
         return segments
-
 
     @staticmethod
     def _fix_control_points(
@@ -540,12 +614,35 @@ class CameraAnimationExport:
         return result
 
     def get_script_text(self) -> str:
+        # Get the data for the movement animation
         transforms = self._get_transform_data()
         segments = self._split_transforms_at_steps(transforms)
-        animation_data = [
+        movement_data = [
             self._transforms_to_mc_api_data(segment)
             for segment in segments
         ]
+        # Get the data for the FOV animation
+        fov_data: list[McApiFovKeyFrame] = []
+        for keyframe in sorted(self.fov_keyframes):
+            fov_degrees, interpolation = self.fov_keyframes[keyframe]
+            interpolation_str = "linear"
+            if interpolation == InterpolationMode.STEP:
+                interpolation_str = "step"
+            elif interpolation == InterpolationMode.LINEAR:
+                interpolation_str = "linear"
+            elif interpolation == InterpolationMode.SMOOTH:
+                interpolation_str = "smooth"
+            fov_data.append({
+                'timeSeconds': round((keyframe - 1) / self.fps, 2),
+                'fov': fov_degrees,
+                'interpolation': interpolation_str
+            })
+        # Combine for the output
+        animation_data = {
+            'totalTimeSeconds': self.length,
+            'fov': fov_data,
+            'movement': movement_data,
+        }
         script = f"export default {json.dumps(animation_data)};\n"
         return script
 

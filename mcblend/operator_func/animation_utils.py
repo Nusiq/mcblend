@@ -45,6 +45,7 @@ class TransformationType(Enum):
     LOCATION = 0
     ROTATION = 1
     SCALE = 2
+    FOV = 3
 
     # Must be comparable for 'sorted' function
     def __lt__(self, other: TransformationType) -> bool:
