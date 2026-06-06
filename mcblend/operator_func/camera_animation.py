@@ -316,8 +316,11 @@ class McApiRotationKeyFrame(TypedDict):
     timeSeconds: float
     rotation: McApiVector3
 
+SegmentInterpolation = Literal["smooth", "linear"]
+
 class McApiCameraAnimationData(TypedDict):
     totalTimeSeconds: float
+    interpolation: SegmentInterpolation
     controlPoints: list[McApiVector3]
     progressKeyFrames: list[McApiProgressKeyFrame]
     rotationKeyFrames: list[McApiRotationKeyFrame]
@@ -484,9 +487,8 @@ class CameraAnimationExport:
             prev_transform_rotation = rotation
         return transforms
 
-    @staticmethod
     def _split_transforms_at_steps(
-            transforms: List[_TransformData],
+            self, transforms: List[_TransformData],
     ) -> List[List[_TransformData]]:
         '''
         Splits transforms into continuous segments. A new segment starts at a
@@ -495,27 +497,40 @@ class CameraAnimationExport:
         '''
         if len(transforms) == 0:
             return []
-        segment_starts = [0]
+        # [index, whether it's a step or not]
+        segment_starts: List[Tuple[int, bool]] = [(0, True)]
+        prev_prev_loc_interp = None
         for index in range(1, len(transforms)):
-            previous = transforms[index - 1]
+            prev = transforms[index - 1]
             if (
-                previous.location_interpolation == InterpolationMode.STEP or
-                previous.rotation_interpolation == InterpolationMode.STEP
+                prev.location_interpolation == InterpolationMode.STEP or
+                prev.rotation_interpolation == InterpolationMode.STEP
             ):
-                segment_starts.append(index)
+                segment_starts.append((index, True))
+            elif (
+                    prev_prev_loc_interp != None and
+                    prev_prev_loc_interp != InterpolationMode.STEP and
+                    prev_prev_loc_interp != prev.location_interpolation):
+                segment_starts.append((index, False))
+            prev_prev_loc_interp = prev.location_interpolation
+
         segments: List[List[_TransformData]] = []
-        for segment_index, start in enumerate(segment_starts):
-            end = (
-                segment_starts[segment_index + 1]
-                if segment_index + 1 < len(segment_starts)
-                else len(transforms)
-            )
+        for segment_index, (start, _) in enumerate(segment_starts):
+            end = len(transforms)
+            next_segment_is_step = False
+            if segment_index + 1 < len(segment_starts):
+                next_segment = segment_starts[segment_index + 1]
+                end = next_segment[0]
+                next_segment_is_step = next_segment[1]
+            # If it's not a sudden STEP, then the ending of this segment must
+            # overlap with the start of the next segment.
+            if not next_segment_is_step:
+                end += 1
             segments.append(transforms[start:end])
         return segments
 
-    @staticmethod
     def _fix_control_points(
-            control_points: list[McApiVector3],
+            self, control_points: list[McApiVector3],
     ) -> list[McApiVector3]:
         '''
         Minecraft's API xrequires at least three control points for
@@ -551,9 +566,8 @@ class CameraAnimationExport:
             point
         ]
 
-    @staticmethod
     def _transforms_to_mc_api_data(
-            transforms: List[_TransformData],
+            self, transforms: List[_TransformData],
     ) -> McApiCameraAnimationData:
         '''
         Builds a single CameraAnimationData dict from a continuous segment of
@@ -561,6 +575,7 @@ class CameraAnimationExport:
         '''
         result: McApiCameraAnimationData = {
             'totalTimeSeconds': 0,
+            'interpolation': 'linear',
             'controlPoints': [],
             'progressKeyFrames': [],
             'rotationKeyFrames': [],
@@ -568,7 +583,6 @@ class CameraAnimationExport:
         # No data export
         if len(transforms) == 0:  # If empty return empty animation
             return result
-
         time_offset = transforms[0].time
         prev_location = transforms[0].location
         spline_distance = 0.0
@@ -607,9 +621,16 @@ class CameraAnimationExport:
             else:
                 p['alpha'] = 0.0
 
-        result['controlPoints'] = CameraAnimationExport._fix_control_points(
+        result['controlPoints'] = self._fix_control_points(
             result['controlPoints'])
-
+        
+        # If we have enough control points, allow the smooth inteprolation, if
+        # the segment is a smooth interpolation type.
+        if (
+                len(result['controlPoints']) >= 4 and
+                transforms[0].location_interpolation ==
+                    InterpolationMode.SMOOTH):
+            result['interpolation'] = "smooth"
         result['totalTimeSeconds'] = time
         return result
 
