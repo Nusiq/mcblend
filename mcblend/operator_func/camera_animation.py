@@ -4,9 +4,11 @@ Functions related to exporting animations.
 from __future__ import annotations
 
 from typing import (
-    NamedTuple, Dict, List, Tuple, cast, Iterable, TypedDict, Literal)
+    NamedTuple, Dict, Iterator, List, Tuple, cast, Iterable, TypedDict,
+    Literal)
 import json
 import math # pyright: ignore[reportShadowedImports]
+from itertools import product
 import bpy
 from bpy.types import Action, ActionSlot, Context, Object, Camera
 
@@ -18,7 +20,8 @@ from .animation_utils import (
     InterpolationMode, TransformationType, Timeline, pick_closest_rotation,
 )
 from bpy_extras import anim_utils
-
+from mathutils import Euler, Quaternion
+from .sqlite_bedrock_packs.better_json_tools import CompactEncoder
 
 '''
 Alias used internally in some funcitons. It's a tuple of data of a keyframe:
@@ -256,7 +259,7 @@ class CameraTransformation(NamedTuple):
     '''Properties of a pose of single bone.'''
     name: str
     location: NumpyTable
-    rotation: NumpyTable
+    orientation: Quaternion
     scale: NumpyTable
     location_interpolation: InterpolationMode = InterpolationMode.LINEAR
     rotation_interpolation: InterpolationMode = InterpolationMode.LINEAR
@@ -280,10 +283,8 @@ class CameraTransformation(NamedTuple):
         # Location
         location = np.array(local_matrix.to_translation())
         location = location[[0, 2, 1]] * np.array([1, 1, -1])
-        # Rotation
-        rotation = objprop.get_mcrotation(objprop.parent) * np.array(
-            [1, -1, 1]
-        )
+        orientation = local_matrix.to_quaternion()
+
         location_interpolation_mode = InterpolationMode.LINEAR
         rotation_interpolation_mode = InterpolationMode.LINEAR
         scale_interpolation_mode = InterpolationMode.LINEAR
@@ -297,7 +298,7 @@ class CameraTransformation(NamedTuple):
                 TransformationType.SCALE, keyframe)
         return CameraTransformation(
             name=objprop.obj_name, location=location, scale=scale,
-            rotation=rotation,
+            orientation=orientation,
             location_interpolation=location_interpolation_mode,
             rotation_interpolation=rotation_interpolation_mode,
             scale_interpolation=scale_interpolation_mode,
@@ -388,15 +389,17 @@ class CameraAnimationExport:
         bpy.ops.screen.animation_cancel()  # pyright: ignore[reportUnknownMemberType]
         try:
             # LOAD MOVEMENT ANIMATION
-            context.scene.frame_set(0)
-            self.original_transformation = CameraTransformation.from_object_and_keyframe_data(
-                object_properties)
-            # Add frames from frame slice pattern
             frame_start = context.scene.frame_start
             frame_end = context.scene.frame_end
             obj = context.object
 
             bone_states = ObjectKeyframesInfo(obj)
+            self.original_transformation = CameraTransformation(
+                name=object_properties.obj_name,
+                location=np.zeros(3),
+                orientation=Quaternion((1.0, 0.0, 0.0, 0.0)),
+                scale=np.ones(3),
+            )
             for keyframe in sorted(bone_states.keyframes):
                 if (
                     keyframe < frame_start or
@@ -453,38 +456,105 @@ class CameraAnimationExport:
         finally:
             context.scene.frame_set(original_frame)
 
+    def yield_equivalent_rotations(
+            self, orientation: Quaternion,
+            previous_blender_rotation: Euler | None,
+    ) -> Iterator[Euler]:
+        '''
+        Yields blender XYZ Euler branches for the orientation defined
+        by "quaternion" tries starting from previous_blender_euler angle.
+        '''
+        if previous_blender_rotation is None:
+            euler = orientation.to_euler('XYZ')
+        else:
+            euler = orientation.to_euler('XYZ', previous_blender_rotation)
+        half_pi = math.pi / 2.0
+
+        # If no gimbal lock, just yield the result
+        if abs(abs(euler.y) - half_pi) >= 0.01:
+            yield euler
+            return
+
+        # Else (gimbal lock), yield multiple alternate numeric branches.
+        # Brute-force check vrious combinations with +-90 or +-180 degrees.
+        # These can be valid during gimbal lock.
+        neg_orientation = orientation.copy()
+        neg_orientation.negate()
+        offsets = (-math.pi, -half_pi, 0.0, half_pi, math.pi)
+        for x_offset, z_offset in product(offsets, repeat=2):
+            partner = Euler((
+                euler.x + x_offset,
+                euler.y,
+                euler.z + z_offset,
+            ), 'XYZ')
+            partner_quat = partner.to_quaternion()
+            angle_dist = min(
+                partner_quat.rotation_difference(orientation).angle,
+                partner_quat.rotation_difference(neg_orientation).angle,
+            )
+            # Make sure taht yielded result is actually equivalent to the
+            # original orientation
+            if angle_dist >= 1e-4:
+                continue
+            yield partner
+
     def _get_transform_data(self) -> List[_TransformData]:
         '''
         Returns keyframe transforms relative to the base pose, with interpolation
         modes preserved for detecting stepped (non-continuous) segments.
+
+        Keyframe locations are relative to ``original_transformation``.
         '''
         transforms: List[_TransformData] = []
-        prev_transform_rotation = np.zeros(3)
+        prev_mc_rotation = np.zeros(3)
+        prev_rotation: Euler | None = None  # Blender rotation (not minecraft)
 
-        # Get relative CameraTransformation with minimized rotation
-        original_transform = self.original_transformation
-        original_parent_transform_scale = np.ones(3)
-    
-        for key_frame, transform in self.transformations.items():
-            # Relative transformations to the original transform
-            location = transform.location - original_transform.location
-            rotation = transform.rotation - original_transform.rotation
+        # Populate transforms in order
+        for key_frame in sorted(self.transformations):
+            transform = self.transformations[key_frame]
+            location = (
+                transform.location -
+                self.original_transformation.location)
 
-            # Magic
-            location = location * original_parent_transform_scale
-            rotation=pick_closest_rotation(
-                rotation, prev_transform_rotation, original_transform.rotation)
+            # Pick the Blender Euler branch closest to the previous keyframe.
+            best_rotation_distance = math.inf
+            best_rotation = transform.orientation.to_euler('XYZ')
+            best_mc_rotation = np.zeros(3)
+            for candidate in self.yield_equivalent_rotations(
+                    transform.orientation, prev_rotation):
+                rotation_distance = 0.0
+                if prev_rotation is not None:
+                    rotation_distance = float(
+                        np.linalg.norm(
+                            np.array(candidate) -
+                            np.array(prev_rotation)
+                        )
+                    )
+                if rotation_distance >= best_rotation_distance:
+                    continue
+                best_rotation_distance = rotation_distance
+                best_rotation = candidate
+                # I'm not sure if pick_closest_rotation() is needed here
+                # since the code above already tries to pick a close result
+                # in very similar way.
+                best_mc_rotation = pick_closest_rotation(
+                    np.array(
+                        [candidate.x-math.pi/2, candidate.z, -candidate.y],
+                        dtype=float) * 180.0/math.pi,
+                    prev_mc_rotation
+                )
+            prev_rotation = best_rotation
             transforms.append(
                 _TransformData(
                     time=round((key_frame-1) / self.fps, 2),
                     location=get_vect_json(location),
-                    rotation=get_vect_json(rotation),
+                    rotation=get_vect_json(best_mc_rotation),
                     location_interpolation=transform.location_interpolation,
                     rotation_interpolation=transform.rotation_interpolation,
                 )
             )
             # Update prev pose
-            prev_transform_rotation = rotation
+            prev_mc_rotation = best_mc_rotation
         return transforms
 
     def _split_transforms_at_steps(
@@ -607,12 +677,18 @@ class CameraAnimationExport:
                 })
             result['progressKeyFrames'].append(
                 {"timeSeconds": time, "alpha": spline_distance})
+            rotation = np.array(t.rotation, dtype=float)
+
+            # Minecraft behaves in a weird ways when the camera is upside down
+            # this hack below, fixes it.
+            if rotation[2] > 90.0 or rotation[2] < -90.0:
+                rotation = rotation * np.array([-1.0, 1.0, 1.0])
             result['rotationKeyFrames'].append({
                 'timeSeconds': time,
                 'rotation': {
-                    "x": t.rotation[0],
-                    "y": t.rotation[1],
-                    "z": t.rotation[2],
+                    "x": float(rotation[0]),
+                    "y": float(rotation[1]),
+                    "z": float(rotation[2]),
                 }
             })
         for p in result['progressKeyFrames']:
