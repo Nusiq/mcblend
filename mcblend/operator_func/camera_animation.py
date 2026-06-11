@@ -637,7 +637,7 @@ class CameraAnimationExport:
         ]
 
     def _transforms_to_mc_api_data(
-            self, transforms: List[_TransformData],
+            self, transforms: List[_TransformData], end_time: float
     ) -> McApiCameraAnimationData:
         '''
         Builds a single CameraAnimationData dict from a continuous segment of
@@ -707,17 +707,22 @@ class CameraAnimationExport:
                 transforms[0].location_interpolation ==
                     InterpolationMode.SMOOTH):
             result['interpolation'] = "smooth"
-        result['totalTimeSeconds'] = time
+        result['totalTimeSeconds'] = end_time - time_offset
         return result
 
     def get_script_text(self) -> str:
         # Get the data for the movement animation
         transforms = self._get_transform_data()
         segments = self._split_transforms_at_steps(transforms)
-        movement_data = [
-            self._transforms_to_mc_api_data(segment)
-            for segment in segments
-        ]
+        movement_data: list[McApiCameraAnimationData] = []
+        for i, segment in enumerate(segments):
+            try:
+                next_time = segments[i + 1][0].time
+            except:
+                next_time = self.length
+            movement_data.append(
+                self._transforms_to_mc_api_data(segment, next_time)
+            )
         # Get the data for the FOV animation
         fov_data: list[McApiFovKeyFrame] = []
         for keyframe in sorted(self.fov_keyframes):
