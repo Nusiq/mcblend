@@ -15,3 +15,4 @@
 - The `Export Bedrock Model` menu item exports the selected model to a file.
 - The `Export Bedrock Animation` menu item exports the **currently active** animation to a file.
 - The `Batch Export Bedrock Animations` menu item exports **multiple** animations assigned to the armature into a single `.animation.json` file. It provides options to select which animations to export.
+- The `Export Bedrock Camera Script` menu item exports camera movement and FOV animation data for the selected camera to a `.js` file. See {ref}`Exporting camera animations<exporting-camera-animations>`.
