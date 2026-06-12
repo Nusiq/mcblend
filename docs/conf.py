@@ -9,7 +9,7 @@
 project = 'mcblend'
 copyright = '2022, Nusiq'
 author = 'Nusiq'
-release = '12.0.0'
+release = '12.1.0'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
