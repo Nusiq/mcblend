@@ -47,6 +47,13 @@ Physics simluation <animations/physics_simulation>
 
 ```{toctree}
 :hidden:
+:caption: Camera animations
+
+Exporting camera animations <camera_animations/exporting_camera_animations>
+```
+
+```{toctree}
+:hidden:
 :caption: GUI reference
 
 Overview <gui/overview>
@@ -75,6 +82,7 @@ Mcblend is a Blender plugin designed for Minecraft creators. It enables users to
 ## Features
 - Exporting and importing models for Minecraft Bedrock Edition, including support for polymesh and cube-based models of attachables and entities.
 - Exporting keyframe animations and poses for entities and attachables, and baking animations into Minecraft format, including support for using inverse kinematics and constraints to create complex movements.
+- Exporting camera movement and FOV animations as JavaScript data for Minecraft Script API cutscenes and scripted camera playback.
 - Generating UV maps and textures for Minecraft models.
 - Access to Blender features such as physics simulation and rigging for animating Minecraft models, and a function for automatic rigid body setup for a model.
 

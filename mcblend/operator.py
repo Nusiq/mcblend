@@ -31,10 +31,10 @@ from .uv_data import get_unused_uv_group_name
 from .operator_func.material import MATERIALS_MAP
 
 from .operator_func import (
-    export_model, export_animation, fix_uvs, separate_mesh_cubes, set_uvs,
-    import_model, inflate_objects, load_rp_to_mcblned, unload_rps,
-    import_model_form_project, apply_materials, prepare_physics_simulation,
-    merge_models)
+    export_model, export_animation, export_camera_animation, fix_uvs,
+    separate_mesh_cubes, set_uvs, import_model, inflate_objects,
+    load_rp_to_mcblned, unload_rps, import_model_form_project,
+    apply_materials, prepare_physics_simulation, merge_models)
 from .operator_func.rp_importer import get_pks_for_model_improt
 from .operator_func.sqlite_bedrock_packs.better_json_tools import (
     CompactEncoder, JSONCDecoder)
@@ -199,6 +199,67 @@ def menu_func_mcblend_export_animation(self: Any, context: Context):
     '''Used to register the operator in the file export menu.'''
     # pylint: disable=unused-argument
     self.layout.operator(MCBLEND_OT_ExportAnimation.bl_idname)
+
+# Camera exporter
+class MCBLEND_OT_ExportCameraAnimation(Operator, ExportHelper):
+    '''Operator used for exporting Minecraft animations from blender.'''
+    # pylint: disable=unused-argument, no-member
+    bl_idname = "mcblend.export_camera_animation"
+    bl_label = "Export Bedrock Camera Script"
+    bl_options = {'REGISTER'}
+    bl_description = (
+        "Export the camera animation script for Minecraft Bedrock Edition "
+        "based on the currently active camera.")
+
+    filename_ext = '.js'
+
+    filter_glob: StringProperty(  # type: ignore
+        default='*.js',
+        options={'HIDDEN'},
+        maxlen=1000
+    )
+
+    @classmethod
+    def poll(cls, context: Context) -> bool:
+        if context.mode != 'OBJECT':
+            return False
+        obj = context.object
+        if obj is None:
+            return False
+        if obj.type != 'CAMERA':
+            return False
+        return True
+
+    def execute(self, context: Context):
+        # Geberate tge fuke
+        script_text, warnings_generator = export_camera_animation(context)
+        warnings_counter = 0
+        for warning in warnings_generator:
+            self.report({'WARNING'}, warning)
+            warnings_counter += 1
+
+        # Save file and finish
+        filepath: str = self.filepath  # type: ignore
+        with open(filepath, 'w', encoding='utf8') as f:  # type: ignore
+            f.write(script_text)
+        if warnings_counter > 1:
+            self.report(
+                {'WARNING'},
+                f"Camera animation saved in {filepath} after exporting with "
+                f"{warnings_counter} warnings. See logs for more details.")
+        elif warnings_counter == 1:
+            self.report(
+                {'WARNING'},
+                f"Camera animation saved in {filepath} after exporting with 1 "
+                "warning. See logs for more details.")
+        else:
+            self.report({'INFO'}, f'Camera animation saved in {filepath}.')
+        return {'FINISHED'}
+
+def menu_func_mcblend_export_camera_animation(self: Any, context: Context):
+    '''Used to register the operator in the file export menu.'''
+    # pylint: disable=unused-argument
+    self.layout.operator(MCBLEND_OT_ExportCameraAnimation.bl_idname)
 
 
 # Batch Animation exporter

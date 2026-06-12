@@ -6,12 +6,16 @@ on:
     paths:
     - '**.py'
     - 'tests/data/**.json'
+    - 'tests/data/**.js'
+    - 'tests/**.blend'
     - '.github/workflows/**.yml'
   pull_request:
     branches: [ master ]
     paths:
     - '**.py'
     - 'tests/data/**.json'
+    - 'tests/data/**.js'
+    - 'tests/**.blend'
     - '.github/workflows/**.yml'
   workflow_dispatch:
 

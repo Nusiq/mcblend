@@ -1,3 +1,4 @@
+(matching-framerate)=
 # Matching framerate
 By default, Blender uses 24FPS framerate. Minecraft uses seconds to define
 the timestamps of keyframes in animation. It's good to change the framerate setting

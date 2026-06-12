@@ -53,6 +53,7 @@ class MCObjType(Enum):
     CUBE = 'CUBE'
     BONE = 'BONE'
     LOCATOR = 'LOCATOR'
+    CAMERA = 'CAMERA'
 
 class MeshType(Enum):
     '''
@@ -97,12 +98,12 @@ class McblendObject:
     parentobj_id: ObjectId | None
     children_ids: list[ObjectId]
     mctype: MCObjType
-    group: McblendObjectGroup
+    group: McblendObjectGroup | None
 
     def __init__(
             self, thisobj_id: ObjectId, thisobj: Object,
             parentobj_id: ObjectId | None, children_ids: list[ObjectId],
-            mctype: MCObjType, group: McblendObjectGroup):
+            mctype: MCObjType, group: McblendObjectGroup | None):
         self.thisobj_id = thisobj_id
         self.thisobj = thisobj
         self.parentobj_id = parentobj_id
@@ -116,6 +117,8 @@ class McblendObject:
         try:
             if self.parentobj_id is None:
                 return None
+            if self.group is None:
+                return None
             return self.group[self.parentobj_id]
         except KeyError:
             return None
@@ -127,6 +130,8 @@ class McblendObject:
         object.
         '''
         children: List[McblendObject] = []
+        if self.group is None:
+            return tuple()
         for child_id in self.children_ids:
             if child_id in self.group:
                 children.append(self.group[child_id])
@@ -221,7 +226,7 @@ class McblendObject:
         wrapped inside this object.
         '''
         this_obj_matrix_world = self.thisobj.matrix_world.copy()
-        if self.group.world_origin is not None:
+        if self.group is not None and self.group.world_origin is not None:
             this_obj_matrix_world = (
                 self.group.world_origin.matrix_world.inverted() @
                 this_obj_matrix_world
