@@ -233,7 +233,14 @@ def update_selected_entity(self, context) -> None:
     '''
     # pylint: disable=unused-argument
     self = cast(MCBLEND_ProjectProperties, self)
-    pk = self.entities[self.selected_entity].primary_key
+    # The update callback is also called when the property is reset (e.g.
+    # when resource packs are loaded/unloaded). In that case the selected
+    # entity may not exist (or may be an empty string).
+    selected_entity = self.selected_entity
+    if selected_entity not in self.entities:
+        self.entity_render_controllers.clear()
+        return
+    pk = self.entities[selected_entity].primary_key
     self.entity_render_controllers.clear()
     db_handler = get_db_handler()
     for rc_pk, rc_identifier in db_handler.list_entity_render_controllers(pk):
@@ -257,7 +264,14 @@ def update_selected_attachable(self, context) -> None:
     '''
     # pylint: disable=unused-argument
     self = cast(MCBLEND_ProjectProperties, self)
-    pk = self.attachables[self.selected_attachable].primary_key
+    # The update callback is also called when the property is reset (e.g.
+    # when resource packs are loaded/unloaded). In that case the selected
+    # attachable may not exist (or may be an empty string).
+    selected_attachable = self.selected_attachable
+    if selected_attachable not in self.attachables:
+        self.attachable_render_controllers.clear()
+        return
+    pk = self.attachables[selected_attachable].primary_key
     self.attachable_render_controllers.clear()
     db_handler = get_db_handler()
     for rc_pk, rc_identifier in db_handler.list_attachable_render_controllers(pk):
