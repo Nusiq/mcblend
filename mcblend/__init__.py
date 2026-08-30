@@ -120,7 +120,7 @@ bl_info = {
     "author": "Artur",
     "description": "An addon that allows to design and animate Minecraft Bedrock Edition models",
     "blender": (5, 2, 0),
-    "version": (12, 1, 0),  # Remember to update the version in the "docs/conf.py"
+    "version": (13, 0, 0),  # Remember to update the version in the "docs/conf.py"
     "location": "",
     "warning": "",
     "category": "Object"

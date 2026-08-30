@@ -45,7 +45,7 @@ If you press `New Animation` before pushing down the animation, the animation wi
 ```
 
 ```{note}
-The UI may look slightly different. In Blender 4.5, the `Stash` and `Push Down` buttons were moved into the "Action" menu, and a new field for Action Slots was added in that newly freed space.
+The UI may look slightly different. In Blender 4.5 (and newer), the `Stash` and `Push Down` buttons were moved into the "Action" menu, and a new field for Action Slots was added in that newly freed space.
 ```
 
 
