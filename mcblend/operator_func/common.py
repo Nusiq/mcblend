@@ -280,7 +280,7 @@ class McblendObject:
                 result = objprop.obj_matrix_world.to_translation()
             return result
 
-        return np.array(_get_mcpivot(self).xzy)
+        return np.array(_get_mcpivot(self).xzy, dtype=np.float64)
 
     def get_local_matrix(
             self, other: Optional[McblendObject] = None, normalize: bool = False
@@ -361,7 +361,8 @@ class McblendObject:
             )
         else:
             result_euler = self.obj_matrix_world.to_euler('XZY')
-        result: NumpyTable = np.array(result_euler)[[0, 2, 1]]
+        result: NumpyTable = np.array(
+            result_euler, dtype=np.float64)[[0, 2, 1]]
         result = result * np.array([1, -1, 1])
         result = result * 180/math.pi  # type: ignore
         return result
@@ -678,7 +679,8 @@ class CubePolygons(NamedTuple):
 
         p_options: List[List[str]] =  []
         for vertex_id in range(8):
-            vertex_crds = np.array(cube.data.vertices[vertex_id].co)
+            vertex_crds = np.array(
+                cube.data.vertices[vertex_id].co, dtype=np.float64)
             # Find the closest point of bounding box (key from bb_crds)
             shortest_distance: Optional[float] = None
             for k, v in bb_crds.items():
@@ -741,7 +743,9 @@ class CubePolygon(NamedTuple):
         # The indexing must be a tuple to work with numpy, see issue  #111
         ordered_loop_indices = np.array(self.side.loop_indices)[(self.order,)]
         
-        crds = np.array([uv_layer.data[i].uv for i in ordered_loop_indices])
+        crds = np.array(
+            [uv_layer.data[i].uv for i in ordered_loop_indices],
+            dtype=np.float64)
         return crds
 
     @staticmethod
@@ -1017,7 +1021,7 @@ def get_vect_json(arr: Iterable[float | int]) -> list[float]:
 
     :param arr: an iterable of numbers.
     '''
-    result = [round(i, 3) for i in arr]
+    result = [round(float(i), 3) for i in arr]
     for i, _ in enumerate(result):
         if result[i] == -0.0:
             result[i] = 0.0

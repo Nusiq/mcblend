@@ -279,9 +279,11 @@ class CameraTransformation(NamedTuple):
         # Scale
         local_matrix = objprop.get_local_matrix(
             objprop.parent, normalize=False)
-        scale = np.array(local_matrix.to_scale())[[0, 2, 1]]
+        scale = np.array(
+            local_matrix.to_scale(), dtype=np.float64)[[0, 2, 1]]
         # Location
-        location = np.array(local_matrix.to_translation())
+        location = np.array(
+            local_matrix.to_translation(), dtype=np.float64)
         location = location[[0, 2, 1]] * np.array([1, 1, -1])
         orientation = local_matrix.to_quaternion()
 

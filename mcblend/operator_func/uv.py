@@ -48,7 +48,7 @@ class CoordinatesConverter:
         :param x: the vector with coordinates.
         :returns: converted vector.
         '''
-        x = np.array(x).T
+        x = np.array(x, dtype=np.float64).T
         return (((x-self.space_a[0])/self.scale_a)*self.scale_b)+self.space_b[0]
 
 

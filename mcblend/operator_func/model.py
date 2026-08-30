@@ -159,7 +159,7 @@ class BoneExport:
         def _scale(objprop: McblendObject) -> NumpyTable:
             '''Scale of a bone'''
             _, _, scale = objprop.obj_matrix_world.decompose()
-            return np.array(scale.xzy)
+            return np.array(scale.xzy, dtype=np.float64)
 
         # Set locators
         for locatorprop in locator_objs:
@@ -224,8 +224,12 @@ class BoneExport:
                 for vertex in vertices:
                     transformed_vertex = inv_bone_matrix @ vertex.co
                     transformed_vertex = (
-                        np.array(transformed_vertex) * MINECRAFT_SCALE_FACTOR *
-                        np.array(thisobj.obj_matrix_world.to_scale())
+                        np.array(
+                            transformed_vertex, dtype=np.float64
+                        ) * MINECRAFT_SCALE_FACTOR *
+                        np.array(
+                            thisobj.obj_matrix_world.to_scale(),
+                            dtype=np.float64)
                     )[[0, 2, 1]] + self.pivot
                     positions.append(list(transformed_vertex))  # type: ignore
                 for loop in loops:

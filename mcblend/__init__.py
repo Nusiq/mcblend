@@ -119,7 +119,7 @@ bl_info = {
     "name": "Mcblend",
     "author": "Artur",
     "description": "An addon that allows to design and animate Minecraft Bedrock Edition models",
-    "blender": (4, 5, 0),
+    "blender": (5, 2, 0),
     "version": (12, 1, 0),  # Remember to update the version in the "docs/conf.py"
     "location": "",
     "warning": "",
